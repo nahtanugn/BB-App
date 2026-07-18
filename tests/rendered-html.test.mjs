@@ -31,13 +31,14 @@ test("defines the 11KCHBB App application shell and sharing metadata", async () 
 });
 
 test("ships the Malaysia Senior Section catalogue, role-based portals and installable shell", async () => {
-  const [route, authRoute, resourcesRoute, submissionsRoute, memberProgressRoute, resourceLibrary, submissions, memberProgress, manifest, serviceWorker] = await Promise.all([
+  const [route, authRoute, resourcesRoute, submissionsRoute, memberProgressRoute, resourceLibrary, submissionsPage, submissions, memberProgress, manifest, serviceWorker] = await Promise.all([
     readFile(new URL("../app/api/tracker/route.ts", import.meta.url), "utf8"),
     readFile(new URL("../app/api/auth/route.ts", import.meta.url), "utf8"),
     readFile(new URL("../app/api/resources/route.ts", import.meta.url), "utf8"),
     readFile(new URL("../app/api/submissions/route.ts", import.meta.url), "utf8"),
     readFile(new URL("../app/api/member-progress/route.ts", import.meta.url), "utf8"),
     readFile(new URL("../app/ResourceLibrary.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/SubmissionsPage.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/AwardSubmissions.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/MemberProgress.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/manifest.ts", import.meta.url), "utf8"),
@@ -83,6 +84,9 @@ test("ships the Malaysia Senior Section catalogue, role-based portals and instal
   assert.match(resourceLibrary, /Resource library/);
   assert.match(resourceLibrary, /user\.role !== "member"/);
   assert.match(resourceLibrary, /user\.role !== "nco"/);
+  assert.doesNotMatch(resourceLibrary, /import AwardSubmissions/);
+  assert.match(submissionsPage, /<AwardSubmissions user=\{user\}/);
+  assert.match(submissionsPage, /Award submissions/);
   assert.match(submissionsRoute, /Only member accounts can submit award applications/);
   assert.match(submissionsRoute, /Officer access required/);
   assert.match(submissionsRoute, /submitted_by_user_id = \?/);

@@ -66,9 +66,10 @@ type AwardTrackerProps = {
   onLogout?: () => void;
   onManageAccount?: () => void;
   onOpenResources?: () => void;
+  onOpenSubmissions?: () => void;
 };
 
-export default function AwardTracker({ user, onLogout, onManageAccount, onOpenResources }: AwardTrackerProps) {
+export default function AwardTracker({ user, onLogout, onManageAccount, onOpenResources, onOpenSubmissions }: AwardTrackerProps) {
   const isNco = user?.role === "nco";
   const [data, setData] = useState<TrackerData | null>(null);
   const [error, setError] = useState("");
@@ -287,6 +288,7 @@ export default function AwardTracker({ user, onLogout, onManageAccount, onOpenRe
           {!isNco && <button className={view === "matrix" ? "active" : ""} onClick={() => setView("matrix")}><span>▦</span> Award matrix</button>}
           {!isNco && <button className={view === "members" ? "active" : ""} onClick={() => setView("members")}><span>♙</span> Members</button>}
           <button className={view === "attendance" ? "active" : ""} onClick={() => setView("attendance")}><span>✓</span> Attendance</button>
+          {!isNco && <button onClick={onOpenSubmissions}><span>⇧</span> Submissions</button>}
           <button onClick={onOpenResources}><span>↗</span> Resources</button>
         </nav>
         <div className="sidebar-note"><span>SYLLABUS</span><strong>August 2024</strong><small>BB Malaysia Senior Section</small></div>
