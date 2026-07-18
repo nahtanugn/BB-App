@@ -37,3 +37,26 @@ export const memberAwards = sqliteTable(
   },
   (table) => [primaryKey({ columns: [table.memberId, table.awardCode, table.level] })],
 );
+
+export const attendanceSessions = sqliteTable("attendance_sessions", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  meetingDate: text("meeting_date").notNull(),
+  title: text("title").notNull().default("Weekly Parade"),
+  createdAt: text("created_at").notNull(),
+});
+
+export const attendanceRecords = sqliteTable(
+  "attendance_records",
+  {
+    sessionId: integer("session_id")
+      .notNull()
+      .references(() => attendanceSessions.id, { onDelete: "cascade" }),
+    memberId: integer("member_id")
+      .notNull()
+      .references(() => members.id, { onDelete: "cascade" }),
+    status: text("status").notNull().default("unmarked"),
+    updatedAt: text("updated_at").notNull(),
+    updatedBy: text("updated_by").notNull(),
+  },
+  (table) => [primaryKey({ columns: [table.sessionId, table.memberId] })],
+);

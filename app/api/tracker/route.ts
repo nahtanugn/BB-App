@@ -88,6 +88,23 @@ async function ensureSchema() {
       FOREIGN KEY (award_code) REFERENCES award_definitions(code) ON DELETE CASCADE
     )`),
     db.prepare("CREATE INDEX IF NOT EXISTS member_awards_member_idx ON member_awards(member_id)"),
+    db.prepare(`CREATE TABLE IF NOT EXISTS attendance_sessions (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      meeting_date TEXT NOT NULL,
+      title TEXT NOT NULL DEFAULT 'Weekly Parade',
+      created_at TEXT NOT NULL
+    )`),
+    db.prepare(`CREATE TABLE IF NOT EXISTS attendance_records (
+      session_id INTEGER NOT NULL,
+      member_id INTEGER NOT NULL,
+      status TEXT NOT NULL DEFAULT 'unmarked',
+      updated_at TEXT NOT NULL,
+      updated_by TEXT NOT NULL,
+      PRIMARY KEY (session_id, member_id),
+      FOREIGN KEY (session_id) REFERENCES attendance_sessions(id) ON DELETE CASCADE,
+      FOREIGN KEY (member_id) REFERENCES members(id) ON DELETE CASCADE
+    )`),
+    db.prepare("CREATE INDEX IF NOT EXISTS attendance_records_member_idx ON attendance_records(member_id)"),
   ]);
 
   await db.batch(
@@ -125,15 +142,19 @@ export async function GET() {
   try {
     await ensureSchema();
     const db = env.DB;
-    const [memberResult, awardResult, progressResult] = await Promise.all([
+    const [memberResult, awardResult, progressResult, sessionResult, attendanceResult] = await Promise.all([
       db.prepare("SELECT * FROM members ORDER BY name COLLATE NOCASE").all(),
       db.prepare("SELECT * FROM award_definitions ORDER BY sort_order").all(),
       db.prepare("SELECT * FROM member_awards").all(),
+      db.prepare("SELECT * FROM attendance_sessions ORDER BY meeting_date DESC, id DESC").all(),
+      db.prepare("SELECT * FROM attendance_records").all(),
     ]);
     return Response.json({
       members: memberResult.results,
       awards: awardResult.results,
       progress: progressResult.results,
+      attendanceSessions: sessionResult.results,
+      attendance: attendanceResult.results,
       syllabus: "BB Malaysia Members' Handbook · August 2024",
     });
   } catch (error) {
@@ -162,6 +183,19 @@ export async function POST(request: Request) {
           Math.max(0, Number(body.serviceYears ?? 0)),
           new Date().toISOString(),
         ).run();
+    } else if (action === "update_member") {
+      const memberId = Number(body.memberId);
+      const name = String(body.name ?? "").trim();
+      if (!memberId || !name) return Response.json({ error: "Valid member details are required" }, { status: 400 });
+      await db.prepare(`UPDATE members SET name = ?, rank = ?, squad = ?, joined_at = ?, service_years = ? WHERE id = ?`)
+        .bind(
+          name,
+          String(body.rank ?? "Private"),
+          String(body.squad ?? "Unassigned"),
+          String(body.joinedAt ?? new Date().toISOString().slice(0, 10)),
+          Math.max(0, Number(body.serviceYears ?? 0)),
+          memberId,
+        ).run();
     } else if (action === "update_award") {
       const memberId = Number(body.memberId);
       const awardCode = String(body.awardCode ?? "");
@@ -185,7 +219,30 @@ export async function POST(request: Request) {
       const memberId = Number(body.memberId);
       if (!memberId) return Response.json({ error: "Invalid member" }, { status: 400 });
       await db.prepare("DELETE FROM member_awards WHERE member_id = ?").bind(memberId).run();
+      await db.prepare("DELETE FROM attendance_records WHERE member_id = ?").bind(memberId).run();
       await db.prepare("DELETE FROM members WHERE id = ?").bind(memberId).run();
+    } else if (action === "create_attendance_session") {
+      const meetingDate = String(body.meetingDate ?? "");
+      const title = String(body.title ?? "Weekly Parade").trim() || "Weekly Parade";
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(meetingDate)) return Response.json({ error: "A valid meeting date is required" }, { status: 400 });
+      await db.prepare("INSERT INTO attendance_sessions (meeting_date, title, created_at) VALUES (?, ?, ?)")
+        .bind(meetingDate, title, new Date().toISOString()).run();
+    } else if (action === "update_attendance") {
+      const sessionId = Number(body.sessionId);
+      const memberId = Number(body.memberId);
+      const status = String(body.status ?? "unmarked");
+      const allowed = ["unmarked", "present", "absent", "excused"];
+      if (!sessionId || !memberId || !allowed.includes(status)) return Response.json({ error: "Invalid attendance update" }, { status: 400 });
+      const now = new Date().toISOString();
+      await db.prepare(`INSERT INTO attendance_records (session_id, member_id, status, updated_at, updated_by)
+        VALUES (?, ?, ?, ?, ?)
+        ON CONFLICT(session_id, member_id) DO UPDATE SET status = excluded.status, updated_at = excluded.updated_at, updated_by = excluded.updated_by`)
+        .bind(sessionId, memberId, status, now, actor(request)).run();
+    } else if (action === "delete_attendance_session") {
+      const sessionId = Number(body.sessionId);
+      if (!sessionId) return Response.json({ error: "Invalid attendance session" }, { status: 400 });
+      await db.prepare("DELETE FROM attendance_records WHERE session_id = ?").bind(sessionId).run();
+      await db.prepare("DELETE FROM attendance_sessions WHERE id = ?").bind(sessionId).run();
     } else {
       return Response.json({ error: "Unknown action" }, { status: 400 });
     }

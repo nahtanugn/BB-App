@@ -9,6 +9,8 @@ Anchor Awards is an open-source, mobile-first award tracker for Boys' Brigade Se
 - Current Senior Section award catalogue from the August 2024 BB Malaysia Members' Handbook
 - Touch-friendly award matrix with five progress states
 - Member profiles, ranks, squads and service years
+- Editable member details with safeguarded member deletion
+- Meeting attendance registers with Present, Absent and Excused statuses
 - Automatic President's Award readiness indicator
 - CSV export for backups and spreadsheet reporting
 - Durable Cloudflare D1 data storage
