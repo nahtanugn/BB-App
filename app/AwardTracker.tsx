@@ -79,6 +79,7 @@ export default function AwardTracker({ user, onLogout, onManageAccount, onOpenRe
   const isNco = user?.role === "nco";
   const [data, setData] = useState<TrackerData | null>(null);
   const [error, setError] = useState("");
+  const [notice, setNotice] = useState("");
   const [query, setQuery] = useState("");
   const [category, setCategory] = useState("Compulsory");
   const [level, setLevel] = useState<"basic" | "advanced">("basic");
@@ -190,6 +191,8 @@ export default function AwardTracker({ user, onLogout, onManageAccount, onOpenRe
   async function saveMember(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const form = new FormData(event.currentTarget);
+    const wasEditing = Boolean(editingMember);
+    setNotice("");
     setSaving(editingMember ? `member-${editingMember.id}` : "new-member");
     const response = await fetch("/api/tracker", {
       method: "POST",
@@ -204,7 +207,12 @@ export default function AwardTracker({ user, onLogout, onManageAccount, onOpenRe
       }),
     });
     setSaving("");
-    if (response.ok) { setShowAdd(false); setEditingMember(null); await load(); }
+    if (response.ok) {
+      setShowAdd(false);
+      setEditingMember(null);
+      await load();
+      setNotice(wasEditing ? "Member details updated successfully." : "Member created successfully.");
+    }
   }
 
   function openAddMember() {
@@ -226,6 +234,7 @@ export default function AwardTracker({ user, onLogout, onManageAccount, onOpenRe
   async function createAttendanceSession(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const form = new FormData(event.currentTarget);
+    setNotice("");
     setSaving("new-session");
     const response = await fetch("/api/tracker", {
       method: "POST",
@@ -237,6 +246,7 @@ export default function AwardTracker({ user, onLogout, onManageAccount, onOpenRe
       setShowSession(false);
       await load();
       setActiveSessionId(null);
+      setNotice("Attendance meeting created successfully.");
     }
   }
 
@@ -287,6 +297,7 @@ export default function AwardTracker({ user, onLogout, onManageAccount, onOpenRe
 
   return (
     <div className="app-shell">
+      {notice && <div className="action-toast" role="status"><span>✓</span>{notice}<button onClick={() => setNotice("")} aria-label="Dismiss confirmation">×</button></div>}
       <aside className="sidebar">
         <div className="brand"><div className="brand-mark app-photo" role="img" aria-label="11th Kuching Company" /><div><strong>11KCHBB App</strong><span>{isNco ? "NCO attendance" : "Senior Section tracker"}</span></div></div>
         <nav className={isNco ? "nco-nav" : ""} aria-label="Primary navigation">

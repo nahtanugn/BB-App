@@ -26,10 +26,14 @@ test("defines the 11KCHBB App application shell and sharing metadata", async () 
   assert.match(tracker, /<option>Delta<\/option>/);
   assert.match(tracker, /type="month"/);
   assert.match(tracker, /joinedMonth\(member\.joined_at\)/);
+  assert.match(tracker, /Member created successfully/);
+  assert.match(tracker, /Attendance meeting created successfully/);
   assert.match(standalone, /Company portal/);
   assert.match(standalone, /Create your administrator account/);
   assert.match(standalone, /Edit account/);
   assert.match(standalone, /Save changes/);
+  assert.match(standalone, /Account created successfully/);
+  assert.match(standalone, />Delete<\/button>/);
 });
 
 test("ships the Malaysia Senior Section catalogue, role-based portals and installable shell", async () => {
@@ -77,6 +81,8 @@ test("ships the Malaysia Senior Section catalogue, role-based portals and instal
   assert.match(authRoute, /createOrLinkMemberProfile/);
   assert.match(authRoute, /'Private', 'Alpha'/);
   assert.match(authRoute, /role === "member"/);
+  assert.match(authRoute, /action === "delete_user"/);
+  assert.match(authRoute, /You cannot delete your own account/);
   assert.match(authRoute, /\["admin", "officer", "nco", "member"\]/);
   assert.match(resourcesRoute, /user\.role === "member"/);
   assert.match(resourcesRoute, /user\.role === "nco"/);
@@ -87,6 +93,7 @@ test("ships the Malaysia Senior Section catalogue, role-based portals and instal
   assert.match(resourceLibrary, /Resource library/);
   assert.match(resourceLibrary, /user\.role !== "member"/);
   assert.match(resourceLibrary, /user\.role !== "nco"/);
+  assert.match(resourceLibrary, /Resource created successfully/);
   assert.doesNotMatch(resourceLibrary, /import AwardSubmissions/);
   assert.match(submissionsPage, /<AwardSubmissions user=\{user\}/);
   assert.match(submissionsPage, /Award submissions/);

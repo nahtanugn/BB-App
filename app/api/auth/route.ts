@@ -149,6 +149,16 @@ export async function POST(request: Request) {
       return Response.json({ ok: true });
     }
 
+    if (action === "delete_user") {
+      const targetId = Number(body.userId);
+      if (!targetId || targetId === user.id) return Response.json({ error: "You cannot delete your own account" }, { status: 400 });
+      const target = await runtime.DB.prepare("SELECT id FROM users WHERE id = ?").bind(targetId).first<{ id: number }>();
+      if (!target) return Response.json({ error: "User account not found" }, { status: 404 });
+      await runtime.DB.prepare("DELETE FROM sessions WHERE user_id = ?").bind(targetId).run();
+      await runtime.DB.prepare("DELETE FROM users WHERE id = ?").bind(targetId).run();
+      return Response.json({ ok: true });
+    }
+
     if (action === "update_user") {
       const targetId = Number(body.userId);
       const email = String(body.email ?? "").trim().toLowerCase();
