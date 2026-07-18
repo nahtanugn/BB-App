@@ -22,7 +22,8 @@ export async function GET(request: Request) {
     const user = await getCurrentUser(request);
     if (!user) return Response.json({ error: "Sign in required" }, { status: 401 });
     await ensureResourcesSchema();
-    const result = await env.DB.prepare("SELECT * FROM resources ORDER BY category COLLATE NOCASE, title COLLATE NOCASE").all();
+    const fields = user.role === "admin" || user.role === "officer" ? "*" : "id, title, description, category, url, created_at";
+    const result = await env.DB.prepare(`SELECT ${fields} FROM resources ORDER BY category COLLATE NOCASE, title COLLATE NOCASE`).all();
     return Response.json({ resources: result.results });
   } catch (error) {
     return Response.json({ error: error instanceof Error ? error.message : "Unable to load resources" }, { status: 500 });
@@ -33,7 +34,7 @@ export async function POST(request: Request) {
   try {
     const user = await getCurrentUser(request);
     if (!user) return Response.json({ error: "Sign in required" }, { status: 401 });
-    if (user.role === "member") return Response.json({ error: "Resources are read-only for members" }, { status: 403 });
+    if (user.role === "member" || user.role === "nco") return Response.json({ error: "Resources are read-only for this account" }, { status: 403 });
     await ensureResourcesSchema();
     const body = (await request.json()) as Record<string, unknown>;
     const action = String(body.action ?? "");

@@ -142,12 +142,28 @@ export async function GET(request: Request) {
     if (user.role === "member") return Response.json({ error: "Member accounts can access resources only" }, { status: 403 });
     await ensureSchema();
     const db = env.DB;
-    const [memberResult, awardResult, progressResult, sessionResult, attendanceResult] = await Promise.all([
-      db.prepare("SELECT * FROM members ORDER BY name COLLATE NOCASE").all(),
+    const [memberResult, sessionResult, attendanceResult] = await Promise.all([
+      user.role === "nco"
+        ? db.prepare("SELECT id, name, rank, '' AS squad, '' AS joined_at, 0 AS service_years, 0 AS is_demo FROM members ORDER BY name COLLATE NOCASE").all()
+        : db.prepare("SELECT * FROM members ORDER BY name COLLATE NOCASE").all(),
+      db.prepare("SELECT * FROM attendance_sessions ORDER BY meeting_date DESC, id DESC").all(),
+      user.role === "nco"
+        ? db.prepare("SELECT session_id, member_id, status FROM attendance_records").all()
+        : db.prepare("SELECT * FROM attendance_records").all(),
+    ]);
+    if (user.role === "nco") {
+      return Response.json({
+        members: memberResult.results,
+        awards: [],
+        progress: [],
+        attendanceSessions: sessionResult.results,
+        attendance: attendanceResult.results,
+        syllabus: "BB Malaysia Members' Handbook · August 2024",
+      });
+    }
+    const [awardResult, progressResult] = await Promise.all([
       db.prepare("SELECT * FROM award_definitions ORDER BY sort_order").all(),
       db.prepare("SELECT * FROM member_awards").all(),
-      db.prepare("SELECT * FROM attendance_sessions ORDER BY meeting_date DESC, id DESC").all(),
-      db.prepare("SELECT * FROM attendance_records").all(),
     ]);
     return Response.json({
       members: memberResult.results,
@@ -171,6 +187,9 @@ export async function POST(request: Request) {
     const db = env.DB;
     const body = (await request.json()) as Record<string, unknown>;
     const action = String(body.action ?? "");
+    if (user.role === "nco" && !["create_attendance_session", "update_attendance"].includes(action)) {
+      return Response.json({ error: "NCO accounts can manage attendance only" }, { status: 403 });
+    }
 
     if (action === "create_member") {
       const name = String(body.name ?? "").trim();

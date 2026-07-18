@@ -104,7 +104,7 @@ export async function POST(request: Request) {
       const name = String(body.name ?? "").trim();
       const password = String(body.password ?? "");
       const requestedRole = String(body.role ?? "officer");
-      const role = requestedRole === "admin" || requestedRole === "member" ? requestedRole : "officer";
+      const role = ["admin", "officer", "nco", "member"].includes(requestedRole) ? requestedRole : "officer";
       if (!/^\S+@\S+\.\S+$/.test(email) || !name || password.length < 10) {
         return Response.json({ error: "Enter a valid email, name, and temporary password of at least 10 characters" }, { status: 400 });
       }

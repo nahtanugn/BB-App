@@ -57,19 +57,20 @@ function initials(name: string) {
 }
 
 type AwardTrackerProps = {
-  user?: { name: string; email: string; role: "admin" | "officer" };
+  user?: { name: string; email: string; role: "admin" | "officer" | "nco" };
   onLogout?: () => void;
   onManageAccount?: () => void;
   onOpenResources?: () => void;
 };
 
 export default function AwardTracker({ user, onLogout, onManageAccount, onOpenResources }: AwardTrackerProps) {
+  const isNco = user?.role === "nco";
   const [data, setData] = useState<TrackerData | null>(null);
   const [error, setError] = useState("");
   const [query, setQuery] = useState("");
   const [category, setCategory] = useState("Compulsory");
   const [level, setLevel] = useState<"basic" | "advanced">("basic");
-  const [view, setView] = useState<"dashboard" | "matrix" | "members" | "attendance">("dashboard");
+  const [view, setView] = useState<"dashboard" | "matrix" | "members" | "attendance">(isNco ? "attendance" : "dashboard");
   const [showAdd, setShowAdd] = useState(false);
   const [editingMember, setEditingMember] = useState<Member | null>(null);
   const [showSession, setShowSession] = useState(false);
@@ -273,11 +274,11 @@ export default function AwardTracker({ user, onLogout, onManageAccount, onOpenRe
   return (
     <div className="app-shell">
       <aside className="sidebar">
-        <div className="brand"><div className="brand-mark app-photo" role="img" aria-label="11th Kuching Company" /><div><strong>11KCHBB App</strong><span>Senior Section tracker</span></div></div>
-        <nav aria-label="Primary navigation">
-          <button className={view === "dashboard" ? "active" : ""} onClick={() => setView("dashboard")}><span>⌂</span> Overview</button>
-          <button className={view === "matrix" ? "active" : ""} onClick={() => setView("matrix")}><span>▦</span> Award matrix</button>
-          <button className={view === "members" ? "active" : ""} onClick={() => setView("members")}><span>♙</span> Members</button>
+        <div className="brand"><div className="brand-mark app-photo" role="img" aria-label="11th Kuching Company" /><div><strong>11KCHBB App</strong><span>{isNco ? "NCO attendance" : "Senior Section tracker"}</span></div></div>
+        <nav className={isNco ? "nco-nav" : ""} aria-label="Primary navigation">
+          {!isNco && <button className={view === "dashboard" ? "active" : ""} onClick={() => setView("dashboard")}><span>⌂</span> Overview</button>}
+          {!isNco && <button className={view === "matrix" ? "active" : ""} onClick={() => setView("matrix")}><span>▦</span> Award matrix</button>}
+          {!isNco && <button className={view === "members" ? "active" : ""} onClick={() => setView("members")}><span>♙</span> Members</button>}
           <button className={view === "attendance" ? "active" : ""} onClick={() => setView("attendance")}><span>✓</span> Attendance</button>
           <button onClick={onOpenResources}><span>↗</span> Resources</button>
         </nav>
@@ -291,7 +292,7 @@ export default function AwardTracker({ user, onLogout, onManageAccount, onOpenRe
           <div className="top-actions"><label className="search"><span>⌕</span><input aria-label="Search members" placeholder="Search members" value={query} onChange={(event) => setQuery(event.target.value)} /></label>{user && <button className="account-chip" onClick={onManageAccount} title={user.email}>{initials(user.name)}<span>{user.name.split(" ")[0]}</span></button>}{onLogout && <button className="sign-out" onClick={onLogout}>Sign out</button>}{view === "attendance" ? <button className="primary" onClick={() => setShowSession(true)}>＋ New meeting</button> : <button className="primary" onClick={openAddMember}>＋ Add member</button>}</div>
         </header>
 
-        {data.members.some((member) => member.is_demo) && <div className="demo-banner"><strong>Starter records are included.</strong> Explore the app, add your members, then remove the sample profiles when ready.</div>}
+        {!isNco && data.members.some((member) => member.is_demo) && <div className="demo-banner"><strong>Starter records are included.</strong> Explore the app, add your members, then remove the sample profiles when ready.</div>}
 
         {view === "dashboard" && <>
           <section className="stat-grid" aria-label="Company statistics">
@@ -323,7 +324,7 @@ export default function AwardTracker({ user, onLogout, onManageAccount, onOpenRe
 
         {view === "attendance" && <section className="attendance-layout">
           <aside className="panel session-list"><div className="panel-heading"><div><p className="eyebrow">MEETINGS</p><h2>Attendance dates</h2></div></div>{data.attendanceSessions.length ? <div className="session-buttons">{data.attendanceSessions.map((session) => { const present = data.attendance.filter((item) => item.session_id === session.id && item.status === "present").length; return <button key={session.id} className={activeSession?.id === session.id ? "active" : ""} onClick={() => setActiveSessionId(session.id)}><span><strong>{session.title}</strong><small>{new Date(`${session.meeting_date}T00:00:00`).toLocaleDateString("en-MY", { day: "numeric", month: "short", year: "numeric" })}</small></span><b>{present}/{data.members.length}</b></button>; })}</div> : <div className="empty-state"><strong>No meetings yet</strong><p>Create your first meeting to start taking attendance.</p><button className="primary" onClick={() => setShowSession(true)}>New meeting</button></div>}</aside>
-          <article className="panel attendance-register">{activeSession ? <><div className="panel-heading attendance-heading"><div><p className="eyebrow">ATTENDANCE REGISTER</p><h2>{activeSession.title}</h2><small>{new Date(`${activeSession.meeting_date}T00:00:00`).toLocaleDateString("en-MY", { weekday: "long", day: "numeric", month: "long", year: "numeric" })}</small></div><button className="danger-link" onClick={() => deleteAttendanceSession(activeSession)}>Delete meeting</button></div><div className="attendance-summary">{(["present", "absent", "excused", "unmarked"] as AttendanceStatus[]).map((status) => <span key={status} className={status}><strong>{filteredMembers.filter((member) => (attendanceMap.get(`${activeSession.id}:${member.id}`)?.status ?? "unmarked") === status).length}</strong> {attendanceLabel[status]}</span>)}</div><div className="attendance-rows">{filteredMembers.map((member) => { const key = `attendance-${activeSession.id}-${member.id}`; const current = attendanceMap.get(`${activeSession.id}:${member.id}`)?.status ?? "unmarked"; return <div className="attendance-row" key={member.id}><div className="avatar small">{initials(member.name)}</div><div className="member-meta"><strong>{member.name}</strong><span>{member.rank}</span></div><div className="attendance-options" role="group" aria-label={`${member.name} attendance`}>{attendanceOrder.slice(1).map((status) => <button key={status} disabled={saving === key} className={`${status} ${current === status ? "active" : ""}`} onClick={() => updateAttendance(activeSession.id, member.id, current === status ? "unmarked" : status)}>{attendanceLabel[status]}</button>)}</div></div>; })}</div></> : <div className="empty-state large"><strong>Select or create a meeting</strong><p>The register will appear here.</p></div>}</article>
+          <article className="panel attendance-register">{activeSession ? <><div className="panel-heading attendance-heading"><div><p className="eyebrow">ATTENDANCE REGISTER</p><h2>{activeSession.title}</h2><small>{new Date(`${activeSession.meeting_date}T00:00:00`).toLocaleDateString("en-MY", { weekday: "long", day: "numeric", month: "long", year: "numeric" })}</small></div>{!isNco && <button className="danger-link" onClick={() => deleteAttendanceSession(activeSession)}>Delete meeting</button>}</div><div className="attendance-summary">{(["present", "absent", "excused", "unmarked"] as AttendanceStatus[]).map((status) => <span key={status} className={status}><strong>{filteredMembers.filter((member) => (attendanceMap.get(`${activeSession.id}:${member.id}`)?.status ?? "unmarked") === status).length}</strong> {attendanceLabel[status]}</span>)}</div><div className="attendance-rows">{filteredMembers.map((member) => { const key = `attendance-${activeSession.id}-${member.id}`; const current = attendanceMap.get(`${activeSession.id}:${member.id}`)?.status ?? "unmarked"; return <div className="attendance-row" key={member.id}><div className="avatar small">{initials(member.name)}</div><div className="member-meta"><strong>{member.name}</strong><span>{member.rank}</span></div><div className="attendance-options" role="group" aria-label={`${member.name} attendance`}>{attendanceOrder.slice(1).map((status) => <button key={status} disabled={saving === key} className={`${status} ${current === status ? "active" : ""}`} onClick={() => updateAttendance(activeSession.id, member.id, current === status ? "unmarked" : status)}>{attendanceLabel[status]}</button>)}</div></div>; })}</div></> : <div className="empty-state large"><strong>Select or create a meeting</strong><p>The register will appear here.</p></div>}</article>
         </section>}
       </main>
 
