@@ -139,6 +139,7 @@ export async function GET(request: Request) {
   try {
     const user = await getCurrentUser(request);
     if (!user) return Response.json({ error: "Sign in required" }, { status: 401 });
+    if (user.role === "member") return Response.json({ error: "Member accounts can access resources only" }, { status: 403 });
     await ensureSchema();
     const db = env.DB;
     const [memberResult, awardResult, progressResult, sessionResult, attendanceResult] = await Promise.all([
@@ -165,6 +166,7 @@ export async function POST(request: Request) {
   try {
     const user = await getCurrentUser(request);
     if (!user) return Response.json({ error: "Sign in required" }, { status: 401 });
+    if (user.role === "member") return Response.json({ error: "Member accounts can access resources only" }, { status: 403 });
     await ensureSchema();
     const db = env.DB;
     const body = (await request.json()) as Record<string, unknown>;

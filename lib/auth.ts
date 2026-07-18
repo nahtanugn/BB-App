@@ -4,7 +4,7 @@ export type AppUser = {
   id: number;
   email: string;
   name: string;
-  role: "admin" | "officer";
+  role: "admin" | "officer" | "member";
 };
 
 type RuntimeEnv = {

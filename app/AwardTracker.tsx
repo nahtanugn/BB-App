@@ -60,9 +60,10 @@ type AwardTrackerProps = {
   user?: { name: string; email: string; role: "admin" | "officer" };
   onLogout?: () => void;
   onManageAccount?: () => void;
+  onOpenResources?: () => void;
 };
 
-export default function AwardTracker({ user, onLogout, onManageAccount }: AwardTrackerProps) {
+export default function AwardTracker({ user, onLogout, onManageAccount, onOpenResources }: AwardTrackerProps) {
   const [data, setData] = useState<TrackerData | null>(null);
   const [error, setError] = useState("");
   const [query, setQuery] = useState("");
@@ -278,6 +279,7 @@ export default function AwardTracker({ user, onLogout, onManageAccount }: AwardT
           <button className={view === "matrix" ? "active" : ""} onClick={() => setView("matrix")}><span>▦</span> Award matrix</button>
           <button className={view === "members" ? "active" : ""} onClick={() => setView("members")}><span>♙</span> Members</button>
           <button className={view === "attendance" ? "active" : ""} onClick={() => setView("attendance")}><span>✓</span> Attendance</button>
+          <button onClick={onOpenResources}><span>↗</span> Resources</button>
         </nav>
         <div className="sidebar-note"><span>SYLLABUS</span><strong>August 2024</strong><small>BB Malaysia Senior Section</small></div>
         <div className="open-source"><span>◈</span><div><strong>Open source</strong><small>MIT licensed</small></div></div>

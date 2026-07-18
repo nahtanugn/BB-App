@@ -85,3 +85,13 @@ export const authAttempts = sqliteTable("auth_attempts", {
   attempts: integer("attempts").notNull().default(0),
   windowStartedAt: text("window_started_at").notNull(),
 });
+
+export const resources = sqliteTable("resources", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  title: text("title").notNull(),
+  description: text("description").notNull().default(""),
+  category: text("category").notNull().default("General"),
+  url: text("url").notNull(),
+  createdAt: text("created_at").notNull(),
+  createdBy: text("created_by").notNull(),
+});

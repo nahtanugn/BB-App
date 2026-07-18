@@ -224,6 +224,48 @@ h2 { color: var(--navy); }
 .auth-card > small { display: block; margin-top: 18px; color: #8b96a4; font-size: 8px; text-align: center; }
 .form-error { margin: 0; padding: 9px 11px; border-radius: 8px; background: #fff0f0; color: var(--danger); font-size: 9px; line-height: 1.4; }
 
+.resources-shell { min-height: 100vh; background: var(--background); }
+.resources-topbar { min-height: 76px; padding: 13px clamp(18px, 5vw, 64px); display: flex; align-items: center; justify-content: space-between; gap: 20px; background: var(--navy); color: white; }
+.resource-brand, .resource-user { display: flex; align-items: center; gap: 11px; }
+.resource-brand strong, .resource-brand span, .resource-user strong, .resource-user small { display: block; }
+.resource-brand strong { font-size: 14px; }
+.resource-brand span { margin-top: 2px; color: #adc1d3; font-size: 9px; }
+.resource-user { margin-left: auto; }
+.resource-user > span { text-align: right; }
+.resource-user strong { font-size: 9px; }
+.resource-user small { margin-top: 2px; color: #adc1d3; font-size: 8px; text-transform: capitalize; }
+.resource-user button { min-height: 34px; padding: 0 10px; border: 1px solid rgba(255,255,255,.22); border-radius: 8px; background: transparent; color: white; font-size: 8px; font-weight: 700; }
+.resources-hero { padding: 44px clamp(18px, 7vw, 90px) 32px; display: flex; justify-content: space-between; align-items: end; gap: 30px; background: linear-gradient(135deg, #fff 0%, #edf4fa 100%); border-bottom: 1px solid var(--line); }
+.resources-hero h1 { font-size: clamp(36px, 6vw, 64px); }
+.resources-hero p:not(.eyebrow) { margin: 10px 0 0; color: var(--muted); font-size: 11px; }
+.resource-search { width: min(340px, 42vw); height: 43px; padding: 0 13px; display: flex; align-items: center; gap: 9px; border: 1px solid var(--line); border-radius: 10px; background: white; }
+.resource-search input { width: 100%; border: 0; outline: 0; font-size: 10px; }
+.resource-editor { margin: 24px clamp(18px, 7vw, 90px); padding: 22px; display: grid; grid-template-columns: minmax(180px, .65fr) minmax(0, 1.5fr); gap: 28px; }
+.resource-editor h2 { margin: 0; font-family: Georgia, serif; font-size: 20px; }
+.resource-editor > div > p:last-child { margin: 7px 0 0; color: var(--muted); font-size: 9px; line-height: 1.5; }
+.resource-editor form { display: grid; gap: 11px; }
+.resource-editor label { display: grid; gap: 6px; color: var(--navy); font-size: 9px; font-weight: 750; }
+.resource-editor input { width: 100%; height: 40px; padding: 0 10px; border: 1px solid var(--line); border-radius: 8px; background: white; font-size: 10px; }
+.resource-editor .primary { justify-self: start; }
+.resource-groups { padding: 16px clamp(18px, 7vw, 90px) 60px; }
+.resource-group { margin-bottom: 29px; }
+.resource-category { margin-bottom: 12px; display: flex; align-items: end; gap: 10px; }
+.resource-category h2 { margin: 0; font-family: Georgia, serif; font-size: 21px; }
+.resource-category .eyebrow { align-self: center; margin: 0; }
+.resource-category span { margin-left: auto; color: var(--muted); font-size: 8px; }
+.resource-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 13px; }
+.resource-card { position: relative; min-height: 170px; padding: 18px; display: grid; grid-template-columns: 36px 1fr; gap: 12px; border: 1px solid var(--line); border-radius: 13px; background: white; box-shadow: 0 5px 16px rgba(18,40,67,.03); }
+.resource-card-icon { width: 36px; height: 36px; display: grid; place-items: center; border-radius: 10px; background: var(--blue-soft); color: var(--blue); font-size: 17px; }
+.resource-card h3 { margin: 2px 24px 7px 0; color: var(--navy); font-family: Georgia, serif; font-size: 16px; }
+.resource-card p { min-height: 42px; margin: 0 0 13px; color: var(--muted); font-size: 9px; line-height: 1.5; }
+.resource-card a { color: var(--blue); font-size: 9px; font-weight: 800; text-decoration: none; }
+.resource-delete { position: absolute; top: 11px; right: 11px; width: 26px; height: 26px; border: 0; border-radius: 7px; background: #f2f4f6; color: var(--muted); }
+.resource-delete:hover { background: #fff0f0; color: var(--danger); }
+.resource-empty { min-height: 360px; display: grid; place-content: center; justify-items: center; text-align: center; }
+.resource-empty h2 { margin: 15px 0 5px; font-family: Georgia, serif; }
+.resource-empty p { color: var(--muted); font-size: 10px; }
+.resource-error { margin: 20px clamp(18px, 7vw, 90px) 0; }
+
 .modal-backdrop { position: fixed; inset: 0; z-index: 50; padding: 20px; display: grid; place-items: center; background: rgba(4, 22, 39, .56); backdrop-filter: blur(3px); }
 .modal { width: min(520px, 100%); overflow: hidden; border-radius: 16px; background: white; box-shadow: 0 30px 90px rgba(0,0,0,.25); }
 .modal-heading { padding: 21px 24px 17px; border-bottom: 1px solid var(--line); display: flex; justify-content: space-between; }
@@ -253,7 +295,7 @@ h2 { color: var(--navy); }
   .app-shell { display: block; padding-bottom: 66px; }
   .sidebar { position: fixed; z-index: 20; top: auto; bottom: 0; left: 0; right: 0; width: 100%; height: 64px; padding: 7px 10px max(7px, env(safe-area-inset-bottom)); display: block; box-shadow: 0 -7px 25px rgba(5,29,52,.16); }
   .brand, .sidebar-note, .open-source { display: none; }
-  .sidebar nav { height: 100%; display: grid; grid-template-columns: repeat(4, 1fr); gap: 5px; }
+  .sidebar nav { height: 100%; display: grid; grid-template-columns: repeat(5, 1fr); gap: 5px; }
   .sidebar nav button { justify-content: center; flex-direction: column; gap: 1px; padding: 3px; font-size: 8px; }
   .sidebar nav button span { font-size: 17px; line-height: 1; }
   .sidebar nav button.active { box-shadow: inset 0 2px 0 var(--gold); }
@@ -291,6 +333,12 @@ h2 { color: var(--navy); }
   .inline-form { grid-template-columns: 1fr; }
   .account-content { padding-inline: 18px; }
   .auth-card { padding: 26px 22px; }
+  .resources-topbar, .resources-hero { align-items: stretch; flex-direction: column; }
+  .resource-user { width: 100%; margin-left: 0; }
+  .resource-user > span { margin-right: auto; text-align: left; }
+  .resource-search { width: 100%; }
+  .resource-editor { grid-template-columns: 1fr; }
+  .resource-grid { grid-template-columns: 1fr; }
 }
 
 @media (prefers-reduced-motion: reduce) {
