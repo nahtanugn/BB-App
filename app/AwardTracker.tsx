@@ -287,7 +287,7 @@ export default function AwardTracker({ user, onLogout, onManageAccount, onOpenRe
 
       <main className="main-content">
         <header className="topbar">
-          <div><p className="eyebrow">{view === "dashboard" ? "COMPANY OVERVIEW" : view === "matrix" ? "AWARD PROGRESS" : view === "members" ? "MEMBER DIRECTORY" : "PARADE REGISTER"}</p><h1>{view === "dashboard" ? "Good to see you, Officer." : view === "matrix" ? "Award matrix" : view === "members" ? "Members" : "Attendance"}</h1></div>
+          <div><p className="eyebrow">{view === "dashboard" ? "COMPANY OVERVIEW" : view === "matrix" ? "AWARD PROGRESS" : view === "members" ? "MEMBER DIRECTORY" : "PARADE REGISTER"}</p><h1>{view === "dashboard" ? "Shalom" : view === "matrix" ? "Award matrix" : view === "members" ? "Members" : "Attendance"}</h1></div>
           <div className="top-actions"><label className="search"><span>⌕</span><input aria-label="Search members" placeholder="Search members" value={query} onChange={(event) => setQuery(event.target.value)} /></label>{user && <button className="account-chip" onClick={onManageAccount} title={user.email}>{initials(user.name)}<span>{user.name.split(" ")[0]}</span></button>}{onLogout && <button className="sign-out" onClick={onLogout}>Sign out</button>}{view === "attendance" ? <button className="primary" onClick={() => setShowSession(true)}>＋ New meeting</button> : <button className="primary" onClick={openAddMember}>＋ Add member</button>}</div>
         </header>
 
