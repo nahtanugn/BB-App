@@ -56,6 +56,7 @@ const awards: AwardSeed[] = [
   { code: "three_year_service", name: "Three-Year Service", category: "Service", basic: 1, advanced: 0 },
   { code: "long_year_service", name: "Long-Year Service", category: "Service", basic: 1, advanced: 0 },
 ];
+const allowedSquads = ["Alpha", "Bravo", "Charlie", "Delta"];
 
 let initialized = false;
 
@@ -214,14 +215,16 @@ export async function POST(request: Request) {
 
     if (action === "create_member") {
       const name = String(body.name ?? "").trim();
+      const squad = String(body.squad ?? "Alpha");
       if (!name) return Response.json({ error: "Member name is required" }, { status: 400 });
+      if (!allowedSquads.includes(squad)) return Response.json({ error: "Select Alpha, Bravo, Charlie, or Delta squad" }, { status: 400 });
       await db.prepare(`INSERT INTO members
         (name, rank, squad, joined_at, service_years, school, contact_number, emergency_contact_number, email, parents_name, is_demo, created_at)
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, ?)`)
         .bind(
           name,
           String(body.rank ?? "Private"),
-          String(body.squad ?? "Unassigned"),
+          squad,
           String(body.joinedAt ?? new Date().toISOString().slice(0, 10)),
           Math.max(0, Number(body.serviceYears ?? 0)),
           String(body.school ?? "").trim(),
@@ -234,12 +237,14 @@ export async function POST(request: Request) {
     } else if (action === "update_member") {
       const memberId = Number(body.memberId);
       const name = String(body.name ?? "").trim();
+      const squad = String(body.squad ?? "Alpha");
       if (!memberId || !name) return Response.json({ error: "Valid member details are required" }, { status: 400 });
+      if (!allowedSquads.includes(squad)) return Response.json({ error: "Select Alpha, Bravo, Charlie, or Delta squad" }, { status: 400 });
       await db.prepare(`UPDATE members SET name = ?, rank = ?, squad = ?, joined_at = ?, service_years = ?, school = ?, contact_number = ?, emergency_contact_number = ?, email = ?, parents_name = ? WHERE id = ?`)
         .bind(
           name,
           String(body.rank ?? "Private"),
-          String(body.squad ?? "Unassigned"),
+          squad,
           String(body.joinedAt ?? new Date().toISOString().slice(0, 10)),
           Math.max(0, Number(body.serviceYears ?? 0)),
           String(body.school ?? "").trim(),
