@@ -2,8 +2,8 @@ import type { MetadataRoute } from "next";
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: "Anchor Awards · Senior Section Tracker",
-    short_name: "Anchor Awards",
+    name: "11KCHBB App · Senior Section Tracker",
+    short_name: "11KCHBB App",
     description: "Track Boys' Brigade Senior Section awards across every member and device.",
     start_url: "/",
     display: "standalone",

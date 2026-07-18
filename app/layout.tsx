@@ -6,30 +6,30 @@ export async function generateMetadata(): Promise<Metadata> {
   const requestHeaders = await headers();
   const host = requestHeaders.get("host") ?? "localhost:3000";
   const protocol = requestHeaders.get("x-forwarded-proto") ?? (host.startsWith("localhost") ? "http" : "https");
-  const shareImage = `${protocol}://${host}/og.png`;
+  const shareImage = `${protocol}://${host}/app-photo.jpeg`;
   const description = "An open-source, cross-platform award tracker for Boys' Brigade Senior Section companies.";
 
   return {
-    title: "Anchor Awards · BB Senior Award Tracker",
+    title: "11KCHBB App · BB Senior Award Tracker",
     description,
-    applicationName: "Anchor Awards",
+    applicationName: "11KCHBB App",
     manifest: "/manifest.webmanifest",
     icons: {
       icon: "/app-photo.jpeg",
       shortcut: "/app-photo.jpeg",
       apple: "/app-photo.jpeg",
     },
-    appleWebApp: { capable: true, statusBarStyle: "black-translucent", title: "Anchor Awards" },
+    appleWebApp: { capable: true, statusBarStyle: "black-translucent", title: "11KCHBB App" },
     formatDetection: { telephone: false },
     openGraph: {
-      title: "Anchor Awards",
+      title: "11KCHBB App",
       description: "Senior Section award tracking, made steady.",
       type: "website",
-      images: [{ url: shareImage, width: 1733, height: 910, alt: "Anchor Awards app preview" }],
+      images: [{ url: shareImage, width: 1152, height: 1152, alt: "11KCHBB App preview" }],
     },
     twitter: {
       card: "summary_large_image",
-      title: "Anchor Awards",
+      title: "11KCHBB App",
       description: "Senior Section award tracking, made steady.",
       images: [shareImage],
     },

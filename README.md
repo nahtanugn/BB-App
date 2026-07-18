@@ -1,6 +1,6 @@
-# Anchor Awards
+# 11KCHBB App
 
-Anchor Awards is an open-source, mobile-first award tracker for Boys' Brigade Senior Section companies. It provides one shared place for officers to manage members, update Basic and Advanced award progress, monitor President's Award readiness and record attendance.
+11KCHBB App is an open-source, mobile-first award tracker for Boys' Brigade Senior Section companies. It provides one shared place for officers to manage members, update Basic and Advanced award progress, monitor President's Award readiness and record attendance.
 
 ## What is included
 
@@ -61,7 +61,7 @@ On first launch, the configured administrator email and one-time setup code crea
 
 The built-in catalogue follows the BB Malaysia Senior Section award classification published in the August 2024 Members' Handbook. Companies should verify nationally administered award requirements against the latest official circulars and forms before submission.
 
-Anchor Awards is an independent open-source project and is not an official BB Malaysia product. The project does not include or claim ownership of BB Malaysia logos, badge artwork or handbook content.
+11KCHBB App is an independent open-source project and is not an official BB Malaysia product. The project does not include or claim ownership of BB Malaysia logos, badge artwork or handbook content.
 
 ## Contributing
 

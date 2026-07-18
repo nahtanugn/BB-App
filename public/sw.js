@@ -1,4 +1,4 @@
-const CACHE = "anchor-awards-v3";
+const CACHE = "11kchbb-app-v1";
 const SHELL = ["/"];
 
 self.addEventListener("install", (event) => {

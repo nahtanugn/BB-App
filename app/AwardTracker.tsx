@@ -257,12 +257,12 @@ export default function AwardTracker({ user, onLogout, onManageAccount }: AwardT
     const csv = lines.map((row) => row.map((cell) => `"${String(cell).replaceAll('"', '""')}"`).join(",")).join("\n");
     const link = document.createElement("a");
     link.href = URL.createObjectURL(new Blob([csv], { type: "text/csv" }));
-    link.download = `anchor-awards-${new Date().toISOString().slice(0, 10)}.csv`;
+    link.download = `11kchbb-app-${new Date().toISOString().slice(0, 10)}.csv`;
     link.click();
     URL.revokeObjectURL(link.href);
   }
 
-  if (error) return <main className="loading-state"><div className="brand-mark app-photo" role="img" aria-label="11th Kuching Company" /><h1>Anchor Awards</h1><p>{error}</p><button onClick={load}>Try again</button></main>;
+  if (error) return <main className="loading-state"><div className="brand-mark app-photo" role="img" aria-label="11th Kuching Company" /><h1>11KCHBB App</h1><p>{error}</p><button onClick={load}>Try again</button></main>;
   if (!data) return <main className="loading-state"><div className="brand-mark app-photo pulse" role="img" aria-label="11th Kuching Company" /><p>Preparing your award records…</p></main>;
 
   const awardedTotal = data.progress.filter((item) => item.status === "awarded").length;
@@ -272,7 +272,7 @@ export default function AwardTracker({ user, onLogout, onManageAccount }: AwardT
   return (
     <div className="app-shell">
       <aside className="sidebar">
-        <div className="brand"><div className="brand-mark app-photo" role="img" aria-label="11th Kuching Company" /><div><strong>Anchor Awards</strong><span>Senior Section tracker</span></div></div>
+        <div className="brand"><div className="brand-mark app-photo" role="img" aria-label="11th Kuching Company" /><div><strong>11KCHBB App</strong><span>Senior Section tracker</span></div></div>
         <nav aria-label="Primary navigation">
           <button className={view === "dashboard" ? "active" : ""} onClick={() => setView("dashboard")}><span>⌂</span> Overview</button>
           <button className={view === "matrix" ? "active" : ""} onClick={() => setView("matrix")}><span>▦</span> Award matrix</button>
