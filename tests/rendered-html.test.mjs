@@ -43,6 +43,7 @@ test("ships the Malaysia Senior Section catalogue, resource-only member access a
   assert.match(route, /update_attendance/);
   assert.match(route, /emergency_contact_number/);
   assert.match(route, /parents_name/);
+  assert.doesNotMatch(route, /Alicia Tan|Daniel Lim|Megan Lee|Joshua Wong/);
   assert.match(route, /Sign in required/);
   assert.match(route, /user\.role === "member"/);
   assert.match(route, /Member accounts can access resources only/);

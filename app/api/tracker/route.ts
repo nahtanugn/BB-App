@@ -136,20 +136,6 @@ async function ensureSchema() {
     ),
   );
 
-  const count = await db.prepare("SELECT COUNT(*) AS total FROM members").first<{ total: number }>();
-  if (!count?.total) {
-    const now = new Date().toISOString();
-    await db.batch([
-      db.prepare("INSERT INTO members (name, rank, squad, joined_at, service_years, is_demo, created_at) VALUES (?, ?, ?, ?, ?, 1, ?)")
-        .bind("Alicia Tan", "Sergeant", "Anchor", "2022-01-15", 4, now),
-      db.prepare("INSERT INTO members (name, rank, squad, joined_at, service_years, is_demo, created_at) VALUES (?, ?, ?, ?, ?, 1, ?)")
-        .bind("Daniel Lim", "Corporal", "Anchor", "2023-02-04", 3, now),
-      db.prepare("INSERT INTO members (name, rank, squad, joined_at, service_years, is_demo, created_at) VALUES (?, ?, ?, ?, ?, 1, ?)")
-        .bind("Megan Lee", "Lance Corporal", "Stedfast", "2024-01-20", 2, now),
-      db.prepare("INSERT INTO members (name, rank, squad, joined_at, service_years, is_demo, created_at) VALUES (?, ?, ?, ?, ?, 1, ?)")
-        .bind("Joshua Wong", "Private", "Stedfast", "2025-01-18", 1, now),
-    ]);
-  }
   initialized = true;
 }
 

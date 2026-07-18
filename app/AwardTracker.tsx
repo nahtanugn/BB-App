@@ -299,8 +299,6 @@ export default function AwardTracker({ user, onLogout, onManageAccount, onOpenRe
           <div className="top-actions"><label className="search"><span>⌕</span><input aria-label="Search members" placeholder="Search members" value={query} onChange={(event) => setQuery(event.target.value)} /></label>{user && <button className="account-chip" onClick={onManageAccount} title={user.email}>{initials(user.name)}<span>{user.name.split(" ")[0]}</span></button>}{onLogout && <button className="sign-out" onClick={onLogout}>Sign out</button>}{view === "attendance" ? <button className="primary" onClick={() => setShowSession(true)}>＋ New meeting</button> : <button className="primary" onClick={openAddMember}>＋ Add member</button>}</div>
         </header>
 
-        {!isNco && data.members.some((member) => member.is_demo) && <div className="demo-banner"><strong>Starter records are included.</strong> Explore the app, add your members, then remove the sample profiles when ready.</div>}
-
         {view === "dashboard" && <>
           <section className="stat-grid" aria-label="Company statistics">
             <article className="stat-card blue"><div><span>ACTIVE MEMBERS</span><strong>{data.members.length}</strong><small>Across {new Set(data.members.map((member) => member.squad)).size} squads</small></div><div className="stat-icon">♙</div></article>
