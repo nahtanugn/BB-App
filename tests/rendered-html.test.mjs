@@ -26,12 +26,14 @@ test("defines the 11KCHBB App application shell and sharing metadata", async () 
   assert.match(standalone, /Save changes/);
 });
 
-test("ships the Malaysia Senior Section catalogue, resource-only member access and installable shell", async () => {
-  const [route, authRoute, resourcesRoute, resourceLibrary, manifest, serviceWorker] = await Promise.all([
+test("ships the Malaysia Senior Section catalogue, role-based portals and installable shell", async () => {
+  const [route, authRoute, resourcesRoute, submissionsRoute, resourceLibrary, submissions, manifest, serviceWorker] = await Promise.all([
     readFile(new URL("../app/api/tracker/route.ts", import.meta.url), "utf8"),
     readFile(new URL("../app/api/auth/route.ts", import.meta.url), "utf8"),
     readFile(new URL("../app/api/resources/route.ts", import.meta.url), "utf8"),
+    readFile(new URL("../app/api/submissions/route.ts", import.meta.url), "utf8"),
     readFile(new URL("../app/ResourceLibrary.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/AwardSubmissions.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/manifest.ts", import.meta.url), "utf8"),
     readFile(new URL("../public/sw.js", import.meta.url), "utf8"),
   ]);
@@ -61,6 +63,13 @@ test("ships the Malaysia Senior Section catalogue, resource-only member access a
   assert.match(resourceLibrary, /Resource library/);
   assert.match(resourceLibrary, /user\.role !== "member"/);
   assert.match(resourceLibrary, /user\.role !== "nco"/);
+  assert.match(submissionsRoute, /Only member accounts can submit award applications/);
+  assert.match(submissionsRoute, /Officer access required/);
+  assert.match(submissionsRoute, /submitted_by_user_id = \?/);
+  assert.match(submissions, /Apply for an award/);
+  assert.match(submissions, /Submit application/);
+  assert.match(submissions, /Approve/);
+  assert.match(submissions, /Reject/);
   assert.match(manifest, /display: "standalone"/);
   assert.match(manifest, /app-photo\.jpeg/);
   assert.match(serviceWorker, /11kchbb-app-v1/);

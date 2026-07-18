@@ -100,3 +100,19 @@ export const resources = sqliteTable("resources", {
   createdAt: text("created_at").notNull(),
   createdBy: text("created_by").notNull(),
 });
+
+export const awardSubmissions = sqliteTable("award_submissions", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  submittedByUserId: integer("submitted_by_user_id").notNull(),
+  submittedByEmail: text("submitted_by_email").notNull(),
+  memberName: text("member_name").notNull(),
+  awardCode: text("award_code").notNull(),
+  awardName: text("award_name").notNull(),
+  level: text("level").notNull(),
+  evidenceUrl: text("evidence_url").notNull().default(""),
+  notes: text("notes").notNull().default(""),
+  status: text("status").notNull().default("pending"),
+  submittedAt: text("submitted_at").notNull(),
+  reviewedAt: text("reviewed_at"),
+  reviewedBy: text("reviewed_by"),
+});

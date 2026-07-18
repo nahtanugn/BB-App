@@ -36,6 +36,13 @@
       "when": 1784388962902,
       "tag": "0004_furry_jetstream",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "6",
+      "when": 1784389587635,
+      "tag": "0005_clean_centennial",
+      "breakpoints": true
     }
   ]
 }

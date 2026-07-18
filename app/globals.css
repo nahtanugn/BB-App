@@ -268,6 +268,40 @@ h2 { color: var(--navy); }
 .resource-empty h2 { margin: 15px 0 5px; font-family: Georgia, serif; }
 .resource-empty p { color: var(--muted); font-size: 10px; }
 .resource-error { margin: 20px clamp(18px, 7vw, 90px) 0; }
+.submission-section { margin: 24px clamp(18px, 7vw, 90px); }
+.submission-heading { margin-bottom: 14px; display: flex; align-items: end; gap: 18px; }
+.submission-heading h2 { margin: 0; font-family: Georgia, serif; font-size: 24px; }
+.submission-heading p:not(.eyebrow) { margin: 7px 0 0; color: var(--muted); font-size: 9px; }
+.submission-heading > span { margin-left: auto; padding: 6px 9px; border-radius: 999px; background: var(--gold-soft); color: #76530d; font-size: 8px; font-weight: 800; }
+.submission-form { padding: 20px; display: grid; gap: 13px; }
+.submission-form label { display: grid; gap: 6px; color: var(--navy); font-size: 9px; font-weight: 750; }
+.submission-form input, .submission-form select, .submission-form textarea { width: 100%; padding: 0 10px; border: 1px solid var(--line); border-radius: 8px; background: white; color: var(--ink); font: inherit; font-size: 10px; }
+.submission-form input, .submission-form select { height: 40px; }
+.submission-form textarea { padding-block: 10px; resize: vertical; }
+.submission-form .primary { justify-self: start; }
+.form-success { margin: 0; padding: 9px 11px; border-radius: 8px; background: #e9f8f0; color: #176941; font-size: 9px; }
+.submission-error { margin-bottom: 13px; }
+.submission-list { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 13px; }
+.submission-form + .submission-list { margin-top: 16px; }
+.submission-card { min-height: 205px; padding: 17px; }
+.submission-card-top { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+.submission-card-top small { color: var(--muted); font-size: 8px; }
+.submission-status { padding: 5px 8px; border-radius: 999px; font-size: 7px; font-weight: 850; text-transform: uppercase; letter-spacing: .08em; }
+.submission-status.pending { background: #fff5d8; color: #75530b; }
+.submission-status.approved { background: #e1f6ec; color: #176941; }
+.submission-status.rejected { background: #ffeded; color: #a93b3b; }
+.submission-card h3 { margin: 14px 0 5px; color: var(--navy); font-family: Georgia, serif; font-size: 15px; text-transform: capitalize; }
+.submission-card p { margin: 8px 0; color: var(--muted); font-size: 9px; line-height: 1.5; }
+.submission-card .submission-member { color: var(--ink); font-weight: 700; }
+.submission-card a { color: var(--blue); font-size: 9px; font-weight: 800; text-decoration: none; }
+.review-note { display: block; margin-top: 10px; color: var(--muted); font-size: 7px; }
+.submission-actions { margin-top: 15px; display: flex; gap: 8px; }
+.submission-actions button { min-height: 34px; padding: 0 12px; border: 0; border-radius: 8px; font-size: 8px; font-weight: 800; }
+.submission-actions .approve { background: #e1f6ec; color: #176941; }
+.submission-actions .reject { background: #ffeded; color: #a93b3b; }
+.submission-empty { grid-column: 1 / -1; padding: 32px; border: 1px dashed var(--line); border-radius: 12px; text-align: center; }
+.submission-empty strong { color: var(--navy); font-family: Georgia, serif; }
+.submission-empty p { margin: 7px 0 0; color: var(--muted); font-size: 9px; }
 
 .modal-backdrop { position: fixed; inset: 0; z-index: 50; padding: 20px; display: grid; place-items: center; background: rgba(4, 22, 39, .56); backdrop-filter: blur(3px); }
 .modal { width: min(520px, 100%); max-height: calc(100vh - 40px); overflow-x: hidden; overflow-y: auto; border-radius: 16px; background: white; box-shadow: 0 30px 90px rgba(0,0,0,.25); }
@@ -343,6 +377,8 @@ h2 { color: var(--navy); }
   .resource-search { width: 100%; }
   .resource-editor { grid-template-columns: 1fr; }
   .resource-grid { grid-template-columns: 1fr; }
+  .submission-list { grid-template-columns: 1fr; }
+  .submission-heading { align-items: flex-start; }
 }
 
 @media (prefers-reduced-motion: reduce) {
