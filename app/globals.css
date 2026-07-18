@@ -268,6 +268,39 @@ h2 { color: var(--navy); }
 .resource-empty h2 { margin: 15px 0 5px; font-family: Georgia, serif; }
 .resource-empty p { color: var(--muted); font-size: 10px; }
 .resource-error { margin: 20px clamp(18px, 7vw, 90px) 0; }
+.member-progress-section { margin: 24px clamp(18px, 7vw, 90px); }
+.member-progress-heading { margin-bottom: 14px; }
+.member-progress-heading h2, .progress-unlinked h2 { margin: 0; font-family: Georgia, serif; font-size: 24px; }
+.member-progress-heading p:not(.eyebrow), .progress-unlinked > p:last-child { margin: 7px 0 0; color: var(--muted); font-size: 9px; line-height: 1.6; }
+.progress-loading, .progress-unlinked { padding: 22px; color: var(--muted); font-size: 10px; }
+.progress-unlinked strong { color: var(--navy); }
+.personal-stat-grid { display: grid; grid-template-columns: 1.5fr .7fr 1fr; gap: 13px; }
+.attendance-percentage { padding: 18px; display: flex; align-items: center; gap: 16px; }
+.percentage-ring { width: 86px; height: 86px; flex: 0 0 86px; display: grid; place-items: center; border-radius: 50%; background: conic-gradient(var(--blue) var(--attendance), #e5edf4 0); position: relative; }
+.percentage-ring::after { content: ""; position: absolute; inset: 9px; border-radius: 50%; background: white; }
+.percentage-ring span { position: relative; z-index: 1; color: var(--navy); font-family: Georgia, serif; font-size: 22px; font-weight: 800; }
+.attendance-percentage h3 { margin: 2px 0 5px; color: var(--navy); font-family: Georgia, serif; font-size: 17px; }
+.attendance-percentage small, .personal-award-total small { color: var(--muted); font-size: 8px; }
+.personal-award-total { padding: 18px; display: grid; align-content: center; }
+.personal-award-total > strong { color: var(--navy); font-family: Georgia, serif; font-size: 38px; }
+.attendance-breakdown { padding: 16px; display: grid; grid-template-columns: 1fr 1fr; gap: 9px; }
+.attendance-breakdown span { padding: 9px; border-radius: 8px; background: #f3f6f8; color: var(--muted); font-size: 8px; }
+.attendance-breakdown strong { display: block; color: var(--navy); font-size: 15px; }
+.attendance-breakdown .present { background: #e1f6ec; }
+.attendance-breakdown .absent { background: #ffeded; }
+.attendance-breakdown .excused { background: #edf2ff; }
+.personal-award-matrix { margin-top: 13px; overflow: hidden; }
+.personal-matrix-heading { padding: 16px 18px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--line); }
+.personal-matrix-heading h3 { margin: 0; color: var(--navy); font-family: Georgia, serif; font-size: 18px; }
+.personal-matrix-heading > span { padding: 5px 8px; border-radius: 999px; background: #edf2f6; color: var(--muted); font-size: 7px; font-weight: 800; text-transform: uppercase; }
+.personal-award-matrix .table-scroll { max-height: 430px; }
+.personal-award-matrix table { width: 100%; border-collapse: collapse; }
+.personal-award-matrix th, .personal-award-matrix td { padding: 11px 13px; border-bottom: 1px solid var(--line); color: var(--muted); font-size: 8px; text-align: left; }
+.personal-award-matrix tbody th { color: var(--navy); font-size: 9px; }
+.progress-status { display: inline-block; min-width: 68px; padding: 5px 7px; border-radius: 999px; background: #f0f2f4; color: var(--muted); font-size: 7px; font-weight: 750; text-align: center; }
+.progress-status.in_progress { background: #edf2ff; color: #355ca8; }
+.progress-status.submitted, .progress-status.verified { background: #fff5d8; color: #75530b; }
+.progress-status.awarded { background: #e1f6ec; color: #176941; }
 .submission-section { margin: 24px clamp(18px, 7vw, 90px); }
 .submission-heading { margin-bottom: 14px; display: flex; align-items: end; gap: 18px; }
 .submission-heading h2 { margin: 0; font-family: Georgia, serif; font-size: 24px; }
@@ -377,6 +410,7 @@ h2 { color: var(--navy); }
   .resource-search { width: 100%; }
   .resource-editor { grid-template-columns: 1fr; }
   .resource-grid { grid-template-columns: 1fr; }
+  .personal-stat-grid { grid-template-columns: 1fr; }
   .submission-list { grid-template-columns: 1fr; }
   .submission-heading { align-items: flex-start; }
 }

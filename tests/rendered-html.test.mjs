@@ -31,13 +31,15 @@ test("defines the 11KCHBB App application shell and sharing metadata", async () 
 });
 
 test("ships the Malaysia Senior Section catalogue, role-based portals and installable shell", async () => {
-  const [route, authRoute, resourcesRoute, submissionsRoute, resourceLibrary, submissions, manifest, serviceWorker] = await Promise.all([
+  const [route, authRoute, resourcesRoute, submissionsRoute, memberProgressRoute, resourceLibrary, submissions, memberProgress, manifest, serviceWorker] = await Promise.all([
     readFile(new URL("../app/api/tracker/route.ts", import.meta.url), "utf8"),
     readFile(new URL("../app/api/auth/route.ts", import.meta.url), "utf8"),
     readFile(new URL("../app/api/resources/route.ts", import.meta.url), "utf8"),
     readFile(new URL("../app/api/submissions/route.ts", import.meta.url), "utf8"),
+    readFile(new URL("../app/api/member-progress/route.ts", import.meta.url), "utf8"),
     readFile(new URL("../app/ResourceLibrary.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/AwardSubmissions.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/MemberProgress.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/manifest.ts", import.meta.url), "utf8"),
     readFile(new URL("../public/sw.js", import.meta.url), "utf8"),
   ]);
@@ -68,6 +70,9 @@ test("ships the Malaysia Senior Section catalogue, role-based portals and instal
   assert.match(authRoute, /Administrator access required/);
   assert.match(authRoute, /action === "update_user"/);
   assert.match(authRoute, /You cannot remove your own administrator role/);
+  assert.match(authRoute, /createOrLinkMemberProfile/);
+  assert.match(authRoute, /'Private', 'Alpha'/);
+  assert.match(authRoute, /role === "member"/);
   assert.match(authRoute, /\["admin", "officer", "nco", "member"\]/);
   assert.match(resourcesRoute, /user\.role === "member"/);
   assert.match(resourcesRoute, /user\.role === "nco"/);
@@ -85,6 +90,12 @@ test("ships the Malaysia Senior Section catalogue, role-based portals and instal
   assert.match(submissions, /Submit application/);
   assert.match(submissions, /Approve/);
   assert.match(submissions, /Reject/);
+  assert.match(memberProgressRoute, /user\.role !== "member"/);
+  assert.match(memberProgressRoute, /LOWER\(email\) = LOWER\(\?\)/);
+  assert.match(memberProgressRoute, /Math\.round\(\(present \/ total\) \* 100\)/);
+  assert.match(memberProgress, /MY PROGRESS/);
+  assert.match(memberProgress, /AWARDS MATRIX/);
+  assert.match(memberProgress, /View only/);
   assert.match(manifest, /display: "standalone"/);
   assert.match(manifest, /app-photo\.jpeg/);
   assert.match(serviceWorker, /11kchbb-app-v1/);

@@ -11,6 +11,22 @@ import {
 const runtime = getRuntimeEnv();
 const allowedRoles = ["admin", "officer", "nco", "member"];
 
+async function createOrLinkMemberProfile(name: string, email: string, previousEmail?: string) {
+  const previousProfile = previousEmail
+    ? await runtime.DB.prepare("SELECT id FROM members WHERE LOWER(email) = LOWER(?) LIMIT 1").bind(previousEmail).first<{ id: number }>()
+    : null;
+  if (previousProfile) {
+    await runtime.DB.prepare("UPDATE members SET name = ?, email = ? WHERE id = ?").bind(name, email, previousProfile.id).run();
+    return;
+  }
+  const existingProfile = await runtime.DB.prepare("SELECT id FROM members WHERE LOWER(email) = LOWER(?) LIMIT 1").bind(email).first<{ id: number }>();
+  if (existingProfile) return;
+  await runtime.DB.prepare(`INSERT INTO members
+    (name, rank, squad, joined_at, service_years, school, contact_number, emergency_contact_number, email, parents_name, is_demo, created_at)
+    VALUES (?, 'Private', 'Alpha', ?, 0, '', '', '', ?, '', 0, ?)`)
+    .bind(name, new Date().toISOString().slice(0, 10), email, new Date().toISOString()).run();
+}
+
 export async function GET(request: Request) {
   try {
     await ensureAuthSchema();
@@ -110,9 +126,17 @@ export async function POST(request: Request) {
         return Response.json({ error: "Enter a valid email, name, and temporary password of at least 10 characters" }, { status: 400 });
       }
       const digest = await passwordDigest(password);
-      await runtime.DB.prepare(`INSERT INTO users (email, name, role, password_hash, password_salt, active, created_at)
+      const result = await runtime.DB.prepare(`INSERT INTO users (email, name, role, password_hash, password_salt, active, created_at)
         VALUES (?, ?, ?, ?, ?, 1, ?)`)
         .bind(email, name, role, digest.hash, digest.salt, new Date().toISOString()).run();
+      if (role === "member") {
+        try {
+          await createOrLinkMemberProfile(name, email);
+        } catch (error) {
+          await runtime.DB.prepare("DELETE FROM users WHERE id = ?").bind(Number(result.meta.last_row_id)).run();
+          throw error;
+        }
+      }
       return Response.json({ ok: true });
     }
 
@@ -136,10 +160,11 @@ export async function POST(request: Request) {
       if (targetId === user.id && requestedRole !== "admin") {
         return Response.json({ error: "You cannot remove your own administrator role" }, { status: 400 });
       }
-      const target = await runtime.DB.prepare("SELECT id FROM users WHERE id = ?").bind(targetId).first<{ id: number }>();
+      const target = await runtime.DB.prepare("SELECT id, email, role FROM users WHERE id = ?").bind(targetId).first<{ id: number; email: string; role: string }>();
       if (!target) return Response.json({ error: "User account not found" }, { status: 404 });
       await runtime.DB.prepare("UPDATE users SET name = ?, email = ?, role = ? WHERE id = ?")
         .bind(name, email, requestedRole, targetId).run();
+      if (requestedRole === "member") await createOrLinkMemberProfile(name, email, target.role === "member" ? target.email : undefined);
       return Response.json({ ok: true });
     }
 
