@@ -7,6 +7,11 @@ export const members = sqliteTable("members", {
   squad: text("squad").notNull().default("Unassigned"),
   joinedAt: text("joined_at").notNull(),
   serviceYears: integer("service_years").notNull().default(0),
+  school: text("school").notNull().default(""),
+  contactNumber: text("contact_number").notNull().default(""),
+  emergencyContactNumber: text("emergency_contact_number").notNull().default(""),
+  email: text("email").notNull().default(""),
+  parentsName: text("parents_name").notNull().default(""),
   isDemo: integer("is_demo", { mode: "boolean" }).notNull().default(false),
   createdAt: text("created_at").notNull(),
 });

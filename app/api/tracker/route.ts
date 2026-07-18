@@ -65,6 +65,11 @@ async function ensureSchema() {
       squad TEXT NOT NULL DEFAULT 'Unassigned',
       joined_at TEXT NOT NULL,
       service_years INTEGER NOT NULL DEFAULT 0,
+      school TEXT NOT NULL DEFAULT '',
+      contact_number TEXT NOT NULL DEFAULT '',
+      emergency_contact_number TEXT NOT NULL DEFAULT '',
+      email TEXT NOT NULL DEFAULT '',
+      parents_name TEXT NOT NULL DEFAULT '',
       is_demo INTEGER NOT NULL DEFAULT 0,
       created_at TEXT NOT NULL
     )`),
@@ -107,6 +112,19 @@ async function ensureSchema() {
     )`),
     db.prepare("CREATE INDEX IF NOT EXISTS attendance_records_member_idx ON attendance_records(member_id)"),
   ]);
+
+  const memberColumns = await db.prepare("PRAGMA table_info(members)").all<{ name: string }>();
+  const existingMemberColumns = new Set(memberColumns.results.map((column) => column.name));
+  const missingMemberColumns = [
+    ["school", "ALTER TABLE members ADD COLUMN school TEXT NOT NULL DEFAULT ''"],
+    ["contact_number", "ALTER TABLE members ADD COLUMN contact_number TEXT NOT NULL DEFAULT ''"],
+    ["emergency_contact_number", "ALTER TABLE members ADD COLUMN emergency_contact_number TEXT NOT NULL DEFAULT ''"],
+    ["email", "ALTER TABLE members ADD COLUMN email TEXT NOT NULL DEFAULT ''"],
+    ["parents_name", "ALTER TABLE members ADD COLUMN parents_name TEXT NOT NULL DEFAULT ''"],
+  ].filter(([column]) => !existingMemberColumns.has(column));
+  if (missingMemberColumns.length) {
+    await db.batch(missingMemberColumns.map(([, statement]) => db.prepare(statement)));
+  }
 
   await db.batch(
     awards.map((award, index) =>
@@ -195,27 +213,37 @@ export async function POST(request: Request) {
       const name = String(body.name ?? "").trim();
       if (!name) return Response.json({ error: "Member name is required" }, { status: 400 });
       await db.prepare(`INSERT INTO members
-        (name, rank, squad, joined_at, service_years, is_demo, created_at)
-        VALUES (?, ?, ?, ?, ?, 0, ?)`)
+        (name, rank, squad, joined_at, service_years, school, contact_number, emergency_contact_number, email, parents_name, is_demo, created_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, ?)`)
         .bind(
           name,
           String(body.rank ?? "Private"),
           String(body.squad ?? "Unassigned"),
           String(body.joinedAt ?? new Date().toISOString().slice(0, 10)),
           Math.max(0, Number(body.serviceYears ?? 0)),
+          String(body.school ?? "").trim(),
+          String(body.contactNumber ?? "").trim(),
+          String(body.emergencyContactNumber ?? "").trim(),
+          String(body.email ?? "").trim().toLowerCase(),
+          String(body.parentsName ?? "").trim(),
           new Date().toISOString(),
         ).run();
     } else if (action === "update_member") {
       const memberId = Number(body.memberId);
       const name = String(body.name ?? "").trim();
       if (!memberId || !name) return Response.json({ error: "Valid member details are required" }, { status: 400 });
-      await db.prepare(`UPDATE members SET name = ?, rank = ?, squad = ?, joined_at = ?, service_years = ? WHERE id = ?`)
+      await db.prepare(`UPDATE members SET name = ?, rank = ?, squad = ?, joined_at = ?, service_years = ?, school = ?, contact_number = ?, emergency_contact_number = ?, email = ?, parents_name = ? WHERE id = ?`)
         .bind(
           name,
           String(body.rank ?? "Private"),
           String(body.squad ?? "Unassigned"),
           String(body.joinedAt ?? new Date().toISOString().slice(0, 10)),
           Math.max(0, Number(body.serviceYears ?? 0)),
+          String(body.school ?? "").trim(),
+          String(body.contactNumber ?? "").trim(),
+          String(body.emergencyContactNumber ?? "").trim(),
+          String(body.email ?? "").trim().toLowerCase(),
+          String(body.parentsName ?? "").trim(),
           memberId,
         ).run();
     } else if (action === "update_award") {
