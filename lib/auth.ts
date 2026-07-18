@@ -57,7 +57,8 @@ export async function passwordDigest(password: string, salt?: string) {
   const saltBytes = salt ? fromHex(salt) : crypto.getRandomValues(new Uint8Array(16));
   const key = await crypto.subtle.importKey("raw", encoder.encode(password), "PBKDF2", false, ["deriveBits"]);
   const bits = await crypto.subtle.deriveBits(
-    { name: "PBKDF2", hash: "SHA-256", salt: saltBytes, iterations: 210_000 },
+    // Cloudflare Workers supports up to 100,000 PBKDF2 iterations.
+    { name: "PBKDF2", hash: "SHA-256", salt: saltBytes, iterations: 100_000 },
     key,
     256,
   );
