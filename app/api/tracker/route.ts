@@ -216,8 +216,10 @@ export async function POST(request: Request) {
     if (action === "create_member") {
       const name = String(body.name ?? "").trim();
       const squad = String(body.squad ?? "Alpha");
+      const joinedAt = String(body.joinedAt ?? new Date().toISOString().slice(0, 7));
       if (!name) return Response.json({ error: "Member name is required" }, { status: 400 });
       if (!allowedSquads.includes(squad)) return Response.json({ error: "Select Alpha, Bravo, Charlie, or Delta squad" }, { status: 400 });
+      if (!/^\d{4}-\d{2}$/.test(joinedAt)) return Response.json({ error: "Select a valid joining month and year" }, { status: 400 });
       await db.prepare(`INSERT INTO members
         (name, rank, squad, joined_at, service_years, school, contact_number, emergency_contact_number, email, parents_name, is_demo, created_at)
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, ?)`)
@@ -225,7 +227,7 @@ export async function POST(request: Request) {
           name,
           String(body.rank ?? "Private"),
           squad,
-          String(body.joinedAt ?? new Date().toISOString().slice(0, 10)),
+          joinedAt,
           Math.max(0, Number(body.serviceYears ?? 0)),
           String(body.school ?? "").trim(),
           String(body.contactNumber ?? "").trim(),
@@ -238,14 +240,16 @@ export async function POST(request: Request) {
       const memberId = Number(body.memberId);
       const name = String(body.name ?? "").trim();
       const squad = String(body.squad ?? "Alpha");
+      const joinedAt = String(body.joinedAt ?? new Date().toISOString().slice(0, 7));
       if (!memberId || !name) return Response.json({ error: "Valid member details are required" }, { status: 400 });
       if (!allowedSquads.includes(squad)) return Response.json({ error: "Select Alpha, Bravo, Charlie, or Delta squad" }, { status: 400 });
+      if (!/^\d{4}-\d{2}$/.test(joinedAt)) return Response.json({ error: "Select a valid joining month and year" }, { status: 400 });
       await db.prepare(`UPDATE members SET name = ?, rank = ?, squad = ?, joined_at = ?, service_years = ?, school = ?, contact_number = ?, emergency_contact_number = ?, email = ?, parents_name = ? WHERE id = ?`)
         .bind(
           name,
           String(body.rank ?? "Private"),
           squad,
-          String(body.joinedAt ?? new Date().toISOString().slice(0, 10)),
+          joinedAt,
           Math.max(0, Number(body.serviceYears ?? 0)),
           String(body.school ?? "").trim(),
           String(body.contactNumber ?? "").trim(),

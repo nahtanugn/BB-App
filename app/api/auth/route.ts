@@ -24,7 +24,7 @@ async function createOrLinkMemberProfile(name: string, email: string, previousEm
   await runtime.DB.prepare(`INSERT INTO members
     (name, rank, squad, joined_at, service_years, school, contact_number, emergency_contact_number, email, parents_name, is_demo, created_at)
     VALUES (?, 'Private', 'Alpha', ?, 0, '', '', '', ?, '', 0, ?)`)
-    .bind(name, new Date().toISOString().slice(0, 10), email, new Date().toISOString()).run();
+    .bind(name, new Date().toISOString().slice(0, 7), email, new Date().toISOString()).run();
 }
 
 export async function GET(request: Request) {
