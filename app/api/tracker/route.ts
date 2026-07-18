@@ -14,8 +14,13 @@ const awards: AwardSeed[] = [
   { code: "christian_education", name: "Christian Education", category: "Compulsory", basic: 1, advanced: 1 },
   { code: "drill", name: "Drill", category: "Compulsory", basic: 1, advanced: 1 },
   { code: "recruitment", name: "Recruitment", category: "Compulsory", basic: 1, advanced: 1 },
-  { code: "arts_crafts_hobbies", name: "Arts, Crafts & Hobbies", category: "A · Interest", basic: 1, advanced: 1 },
-  { code: "band_proficiency", name: "Band Proficiency", category: "A · Interest", basic: 1, advanced: 1 },
+  { code: "arts", name: "Arts", category: "A · Interest", basic: 1, advanced: 1 },
+  { code: "crafts", name: "Crafts", category: "A · Interest", basic: 1, advanced: 1 },
+  { code: "hobbies", name: "Hobbies", category: "A · Interest", basic: 1, advanced: 1 },
+  { code: "bandsman", name: "Bandsman", category: "A · Interest", basic: 1, advanced: 1 },
+  { code: "bugler", name: "Bugler", category: "A · Interest", basic: 1, advanced: 1 },
+  { code: "drummer", name: "Drummer", category: "A · Interest", basic: 1, advanced: 1 },
+  { code: "piper", name: "Piper", category: "A · Interest", basic: 1, advanced: 1 },
   { code: "communication", name: "Communication", category: "A · Interest", basic: 1, advanced: 1 },
   { code: "computer_knowledge", name: "Computer Knowledge", category: "A · Interest", basic: 1, advanced: 1 },
   { code: "international_relations", name: "International Relations", category: "A · Interest", basic: 1, advanced: 1 },
@@ -41,7 +46,9 @@ const awards: AwardSeed[] = [
   { code: "nco_proficiency", name: "NCO Proficiency", category: "Special", basic: 1, advanced: 1 },
   { code: "presidents_award", name: "President's Award", category: "Special", basic: 1, advanced: 0 },
   { code: "founders_award", name: "Founder's Award", category: "Special", basic: 1, advanced: 0 },
-  { code: "scholastic", name: "Scholastic Award", category: "Special", basic: 1, advanced: 1 },
+  { code: "scholastics_bronze", name: "Scholastics Bronze", category: "Special", basic: 1, advanced: 0 },
+  { code: "scholastics_silver", name: "Scholastics Silver", category: "Special", basic: 1, advanced: 0 },
+  { code: "scholastics_gold", name: "Scholastics Gold", category: "Special", basic: 1, advanced: 0 },
   { code: "duke_of_edinburgh", name: "Duke of Edinburgh Award", category: "Special", basic: 1, advanced: 1 },
   { code: "cross_of_heroism", name: "Cross of Heroism", category: "Special", basic: 1, advanced: 0 },
   { code: "gallant_conduct", name: "Diploma for Gallant Conduct", category: "Special", basic: 1, advanced: 0 },
@@ -129,12 +136,22 @@ async function ensureSchema() {
   await db.batch(
     awards.map((award, index) =>
       db
-        .prepare(`INSERT OR IGNORE INTO award_definitions
+        .prepare(`INSERT INTO award_definitions
           (code, name, category, sort_order, basic_available, advanced_available)
-          VALUES (?, ?, ?, ?, ?, ?)`)
+          VALUES (?, ?, ?, ?, ?, ?)
+          ON CONFLICT(code) DO UPDATE SET
+            name = excluded.name,
+            category = excluded.category,
+            sort_order = excluded.sort_order,
+            basic_available = excluded.basic_available,
+            advanced_available = excluded.advanced_available`)
         .bind(award.code, award.name, award.category, index, award.basic, award.advanced),
     ),
   );
+
+  await db.prepare(`DELETE FROM award_definitions
+    WHERE code IN ('arts_crafts_hobbies', 'band_proficiency', 'scholastic')
+    AND NOT EXISTS (SELECT 1 FROM member_awards WHERE member_awards.award_code = award_definitions.code)`).run();
 
   initialized = true;
 }
@@ -166,7 +183,7 @@ export async function GET(request: Request) {
       });
     }
     const [awardResult, progressResult] = await Promise.all([
-      db.prepare("SELECT * FROM award_definitions ORDER BY sort_order").all(),
+      db.prepare("SELECT * FROM award_definitions WHERE code NOT IN ('arts_crafts_hobbies', 'band_proficiency', 'scholastic') ORDER BY sort_order").all(),
       db.prepare("SELECT * FROM member_awards").all(),
     ]);
     return Response.json({

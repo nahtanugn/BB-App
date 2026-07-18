@@ -41,6 +41,16 @@ test("ships the Malaysia Senior Section catalogue, role-based portals and instal
   assert.match(route, /Members' Handbook · August 2024/);
   assert.match(route, /President's Award/);
   assert.match(route, /Financial Stewardship/);
+  assert.match(route, /name: "Arts"/);
+  assert.match(route, /name: "Crafts"/);
+  assert.match(route, /name: "Hobbies"/);
+  assert.match(route, /name: "Bandsman"/);
+  assert.match(route, /name: "Bugler"/);
+  assert.match(route, /name: "Drummer"/);
+  assert.match(route, /name: "Piper"/);
+  assert.match(route, /Scholastics Bronze/);
+  assert.match(route, /Scholastics Silver/);
+  assert.match(route, /Scholastics Gold/);
   assert.match(route, /create_attendance_session/);
   assert.match(route, /update_attendance/);
   assert.match(route, /emergency_contact_number/);
