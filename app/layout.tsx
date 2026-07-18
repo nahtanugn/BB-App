@@ -14,6 +14,11 @@ export async function generateMetadata(): Promise<Metadata> {
     description,
     applicationName: "Anchor Awards",
     manifest: "/manifest.webmanifest",
+    icons: {
+      icon: "/app-photo.jpeg",
+      shortcut: "/app-photo.jpeg",
+      apple: "/app-photo.jpeg",
+    },
     appleWebApp: { capable: true, statusBarStyle: "black-translucent", title: "Anchor Awards" },
     formatDetection: { telephone: false },
     openGraph: {

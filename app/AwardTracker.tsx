@@ -262,8 +262,8 @@ export default function AwardTracker({ user, onLogout, onManageAccount }: AwardT
     URL.revokeObjectURL(link.href);
   }
 
-  if (error) return <main className="loading-state"><div className="brand-mark">A</div><h1>Anchor Awards</h1><p>{error}</p><button onClick={load}>Try again</button></main>;
-  if (!data) return <main className="loading-state"><div className="brand-mark pulse">A</div><p>Preparing your award records…</p></main>;
+  if (error) return <main className="loading-state"><div className="brand-mark app-photo" role="img" aria-label="11th Kuching Company" /><h1>Anchor Awards</h1><p>{error}</p><button onClick={load}>Try again</button></main>;
+  if (!data) return <main className="loading-state"><div className="brand-mark app-photo pulse" role="img" aria-label="11th Kuching Company" /><p>Preparing your award records…</p></main>;
 
   const awardedTotal = data.progress.filter((item) => item.status === "awarded").length;
   const pendingTotal = data.progress.filter((item) => ["submitted", "verified"].includes(item.status)).length;
@@ -272,7 +272,7 @@ export default function AwardTracker({ user, onLogout, onManageAccount }: AwardT
   return (
     <div className="app-shell">
       <aside className="sidebar">
-        <div className="brand"><div className="brand-mark">A</div><div><strong>Anchor Awards</strong><span>Senior Section tracker</span></div></div>
+        <div className="brand"><div className="brand-mark app-photo" role="img" aria-label="11th Kuching Company" /><div><strong>Anchor Awards</strong><span>Senior Section tracker</span></div></div>
         <nav aria-label="Primary navigation">
           <button className={view === "dashboard" ? "active" : ""} onClick={() => setView("dashboard")}><span>⌂</span> Overview</button>
           <button className={view === "matrix" ? "active" : ""} onClick={() => setView("matrix")}><span>▦</span> Award matrix</button>

@@ -12,6 +12,7 @@ test("defines the Anchor Awards application shell and sharing metadata", async (
   assert.match(layout, /Anchor Awards · BB Senior Award Tracker/);
   assert.match(layout, /manifest: "\/manifest\.webmanifest"/);
   assert.match(layout, /\/og\.png/);
+  assert.match(layout, /\/app-photo\.jpeg/);
   assert.match(tracker, /Preparing your award records/);
   assert.match(tracker, /Attendance dates/);
   assert.match(tracker, /Member details/);
@@ -36,5 +37,6 @@ test("ships the Malaysia Senior Section catalogue and installable shell", async 
   assert.match(authRoute, /PBKDF2|passwordDigest/);
   assert.match(authRoute, /Administrator access required/);
   assert.match(manifest, /display: "standalone"/);
-  assert.match(serviceWorker, /anchor-awards-v2/);
+  assert.match(manifest, /app-photo\.jpeg/);
+  assert.match(serviceWorker, /anchor-awards-v3/);
 });
