@@ -1,0 +1,244 @@
+"use client";
+
+import { FormEvent, useEffect, useMemo, useState } from "react";
+
+type Member = {
+  id: number;
+  name: string;
+  rank: string;
+  squad: string;
+  joined_at: string;
+  service_years: number;
+  is_demo: number;
+};
+
+type Award = {
+  code: string;
+  name: string;
+  category: string;
+  basic_available: number;
+  advanced_available: number;
+};
+
+type Progress = {
+  member_id: number;
+  award_code: string;
+  level: string;
+  status: Status;
+  awarded_at: string | null;
+};
+
+type Status = "not_started" | "in_progress" | "submitted" | "verified" | "awarded";
+type TrackerData = { members: Member[]; awards: Award[]; progress: Progress[]; syllabus: string };
+
+const statusOrder: Status[] = ["not_started", "in_progress", "submitted", "verified", "awarded"];
+const statusLabel: Record<Status, string> = {
+  not_started: "Not started",
+  in_progress: "In progress",
+  submitted: "Submitted",
+  verified: "Verified",
+  awarded: "Awarded",
+};
+
+function initials(name: string) {
+  return name.split(/\s+/).map((part) => part[0]).join("").slice(0, 2).toUpperCase();
+}
+
+export default function AwardTracker() {
+  const [data, setData] = useState<TrackerData | null>(null);
+  const [error, setError] = useState("");
+  const [query, setQuery] = useState("");
+  const [category, setCategory] = useState("Compulsory");
+  const [level, setLevel] = useState<"basic" | "advanced">("basic");
+  const [view, setView] = useState<"dashboard" | "matrix" | "members">("dashboard");
+  const [showAdd, setShowAdd] = useState(false);
+  const [saving, setSaving] = useState("");
+
+  async function load() {
+    try {
+      const response = await fetch("/api/tracker", { cache: "no-store" });
+      const result = (await response.json()) as TrackerData & { error?: string };
+      if (!response.ok) throw new Error(result.error ?? "Unable to load the tracker");
+      setData(result);
+      setError("");
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : "Unable to load the tracker");
+    }
+  }
+
+  useEffect(() => {
+    fetch("/api/tracker", { cache: "no-store" })
+      .then(async (response) => {
+        const result = (await response.json()) as TrackerData & { error?: string };
+        if (!response.ok) throw new Error(result.error ?? "Unable to load the tracker");
+        setData(result);
+      })
+      .catch((cause: unknown) => {
+        setError(cause instanceof Error ? cause.message : "Unable to load the tracker");
+      });
+    if ("serviceWorker" in navigator) navigator.serviceWorker.register("/sw.js").catch(() => undefined);
+  }, []);
+
+  const progressMap = useMemo(() => {
+    const map = new Map<string, Progress>();
+    data?.progress.forEach((item) => map.set(`${item.member_id}:${item.award_code}:${item.level}`, item));
+    return map;
+  }, [data]);
+
+  const filteredMembers = useMemo(() => {
+    const term = query.trim().toLowerCase();
+    return (data?.members ?? []).filter((member) =>
+      !term || `${member.name} ${member.rank} ${member.squad}`.toLowerCase().includes(term),
+    );
+  }, [data, query]);
+
+  const visibleAwards = useMemo(
+    () => (data?.awards ?? []).filter((award) => award.category === category && (level === "basic" ? award.basic_available : award.advanced_available)),
+    [data, category, level],
+  );
+
+  function memberStats(member: Member) {
+    const rows = (data?.progress ?? []).filter((item) => item.member_id === member.id);
+    const awarded = rows.filter((item) => item.status === "awarded").length;
+    const active = rows.filter((item) => ["in_progress", "submitted", "verified"].includes(item.status)).length;
+    return { awarded, active };
+  }
+
+  function presidentReadiness(member: Member) {
+    const isAwarded = (code: string, awardLevel: string) => progressMap.get(`${member.id}:${code}:${awardLevel}`)?.status === "awarded";
+    const checks = [
+      isAwarded("nco_proficiency", "advanced"),
+      isAwarded("christian_education", "advanced"),
+      isAwarded("drill", "advanced"),
+      isAwarded("recruitment", "basic"),
+      member.service_years >= 3,
+    ];
+    const groupAwards = (data?.awards ?? []).filter((award) => /^[A-D] ·/.test(award.category));
+    const best = groupAwards.map((award) => ({
+      category: award.category[0],
+      level: isAwarded(award.code, "advanced") ? "advanced" : isAwarded(award.code, "basic") ? "basic" : null,
+    })).filter((item) => item.level);
+    const categories = new Set(best.map((item) => item.category));
+    checks.push(best.length >= 6, categories.size === 4, best.filter((item) => item.level === "basic").length >= 2, best.filter((item) => item.level === "advanced").length >= 4);
+    const complete = checks.filter(Boolean).length;
+    return { complete, total: checks.length, percent: Math.round((complete / checks.length) * 100) };
+  }
+
+  async function updateAward(memberId: number, awardCode: string) {
+    const key = `${memberId}:${awardCode}:${level}`;
+    const current = progressMap.get(key)?.status ?? "not_started";
+    const next = statusOrder[(statusOrder.indexOf(current) + 1) % statusOrder.length];
+    setSaving(key);
+    setData((existing) => existing ? {
+      ...existing,
+      progress: [...existing.progress.filter((item) => `${item.member_id}:${item.award_code}:${item.level}` !== key), {
+        member_id: memberId, award_code: awardCode, level, status: next, awarded_at: next === "awarded" ? new Date().toISOString() : null,
+      }],
+    } : existing);
+    const response = await fetch("/api/tracker", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action: "update_award", memberId, awardCode, level, status: next }),
+    });
+    if (!response.ok) await load();
+    setSaving("");
+  }
+
+  async function createMember(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const form = new FormData(event.currentTarget);
+    setSaving("new-member");
+    const response = await fetch("/api/tracker", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        action: "create_member",
+        name: form.get("name"), rank: form.get("rank"), squad: form.get("squad"),
+        joinedAt: form.get("joinedAt"), serviceYears: form.get("serviceYears"),
+      }),
+    });
+    setSaving("");
+    if (response.ok) { setShowAdd(false); await load(); }
+  }
+
+  async function deleteMember(member: Member) {
+    if (!window.confirm(`Remove ${member.name} and their award records?`)) return;
+    await fetch("/api/tracker", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "delete_member", memberId: member.id }) });
+    await load();
+  }
+
+  function exportCsv() {
+    if (!data) return;
+    const lines = [["Member", "Rank", "Squad", "Award", "Level", "Status"]];
+    data.members.forEach((member) => data.awards.forEach((award) => ["basic", "advanced"].forEach((awardLevel) => {
+      if ((awardLevel === "basic" && !award.basic_available) || (awardLevel === "advanced" && !award.advanced_available)) return;
+      lines.push([member.name, member.rank, member.squad, award.name, awardLevel, progressMap.get(`${member.id}:${award.code}:${awardLevel}`)?.status ?? "not_started"]);
+    })));
+    const csv = lines.map((row) => row.map((cell) => `"${String(cell).replaceAll('"', '""')}"`).join(",")).join("\n");
+    const link = document.createElement("a");
+    link.href = URL.createObjectURL(new Blob([csv], { type: "text/csv" }));
+    link.download = `anchor-awards-${new Date().toISOString().slice(0, 10)}.csv`;
+    link.click();
+    URL.revokeObjectURL(link.href);
+  }
+
+  if (error) return <main className="loading-state"><div className="brand-mark">A</div><h1>Anchor Awards</h1><p>{error}</p><button onClick={load}>Try again</button></main>;
+  if (!data) return <main className="loading-state"><div className="brand-mark pulse">A</div><p>Preparing your award records…</p></main>;
+
+  const awardedTotal = data.progress.filter((item) => item.status === "awarded").length;
+  const pendingTotal = data.progress.filter((item) => ["submitted", "verified"].includes(item.status)).length;
+  const categories = [...new Set(data.awards.map((award) => award.category))];
+
+  return (
+    <div className="app-shell">
+      <aside className="sidebar">
+        <div className="brand"><div className="brand-mark">A</div><div><strong>Anchor Awards</strong><span>Senior Section tracker</span></div></div>
+        <nav aria-label="Primary navigation">
+          <button className={view === "dashboard" ? "active" : ""} onClick={() => setView("dashboard")}><span>⌂</span> Overview</button>
+          <button className={view === "matrix" ? "active" : ""} onClick={() => setView("matrix")}><span>▦</span> Award matrix</button>
+          <button className={view === "members" ? "active" : ""} onClick={() => setView("members")}><span>♙</span> Members</button>
+        </nav>
+        <div className="sidebar-note"><span>SYLLABUS</span><strong>August 2024</strong><small>BB Malaysia Senior Section</small></div>
+        <div className="open-source"><span>◈</span><div><strong>Open source</strong><small>MIT licensed</small></div></div>
+      </aside>
+
+      <main className="main-content">
+        <header className="topbar">
+          <div><p className="eyebrow">{view === "dashboard" ? "COMPANY OVERVIEW" : view === "matrix" ? "AWARD PROGRESS" : "MEMBER DIRECTORY"}</p><h1>{view === "dashboard" ? "Good to see you, Officer." : view === "matrix" ? "Award matrix" : "Members"}</h1></div>
+          <div className="top-actions"><label className="search"><span>⌕</span><input aria-label="Search members" placeholder="Search members" value={query} onChange={(event) => setQuery(event.target.value)} /></label><button className="primary" onClick={() => setShowAdd(true)}>＋ Add member</button></div>
+        </header>
+
+        {data.members.some((member) => member.is_demo) && <div className="demo-banner"><strong>Starter records are included.</strong> Explore the app, add your members, then remove the sample profiles when ready.</div>}
+
+        {view === "dashboard" && <>
+          <section className="stat-grid" aria-label="Company statistics">
+            <article className="stat-card blue"><div><span>ACTIVE MEMBERS</span><strong>{data.members.length}</strong><small>Across {new Set(data.members.map((member) => member.squad)).size} squads</small></div><div className="stat-icon">♙</div></article>
+            <article className="stat-card gold"><div><span>AWARDS EARNED</span><strong>{awardedTotal}</strong><small>Recorded completions</small></div><div className="stat-icon">✦</div></article>
+            <article className="stat-card green"><div><span>AWAITING REVIEW</span><strong>{pendingTotal}</strong><small>Submitted or verified</small></div><div className="stat-icon">✓</div></article>
+            <article className="stat-card navy"><div><span>SYLLABUS AWARDS</span><strong>{data.awards.length}</strong><small>Including service & special</small></div><div className="stat-icon">▤</div></article>
+          </section>
+          <section className="dashboard-grid">
+            <article className="panel member-progress"><div className="panel-heading"><div><p className="eyebrow">MEMBER PROGRESS</p><h2>President’s Award pathway</h2></div><button className="text-button" onClick={() => setView("members")}>View all →</button></div>
+              <div className="progress-list">{filteredMembers.slice(0, 5).map((member) => { const readiness = presidentReadiness(member); return <div className="progress-row" key={member.id}><div className="avatar">{initials(member.name)}</div><div className="member-meta"><strong>{member.name}</strong><span>{member.rank} · {member.squad}</span></div><div className="progress-track"><div style={{ width: `${readiness.percent}%` }} /></div><strong className="percent">{readiness.percent}%</strong></div>; })}</div>
+            </article>
+            <article className="panel quick-actions"><div className="panel-heading"><div><p className="eyebrow">QUICK ACTIONS</p><h2>Keep parade moving</h2></div></div>
+              <button onClick={() => setView("matrix")}><span className="action-icon">▦</span><span><strong>Update award progress</strong><small>Tap through member statuses</small></span><b>›</b></button>
+              <button onClick={() => setShowAdd(true)}><span className="action-icon">＋</span><span><strong>Register a member</strong><small>Add rank, squad and service</small></span><b>›</b></button>
+              <button onClick={exportCsv}><span className="action-icon">↓</span><span><strong>Export records</strong><small>Download a spreadsheet-ready CSV</small></span><b>›</b></button>
+            </article>
+          </section>
+        </>}
+
+        {view === "matrix" && <section className="panel matrix-panel">
+          <div className="matrix-toolbar"><div className="category-tabs" role="tablist">{categories.map((item) => <button key={item} className={category === item ? "active" : ""} onClick={() => setCategory(item)}>{item}</button>)}</div><div className="level-toggle"><button className={level === "basic" ? "active" : ""} onClick={() => setLevel("basic")}>Basic</button><button className={level === "advanced" ? "active" : ""} onClick={() => setLevel("advanced")}>Advanced</button></div></div>
+          <div className="matrix-help"><span>Tap a status to move it forward</span><div>{statusOrder.slice(1).map((status) => <span key={status} className={`legend ${status}`}>{statusLabel[status]}</span>)}</div></div>
+          <div className="table-scroll"><table className="award-matrix"><thead><tr><th>Member</th>{visibleAwards.map((award) => <th key={award.code}>{award.name}</th>)}</tr></thead><tbody>{filteredMembers.map((member) => <tr key={member.id}><th><div className="table-member"><div className="avatar small">{initials(member.name)}</div><div><strong>{member.name}</strong><span>{member.rank}</span></div></div></th>{visibleAwards.map((award) => { const key = `${member.id}:${award.code}:${level}`; const status = progressMap.get(key)?.status ?? "not_started"; return <td key={award.code}><button disabled={saving === key} className={`status-pill ${status}`} onClick={() => updateAward(member.id, award.code)} aria-label={`${member.name}, ${award.name}: ${statusLabel[status]}`}>{saving === key ? "…" : status === "not_started" ? "—" : statusLabel[status]}</button></td>; })}</tr>)}</tbody></table></div>
+        </section>}
+
+        {view === "members" && <section className="member-grid">{filteredMembers.map((member) => { const stats = memberStats(member); const readiness = presidentReadiness(member); return <article className="member-card" key={member.id}><div className="member-card-top"><div className="avatar large">{initials(member.name)}</div><button className="more" aria-label={`Remove ${member.name}`} onClick={() => deleteMember(member)}>×</button></div><h2>{member.name}</h2><p>{member.rank} · {member.squad} Squad</p><div className="member-numbers"><div><strong>{stats.awarded}</strong><span>Awards</span></div><div><strong>{stats.active}</strong><span>Active</span></div><div><strong>{member.service_years}</strong><span>Years</span></div></div><div className="readiness"><div><span>President’s Award</span><strong>{readiness.complete}/{readiness.total}</strong></div><div className="progress-track"><div style={{ width: `${readiness.percent}%` }} /></div></div></article>; })}</section>}
+      </main>
+
+      {showAdd && <div className="modal-backdrop" role="presentation" onMouseDown={() => setShowAdd(false)}><section className="modal" role="dialog" aria-modal="true" aria-labelledby="add-title" onMouseDown={(event) => event.stopPropagation()}><div className="modal-heading"><div><p className="eyebrow">NEW PROFILE</p><h2 id="add-title">Add a Senior member</h2></div><button onClick={() => setShowAdd(false)} aria-label="Close">×</button></div><form onSubmit={createMember}><label>Full name<input name="name" required autoFocus placeholder="e.g. Michelle Tan" /></label><div className="form-row"><label>Rank<select name="rank" defaultValue="Private"><option>Private</option><option>Lance Corporal</option><option>Corporal</option><option>Sergeant</option><option>Staff Sergeant</option></select></label><label>Squad<input name="squad" defaultValue="Anchor" /></label></div><div className="form-row"><label>Joined on<input name="joinedAt" type="date" defaultValue={new Date().toISOString().slice(0, 10)} /></label><label>Service years<input name="serviceYears" type="number" min="0" defaultValue="0" /></label></div><button className="primary submit" disabled={saving === "new-member"}>{saving === "new-member" ? "Adding…" : "Add member"}</button></form></section></div>}
+    </div>
+  );
+}
