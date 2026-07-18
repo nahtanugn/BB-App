@@ -49,7 +49,7 @@ The app is designed for the OpenAI Sites / Cloudflare Workers runtime and uses a
 
 ## Independent Cloudflare deployment
 
-The standalone build runs directly on Cloudflare Workers and does not require a ChatGPT account. Create a D1 database, replace the placeholder database id in `vite.config.ts`, set the `SETUP_TOKEN` Worker secret, then run:
+The standalone build runs directly on Cloudflare Workers and does not require a ChatGPT account. Its D1 binding and administrator email are configured in `vite.config.ts`; set the `SETUP_TOKEN` Worker secret, then run:
 
 ```bash
 pnpm run deploy:standalone
