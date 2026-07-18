@@ -1,4 +1,5 @@
 import { env } from "cloudflare:workers";
+import { getCurrentUser } from "../../../lib/auth";
 
 type AwardSeed = {
   code: string;
@@ -134,12 +135,10 @@ async function ensureSchema() {
   initialized = true;
 }
 
-function actor(request: Request) {
-  return request.headers.get("oai-authenticated-user-email") ?? "local-officer";
-}
-
-export async function GET() {
+export async function GET(request: Request) {
   try {
+    const user = await getCurrentUser(request);
+    if (!user) return Response.json({ error: "Sign in required" }, { status: 401 });
     await ensureSchema();
     const db = env.DB;
     const [memberResult, awardResult, progressResult, sessionResult, attendanceResult] = await Promise.all([
@@ -164,6 +163,8 @@ export async function GET() {
 
 export async function POST(request: Request) {
   try {
+    const user = await getCurrentUser(request);
+    if (!user) return Response.json({ error: "Sign in required" }, { status: 401 });
     await ensureSchema();
     const db = env.DB;
     const body = (await request.json()) as Record<string, unknown>;
@@ -214,7 +215,7 @@ export async function POST(request: Request) {
           awarded_at = excluded.awarded_at,
           updated_at = excluded.updated_at,
           updated_by = excluded.updated_by`)
-        .bind(memberId, awardCode, level, status, status === "awarded" ? now : null, now, actor(request)).run();
+        .bind(memberId, awardCode, level, status, status === "awarded" ? now : null, now, user.email).run();
     } else if (action === "delete_member") {
       const memberId = Number(body.memberId);
       if (!memberId) return Response.json({ error: "Invalid member" }, { status: 400 });
@@ -237,7 +238,7 @@ export async function POST(request: Request) {
       await db.prepare(`INSERT INTO attendance_records (session_id, member_id, status, updated_at, updated_by)
         VALUES (?, ?, ?, ?, ?)
         ON CONFLICT(session_id, member_id) DO UPDATE SET status = excluded.status, updated_at = excluded.updated_at, updated_by = excluded.updated_by`)
-        .bind(sessionId, memberId, status, now, actor(request)).run();
+        .bind(sessionId, memberId, status, now, user.email).run();
     } else if (action === "delete_attendance_session") {
       const sessionId = Number(body.sessionId);
       if (!sessionId) return Response.json({ error: "Invalid attendance session" }, { status: 400 });

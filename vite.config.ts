@@ -31,6 +31,9 @@ const localBindingConfig = {
         },
       ]
     : [],
+  vars: {
+    ADMIN_EMAIL: "nguyx04@gmail.com",
+  },
 };
 
 export default defineConfig(async () => {

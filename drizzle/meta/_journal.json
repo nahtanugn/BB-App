@@ -15,6 +15,13 @@
       "when": 1784371727038,
       "tag": "0001_giant_felicia_hardy",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1784372980107,
+      "tag": "0002_superb_phantom_reporter",
+      "breakpoints": true
     }
   ]
 }

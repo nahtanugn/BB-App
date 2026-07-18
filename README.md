@@ -1,6 +1,6 @@
 # Anchor Awards
 
-Anchor Awards is an open-source, mobile-first award tracker for Boys' Brigade Senior Section companies. It provides one shared place for officers to manage members, update Basic and Advanced award progress, and monitor President's Award readiness.
+Anchor Awards is an open-source, mobile-first award tracker for Boys' Brigade Senior Section companies. It provides one shared place for officers to manage members, update Basic and Advanced award progress, monitor President's Award readiness and record attendance.
 
 ## What is included
 
@@ -14,6 +14,7 @@ Anchor Awards is an open-source, mobile-first award tracker for Boys' Brigade Se
 - Automatic President's Award readiness indicator
 - CSV export for backups and spreadsheet reporting
 - Durable Cloudflare D1 data storage
+- Independent email-and-password officer accounts with administrator controls
 - Starter records that can be removed after setup
 
 ## Status model
@@ -45,6 +46,16 @@ pnpm run build
 ```
 
 The app is designed for the OpenAI Sites / Cloudflare Workers runtime and uses a D1 binding named `DB`. The logical binding is declared in `.openai/hosting.json`.
+
+## Independent Cloudflare deployment
+
+The standalone build runs directly on Cloudflare Workers and does not require a ChatGPT account. Create a D1 database, replace the placeholder database id in `vite.config.ts`, set the `SETUP_TOKEN` Worker secret, then run:
+
+```bash
+pnpm run deploy:standalone
+```
+
+On first launch, the configured administrator email and one-time setup code create the initial administrator. Administrators can then create or disable officer accounts from inside the app.
 
 ## Award syllabus
 

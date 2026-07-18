@@ -56,7 +56,13 @@ function initials(name: string) {
   return name.split(/\s+/).map((part) => part[0]).join("").slice(0, 2).toUpperCase();
 }
 
-export default function AwardTracker() {
+type AwardTrackerProps = {
+  user?: { name: string; email: string; role: "admin" | "officer" };
+  onLogout?: () => void;
+  onManageAccount?: () => void;
+};
+
+export default function AwardTracker({ user, onLogout, onManageAccount }: AwardTrackerProps) {
   const [data, setData] = useState<TrackerData | null>(null);
   const [error, setError] = useState("");
   const [query, setQuery] = useState("");
@@ -280,7 +286,7 @@ export default function AwardTracker() {
       <main className="main-content">
         <header className="topbar">
           <div><p className="eyebrow">{view === "dashboard" ? "COMPANY OVERVIEW" : view === "matrix" ? "AWARD PROGRESS" : view === "members" ? "MEMBER DIRECTORY" : "PARADE REGISTER"}</p><h1>{view === "dashboard" ? "Good to see you, Officer." : view === "matrix" ? "Award matrix" : view === "members" ? "Members" : "Attendance"}</h1></div>
-          <div className="top-actions"><label className="search"><span>⌕</span><input aria-label="Search members" placeholder="Search members" value={query} onChange={(event) => setQuery(event.target.value)} /></label>{view === "attendance" ? <button className="primary" onClick={() => setShowSession(true)}>＋ New meeting</button> : <button className="primary" onClick={openAddMember}>＋ Add member</button>}</div>
+          <div className="top-actions"><label className="search"><span>⌕</span><input aria-label="Search members" placeholder="Search members" value={query} onChange={(event) => setQuery(event.target.value)} /></label>{user && <button className="account-chip" onClick={onManageAccount} title={user.email}>{initials(user.name)}<span>{user.name.split(" ")[0]}</span></button>}{onLogout && <button className="sign-out" onClick={onLogout}>Sign out</button>}{view === "attendance" ? <button className="primary" onClick={() => setShowSession(true)}>＋ New meeting</button> : <button className="primary" onClick={openAddMember}>＋ Add member</button>}</div>
         </header>
 
         {data.members.some((member) => member.is_demo) && <div className="demo-banner"><strong>Starter records are included.</strong> Explore the app, add your members, then remove the sample profiles when ready.</div>}
