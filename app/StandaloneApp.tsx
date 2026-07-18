@@ -15,6 +15,7 @@ export default function StandaloneApp() {
   const [showAccount, setShowAccount] = useState(false);
   const [showResources, setShowResources] = useState(false);
   const [users, setUsers] = useState<ManagedUser[]>([]);
+  const [editingUser, setEditingUser] = useState<ManagedUser | null>(null);
 
   async function refreshAuth() {
     const response = await fetch("/api/auth", { cache: "no-store" });
@@ -70,6 +71,7 @@ export default function StandaloneApp() {
 
   async function openAccount() {
     setShowAccount(true);
+    setEditingUser(null);
     setError("");
     if (auth?.user?.role === "admin") await loadUsers();
   }
@@ -100,6 +102,32 @@ export default function StandaloneApp() {
     await loadUsers();
   }
 
+  async function updateUser(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!editingUser) return;
+    const form = new FormData(event.currentTarget);
+    setBusy(true);
+    setError("");
+    const response = await fetch("/api/auth", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        action: "update_user",
+        userId: editingUser.id,
+        name: form.get("name"),
+        email: form.get("email"),
+        role: editingUser.id === auth?.user?.id ? editingUser.role : form.get("role"),
+      }),
+    });
+    const result = (await response.json()) as { error?: string };
+    setBusy(false);
+    if (!response.ok) return setError(result.error ?? "Unable to update account");
+    const editedCurrentUser = editingUser.id === auth?.user?.id;
+    setEditingUser(null);
+    await loadUsers();
+    if (editedCurrentUser) await refreshAuth();
+  }
+
   async function changePassword(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const form = new FormData(event.currentTarget);
@@ -122,5 +150,5 @@ export default function StandaloneApp() {
 
   if (auth.user.role === "member" || showResources) return <ResourceLibrary user={auth.user} onLogout={logout} onBack={auth.user.role === "member" ? undefined : () => setShowResources(false)} />;
 
-  return <><AwardTracker user={auth.user} onLogout={logout} onManageAccount={openAccount} onOpenResources={() => setShowResources(true)} />{showAccount && <div className="modal-backdrop" role="presentation" onMouseDown={() => setShowAccount(false)}><section className="modal account-modal" role="dialog" aria-modal="true" aria-labelledby="account-title" onMouseDown={(event) => event.stopPropagation()}><div className="modal-heading"><div><p className="eyebrow">SIGNED IN</p><h2 id="account-title">{auth.user.name}</h2><small>{auth.user.email} · {auth.user.role}</small></div><button onClick={() => setShowAccount(false)} aria-label="Close">×</button></div><div className="account-content"><section><h3>Change my password</h3><form className="inline-form" onSubmit={changePassword}><label>Current password<input name="currentPassword" type="password" required /></label><label>New password<input name="newPassword" type="password" minLength={10} required /></label><button className="primary" disabled={busy}>Update password</button></form></section>{auth.user.role === "admin" && <section><div className="account-section-heading"><div><h3>User accounts</h3><p>Create officer, attendance-only NCO, or resource-only member logins.</p></div></div><div className="user-list">{users.map((user) => <div key={user.id}><span><strong>{user.name}</strong><small>{user.email} · {user.role}</small></span><button disabled={user.id === auth.user?.id} className={user.active ? "danger-link" : "text-button"} onClick={() => setUserActive(user)}>{user.active ? "Disable" : "Enable"}</button></div>)}</div><form className="create-user-form" onSubmit={createUser}><h3>Add an account</h3><div className="form-row"><label>Name<input name="name" required /></label><label>Email<input name="email" type="email" required /></label></div><div className="form-row"><label>Temporary password<input name="password" type="password" minLength={10} required /></label><label>Role<select name="role" defaultValue="officer"><option value="officer">Officer</option><option value="nco">NCO · attendance only</option><option value="member">Member · resources only</option><option value="admin">Administrator</option></select></label></div><button className="primary" disabled={busy}>Create account</button></form></section>}{error && <p className="form-error">{error}</p>}</div></section></div>}</>;
+  return <><AwardTracker user={auth.user} onLogout={logout} onManageAccount={openAccount} onOpenResources={() => setShowResources(true)} />{showAccount && <div className="modal-backdrop" role="presentation" onMouseDown={() => setShowAccount(false)}><section className="modal account-modal" role="dialog" aria-modal="true" aria-labelledby="account-title" onMouseDown={(event) => event.stopPropagation()}><div className="modal-heading"><div><p className="eyebrow">SIGNED IN</p><h2 id="account-title">{auth.user.name}</h2><small>{auth.user.email} · {auth.user.role}</small></div><button onClick={() => setShowAccount(false)} aria-label="Close">×</button></div><div className="account-content"><section><h3>Change my password</h3><form className="inline-form" onSubmit={changePassword}><label>Current password<input name="currentPassword" type="password" required /></label><label>New password<input name="newPassword" type="password" minLength={10} required /></label><button className="primary" disabled={busy}>Update password</button></form></section>{auth.user.role === "admin" && <section><div className="account-section-heading"><div><h3>User accounts</h3><p>Create accounts or edit existing names, emails and roles.</p></div></div><div className="user-list">{users.map((user) => <div key={user.id}><span><strong>{user.name}</strong><small>{user.email} · {user.role}</small></span><div className="user-actions"><button className="text-button" onClick={() => setEditingUser(user)}>Edit</button><button disabled={user.id === auth.user?.id} className={user.active ? "danger-link" : "text-button"} onClick={() => setUserActive(user)}>{user.active ? "Disable" : "Enable"}</button></div></div>)}</div>{editingUser && <form key={editingUser.id} className="create-user-form edit-user-form" onSubmit={updateUser}><div className="account-section-heading"><h3>Edit account</h3><button type="button" className="text-button" onClick={() => setEditingUser(null)}>Cancel</button></div><div className="form-row"><label>Name<input name="name" required defaultValue={editingUser.name} /></label><label>Email<input name="email" type="email" required defaultValue={editingUser.email} /></label></div><label>Role<select name="role" defaultValue={editingUser.role} disabled={editingUser.id === auth.user?.id}><option value="officer">Officer</option><option value="nco">NCO · attendance only</option><option value="member">Member · resources only</option><option value="admin">Administrator</option></select></label>{editingUser.id === auth.user?.id && <small>Your administrator role cannot be changed while you are signed in.</small>}<button className="primary" disabled={busy}>{busy ? "Saving…" : "Save changes"}</button></form>}<form className="create-user-form" onSubmit={createUser}><h3>Add an account</h3><div className="form-row"><label>Name<input name="name" required /></label><label>Email<input name="email" type="email" required /></label></div><div className="form-row"><label>Temporary password<input name="password" type="password" minLength={10} required /></label><label>Role<select name="role" defaultValue="officer"><option value="officer">Officer</option><option value="nco">NCO · attendance only</option><option value="member">Member · resources only</option><option value="admin">Administrator</option></select></label></div><button className="primary" disabled={busy}>Create account</button></form></section>}{error && <p className="form-error">{error}</p>}</div></section></div>}</>;
 }

@@ -9,6 +9,7 @@ import {
 } from "../../../lib/auth";
 
 const runtime = getRuntimeEnv();
+const allowedRoles = ["admin", "officer", "nco", "member"];
 
 export async function GET(request: Request) {
   try {
@@ -104,7 +105,7 @@ export async function POST(request: Request) {
       const name = String(body.name ?? "").trim();
       const password = String(body.password ?? "");
       const requestedRole = String(body.role ?? "officer");
-      const role = ["admin", "officer", "nco", "member"].includes(requestedRole) ? requestedRole : "officer";
+      const role = allowedRoles.includes(requestedRole) ? requestedRole : "officer";
       if (!/^\S+@\S+\.\S+$/.test(email) || !name || password.length < 10) {
         return Response.json({ error: "Enter a valid email, name, and temporary password of at least 10 characters" }, { status: 400 });
       }
@@ -121,6 +122,24 @@ export async function POST(request: Request) {
       if (!targetId || targetId === user.id) return Response.json({ error: "You cannot disable your own account" }, { status: 400 });
       await runtime.DB.prepare("UPDATE users SET active = ? WHERE id = ?").bind(active, targetId).run();
       if (!active) await runtime.DB.prepare("DELETE FROM sessions WHERE user_id = ?").bind(targetId).run();
+      return Response.json({ ok: true });
+    }
+
+    if (action === "update_user") {
+      const targetId = Number(body.userId);
+      const email = String(body.email ?? "").trim().toLowerCase();
+      const name = String(body.name ?? "").trim();
+      const requestedRole = String(body.role ?? "");
+      if (!targetId || !/^\S+@\S+\.\S+$/.test(email) || !name || !allowedRoles.includes(requestedRole)) {
+        return Response.json({ error: "Enter a valid name, email, and role" }, { status: 400 });
+      }
+      if (targetId === user.id && requestedRole !== "admin") {
+        return Response.json({ error: "You cannot remove your own administrator role" }, { status: 400 });
+      }
+      const target = await runtime.DB.prepare("SELECT id FROM users WHERE id = ?").bind(targetId).first<{ id: number }>();
+      if (!target) return Response.json({ error: "User account not found" }, { status: 404 });
+      await runtime.DB.prepare("UPDATE users SET name = ?, email = ?, role = ? WHERE id = ?")
+        .bind(name, email, requestedRole, targetId).run();
       return Response.json({ ok: true });
     }
 

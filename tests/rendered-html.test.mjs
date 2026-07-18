@@ -18,6 +18,8 @@ test("defines the 11KCHBB App application shell and sharing metadata", async () 
   assert.match(tracker, /Member details/);
   assert.match(standalone, /Company portal/);
   assert.match(standalone, /Create your administrator account/);
+  assert.match(standalone, /Edit account/);
+  assert.match(standalone, /Save changes/);
 });
 
 test("ships the Malaysia Senior Section catalogue, resource-only member access and installable shell", async () => {
@@ -40,6 +42,8 @@ test("ships the Malaysia Senior Section catalogue, resource-only member access a
   assert.match(route, /Member accounts can access resources only/);
   assert.match(authRoute, /PBKDF2|passwordDigest/);
   assert.match(authRoute, /Administrator access required/);
+  assert.match(authRoute, /action === "update_user"/);
+  assert.match(authRoute, /You cannot remove your own administrator role/);
   assert.match(authRoute, /\["admin", "officer", "nco", "member"\]/);
   assert.match(resourcesRoute, /user\.role === "member"/);
   assert.match(resourcesRoute, /user\.role === "nco"/);
