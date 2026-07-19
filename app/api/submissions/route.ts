@@ -32,7 +32,7 @@ async function ensureSubmissionSchema() {
 
 async function getAwardsForSection(section: string) {
   return env.DB.prepare(
-    "SELECT code, name, category, basic_available, advanced_available FROM award_definitions WHERE section = ? AND code NOT IN ('arts_crafts_hobbies', 'band_proficiency', 'scholastic', 'one_year_service', 'three_year_service', 'long_year_service') ORDER BY sort_order",
+    "SELECT code, name, category, basic_available, advanced_available FROM award_definitions WHERE section = ? AND code NOT IN ('arts_crafts_hobbies', 'band_proficiency', 'scholastic', 'duke_of_edinburgh', 'one_year_service', 'three_year_service', 'long_year_service') ORDER BY sort_order",
   )
     .bind(section)
     .all();

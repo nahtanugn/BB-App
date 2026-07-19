@@ -155,6 +155,9 @@ test("ships the Malaysia Senior Section catalogue, role-based portals and instal
   assert.match(route, /const juniorAwards/);
   assert.match(route, /NCO Proficiency Star/);
   assert.match(route, /code: "nco_proficiency"[\s\S]*?basic: 1,[\s\S]*?advanced: 1/);
+  assert.match(route, /Duke of Edinburgh Bronze/);
+  assert.match(route, /Duke of Edinburgh Silver/);
+  assert.match(route, /Duke of Edinburgh Gold/);
   assert.match(route, /"White"/);
   assert.match(route, /WHERE section = \?/);
   assert.match(route, /attendance_sessions WHERE section = \?/);

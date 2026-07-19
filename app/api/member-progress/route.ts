@@ -29,12 +29,12 @@ export async function GET(request: Request) {
 
     const [awards, progress, attendance] = await Promise.all([
       env.DB.prepare(
-        "SELECT code, name, category, basic_available, advanced_available FROM award_definitions WHERE section = ? AND code NOT IN ('arts_crafts_hobbies', 'band_proficiency', 'scholastic', 'three_year_service', 'long_year_service') ORDER BY sort_order",
+        "SELECT code, name, category, basic_available, advanced_available FROM award_definitions WHERE section = ? AND code NOT IN ('arts_crafts_hobbies', 'band_proficiency', 'scholastic', 'duke_of_edinburgh', 'three_year_service', 'long_year_service') ORDER BY sort_order",
       )
         .bind(member.section)
         .all(),
       env.DB.prepare(
-        "SELECT award_code, level, status FROM member_awards WHERE member_id = ?",
+        "SELECT award_code, level, status FROM member_awards WHERE member_id = ? AND award_code != 'duke_of_edinburgh'",
       )
         .bind(member.id)
         .all(),

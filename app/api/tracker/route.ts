@@ -284,11 +284,25 @@ const awards: AwardSeed[] = [
     advanced: 0,
   },
   {
-    code: "duke_of_edinburgh",
-    name: "Duke of Edinburgh Award",
+    code: "duke_of_edinburgh_bronze",
+    name: "Duke of Edinburgh Bronze",
     category: "Special",
     basic: 1,
-    advanced: 1,
+    advanced: 0,
+  },
+  {
+    code: "duke_of_edinburgh_silver",
+    name: "Duke of Edinburgh Silver",
+    category: "Special",
+    basic: 1,
+    advanced: 0,
+  },
+  {
+    code: "duke_of_edinburgh_gold",
+    name: "Duke of Edinburgh Gold",
+    category: "Special",
+    basic: 1,
+    advanced: 0,
   },
   {
     code: "cross_of_heroism",
@@ -568,10 +582,31 @@ async function ensureSchema() {
     ),
   );
 
+  // Preserve legacy Duke of Edinburgh progress when splitting it into
+  // Bronze, Silver, and Gold records. Existing new-format records win.
+  await db.batch([
+    db.prepare(
+      `INSERT INTO member_awards
+      (member_id, award_code, level, status, updated_at, updated_by)
+      SELECT member_id, 'duke_of_edinburgh_bronze', 'basic', status, updated_at, updated_by
+      FROM member_awards
+      WHERE award_code = 'duke_of_edinburgh' AND level = 'basic'
+      ON CONFLICT(member_id, award_code, level) DO NOTHING`,
+    ),
+    db.prepare(
+      `INSERT INTO member_awards
+      (member_id, award_code, level, status, updated_at, updated_by)
+      SELECT member_id, 'duke_of_edinburgh_silver', 'basic', status, updated_at, updated_by
+      FROM member_awards
+      WHERE award_code = 'duke_of_edinburgh' AND level = 'advanced'
+      ON CONFLICT(member_id, award_code, level) DO NOTHING`,
+    ),
+  ]);
+
   await db
     .prepare(
       `DELETE FROM award_definitions
-    WHERE code IN ('arts_crafts_hobbies', 'band_proficiency', 'scholastic')
+    WHERE code IN ('arts_crafts_hobbies', 'band_proficiency', 'scholastic', 'duke_of_edinburgh')
     AND NOT EXISTS (SELECT 1 FROM member_awards WHERE member_awards.award_code = award_definitions.code)`,
     )
     .run();
@@ -657,13 +692,13 @@ export async function GET(request: Request) {
       await Promise.all([
         db
           .prepare(
-            "SELECT * FROM award_definitions WHERE section = ? AND code NOT IN ('arts_crafts_hobbies', 'band_proficiency', 'scholastic', 'three_year_service', 'long_year_service') ORDER BY sort_order",
+            "SELECT * FROM award_definitions WHERE section = ? AND code NOT IN ('arts_crafts_hobbies', 'band_proficiency', 'scholastic', 'duke_of_edinburgh', 'three_year_service', 'long_year_service') ORDER BY sort_order",
           )
           .bind(section)
           .all(),
         db
           .prepare(
-            "SELECT ma.member_id, ma.award_code, ma.level, ma.status FROM member_awards ma INNER JOIN members m ON m.id = ma.member_id WHERE m.section = ?",
+            "SELECT ma.member_id, ma.award_code, ma.level, ma.status FROM member_awards ma INNER JOIN members m ON m.id = ma.member_id WHERE m.section = ? AND ma.award_code != 'duke_of_edinburgh'",
           )
           .bind(section)
           .all(),
