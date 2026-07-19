@@ -18,7 +18,7 @@ type Submission = {
   reviewed_by: string | null;
 };
 
-export default function AwardSubmissions({ user }: { user: User }) {
+export default function AwardSubmissions({ user, memberId }: { user: User; memberId?: number }) {
   const [awards, setAwards] = useState<Award[]>([]);
   const [submissions, setSubmissions] = useState<Submission[]>([]);
   const [awardCode, setAwardCode] = useState("");
@@ -26,9 +26,10 @@ export default function AwardSubmissions({ user }: { user: User }) {
   const [busy, setBusy] = useState("");
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
+  const endpoint = user.role === "member" ? "/api/submissions" : `/api/submissions?memberId=${memberId ?? ""}`;
 
   async function load() {
-    const response = await fetch("/api/submissions", { cache: "no-store" });
+    const response = await fetch(endpoint, { cache: "no-store" });
     const result = (await response.json()) as { awards?: Award[]; submissions?: Submission[]; error?: string };
     if (!response.ok) throw new Error(result.error ?? "Unable to load award submissions");
     setAwards(result.awards ?? []);
@@ -37,7 +38,7 @@ export default function AwardSubmissions({ user }: { user: User }) {
   }
 
   useEffect(() => {
-    fetch("/api/submissions", { cache: "no-store" })
+    fetch(endpoint, { cache: "no-store" })
       .then(async (response) => {
         const result = (await response.json()) as { awards?: Award[]; submissions?: Submission[]; error?: string };
         if (!response.ok) throw new Error(result.error ?? "Unable to load award submissions");
@@ -49,7 +50,7 @@ export default function AwardSubmissions({ user }: { user: User }) {
         setAwardCode(result.awards?.[0]?.code ?? "");
       })
       .catch((cause: unknown) => setError(cause instanceof Error ? cause.message : "Unable to load award submissions"));
-  }, []);
+  }, [endpoint]);
 
   const selectedAward = useMemo(() => awards.find((award) => award.code === awardCode), [awardCode, awards]);
   const categories = useMemo(() => {

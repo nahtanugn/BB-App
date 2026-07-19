@@ -4,6 +4,7 @@ import { getCurrentUser } from "../../../lib/auth";
 async function ensureSubmissionSchema() {
   await env.DB.prepare(`CREATE TABLE IF NOT EXISTS award_submissions (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
+    member_id INTEGER,
     submitted_by_user_id INTEGER NOT NULL,
     submitted_by_email TEXT NOT NULL,
     member_name TEXT NOT NULL,
@@ -17,6 +18,10 @@ async function ensureSubmissionSchema() {
     reviewed_at TEXT,
     reviewed_by TEXT
   )`).run();
+  const columns = await env.DB.prepare("PRAGMA table_info(award_submissions)").all<{ name: string }>();
+  if (!columns.results.some((column) => column.name === "member_id")) {
+    await env.DB.prepare("ALTER TABLE award_submissions ADD COLUMN member_id INTEGER").run();
+  }
 }
 
 export async function GET(request: Request) {
@@ -26,10 +31,18 @@ export async function GET(request: Request) {
     if (user.role === "nco") return Response.json({ error: "NCO accounts cannot access award submissions" }, { status: 403 });
     await ensureSubmissionSchema();
     const awards = await env.DB.prepare("SELECT code, name, category, basic_available, advanced_available FROM award_definitions WHERE code NOT IN ('arts_crafts_hobbies', 'band_proficiency', 'scholastic') ORDER BY sort_order").all();
-    const submissions = user.role === "member"
-      ? await env.DB.prepare("SELECT * FROM award_submissions WHERE submitted_by_user_id = ? ORDER BY submitted_at DESC").bind(user.id).all()
-      : await env.DB.prepare("SELECT * FROM award_submissions ORDER BY CASE status WHEN 'pending' THEN 0 ELSE 1 END, submitted_at DESC").all();
-    return Response.json({ awards: awards.results, submissions: submissions.results });
+    if (user.role === "member") {
+      const member = await env.DB.prepare("SELECT id, name FROM members WHERE LOWER(email) = LOWER(?) LIMIT 1").bind(user.email).first<{ id: number; name: string }>();
+      if (!member) return Response.json({ error: "Your account is not linked to a member profile" }, { status: 409 });
+      const submissions = await env.DB.prepare("SELECT * FROM award_submissions WHERE member_id = ? ORDER BY submitted_at DESC").bind(member.id).all();
+      return Response.json({ awards: awards.results, submissions: submissions.results, member });
+    }
+    const memberId = Number(new URL(request.url).searchParams.get("memberId"));
+    if (!memberId) return Response.json({ error: "Select a member to view submissions" }, { status: 400 });
+    const member = await env.DB.prepare("SELECT id, name FROM members WHERE id = ?").bind(memberId).first<{ id: number; name: string }>();
+    if (!member) return Response.json({ error: "Member profile not found" }, { status: 404 });
+    const submissions = await env.DB.prepare("SELECT * FROM award_submissions WHERE member_id = ? ORDER BY CASE status WHEN 'pending' THEN 0 ELSE 1 END, submitted_at DESC").bind(member.id).all();
+    return Response.json({ awards: awards.results, submissions: submissions.results, member });
   } catch (error) {
     return Response.json({ error: error instanceof Error ? error.message : "Unable to load award submissions" }, { status: 500 });
   }
@@ -64,13 +77,15 @@ export async function POST(request: Request) {
       if (!award || (level === "basic" ? !award.basic_available : !award.advanced_available)) {
         return Response.json({ error: "That award level is not available" }, { status: 400 });
       }
-      const pending = await env.DB.prepare("SELECT id FROM award_submissions WHERE submitted_by_user_id = ? AND award_code = ? AND level = ? AND status = 'pending'")
-        .bind(user.id, awardCode, level).first();
+      const member = await env.DB.prepare("SELECT id, name FROM members WHERE LOWER(email) = LOWER(?) LIMIT 1").bind(user.email).first<{ id: number; name: string }>();
+      if (!member) return Response.json({ error: "Your account is not linked to a member profile" }, { status: 409 });
+      const pending = await env.DB.prepare("SELECT id FROM award_submissions WHERE member_id = ? AND award_code = ? AND level = ? AND status = 'pending'")
+        .bind(member.id, awardCode, level).first();
       if (pending) return Response.json({ error: "You already have a pending submission for this award level" }, { status: 409 });
       await env.DB.prepare(`INSERT INTO award_submissions
-        (submitted_by_user_id, submitted_by_email, member_name, award_code, award_name, level, evidence_url, notes, status, submitted_at)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'pending', ?)`)
-        .bind(user.id, user.email, memberName, award.code, award.name, level, evidenceUrl, notes, new Date().toISOString()).run();
+        (member_id, submitted_by_user_id, submitted_by_email, member_name, award_code, award_name, level, evidence_url, notes, status, submitted_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending', ?)`)
+        .bind(member.id, user.id, user.email, member.name || memberName, award.code, award.name, level, evidenceUrl, notes, new Date().toISOString()).run();
       return Response.json({ ok: true });
     }
 

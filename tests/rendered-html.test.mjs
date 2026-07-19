@@ -28,6 +28,8 @@ test("defines the 11KCHBB App application shell and sharing metadata", async () 
   assert.match(tracker, /joinedMonth\(member\.joined_at\)/);
   assert.match(tracker, /Member created successfully/);
   assert.match(tracker, /Attendance meeting created successfully/);
+  assert.match(tracker, /setSubmissionMember\(member\)/);
+  assert.match(tracker, /memberId=\{submissionMember\.id\}/);
   assert.match(standalone, /Company portal/);
   assert.match(standalone, /Create your administrator account/);
   assert.match(standalone, /Edit account/);
@@ -99,7 +101,9 @@ test("ships the Malaysia Senior Section catalogue, role-based portals and instal
   assert.match(submissionsPage, /Award submissions/);
   assert.match(submissionsRoute, /Only member accounts can submit award applications/);
   assert.match(submissionsRoute, /Officer access required/);
-  assert.match(submissionsRoute, /submitted_by_user_id = \?/);
+  assert.match(submissionsRoute, /WHERE member_id = \?/);
+  assert.match(submissionsRoute, /Select a member to view submissions/);
+  assert.match(submissionsRoute, /LOWER\(email\) = LOWER\(\?\)/);
   assert.match(submissions, /Apply for an award/);
   assert.match(submissions, /Submit application/);
   assert.match(submissions, /Approve/);

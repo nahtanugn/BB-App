@@ -103,6 +103,7 @@ export const resources = sqliteTable("resources", {
 
 export const awardSubmissions = sqliteTable("award_submissions", {
   id: integer("id").primaryKey({ autoIncrement: true }),
+  memberId: integer("member_id"),
   submittedByUserId: integer("submitted_by_user_id").notNull(),
   submittedByEmail: text("submitted_by_email").notNull(),
   memberName: text("member_name").notNull(),

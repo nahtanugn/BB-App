@@ -1,0 +1,1 @@
+ALTER TABLE `award_submissions` ADD `member_id` integer;

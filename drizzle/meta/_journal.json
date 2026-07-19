@@ -43,6 +43,13 @@
       "when": 1784389587635,
       "tag": "0005_clean_centennial",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "6",
+      "when": 1784450666639,
+      "tag": "0006_rainy_molten_man",
+      "breakpoints": true
     }
   ]
 }
