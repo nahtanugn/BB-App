@@ -177,7 +177,7 @@ export default function AwardSubmissions({
       return setError(result.error ?? "Unable to review submission");
     setMessage(
       status === "approved"
-        ? `${submission.member_name}'s ${submission.award_name} was verified. Their Award Matrix is now marked Verified, awaiting award.`
+        ? `${submission.member_name}'s ${submission.award_name} submission was verified. The Award Matrix was not changed.`
         : `${submission.member_name}'s submission was rejected.`,
     );
     await load();
@@ -204,10 +204,10 @@ export default function AwardSubmissions({
             {user.role === "member"
               ? "Send your completed work to an officer for review."
               : isOfficerPortal
-                ? "Review every member application. Verification automatically updates the Award Matrix to Verified, awaiting award."
+                ? "Review every member application. Award Matrix updates remain a separate manual action."
               : user.role === "squad_leader"
                 ? "View submitted applications and their review status."
-                : "Approve or reject award applications submitted by members."}
+                : "Verify or reject award applications submitted by members."}
           </p>
         </div>
         <span>
@@ -314,7 +314,7 @@ export default function AwardSubmissions({
             >
               <option value="all">All submissions</option>
               <option value="pending">Pending review</option>
-              <option value="approved">Verified · awaiting award</option>
+              <option value="approved">Verified submissions</option>
               <option value="rejected">Rejected</option>
             </select>
           </label>
@@ -332,7 +332,7 @@ export default function AwardSubmissions({
               <div className="submission-card-top">
                 <span className={`submission-status ${submission.status}`}>
                   {submission.status === "approved"
-                    ? "Verified · awaiting award"
+                    ? "Verified submission"
                     : submission.status}
                 </span>
                 <small>
@@ -376,7 +376,7 @@ export default function AwardSubmissions({
                     >
                       {busy === `${submission.id}:approved`
                         ? "Verifying…"
-                        : "Verify & update matrix"}
+                        : "Verify submission"}
                     </button>
                     <button
                       className="reject"

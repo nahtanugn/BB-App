@@ -40,6 +40,11 @@ export default function StandaloneApp() {
   }
 
   useEffect(() => {
+    if ("serviceWorker" in navigator)
+      navigator.serviceWorker
+        .register("/sw.js", { updateViaCache: "none" })
+        .then((registration) => registration.update())
+        .catch(() => undefined);
     fetch("/api/auth", { cache: "no-store" })
       .then(async (response) => {
         const result = (await response.json()) as AuthState & {

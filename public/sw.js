@@ -1,8 +1,6 @@
-const CACHE = "11kchbb-app-v1";
-const SHELL = ["/"];
+const CACHE = "11kchbb-app-v2";
 
-self.addEventListener("install", (event) => {
-  event.waitUntil(caches.open(CACHE).then((cache) => cache.addAll(SHELL)));
+self.addEventListener("install", () => {
   self.skipWaiting();
 });
 
@@ -12,10 +10,15 @@ self.addEventListener("activate", (event) => {
 });
 
 self.addEventListener("fetch", (event) => {
-  if (event.request.method !== "GET" || new URL(event.request.url).pathname.startsWith("/api/")) return;
-  event.respondWith(fetch(event.request).then((response) => {
-    const copy = response.clone();
-    caches.open(CACHE).then((cache) => cache.put(event.request, copy));
-    return response;
-  }).catch(() => caches.match(event.request).then((response) => response || caches.match("/"))));
+  if (event.request.method !== "GET" || event.request.mode !== "navigate")
+    return;
+  event.respondWith(
+    fetch(event.request, { cache: "no-store" }).catch(
+      () =>
+        new Response(
+          "<!doctype html><html><body><h1>11KCHBB App is offline</h1><p>Reconnect to the internet and reload this page.</p></body></html>",
+          { headers: { "Content-Type": "text/html; charset=utf-8" } },
+        ),
+    ),
+  );
 });
