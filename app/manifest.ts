@@ -2,9 +2,9 @@ import type { MetadataRoute } from "next";
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: "11KCHBB App · Senior Section Tracker",
+    name: "11KCHBB App · Section Tracker",
     short_name: "11KCHBB App",
-    description: "Track Boys' Brigade Senior Section awards across every member and device.",
+    description: "Track Boys' Brigade Junior and Senior Section records across every device.",
     start_url: "/",
     display: "standalone",
     background_color: "#f3f5f7",

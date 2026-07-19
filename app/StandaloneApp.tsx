@@ -124,6 +124,7 @@ export default function StandaloneApp() {
         password: form.get("password"),
         role: form.get("role"),
         squad: form.get("squad"),
+        memberSection: form.get("memberSection"),
       }),
     });
     const result = (await response.json()) as { error?: string };
@@ -196,6 +197,7 @@ export default function StandaloneApp() {
             ? editingUser.role
             : form.get("role"),
         squad: form.get("squad"),
+        memberSection: form.get("memberSection"),
       }),
     });
     const result = (await response.json()) as { error?: string };
@@ -527,6 +529,15 @@ export default function StandaloneApp() {
                           </select>
                         </label>
                       )}
+                      {editingUser.role === "member" && (
+                        <label>
+                          Member section
+                          <select name="memberSection" defaultValue="senior">
+                            <option value="senior">Senior</option>
+                            <option value="junior">Junior</option>
+                          </select>
+                        </label>
+                      )}
                       {editingUser.id === auth.user?.id && (
                         <small>
                           Your administrator role cannot be changed while you
@@ -591,6 +602,15 @@ export default function StandaloneApp() {
                           <option>Bravo</option>
                           <option>Charlie</option>
                           <option>Delta</option>
+                        </select>
+                      </label>
+                    )}
+                    {newUserRole === "member" && (
+                      <label>
+                        Member section
+                        <select name="memberSection" defaultValue="senior">
+                          <option value="senior">Senior</option>
+                          <option value="junior">Junior</option>
                         </select>
                       </label>
                     )}

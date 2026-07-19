@@ -9,7 +9,7 @@ test("defines the 11KCHBB App application shell and sharing metadata", async () 
     readFile(new URL("../app/StandaloneApp.tsx", import.meta.url), "utf8"),
   ]);
 
-  assert.match(layout, /11KCHBB App · BB Senior Award Tracker/);
+  assert.match(layout, /11KCHBB App · BB Section Tracker/);
   assert.match(layout, /manifest: "\/manifest\.webmanifest"/);
   assert.match(layout, /\/app-photo\.jpeg/);
   assert.match(layout, /\/app-photo\.jpeg/);
@@ -147,11 +147,15 @@ test("ships the Malaysia Senior Section catalogue, role-based portals and instal
   assert.match(route, /\["nco", "squad_leader"\]\.includes\(user\.role\)/);
   assert.match(tracker, /Awards are shown in read-only mode/);
   assert.match(tracker, /disabled=\{!canManageAwards \|\| saving === key\}/);
-  assert.match(
-    tracker,
-    /!canManageAttendance \|\| saving === key/,
-  );
+  assert.match(tracker, /!canManageAttendance \|\| saving === key/);
   assert.match(tracker, /canEditMembers/);
+  assert.match(tracker, /section-switch/);
+  assert.match(tracker, /switchSection\("junior"\)/);
+  assert.match(tracker, /Junior Gold Award pathway/);
+  assert.match(route, /const juniorAwards/);
+  assert.match(route, /"White"/);
+  assert.match(route, /WHERE section = \?/);
+  assert.match(route, /attendance_sessions WHERE section = \?/);
   assert.match(resourceLibrary, /Resource library/);
   assert.match(resourceLibrary, /user\.role !== "member"/);
   assert.match(resourceLibrary, /user\.role !== "nco"/);

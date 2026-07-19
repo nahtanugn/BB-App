@@ -1,12 +1,13 @@
 # 11KCHBB App
 
-11KCHBB App is an open-source, mobile-first award tracker for Boys' Brigade Senior Section companies. It provides one shared place for officers to manage members, update Basic and Advanced award progress, monitor President's Award readiness and record attendance.
+11KCHBB App is an open-source, mobile-first tracker for Boys' Brigade Junior and Senior Sections. It keeps each section's members, awards, submissions and attendance separate while allowing officers to switch between them.
 
 ## What is included
 
 - Responsive dashboard for phones, tablets and desktop computers
 - Installable Progressive Web App
 - Current Senior Section award catalogue from the August 2024 BB Malaysia Members' Handbook
+- Junior Section White, Green, Purple, Blue, Red, Silver and Gold award pathway
 - Touch-friendly award matrix with five progress states
 - Member profiles, ranks, squads and service years
 - Editable member details with safeguarded member deletion

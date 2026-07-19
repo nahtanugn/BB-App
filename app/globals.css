@@ -53,6 +53,9 @@ button:focus-visible, input:focus-visible, select:focus-visible { outline: 3px s
 
 .main-content { min-width: 0; padding: 38px clamp(22px, 4vw, 60px) 60px; }
 .topbar { display: flex; justify-content: space-between; align-items: end; gap: 24px; margin-bottom: 25px; }
+.section-switch { display: inline-flex; gap: 3px; padding: 3px; margin-bottom: 9px; border: 1px solid var(--line); border-radius: 999px; background: white; }
+.section-switch button { padding: 5px 13px; border: 0; border-radius: 999px; background: transparent; color: var(--muted); font-size: 10px; font-weight: 800; }
+.section-switch button.active { background: var(--navy); color: white; }
 .eyebrow { margin: 0 0 7px; color: var(--blue); font-size: 9px; line-height: 1; font-weight: 850; letter-spacing: 1.65px; }
 h1, h2, p { margin-top: 0; }
 h1 { margin-bottom: 0; font-family: Georgia, "Times New Roman", serif; font-size: clamp(28px, 3.2vw, 42px); line-height: 1.05; letter-spacing: -1.2px; color: var(--navy); }

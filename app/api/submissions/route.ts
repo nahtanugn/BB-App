@@ -30,6 +30,14 @@ async function ensureSubmissionSchema() {
   }
 }
 
+async function getAwardsForSection(section: string) {
+  return env.DB.prepare(
+    "SELECT code, name, category, basic_available, advanced_available FROM award_definitions WHERE section = ? AND code NOT IN ('arts_crafts_hobbies', 'band_proficiency', 'scholastic') ORDER BY sort_order",
+  )
+    .bind(section)
+    .all();
+}
+
 export async function GET(request: Request) {
   try {
     const user = await getCurrentUser(request);
@@ -41,15 +49,12 @@ export async function GET(request: Request) {
         { status: 403 },
       );
     await ensureSubmissionSchema();
-    const awards = await env.DB.prepare(
-      "SELECT code, name, category, basic_available, advanced_available FROM award_definitions WHERE code NOT IN ('arts_crafts_hobbies', 'band_proficiency', 'scholastic') ORDER BY sort_order",
-    ).all();
     if (user.role === "member") {
       const member = await env.DB.prepare(
-        "SELECT id, name FROM members WHERE LOWER(email) = LOWER(?) LIMIT 1",
+        "SELECT id, name, section FROM members WHERE LOWER(email) = LOWER(?) LIMIT 1",
       )
         .bind(user.email)
-        .first<{ id: number; name: string }>();
+        .first<{ id: number; name: string; section: string }>();
       if (!member)
         return Response.json(
           { error: "Your account is not linked to a member profile" },
@@ -60,6 +65,7 @@ export async function GET(request: Request) {
       )
         .bind(member.id)
         .all();
+      const awards = await getAwardsForSection(member.section);
       return Response.json({
         awards: awards.results,
         submissions: submissions.results,
@@ -73,10 +79,10 @@ export async function GET(request: Request) {
         { status: 400 },
       );
     const member = await env.DB.prepare(
-      "SELECT id, name FROM members WHERE id = ?",
+      "SELECT id, name, section FROM members WHERE id = ?",
     )
       .bind(memberId)
-      .first<{ id: number; name: string }>();
+      .first<{ id: number; name: string; section: string }>();
     if (!member)
       return Response.json(
         { error: "Member profile not found" },
@@ -87,6 +93,7 @@ export async function GET(request: Request) {
     )
       .bind(member.id)
       .all();
+    const awards = await getAwardsForSection(member.section);
     return Response.json({
       awards: awards.results,
       submissions: submissions.results,
@@ -153,9 +160,9 @@ export async function POST(request: Request) {
           );
       }
       const award = await env.DB.prepare(
-        "SELECT code, name, basic_available, advanced_available FROM award_definitions WHERE code = ?",
+        "SELECT a.code, a.name, a.basic_available, a.advanced_available FROM award_definitions a INNER JOIN members m ON LOWER(m.email) = LOWER(?) WHERE a.code = ? AND a.section = m.section LIMIT 1",
       )
-        .bind(awardCode)
+        .bind(user.email, awardCode)
         .first<{
           code: string;
           name: string;

@@ -1,15 +1,23 @@
-import { integer, primaryKey, sqliteTable, text } from "drizzle-orm/sqlite-core";
+import {
+  integer,
+  primaryKey,
+  sqliteTable,
+  text,
+} from "drizzle-orm/sqlite-core";
 
 export const members = sqliteTable("members", {
   id: integer("id").primaryKey({ autoIncrement: true }),
   name: text("name").notNull(),
   rank: text("rank").notNull().default("Private"),
   squad: text("squad").notNull().default("Unassigned"),
+  section: text("section").notNull().default("senior"),
   joinedAt: text("joined_at").notNull(),
   serviceYears: integer("service_years").notNull().default(0),
   school: text("school").notNull().default(""),
   contactNumber: text("contact_number").notNull().default(""),
-  emergencyContactNumber: text("emergency_contact_number").notNull().default(""),
+  emergencyContactNumber: text("emergency_contact_number")
+    .notNull()
+    .default(""),
   email: text("email").notNull().default(""),
   parentsName: text("parents_name").notNull().default(""),
   isDemo: integer("is_demo", { mode: "boolean" }).notNull().default(false),
@@ -20,9 +28,14 @@ export const awardDefinitions = sqliteTable("award_definitions", {
   code: text("code").primaryKey(),
   name: text("name").notNull(),
   category: text("category").notNull(),
+  section: text("section").notNull().default("senior"),
   sortOrder: integer("sort_order").notNull(),
-  basicAvailable: integer("basic_available", { mode: "boolean" }).notNull().default(true),
-  advancedAvailable: integer("advanced_available", { mode: "boolean" }).notNull().default(true),
+  basicAvailable: integer("basic_available", { mode: "boolean" })
+    .notNull()
+    .default(true),
+  advancedAvailable: integer("advanced_available", { mode: "boolean" })
+    .notNull()
+    .default(true),
 });
 
 export const memberAwards = sqliteTable(
@@ -40,13 +53,16 @@ export const memberAwards = sqliteTable(
     updatedAt: text("updated_at").notNull(),
     updatedBy: text("updated_by").notNull(),
   },
-  (table) => [primaryKey({ columns: [table.memberId, table.awardCode, table.level] })],
+  (table) => [
+    primaryKey({ columns: [table.memberId, table.awardCode, table.level] }),
+  ],
 );
 
 export const attendanceSessions = sqliteTable("attendance_sessions", {
   id: integer("id").primaryKey({ autoIncrement: true }),
   meetingDate: text("meeting_date").notNull(),
   title: text("title").notNull().default("Weekly Parade"),
+  section: text("section").notNull().default("senior"),
   createdAt: text("created_at").notNull(),
 });
 
@@ -80,7 +96,9 @@ export const users = sqliteTable("users", {
 
 export const sessions = sqliteTable("sessions", {
   id: text("id").primaryKey(),
-  userId: integer("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  userId: integer("user_id")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
   tokenHash: text("token_hash").notNull().unique(),
   expiresAt: text("expires_at").notNull(),
   createdAt: text("created_at").notNull(),

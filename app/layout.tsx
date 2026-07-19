@@ -7,10 +7,10 @@ export async function generateMetadata(): Promise<Metadata> {
   const host = requestHeaders.get("host") ?? "localhost:3000";
   const protocol = requestHeaders.get("x-forwarded-proto") ?? (host.startsWith("localhost") ? "http" : "https");
   const shareImage = `${protocol}://${host}/app-photo.jpeg`;
-  const description = "An open-source, cross-platform award tracker for Boys' Brigade Senior Section companies.";
+  const description = "An open-source, cross-platform award tracker for Boys' Brigade Junior and Senior Sections.";
 
   return {
-    title: "11KCHBB App · BB Senior Award Tracker",
+    title: "11KCHBB App · BB Section Tracker",
     description,
     applicationName: "11KCHBB App",
     manifest: "/manifest.webmanifest",
@@ -23,14 +23,14 @@ export async function generateMetadata(): Promise<Metadata> {
     formatDetection: { telephone: false },
     openGraph: {
       title: "11KCHBB App",
-      description: "Senior Section award tracking, made steady.",
+      description: "Junior and Senior Section tracking, made steady.",
       type: "website",
       images: [{ url: shareImage, width: 1152, height: 1152, alt: "11KCHBB App preview" }],
     },
     twitter: {
       card: "summary_large_image",
       title: "11KCHBB App",
-      description: "Senior Section award tracking, made steady.",
+      description: "Junior and Senior Section tracking, made steady.",
       images: [shareImage],
     },
   };

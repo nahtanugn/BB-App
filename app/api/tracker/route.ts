@@ -326,7 +326,23 @@ const awards: AwardSeed[] = [
     advanced: 0,
   },
 ];
+const juniorAwards: AwardSeed[] = [
+  "White",
+  "Green",
+  "Purple",
+  "Blue",
+  "Red",
+  "Silver",
+  "Gold",
+].map((name) => ({
+  code: `junior_${name.toLowerCase()}`,
+  name: `${name} Award`,
+  category: "Junior Awards",
+  basic: 1,
+  advanced: 0,
+}));
 const allowedSquads = ["Alpha", "Bravo", "Charlie", "Delta"];
+const allowedSections = ["senior", "junior"];
 
 function calculateServiceYears(joinedAt: string, today = new Date()) {
   const match = /^(\d{4})-(\d{2})$/.exec(joinedAt);
@@ -362,6 +378,7 @@ async function ensureSchema() {
       name TEXT NOT NULL,
       rank TEXT NOT NULL DEFAULT 'Private',
       squad TEXT NOT NULL DEFAULT 'Unassigned',
+      section TEXT NOT NULL DEFAULT 'senior',
       joined_at TEXT NOT NULL,
       service_years INTEGER NOT NULL DEFAULT 0,
       school TEXT NOT NULL DEFAULT '',
@@ -376,6 +393,7 @@ async function ensureSchema() {
       code TEXT PRIMARY KEY,
       name TEXT NOT NULL,
       category TEXT NOT NULL,
+      section TEXT NOT NULL DEFAULT 'senior',
       sort_order INTEGER NOT NULL,
       basic_available INTEGER NOT NULL DEFAULT 1,
       advanced_available INTEGER NOT NULL DEFAULT 1
@@ -399,6 +417,7 @@ async function ensureSchema() {
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       meeting_date TEXT NOT NULL,
       title TEXT NOT NULL DEFAULT 'Weekly Parade',
+      section TEXT NOT NULL DEFAULT 'senior',
       created_at TEXT NOT NULL
     )`),
     db.prepare(`CREATE TABLE IF NOT EXISTS attendance_records (
@@ -447,19 +466,67 @@ async function ensureSchema() {
     );
   }
 
+  const sectionColumns = await Promise.all([
+    db.prepare("PRAGMA table_info(members)").all<{ name: string }>(),
+    db.prepare("PRAGMA table_info(award_definitions)").all<{ name: string }>(),
+    db
+      .prepare("PRAGMA table_info(attendance_sessions)")
+      .all<{ name: string }>(),
+  ]);
+  const sectionMigrations = [
+    [
+      sectionColumns[0],
+      "ALTER TABLE members ADD COLUMN section TEXT NOT NULL DEFAULT 'senior'",
+    ],
+    [
+      sectionColumns[1],
+      "ALTER TABLE award_definitions ADD COLUMN section TEXT NOT NULL DEFAULT 'senior'",
+    ],
+    [
+      sectionColumns[2],
+      "ALTER TABLE attendance_sessions ADD COLUMN section TEXT NOT NULL DEFAULT 'senior'",
+    ],
+  ] as const;
+  for (const [columns, statement] of sectionMigrations) {
+    if (!columns.results.some((column) => column.name === "section"))
+      await db.prepare(statement).run();
+  }
+
   await db.batch(
     awards.map((award, index) =>
       db
         .prepare(
           `INSERT INTO award_definitions
-          (code, name, category, sort_order, basic_available, advanced_available)
-          VALUES (?, ?, ?, ?, ?, ?)
+          (code, name, category, section, sort_order, basic_available, advanced_available)
+          VALUES (?, ?, ?, 'senior', ?, ?, ?)
           ON CONFLICT(code) DO UPDATE SET
             name = excluded.name,
             category = excluded.category,
             sort_order = excluded.sort_order,
             basic_available = excluded.basic_available,
             advanced_available = excluded.advanced_available`,
+        )
+        .bind(
+          award.code,
+          award.name,
+          award.category,
+          index,
+          award.basic,
+          award.advanced,
+        ),
+    ),
+  );
+
+  await db.batch(
+    juniorAwards.map((award, index) =>
+      db
+        .prepare(
+          `INSERT INTO award_definitions
+        (code, name, category, section, sort_order, basic_available, advanced_available)
+        VALUES (?, ?, ?, 'junior', ?, ?, ?)
+        ON CONFLICT(code) DO UPDATE SET name = excluded.name, category = excluded.category,
+          section = excluded.section, sort_order = excluded.sort_order,
+          basic_available = excluded.basic_available, advanced_available = excluded.advanced_available`,
         )
         .bind(
           award.code,
@@ -483,7 +550,7 @@ async function ensureSchema() {
   initialized = true;
 }
 
-async function getSubmissionNotifications() {
+async function getSubmissionNotifications(section: string) {
   try {
     const result = await env.DB.prepare(
       `SELECT
@@ -493,10 +560,12 @@ async function getSubmissionNotifications() {
       MAX(award_submissions.submitted_at) AS latest_submitted_at
       FROM award_submissions
       INNER JOIN members ON members.id = award_submissions.member_id
-      WHERE award_submissions.status = 'pending'
+      WHERE award_submissions.status = 'pending' AND members.section = ?
       GROUP BY members.id, members.name
       ORDER BY latest_submitted_at DESC`,
-    ).all();
+    )
+      .bind(section)
+      .all();
     return result.results;
   } catch {
     return [];
@@ -515,9 +584,17 @@ export async function GET(request: Request) {
       );
     await ensureSchema();
     const db = env.DB;
+    const requestedSection =
+      new URL(request.url).searchParams.get("section") ?? "senior";
+    const section = allowedSections.includes(requestedSection)
+      ? requestedSection
+      : "senior";
     const [memberResult, sessionResult, attendanceResult] = await Promise.all([
       db
-        .prepare("SELECT * FROM members ORDER BY name COLLATE NOCASE")
+        .prepare(
+          "SELECT * FROM members WHERE section = ? ORDER BY name COLLATE NOCASE",
+        )
+        .bind(section)
         .all<{
           joined_at: string;
           service_years: number;
@@ -525,16 +602,23 @@ export async function GET(request: Request) {
         }>(),
       db
         .prepare(
-          "SELECT * FROM attendance_sessions ORDER BY meeting_date DESC, id DESC",
+          "SELECT * FROM attendance_sessions WHERE section = ? ORDER BY meeting_date DESC, id DESC",
         )
+        .bind(section)
         .all(),
       user.role === "nco"
         ? db
             .prepare(
-              "SELECT session_id, member_id, status FROM attendance_records",
+              "SELECT ar.session_id, ar.member_id, ar.status FROM attendance_records ar INNER JOIN attendance_sessions s ON s.id = ar.session_id WHERE s.section = ?",
             )
+            .bind(section)
             .all()
-        : db.prepare("SELECT * FROM attendance_records").all(),
+        : db
+            .prepare(
+              "SELECT ar.* FROM attendance_records ar INNER JOIN attendance_sessions s ON s.id = ar.session_id WHERE s.section = ?",
+            )
+            .bind(section)
+            .all(),
     ]);
     const members = memberResult.results.map((member) => ({
       ...member,
@@ -544,11 +628,17 @@ export async function GET(request: Request) {
       await Promise.all([
         db
           .prepare(
-            "SELECT * FROM award_definitions WHERE code NOT IN ('arts_crafts_hobbies', 'band_proficiency', 'scholastic') ORDER BY sort_order",
+            "SELECT * FROM award_definitions WHERE section = ? AND code NOT IN ('arts_crafts_hobbies', 'band_proficiency', 'scholastic') ORDER BY sort_order",
           )
+          .bind(section)
           .all(),
-        db.prepare("SELECT * FROM member_awards").all(),
-        getSubmissionNotifications(),
+        db
+          .prepare(
+            "SELECT ma.* FROM member_awards ma INNER JOIN members m ON m.id = ma.member_id WHERE m.section = ?",
+          )
+          .bind(section)
+          .all(),
+        getSubmissionNotifications(section),
       ]);
     return Response.json({
       members,
@@ -557,7 +647,11 @@ export async function GET(request: Request) {
       submissionNotifications,
       attendanceSessions: sessionResult.results,
       attendance: attendanceResult.results,
-      syllabus: "BB Malaysia Members' Handbook · August 2024",
+      syllabus:
+        section === "junior"
+          ? "BB Malaysia Junior Section"
+          : "BB Malaysia Members' Handbook · August 2024",
+      section,
     });
   } catch (error) {
     return Response.json(
@@ -584,6 +678,10 @@ export async function POST(request: Request) {
     const db = env.DB;
     const body = (await request.json()) as Record<string, unknown>;
     const action = String(body.action ?? "");
+    const requestedSection = String(body.section ?? "senior");
+    const section = allowedSections.includes(requestedSection)
+      ? requestedSection
+      : "senior";
     if (
       ["nco", "squad_leader"].includes(user.role) &&
       ![
@@ -625,13 +723,14 @@ export async function POST(request: Request) {
       await db
         .prepare(
           `INSERT INTO members
-        (name, rank, squad, joined_at, service_years, school, contact_number, emergency_contact_number, email, parents_name, is_demo, created_at)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, ?)`,
+        (name, rank, squad, section, joined_at, service_years, school, contact_number, emergency_contact_number, email, parents_name, is_demo, created_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, ?)`,
         )
         .bind(
           name,
           String(body.rank ?? "Private"),
           squad,
+          section,
           joinedAt,
           calculateServiceYears(joinedAt),
           String(body.school ?? "").trim(),
@@ -668,7 +767,7 @@ export async function POST(request: Request) {
         );
       await db
         .prepare(
-          `UPDATE members SET name = ?, rank = ?, squad = ?, joined_at = ?, service_years = ?, school = ?, contact_number = ?, emergency_contact_number = ?, email = ?, parents_name = ? WHERE id = ?`,
+          `UPDATE members SET name = ?, rank = ?, squad = ?, joined_at = ?, service_years = ?, school = ?, contact_number = ?, emergency_contact_number = ?, email = ?, parents_name = ? WHERE id = ? AND section = ?`,
         )
         .bind(
           name,
@@ -684,6 +783,7 @@ export async function POST(request: Request) {
             .toLowerCase(),
           String(body.parentsName ?? "").trim(),
           memberId,
+          section,
         )
         .run();
     } else if (action === "update_award") {
@@ -704,6 +804,19 @@ export async function POST(request: Request) {
           { status: 400 },
         );
       }
+      const validAwardTarget = await db
+        .prepare(
+          `SELECT m.id FROM members m
+        INNER JOIN award_definitions a ON a.code = ?
+        WHERE m.id = ? AND m.section = ? AND a.section = ?`,
+        )
+        .bind(awardCode, memberId, section, section)
+        .first();
+      if (!validAwardTarget)
+        return Response.json(
+          { error: "Award and member must belong to the selected section" },
+          { status: 400 },
+        );
       const now = new Date().toISOString();
       await db
         .prepare(
@@ -730,6 +843,15 @@ export async function POST(request: Request) {
       const memberId = Number(body.memberId);
       if (!memberId)
         return Response.json({ error: "Invalid member" }, { status: 400 });
+      const validMember = await db
+        .prepare("SELECT id FROM members WHERE id = ? AND section = ?")
+        .bind(memberId, section)
+        .first();
+      if (!validMember)
+        return Response.json(
+          { error: "Member not found in the selected section" },
+          { status: 404 },
+        );
       await db
         .prepare("DELETE FROM member_awards WHERE member_id = ?")
         .bind(memberId)
@@ -738,7 +860,10 @@ export async function POST(request: Request) {
         .prepare("DELETE FROM attendance_records WHERE member_id = ?")
         .bind(memberId)
         .run();
-      await db.prepare("DELETE FROM members WHERE id = ?").bind(memberId).run();
+      await db
+        .prepare("DELETE FROM members WHERE id = ? AND section = ?")
+        .bind(memberId, section)
+        .run();
     } else if (action === "create_attendance_session") {
       const meetingDate = String(body.meetingDate ?? "");
       const title =
@@ -750,9 +875,9 @@ export async function POST(request: Request) {
         );
       await db
         .prepare(
-          "INSERT INTO attendance_sessions (meeting_date, title, created_at) VALUES (?, ?, ?)",
+          "INSERT INTO attendance_sessions (meeting_date, title, section, created_at) VALUES (?, ?, ?, ?)",
         )
-        .bind(meetingDate, title, new Date().toISOString())
+        .bind(meetingDate, title, section, new Date().toISOString())
         .run();
     } else if (action === "update_attendance") {
       const sessionId = Number(body.sessionId);
@@ -762,6 +887,19 @@ export async function POST(request: Request) {
       if (!sessionId || !memberId || !allowed.includes(status))
         return Response.json(
           { error: "Invalid attendance update" },
+          { status: 400 },
+        );
+      const validAttendanceTarget = await db
+        .prepare(
+          `SELECT m.id FROM members m
+        INNER JOIN attendance_sessions s ON s.id = ?
+        WHERE m.id = ? AND m.section = ? AND s.section = ?`,
+        )
+        .bind(sessionId, memberId, section, section)
+        .first();
+      if (!validAttendanceTarget)
+        return Response.json(
+          { error: "Meeting and member must belong to the selected section" },
           { status: 400 },
         );
       const now = new Date().toISOString();
@@ -780,13 +918,24 @@ export async function POST(request: Request) {
           { error: "Invalid attendance session" },
           { status: 400 },
         );
+      const validSession = await db
+        .prepare(
+          "SELECT id FROM attendance_sessions WHERE id = ? AND section = ?",
+        )
+        .bind(sessionId, section)
+        .first();
+      if (!validSession)
+        return Response.json(
+          { error: "Meeting not found in the selected section" },
+          { status: 404 },
+        );
       await db
         .prepare("DELETE FROM attendance_records WHERE session_id = ?")
         .bind(sessionId)
         .run();
       await db
-        .prepare("DELETE FROM attendance_sessions WHERE id = ?")
-        .bind(sessionId)
+        .prepare("DELETE FROM attendance_sessions WHERE id = ? AND section = ?")
+        .bind(sessionId, section)
         .run();
     } else {
       return Response.json({ error: "Unknown action" }, { status: 400 });

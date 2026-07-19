@@ -66,6 +66,7 @@ type TrackerData = {
   attendance: AttendanceRecord[];
   submissionNotifications: SubmissionNotification[];
   syllabus: string;
+  section: "senior" | "junior";
 };
 
 const statusOrder: Status[] = [
@@ -157,6 +158,7 @@ export default function AwardTracker({
   const canEditMembers = Boolean(user);
   const canManageAttendance = Boolean(user);
   const canViewSubmissions = !isNco;
+  const [section, setSection] = useState<"senior" | "junior">("senior");
   const [data, setData] = useState<TrackerData | null>(null);
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
@@ -178,7 +180,9 @@ export default function AwardTracker({
 
   async function load() {
     try {
-      const response = await fetch("/api/tracker", { cache: "no-store" });
+      const response = await fetch(`/api/tracker?section=${section}`, {
+        cache: "no-store",
+      });
       const result = (await response.json()) as TrackerData & {
         error?: string;
       };
@@ -194,7 +198,7 @@ export default function AwardTracker({
   }
 
   useEffect(() => {
-    fetch("/api/tracker", { cache: "no-store" })
+    fetch(`/api/tracker?section=${section}`, { cache: "no-store" })
       .then(async (response) => {
         const result = (await response.json()) as TrackerData & {
           error?: string;
@@ -210,7 +214,17 @@ export default function AwardTracker({
       });
     if ("serviceWorker" in navigator)
       navigator.serviceWorker.register("/sw.js").catch(() => undefined);
-  }, []);
+  }, [section]);
+
+  function switchSection(next: "senior" | "junior") {
+    setData(null);
+    setSection(next);
+    setCategory(next === "junior" ? "Junior Awards" : "Compulsory");
+    setLevel("basic");
+    setQuery("");
+    setActiveSessionId(null);
+    setView("dashboard");
+  }
 
   const progressMap = useMemo(() => {
     const map = new Map<string, Progress>();
@@ -273,6 +287,23 @@ export default function AwardTracker({
     const isAwarded = (code: string, awardLevel: string) =>
       progressMap.get(`${member.id}:${code}:${awardLevel}`)?.status ===
       "awarded";
+    if (section === "junior") {
+      const checks = [
+        "white",
+        "green",
+        "purple",
+        "blue",
+        "red",
+        "silver",
+        "gold",
+      ].map((colour) => isAwarded(`junior_${colour}`, "basic"));
+      const complete = checks.filter(Boolean).length;
+      return {
+        complete,
+        total: checks.length,
+        percent: Math.round((complete / checks.length) * 100),
+      };
+    }
     const checks = [
       isAwarded("nco_proficiency", "advanced"),
       isAwarded("christian_education", "advanced"),
@@ -340,6 +371,7 @@ export default function AwardTracker({
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         action: "update_award",
+        section,
         memberId,
         awardCode,
         level,
@@ -361,6 +393,7 @@ export default function AwardTracker({
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         action: editingMember ? "update_member" : "create_member",
+        section,
         memberId: editingMember?.id,
         name: form.get("name"),
         rank: form.get("rank"),
@@ -404,7 +437,11 @@ export default function AwardTracker({
     await fetch("/api/tracker", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ action: "delete_member", memberId: member.id }),
+      body: JSON.stringify({
+        action: "delete_member",
+        section,
+        memberId: member.id,
+      }),
     });
     await load();
   }
@@ -419,6 +456,7 @@ export default function AwardTracker({
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         action: "create_attendance_session",
+        section,
         meetingDate: form.get("meetingDate"),
         title: form.get("title"),
       }),
@@ -460,6 +498,7 @@ export default function AwardTracker({
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         action: "update_attendance",
+        section,
         sessionId,
         memberId,
         status,
@@ -481,6 +520,7 @@ export default function AwardTracker({
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         action: "delete_attendance_session",
+        section,
         sessionId: session.id,
       }),
     });
@@ -591,7 +631,7 @@ export default function AwardTracker({
                 ? "NCO attendance"
                 : isSquadLeader
                   ? `${user?.squad} Squad`
-                  : "Senior Section tracker"}
+                  : `${section === "junior" ? "Junior" : "Senior"} Section tracker`}
             </span>
           </div>
         </div>
@@ -642,7 +682,9 @@ export default function AwardTracker({
         <div className="sidebar-note">
           <span>SYLLABUS</span>
           <strong>August 2024</strong>
-          <small>BB Malaysia Senior Section</small>
+          <small>
+            BB Malaysia {section === "junior" ? "Junior" : "Senior"} Section
+          </small>
         </div>
         <div className="open-source">
           <span>◈</span>
@@ -656,6 +698,20 @@ export default function AwardTracker({
       <main className="main-content">
         <header className="topbar">
           <div>
+            <div className="section-switch" role="group" aria-label="Section">
+              <button
+                className={section === "senior" ? "active" : ""}
+                onClick={() => switchSection("senior")}
+              >
+                Senior
+              </button>
+              <button
+                className={section === "junior" ? "active" : ""}
+                onClick={() => switchSection("junior")}
+              >
+                Junior
+              </button>
+            </div>
             <p className="eyebrow">
               {view === "dashboard"
                 ? "COMPANY OVERVIEW"
@@ -817,7 +873,11 @@ export default function AwardTracker({
                 <div className="panel-heading">
                   <div>
                     <p className="eyebrow">MEMBER PROGRESS</p>
-                    <h2>President’s Award pathway</h2>
+                    <h2>
+                      {section === "junior"
+                        ? "Junior Gold Award pathway"
+                        : "President’s Award pathway"}
+                    </h2>
                   </div>
                   <button
                     className="text-button"
@@ -923,20 +983,22 @@ export default function AwardTracker({
                   </button>
                 ))}
               </div>
-              <div className="level-toggle">
-                <button
-                  className={level === "basic" ? "active" : ""}
-                  onClick={() => setLevel("basic")}
-                >
-                  Basic
-                </button>
-                <button
-                  className={level === "advanced" ? "active" : ""}
-                  onClick={() => setLevel("advanced")}
-                >
-                  Advanced
-                </button>
-              </div>
+              {section === "senior" && (
+                <div className="level-toggle">
+                  <button
+                    className={level === "basic" ? "active" : ""}
+                    onClick={() => setLevel("basic")}
+                  >
+                    Basic
+                  </button>
+                  <button
+                    className={level === "advanced" ? "active" : ""}
+                    onClick={() => setLevel("advanced")}
+                  >
+                    Advanced
+                  </button>
+                </div>
+              )}
             </div>
             <div className="matrix-help">
               <span>
@@ -1108,7 +1170,11 @@ export default function AwardTracker({
                   </div>
                   <div className="readiness">
                     <div>
-                      <span>President’s Award</span>
+                      <span>
+                        {section === "junior"
+                          ? "Junior Gold Award"
+                          : "President’s Award"}
+                      </span>
                       <strong>
                         {readiness.complete}/{readiness.total}
                       </strong>
@@ -1347,7 +1413,9 @@ export default function AwardTracker({
                   {editingMember ? "EDIT PROFILE" : "NEW PROFILE"}
                 </p>
                 <h2 id="add-title">
-                  {editingMember ? "Member details" : "Add a Senior member"}
+                  {editingMember
+                    ? "Member details"
+                    : `Add a ${section === "junior" ? "Junior" : "Senior"} member`}
                 </h2>
               </div>
               <button
@@ -1379,10 +1447,19 @@ export default function AwardTracker({
                     defaultValue={editingMember?.rank ?? "Private"}
                   >
                     <option>Private</option>
-                    <option>Lance Corporal</option>
-                    <option>Corporal</option>
-                    <option>Sergeant</option>
-                    <option>Staff Sergeant</option>
+                    {section === "junior" ? (
+                      <>
+                        <option>Assistant Leading Boy</option>
+                        <option>Leading Boy</option>
+                      </>
+                    ) : (
+                      <>
+                        <option>Lance Corporal</option>
+                        <option>Corporal</option>
+                        <option>Sergeant</option>
+                        <option>Staff Sergeant</option>
+                      </>
+                    )}
                   </select>
                 </label>
                 <label>
