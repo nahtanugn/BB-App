@@ -47,7 +47,7 @@ async function createOrLinkMemberProfile(
     .bind(
       name,
       section === "junior" ? "junior" : "senior",
-      new Date().toISOString().slice(0, 7),
+      String(new Date().getUTCFullYear()),
       email,
       new Date().toISOString(),
     )

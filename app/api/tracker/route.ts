@@ -359,24 +359,15 @@ const allowedSquads = ["Alpha", "Bravo", "Charlie", "Delta"];
 const allowedSections = ["senior", "junior"];
 
 function calculateServiceYears(joinedAt: string, today = new Date()) {
-  const match = /^(\d{4})-(\d{2})$/.exec(joinedAt);
+  const match = /^(\d{4})/.exec(joinedAt);
   if (!match) return 0;
-  const current = Object.fromEntries(
+  const currentYear = Number(
     new Intl.DateTimeFormat("en", {
       timeZone: "Asia/Kuching",
       year: "numeric",
-      month: "numeric",
-    })
-      .formatToParts(today)
-      .map((part) => [part.type, part.value]),
+    }).format(today),
   );
-  const joinedYear = Number(match[1]);
-  const joinedMonth = Number(match[2]);
-  const years =
-    Number(current.year) -
-    joinedYear -
-    (Number(current.month) < joinedMonth ? 1 : 0);
-  return Math.max(0, years);
+  return Math.max(0, currentYear - Number(match[1]));
 }
 
 let initialized = false;
@@ -788,7 +779,7 @@ export async function POST(request: Request) {
       const name = String(body.name ?? "").trim();
       const squad = String(body.squad ?? "Alpha");
       const joinedAt = String(
-        body.joinedAt ?? new Date().toISOString().slice(0, 7),
+        body.joinedAt ?? new Date().getUTCFullYear(),
       );
       if (!name)
         return Response.json(
@@ -800,9 +791,9 @@ export async function POST(request: Request) {
           { error: "Select Alpha, Bravo, Charlie, or Delta squad" },
           { status: 400 },
         );
-      if (!/^\d{4}-\d{2}$/.test(joinedAt))
+      if (!/^\d{4}$/.test(joinedAt))
         return Response.json(
-          { error: "Select a valid joining month and year" },
+          { error: "Select a valid joining year" },
           { status: 400 },
         );
       await db
@@ -833,7 +824,7 @@ export async function POST(request: Request) {
       const name = String(body.name ?? "").trim();
       const squad = String(body.squad ?? "Alpha");
       const joinedAt = String(
-        body.joinedAt ?? new Date().toISOString().slice(0, 7),
+        body.joinedAt ?? new Date().getUTCFullYear(),
       );
       if (!memberId || !name)
         return Response.json(
@@ -845,9 +836,9 @@ export async function POST(request: Request) {
           { error: "Select Alpha, Bravo, Charlie, or Delta squad" },
           { status: 400 },
         );
-      if (!/^\d{4}-\d{2}$/.test(joinedAt))
+      if (!/^\d{4}$/.test(joinedAt))
         return Response.json(
-          { error: "Select a valid joining month and year" },
+          { error: "Select a valid joining year" },
           { status: 400 },
         );
       await db

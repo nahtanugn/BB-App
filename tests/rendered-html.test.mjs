@@ -24,10 +24,11 @@ test("defines the 11KCHBB App application shell and sharing metadata", async () 
   assert.match(tracker, /<option>Bravo<\/option>/);
   assert.match(tracker, /<option>Charlie<\/option>/);
   assert.match(tracker, /<option>Delta<\/option>/);
-  assert.match(tracker, /type="month"/);
+  assert.match(tracker, /Joined year/);
+  assert.match(tracker, /type="number"/);
   assert.match(tracker, /serviceYearsFromJoined\(joinedAtDraft\)/);
-  assert.match(tracker, /Calculated automatically from joining month/);
-  assert.match(tracker, /joinedMonth\(member\.joined_at\)/);
+  assert.match(tracker, /Calculated automatically from joining year/);
+  assert.match(tracker, /joinedYear\(member\.joined_at\)/);
   assert.match(tracker, /Member created successfully/);
   assert.match(tracker, /Attendance meeting created successfully/);
   assert.match(tracker, /setSubmissionMember\(member\)/);
@@ -107,7 +108,7 @@ test("ships the Malaysia Senior Section catalogue, role-based portals and instal
     route,
     /const allowedSquads = \["Alpha", "Bravo", "Charlie", "Delta"\]/,
   );
-  assert.match(route, /Select a valid joining month and year/);
+  assert.match(route, /Select a valid joining year/);
   assert.match(route, /calculateServiceYears\(joinedAt\)/);
   assert.match(route, /getSubmissionNotifications/);
   assert.match(route, /award_submissions\.status = 'pending'/);

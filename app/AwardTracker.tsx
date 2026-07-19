@@ -111,32 +111,20 @@ function initials(name: string) {
     .toUpperCase();
 }
 
-function joinedMonth(value: string) {
-  const match = /^(\d{4})-(\d{2})/.exec(value);
-  if (!match) return value;
-  return new Date(Number(match[1]), Number(match[2]) - 1, 1).toLocaleDateString(
-    "en-MY",
-    { month: "long", year: "numeric" },
-  );
+function joinedYear(value: string) {
+  return /^(\d{4})/.exec(value)?.[1] ?? value;
 }
 
 function serviceYearsFromJoined(value: string) {
-  const match = /^(\d{4})-(\d{2})$/.exec(value);
+  const match = /^(\d{4})/.exec(value);
   if (!match) return 0;
-  const current = Object.fromEntries(
+  const currentYear = Number(
     new Intl.DateTimeFormat("en", {
       timeZone: "Asia/Kuching",
       year: "numeric",
-      month: "numeric",
-    })
-      .formatToParts()
-      .map((part) => [part.type, part.value]),
+    }).format(new Date()),
   );
-  const years =
-    Number(current.year) -
-    Number(match[1]) -
-    (Number(current.month) < Number(match[2]) ? 1 : 0);
-  return Math.max(0, years);
+  return Math.max(0, currentYear - Number(match[1]));
 }
 
 type AwardTrackerProps = {
@@ -188,7 +176,7 @@ export default function AwardTracker({
   const [showAdd, setShowAdd] = useState(false);
   const [editingMember, setEditingMember] = useState<Member | null>(null);
   const [joinedAtDraft, setJoinedAtDraft] = useState(
-    new Date().toISOString().slice(0, 7),
+    String(currentSubscriptionYear),
   );
   const [submissionMember, setSubmissionMember] = useState<Member | null>(null);
   const [showSession, setShowSession] = useState(false);
@@ -487,13 +475,13 @@ export default function AwardTracker({
 
   function openAddMember() {
     setEditingMember(null);
-    setJoinedAtDraft(new Date().toISOString().slice(0, 7));
+    setJoinedAtDraft(String(currentSubscriptionYear));
     setShowAdd(true);
   }
 
   function openEditMember(member: Member) {
     setEditingMember(member);
-    setJoinedAtDraft(member.joined_at.slice(0, 7));
+    setJoinedAtDraft(joinedYear(member.joined_at));
     setShowAdd(true);
   }
 
@@ -693,8 +681,7 @@ export default function AwardTracker({
         "Full Name",
         "Rank",
         "Squad",
-        "Joined Month",
-        "Joined Month Display",
+        "Joined Year",
         "Service Years",
         "One-Year Service Awards",
         "School",
@@ -825,8 +812,7 @@ export default function AwardTracker({
             member.name,
             member.rank,
             member.squad,
-            member.joined_at,
-            joinedMonth(member.joined_at),
+            joinedYear(member.joined_at),
             member.service_years,
             member.service_award_count,
             member.school,
@@ -1531,7 +1517,7 @@ export default function AwardTracker({
                   </div>
                   <h2>{member.name}</h2>
                   <p>
-                    {member.rank} · Joined {joinedMonth(member.joined_at)}
+                    {member.rank} · Joined {joinedYear(member.joined_at)}
                   </p>
                   {(isNco || isSquadLeader) && (
                     <div className="member-detail-summary">
@@ -1986,10 +1972,13 @@ export default function AwardTracker({
               </div>
               <div className="form-row">
                 <label>
-                  Joined on
+                  Joined year
                   <input
                     name="joinedAt"
-                    type="month"
+                    type="number"
+                    min="1900"
+                    max={currentSubscriptionYear}
+                    inputMode="numeric"
                     value={joinedAtDraft}
                     onChange={(event) => setJoinedAtDraft(event.target.value)}
                   />
@@ -2002,7 +1991,7 @@ export default function AwardTracker({
                     readOnly
                     value={serviceYearsFromJoined(joinedAtDraft)}
                   />
-                  <small>Calculated automatically from joining month</small>
+                  <small>Calculated automatically from joining year</small>
                 </label>
               </div>
               <div className="form-row">
