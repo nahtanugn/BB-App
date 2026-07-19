@@ -36,6 +36,8 @@ test("defines the 11KCHBB App application shell and sharing metadata", async () 
   assert.match(tracker, /submissionPendingTotal/);
   assert.match(tracker, /className="nav-badge"/);
   assert.match(tracker, /member-new-marker/);
+  assert.match(tracker, /member-detail-summary/);
+  assert.match(tracker, /Edit details/);
   assert.match(standalone, /Company portal/);
   assert.match(standalone, /Create your administrator account/);
   assert.match(standalone, /Edit account/);
@@ -98,8 +100,8 @@ test("ships the Malaysia Senior Section catalogue, role-based portals and instal
   assert.match(resourcesRoute, /user\.role === "member"/);
   assert.match(resourcesRoute, /user\.role === "nco"/);
   assert.match(resourcesRoute, /Resources are read-only for this account/);
-  assert.match(route, /NCO accounts can manage attendance only/);
-  assert.match(route, /\["create_attendance_session", "update_attendance"\]/);
+  assert.match(route, /NCO accounts can manage attendance and edit member details only/);
+  assert.match(route, /\["create_attendance_session", "update_attendance", "update_member"\]/);
   assert.match(route, /awards: \[\]/);
   assert.match(resourceLibrary, /Resource library/);
   assert.match(resourceLibrary, /user\.role !== "member"/);
