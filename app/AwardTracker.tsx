@@ -154,6 +154,9 @@ export default function AwardTracker({
   const canManageAttendance = Boolean(user);
   const canManageSubscriptions = canManageAwards;
   const canViewSubmissions = !isNco;
+  const canOverrideMemberDetails = ["admin", "officer"].includes(
+    user?.role ?? "",
+  );
   const [section, setSection] = useState<"senior" | "junior">("senior");
   const [data, setData] = useState<TrackerData | null>(null);
   const [error, setError] = useState("");
@@ -175,6 +178,7 @@ export default function AwardTracker({
   );
   const [showAdd, setShowAdd] = useState(false);
   const [editingMember, setEditingMember] = useState<Member | null>(null);
+  const [overrideMemberDetails, setOverrideMemberDetails] = useState(false);
   const [joinedAtDraft, setJoinedAtDraft] = useState(
     String(currentSubscriptionYear),
   );
@@ -458,6 +462,8 @@ export default function AwardTracker({
         emergencyContactNumber: form.get("emergencyContactNumber"),
         email: form.get("email"),
         parentsName: form.get("parentsName"),
+        overrideRequiredDetails:
+          canOverrideMemberDetails && overrideMemberDetails,
       }),
     });
     setSaving("");
@@ -470,17 +476,22 @@ export default function AwardTracker({
           ? "Member details updated successfully."
           : "Member created successfully.",
       );
+    } else {
+      const result = (await response.json()) as { error?: string };
+      window.alert(result.error ?? "Unable to save member details");
     }
   }
 
   function openAddMember() {
     setEditingMember(null);
+    setOverrideMemberDetails(false);
     setJoinedAtDraft(String(currentSubscriptionYear));
     setShowAdd(true);
   }
 
   function openEditMember(member: Member) {
     setEditingMember(member);
+    setOverrideMemberDetails(false);
     setJoinedAtDraft(joinedYear(member.joined_at));
     setShowAdd(true);
   }
@@ -1979,6 +1990,7 @@ export default function AwardTracker({
                     min="1900"
                     max={currentSubscriptionYear}
                     inputMode="numeric"
+                    required
                     value={joinedAtDraft}
                     onChange={(event) => setJoinedAtDraft(event.target.value)}
                   />
@@ -1999,6 +2011,7 @@ export default function AwardTracker({
                   School
                   <input
                     name="school"
+                    required={!overrideMemberDetails}
                     defaultValue={editingMember?.school ?? ""}
                   />
                 </label>
@@ -2007,6 +2020,7 @@ export default function AwardTracker({
                   <input
                     name="email"
                     type="email"
+                    required={!overrideMemberDetails}
                     defaultValue={editingMember?.email ?? ""}
                   />
                 </label>
@@ -2017,6 +2031,7 @@ export default function AwardTracker({
                   <input
                     name="contactNumber"
                     type="tel"
+                    required={!overrideMemberDetails}
                     defaultValue={editingMember?.contact_number ?? ""}
                   />
                 </label>
@@ -2025,6 +2040,7 @@ export default function AwardTracker({
                   <input
                     name="emergencyContactNumber"
                     type="tel"
+                    required={!overrideMemberDetails}
                     defaultValue={editingMember?.emergency_contact_number ?? ""}
                   />
                 </label>
@@ -2033,9 +2049,25 @@ export default function AwardTracker({
                 Parents Name
                 <input
                   name="parentsName"
+                  required={!overrideMemberDetails}
                   defaultValue={editingMember?.parents_name ?? ""}
                 />
               </label>
+              {canOverrideMemberDetails && (
+                <label className="override-details">
+                  <input
+                    type="checkbox"
+                    checked={overrideMemberDetails}
+                    onChange={(event) =>
+                      setOverrideMemberDetails(event.target.checked)
+                    }
+                  />
+                  <span>
+                    Allow incomplete profile
+                    <small>Admin and Officer override only</small>
+                  </span>
+                </label>
+              )}
               <button className="primary submit" disabled={Boolean(saving)}>
                 {saving
                   ? "Saving…"

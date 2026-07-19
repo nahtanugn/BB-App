@@ -757,6 +757,9 @@ export async function POST(request: Request) {
     const section = allowedSections.includes(requestedSection)
       ? requestedSection
       : "senior";
+    const canOverrideMemberDetails = ["admin", "officer"].includes(user.role);
+    const overrideRequiredDetails =
+      canOverrideMemberDetails && body.overrideRequiredDetails === true;
     if (
       ["nco", "squad_leader"].includes(user.role) &&
       ![
@@ -781,6 +784,15 @@ export async function POST(request: Request) {
       const joinedAt = String(
         body.joinedAt ?? new Date().getUTCFullYear(),
       );
+      const school = String(body.school ?? "").trim();
+      const contactNumber = String(body.contactNumber ?? "").trim();
+      const emergencyContactNumber = String(
+        body.emergencyContactNumber ?? "",
+      ).trim();
+      const email = String(body.email ?? "")
+        .trim()
+        .toLowerCase();
+      const parentsName = String(body.parentsName ?? "").trim();
       if (!name)
         return Response.json(
           { error: "Member name is required" },
@@ -796,6 +808,20 @@ export async function POST(request: Request) {
           { error: "Select a valid joining year" },
           { status: 400 },
         );
+      const missingDetails = [
+        ["School", school],
+        ["Contact Number", contactNumber],
+        ["Emergency Contact Number", emergencyContactNumber],
+        ["Email", email],
+        ["Parents Name", parentsName],
+      ].filter(([, value]) => !value);
+      if (missingDetails.length && !overrideRequiredDetails)
+        return Response.json(
+          {
+            error: `Complete all member details. Missing: ${missingDetails.map(([label]) => label).join(", ")}. Only Admins and Officers can override this requirement.`,
+          },
+          { status: 400 },
+        );
       await db
         .prepare(
           `INSERT INTO members
@@ -809,13 +835,11 @@ export async function POST(request: Request) {
           section,
           joinedAt,
           calculateServiceYears(joinedAt),
-          String(body.school ?? "").trim(),
-          String(body.contactNumber ?? "").trim(),
-          String(body.emergencyContactNumber ?? "").trim(),
-          String(body.email ?? "")
-            .trim()
-            .toLowerCase(),
-          String(body.parentsName ?? "").trim(),
+          school,
+          contactNumber,
+          emergencyContactNumber,
+          email,
+          parentsName,
           new Date().toISOString(),
         )
         .run();
@@ -826,6 +850,15 @@ export async function POST(request: Request) {
       const joinedAt = String(
         body.joinedAt ?? new Date().getUTCFullYear(),
       );
+      const school = String(body.school ?? "").trim();
+      const contactNumber = String(body.contactNumber ?? "").trim();
+      const emergencyContactNumber = String(
+        body.emergencyContactNumber ?? "",
+      ).trim();
+      const email = String(body.email ?? "")
+        .trim()
+        .toLowerCase();
+      const parentsName = String(body.parentsName ?? "").trim();
       if (!memberId || !name)
         return Response.json(
           { error: "Valid member details are required" },
@@ -841,6 +874,20 @@ export async function POST(request: Request) {
           { error: "Select a valid joining year" },
           { status: 400 },
         );
+      const missingDetails = [
+        ["School", school],
+        ["Contact Number", contactNumber],
+        ["Emergency Contact Number", emergencyContactNumber],
+        ["Email", email],
+        ["Parents Name", parentsName],
+      ].filter(([, value]) => !value);
+      if (missingDetails.length && !overrideRequiredDetails)
+        return Response.json(
+          {
+            error: `Complete all member details. Missing: ${missingDetails.map(([label]) => label).join(", ")}. Only Admins and Officers can override this requirement.`,
+          },
+          { status: 400 },
+        );
       await db
         .prepare(
           `UPDATE members SET name = ?, rank = ?, squad = ?, joined_at = ?, service_years = ?, school = ?, contact_number = ?, emergency_contact_number = ?, email = ?, parents_name = ? WHERE id = ? AND section = ?`,
@@ -851,13 +898,11 @@ export async function POST(request: Request) {
           squad,
           joinedAt,
           calculateServiceYears(joinedAt),
-          String(body.school ?? "").trim(),
-          String(body.contactNumber ?? "").trim(),
-          String(body.emergencyContactNumber ?? "").trim(),
-          String(body.email ?? "")
-            .trim()
-            .toLowerCase(),
-          String(body.parentsName ?? "").trim(),
+          school,
+          contactNumber,
+          emergencyContactNumber,
+          email,
+          parentsName,
           memberId,
           section,
         )

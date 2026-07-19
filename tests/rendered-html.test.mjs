@@ -20,6 +20,10 @@ test("defines the 11KCHBB App application shell and sharing metadata", async () 
   assert.match(tracker, /Contact Number/);
   assert.match(tracker, /Emergency Contact Number/);
   assert.match(tracker, /Parents Name/);
+  assert.match(tracker, /Allow incomplete profile/);
+  assert.match(tracker, /Admin and Officer override only/);
+  assert.match(tracker, /required=\{!overrideMemberDetails\}/);
+  assert.match(tracker, /overrideRequiredDetails/);
   assert.match(tracker, /<option>Alpha<\/option>/);
   assert.match(tracker, /<option>Bravo<\/option>/);
   assert.match(tracker, /<option>Charlie<\/option>/);
@@ -109,6 +113,9 @@ test("ships the Malaysia Senior Section catalogue, role-based portals and instal
     /const allowedSquads = \["Alpha", "Bravo", "Charlie", "Delta"\]/,
   );
   assert.match(route, /Select a valid joining year/);
+  assert.match(route, /Complete all member details/);
+  assert.match(route, /Only Admins and Officers can override this requirement/);
+  assert.match(route, /canOverrideMemberDetails/);
   assert.match(route, /calculateServiceYears\(joinedAt\)/);
   assert.match(route, /getSubmissionNotifications/);
   assert.match(route, /award_submissions\.status = 'pending'/);
