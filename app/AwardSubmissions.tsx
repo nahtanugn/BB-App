@@ -18,7 +18,7 @@ type Submission = {
   reviewed_by: string | null;
 };
 
-export default function AwardSubmissions({ user, memberId }: { user: User; memberId?: number }) {
+export default function AwardSubmissions({ user, memberId, onChanged }: { user: User; memberId?: number; onChanged?: () => void | Promise<void> }) {
   const [awards, setAwards] = useState<Award[]>([]);
   const [submissions, setSubmissions] = useState<Submission[]>([]);
   const [awardCode, setAwardCode] = useState("");
@@ -96,6 +96,7 @@ export default function AwardSubmissions({ user, memberId }: { user: User; membe
     setBusy("");
     if (!response.ok) return setError(result.error ?? "Unable to review submission");
     await load();
+    await onChanged?.();
   }
 
   if (user.role === "nco") return null;

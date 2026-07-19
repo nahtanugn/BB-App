@@ -157,6 +157,24 @@ async function ensureSchema() {
   initialized = true;
 }
 
+async function getSubmissionNotifications() {
+  try {
+    const result = await env.DB.prepare(`SELECT
+      members.id AS member_id,
+      members.name AS member_name,
+      COUNT(award_submissions.id) AS pending_count,
+      MAX(award_submissions.submitted_at) AS latest_submitted_at
+      FROM award_submissions
+      INNER JOIN members ON members.id = award_submissions.member_id
+      WHERE award_submissions.status = 'pending'
+      GROUP BY members.id, members.name
+      ORDER BY latest_submitted_at DESC`).all();
+    return result.results;
+  } catch {
+    return [];
+  }
+}
+
 export async function GET(request: Request) {
   try {
     const user = await getCurrentUser(request);
@@ -178,19 +196,22 @@ export async function GET(request: Request) {
         members: memberResult.results,
         awards: [],
         progress: [],
+        submissionNotifications: [],
         attendanceSessions: sessionResult.results,
         attendance: attendanceResult.results,
         syllabus: "BB Malaysia Members' Handbook · August 2024",
       });
     }
-    const [awardResult, progressResult] = await Promise.all([
+    const [awardResult, progressResult, submissionNotifications] = await Promise.all([
       db.prepare("SELECT * FROM award_definitions WHERE code NOT IN ('arts_crafts_hobbies', 'band_proficiency', 'scholastic') ORDER BY sort_order").all(),
       db.prepare("SELECT * FROM member_awards").all(),
+      getSubmissionNotifications(),
     ]);
     return Response.json({
       members: memberResult.results,
       awards: awardResult.results,
       progress: progressResult.results,
+      submissionNotifications,
       attendanceSessions: sessionResult.results,
       attendance: attendanceResult.results,
       syllabus: "BB Malaysia Members' Handbook · August 2024",
