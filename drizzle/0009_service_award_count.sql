@@ -1,0 +1,1 @@
+ALTER TABLE `members` ADD `service_award_count` integer DEFAULT 0 NOT NULL;

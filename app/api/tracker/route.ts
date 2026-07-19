@@ -306,7 +306,7 @@ const awards: AwardSeed[] = [
   },
   {
     code: "one_year_service",
-    name: "One-Year Service",
+    name: "One-Year Service Awards",
     category: "Service",
     basic: 1,
     advanced: 0,
@@ -381,6 +381,7 @@ async function ensureSchema() {
       section TEXT NOT NULL DEFAULT 'senior',
       joined_at TEXT NOT NULL,
       service_years INTEGER NOT NULL DEFAULT 0,
+      service_award_count INTEGER NOT NULL DEFAULT 0,
       school TEXT NOT NULL DEFAULT '',
       contact_number TEXT NOT NULL DEFAULT '',
       emergency_contact_number TEXT NOT NULL DEFAULT '',
@@ -459,12 +460,40 @@ async function ensureSchema() {
       "parents_name",
       "ALTER TABLE members ADD COLUMN parents_name TEXT NOT NULL DEFAULT ''",
     ],
+    [
+      "service_award_count",
+      "ALTER TABLE members ADD COLUMN service_award_count INTEGER NOT NULL DEFAULT 0",
+    ],
   ].filter(([column]) => !existingMemberColumns.has(column));
   if (missingMemberColumns.length) {
     await db.batch(
       missingMemberColumns.map(([, statement]) => db.prepare(statement)),
     );
   }
+
+  // Preserve completed legacy service records when moving to a numeric count.
+  await db
+    .prepare(
+      `UPDATE members SET service_award_count = MAX(
+        service_award_count,
+        CASE
+          WHEN EXISTS (
+            SELECT 1 FROM member_awards
+            WHERE member_awards.member_id = members.id
+              AND member_awards.award_code = 'three_year_service'
+              AND member_awards.status = 'awarded'
+          ) THEN 3
+          WHEN EXISTS (
+            SELECT 1 FROM member_awards
+            WHERE member_awards.member_id = members.id
+              AND member_awards.award_code = 'one_year_service'
+              AND member_awards.status = 'awarded'
+          ) THEN 1
+          ELSE 0
+        END
+      )`,
+    )
+    .run();
 
   const sectionColumns = await Promise.all([
     db.prepare("PRAGMA table_info(members)").all<{ name: string }>(),
@@ -628,7 +657,7 @@ export async function GET(request: Request) {
       await Promise.all([
         db
           .prepare(
-            "SELECT * FROM award_definitions WHERE section = ? AND code NOT IN ('arts_crafts_hobbies', 'band_proficiency', 'scholastic') ORDER BY sort_order",
+            "SELECT * FROM award_definitions WHERE section = ? AND code NOT IN ('arts_crafts_hobbies', 'band_proficiency', 'scholastic', 'three_year_service', 'long_year_service') ORDER BY sort_order",
           )
           .bind(section)
           .all(),
@@ -786,6 +815,25 @@ export async function POST(request: Request) {
           section,
         )
         .run();
+    } else if (action === "update_service_award_count") {
+      const memberId = Number(body.memberId);
+      const count = Number(body.count);
+      if (!memberId || !Number.isInteger(count) || count < 0 || count > 20)
+        return Response.json(
+          { error: "Service award count must be between 0 and 20" },
+          { status: 400 },
+        );
+      const result = await db
+        .prepare(
+          "UPDATE members SET service_award_count = ? WHERE id = ? AND section = ?",
+        )
+        .bind(count, memberId, section)
+        .run();
+      if (!result.meta.changes)
+        return Response.json(
+          { error: "Member not found in the selected section" },
+          { status: 404 },
+        );
     } else if (action === "update_award") {
       const memberId = Number(body.memberId);
       const awardCode = String(body.awardCode ?? "");
@@ -804,6 +852,17 @@ export async function POST(request: Request) {
           { status: 400 },
         );
       }
+      if (
+        [
+          "one_year_service",
+          "three_year_service",
+          "long_year_service",
+        ].includes(awardCode)
+      )
+        return Response.json(
+          { error: "Use the service award count for service awards" },
+          { status: 400 },
+        );
       const validAwardTarget = await db
         .prepare(
           `SELECT m.id FROM members m

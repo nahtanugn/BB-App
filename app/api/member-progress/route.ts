@@ -13,7 +13,7 @@ export async function GET(request: Request) {
       );
 
     const member = await env.DB.prepare(
-      "SELECT id, name, rank, squad, section FROM members WHERE LOWER(email) = LOWER(?) LIMIT 1",
+      "SELECT id, name, rank, squad, section, service_award_count FROM members WHERE LOWER(email) = LOWER(?) LIMIT 1",
     )
       .bind(user.email)
       .first<{
@@ -22,13 +22,14 @@ export async function GET(request: Request) {
         rank: string;
         squad: string;
         section: string;
+        service_award_count: number;
       }>();
     if (!member)
       return Response.json({ linked: false, accountEmail: user.email });
 
     const [awards, progress, attendance] = await Promise.all([
       env.DB.prepare(
-        "SELECT code, name, category, basic_available, advanced_available FROM award_definitions WHERE section = ? AND code NOT IN ('arts_crafts_hobbies', 'band_proficiency', 'scholastic') ORDER BY sort_order",
+        "SELECT code, name, category, basic_available, advanced_available FROM award_definitions WHERE section = ? AND code NOT IN ('arts_crafts_hobbies', 'band_proficiency', 'scholastic', 'three_year_service', 'long_year_service') ORDER BY sort_order",
       )
         .bind(member.section)
         .all(),

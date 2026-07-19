@@ -13,6 +13,7 @@ export const members = sqliteTable("members", {
   section: text("section").notNull().default("senior"),
   joinedAt: text("joined_at").notNull(),
   serviceYears: integer("service_years").notNull().default(0),
+  serviceAwardCount: integer("service_award_count").notNull().default(0),
   school: text("school").notNull().default(""),
   contactNumber: text("contact_number").notNull().default(""),
   emergencyContactNumber: text("emergency_contact_number")

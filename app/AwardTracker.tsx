@@ -10,6 +10,7 @@ type Member = {
   squad: string;
   joined_at: string;
   service_years: number;
+  service_award_count: number;
   school: string;
   contact_number: string;
   emergency_contact_number: string;
@@ -274,9 +275,17 @@ export default function AwardTracker({
 
   function memberStats(member: Member) {
     const rows = (data?.progress ?? []).filter(
-      (item) => item.member_id === member.id,
+      (item) =>
+        item.member_id === member.id &&
+        ![
+          "one_year_service",
+          "three_year_service",
+          "long_year_service",
+        ].includes(item.award_code),
     );
-    const awarded = rows.filter((item) => item.status === "awarded").length;
+    const awarded =
+      rows.filter((item) => item.status === "awarded").length +
+      member.service_award_count;
     const active = rows.filter((item) =>
       ["in_progress", "submitted", "verified"].includes(item.status),
     ).length;
@@ -309,7 +318,7 @@ export default function AwardTracker({
       isAwarded("christian_education", "advanced"),
       isAwarded("drill", "advanced"),
       isAwarded("recruitment", "basic"),
-      member.service_years >= 3,
+      member.service_award_count >= 3,
     ];
     const groupAwards = (data?.awards ?? []).filter((award) =>
       /^[A-D] ·/.test(award.category),
@@ -380,6 +389,41 @@ export default function AwardTracker({
     });
     if (!response.ok) await load();
     setSaving("");
+  }
+
+  async function updateServiceAwardCount(member: Member, count: number) {
+    const nextCount = Math.max(0, Math.min(20, count));
+    const key = `service-awards-${member.id}`;
+    setSaving(key);
+    setNotice("");
+    setData((existing) =>
+      existing
+        ? {
+            ...existing,
+            members: existing.members.map((item) =>
+              item.id === member.id
+                ? { ...item, service_award_count: nextCount }
+                : item,
+            ),
+          }
+        : existing,
+    );
+    const response = await fetch("/api/tracker", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        action: "update_service_award_count",
+        section,
+        memberId: member.id,
+        count: nextCount,
+      }),
+    });
+    setSaving("");
+    if (!response.ok) {
+      await load();
+      return;
+    }
+    setNotice("Service award count updated successfully.");
   }
 
   async function saveMember(event: FormEvent<HTMLFormElement>) {
@@ -531,26 +575,36 @@ export default function AwardTracker({
   function exportCsv() {
     if (!data) return;
     const lines = [["Member", "Rank", "Squad", "Award", "Level", "Status"]];
-    data.members.forEach((member) =>
-      data.awards.forEach((award) =>
-        ["basic", "advanced"].forEach((awardLevel) => {
-          if (
-            (awardLevel === "basic" && !award.basic_available) ||
-            (awardLevel === "advanced" && !award.advanced_available)
-          )
-            return;
-          lines.push([
-            member.name,
-            member.rank,
-            member.squad,
-            award.name,
-            awardLevel,
-            progressMap.get(`${member.id}:${award.code}:${awardLevel}`)
-              ?.status ?? "not_started",
-          ]);
-        }),
-      ),
-    );
+    data.members.forEach((member) => {
+      lines.push([
+        member.name,
+        member.rank,
+        member.squad,
+        "One-Year Service Awards",
+        "count",
+        String(member.service_award_count),
+      ]);
+      data.awards
+        .filter((award) => award.category !== "Service")
+        .forEach((award) =>
+          ["basic", "advanced"].forEach((awardLevel) => {
+            if (
+              (awardLevel === "basic" && !award.basic_available) ||
+              (awardLevel === "advanced" && !award.advanced_available)
+            )
+              return;
+            lines.push([
+              member.name,
+              member.rank,
+              member.squad,
+              award.name,
+              awardLevel,
+              progressMap.get(`${member.id}:${award.code}:${awardLevel}`)
+                ?.status ?? "not_started",
+            ]);
+          }),
+        );
+    });
     const csv = lines
       .map((row) =>
         row.map((cell) => `"${String(cell).replaceAll('"', '""')}"`).join(","),
@@ -588,9 +642,20 @@ export default function AwardTracker({
       </main>
     );
 
-  const awardedTotal = data.progress.filter(
-    (item) => item.status === "awarded",
-  ).length;
+  const awardedTotal =
+    data.progress.filter(
+      (item) =>
+        item.status === "awarded" &&
+        ![
+          "one_year_service",
+          "three_year_service",
+          "long_year_service",
+        ].includes(item.award_code),
+    ).length +
+    data.members.reduce(
+      (total, member) => total + member.service_award_count,
+      0,
+    );
   const pendingTotal = data.progress.filter((item) =>
     ["submitted", "verified"].includes(item.status),
   ).length;
@@ -977,13 +1042,16 @@ export default function AwardTracker({
                   <button
                     key={item}
                     className={category === item ? "active" : ""}
-                    onClick={() => setCategory(item)}
+                    onClick={() => {
+                      setCategory(item);
+                      if (item === "Service") setLevel("basic");
+                    }}
                   >
                     {item}
                   </button>
                 ))}
               </div>
-              {section === "senior" && (
+              {section === "senior" && category !== "Service" && (
                 <div className="level-toggle">
                   <button
                     className={level === "basic" ? "active" : ""}
@@ -1002,17 +1070,21 @@ export default function AwardTracker({
             </div>
             <div className="matrix-help">
               <span>
-                {canManageAwards
-                  ? "Tap a status to move it forward"
-                  : "Awards are shown in read-only mode"}
+                {category === "Service"
+                  ? canManageAwards
+                    ? "Use + or − to record how many One-Year Service Awards each member has"
+                    : "Service award counts are shown in read-only mode"
+                  : canManageAwards
+                    ? "Tap a status to move it forward"
+                    : "Awards are shown in read-only mode"}
               </span>
-              <div>
+              {category !== "Service" && <div>
                 {statusOrder.slice(1).map((status) => (
                   <span key={status} className={`legend ${status}`}>
                     {statusLabel[status]}
                   </span>
                 ))}
-              </div>
+              </div>}
             </div>
             <div className="table-scroll">
               <table className="award-matrix">
@@ -1039,6 +1111,53 @@ export default function AwardTracker({
                         </div>
                       </th>
                       {visibleAwards.map((award) => {
+                        if (award.code === "one_year_service") {
+                          const serviceKey = `service-awards-${member.id}`;
+                          return (
+                            <td key={award.code}>
+                              <div
+                                className="service-count-control"
+                                aria-label={`${member.name}: ${member.service_award_count} One-Year Service Awards`}
+                              >
+                                <button
+                                  type="button"
+                                  disabled={
+                                    !canManageAwards ||
+                                    saving === serviceKey ||
+                                    member.service_award_count === 0
+                                  }
+                                  onClick={() =>
+                                    updateServiceAwardCount(
+                                      member,
+                                      member.service_award_count - 1,
+                                    )
+                                  }
+                                  aria-label={`Remove one service award from ${member.name}`}
+                                >
+                                  −
+                                </button>
+                                <strong>{member.service_award_count}</strong>
+                                <button
+                                  type="button"
+                                  disabled={
+                                    !canManageAwards ||
+                                    saving === serviceKey ||
+                                    member.service_award_count === 20
+                                  }
+                                  onClick={() =>
+                                    updateServiceAwardCount(
+                                      member,
+                                      member.service_award_count + 1,
+                                    )
+                                  }
+                                  aria-label={`Add one service award to ${member.name}`}
+                                >
+                                  ＋
+                                </button>
+                              </div>
+                            </td>
+                          );
+                        }
                         const key = `${member.id}:${award.code}:${level}`;
                         const status =
                           progressMap.get(key)?.status ?? "not_started";
@@ -1146,11 +1265,15 @@ export default function AwardTracker({
                         <strong>{member.parents_name || "Not recorded"}</strong>
                       </span>
                       <span>
-                        <small>Service</small>
+                        <small>Service duration</small>
                         <strong>
                           {member.service_years} year
                           {member.service_years === 1 ? "" : "s"}
                         </strong>
+                      </span>
+                      <span>
+                        <small>Service awards</small>
+                        <strong>{member.service_award_count}</strong>
                       </span>
                     </div>
                   )}

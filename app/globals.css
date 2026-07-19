@@ -154,6 +154,10 @@ h2 { color: var(--navy); }
 .table-member span { margin-top: 2px; color: var(--muted); font-size: 8px; font-weight: 500; }
 .status-pill { min-width: 73px; min-height: 27px; padding: 5px 8px; border: 1px solid var(--line); border-radius: 99px; background: white; color: #9aa4af; font-size: 8px; font-weight: 750; }
 .status-pill:hover { transform: translateY(-1px); box-shadow: 0 4px 10px rgba(0,0,0,.06); }
+.service-count-control { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-width: 104px; }
+.service-count-control button { width: 27px; height: 27px; padding: 0; border: 1px solid var(--line); border-radius: 50%; background: white; color: var(--navy); font-weight: 800; cursor: pointer; }
+.service-count-control button:disabled { cursor: not-allowed; opacity: .35; }
+.service-count-control strong { min-width: 18px; color: var(--navy); font-family: Georgia, serif; font-size: 16px; text-align: center; }
 .in_progress { background: #eef5ff !important; color: #276ab3 !important; border-color: #c8ddf6 !important; }
 .submitted { background: #fff5df !important; color: #8b6616 !important; border-color: #efd99b !important; }
 .verified { background: #e8f7f1 !important; color: #147052 !important; border-color: #bfe6d7 !important; }
