@@ -663,7 +663,7 @@ export async function GET(request: Request) {
           .all(),
         db
           .prepare(
-            "SELECT ma.* FROM member_awards ma INNER JOIN members m ON m.id = ma.member_id WHERE m.section = ?",
+            "SELECT ma.member_id, ma.award_code, ma.level, ma.status FROM member_awards ma INNER JOIN members m ON m.id = ma.member_id WHERE m.section = ?",
           )
           .bind(section)
           .all(),
@@ -880,11 +880,10 @@ export async function POST(request: Request) {
       await db
         .prepare(
           `INSERT INTO member_awards
-        (member_id, award_code, level, status, awarded_at, updated_at, updated_by)
-        VALUES (?, ?, ?, ?, ?, ?, ?)
+        (member_id, award_code, level, status, updated_at, updated_by)
+        VALUES (?, ?, ?, ?, ?, ?)
         ON CONFLICT(member_id, award_code, level) DO UPDATE SET
           status = excluded.status,
-          awarded_at = excluded.awarded_at,
           updated_at = excluded.updated_at,
           updated_by = excluded.updated_by`,
         )
@@ -893,7 +892,6 @@ export async function POST(request: Request) {
           awardCode,
           level,
           status,
-          status === "awarded" ? now : null,
           now,
           user.email,
         )

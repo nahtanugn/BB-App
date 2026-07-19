@@ -34,7 +34,7 @@ export async function GET(request: Request) {
         .bind(member.section)
         .all(),
       env.DB.prepare(
-        "SELECT award_code, level, status, awarded_at FROM member_awards WHERE member_id = ?",
+        "SELECT award_code, level, status FROM member_awards WHERE member_id = ?",
       )
         .bind(member.id)
         .all(),

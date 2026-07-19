@@ -32,7 +32,6 @@ type Progress = {
   award_code: string;
   level: string;
   status: Status;
-  awarded_at: string | null;
 };
 
 type Status =
@@ -368,8 +367,6 @@ export default function AwardTracker({
                 award_code: awardCode,
                 level,
                 status: next,
-                awarded_at:
-                  next === "awarded" ? new Date().toISOString() : null,
               },
             ],
           }
