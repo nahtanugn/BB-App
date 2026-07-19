@@ -146,6 +146,7 @@ export default function AwardTracker({
   onLogout,
   onManageAccount,
   onOpenResources,
+  onOpenSubmissions,
 }: AwardTrackerProps) {
   const isNco = user?.role === "nco";
   const isSquadLeader = user?.role === "squad_leader";
