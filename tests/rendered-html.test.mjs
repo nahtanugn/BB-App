@@ -153,6 +153,15 @@ test("ships the Malaysia Senior Section catalogue, role-based portals and instal
   assert.match(tracker, /YEARLY SUBSCRIPTION/);
   assert.match(tracker, /updateSubscription/);
   assert.match(tracker, /canManageSubscriptions/);
+  assert.match(tracker, /Export all member data/);
+  assert.match(tracker, /11kchbb-all-member-records-/);
+  assert.match(
+    tracker,
+    /All Senior and Junior member records exported successfully/,
+  );
+  assert.match(tracker, /Attendance Percentage/);
+  assert.match(tracker, /One-Year Service Awards/);
+  assert.match(tracker, /Subscription \$\{year\}/);
   assert.match(route, /CREATE TABLE IF NOT EXISTS member_subscriptions/);
   assert.match(route, /action === "update_subscription"/);
   assert.match(tracker, /section-switch/);

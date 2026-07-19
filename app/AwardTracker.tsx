@@ -631,49 +631,272 @@ export default function AwardTracker({
     await load();
   }
 
-  function exportCsv() {
-    if (!data) return;
-    const lines = [["Member", "Rank", "Squad", "Award", "Level", "Status"]];
-    data.members.forEach((member) => {
-      lines.push([
-        member.name,
-        member.rank,
-        member.squad,
+  async function exportCsv() {
+    if (!data || saving === "export") return;
+    setSaving("export");
+    setNotice("");
+    try {
+      const datasets = await Promise.all(
+        (["senior", "junior"] as const).map(async (exportSection) => {
+          const response = await fetch(
+            `/api/tracker?section=${exportSection}`,
+            { cache: "no-store" },
+          );
+          const result = (await response.json()) as TrackerData & {
+            error?: string;
+          };
+          if (!response.ok)
+            throw new Error(result.error ?? "Unable to prepare the export");
+          return result;
+        }),
+      );
+
+      const awardColumns = datasets.flatMap((dataset) =>
+        dataset.awards
+          .filter((award) => award.code !== "one_year_service")
+          .flatMap((award) =>
+            (["basic", "advanced"] as const)
+              .filter((awardLevel) =>
+                awardLevel === "basic"
+                  ? Boolean(award.basic_available)
+                  : Boolean(award.advanced_available),
+              )
+              .map((awardLevel) => ({
+                key: `${dataset.section}:${award.code}:${awardLevel}`,
+                section: dataset.section,
+                code: award.code,
+                level: awardLevel,
+                label: `${dataset.section === "senior" ? "Senior" : "Junior"} Award · ${award.category} · ${award.name} · ${awardLevel === "basic" ? "Basic" : "Advanced"}`,
+              })),
+          ),
+      );
+      const attendanceColumns = datasets.flatMap((dataset) =>
+        dataset.attendanceSessions.map((session) => ({
+          key: `${dataset.section}:${session.id}`,
+          section: dataset.section,
+          session,
+          label: `${dataset.section === "senior" ? "Senior" : "Junior"} Attendance · ${session.meeting_date} · ${session.title}`,
+        })),
+      );
+      const subscriptionYears = [
+        ...new Set([
+          currentSubscriptionYear,
+          ...datasets.flatMap((dataset) =>
+            dataset.subscriptions.map((item) => item.year),
+          ),
+        ]),
+      ].sort((a, b) => b - a);
+      const headers = [
+        "Member ID",
+        "Section",
+        "Syllabus",
+        "Full Name",
+        "Rank",
+        "Squad",
+        "Joined Month",
+        "Joined Month Display",
+        "Service Years",
         "One-Year Service Awards",
-        "count",
-        String(member.service_award_count),
-      ]);
-      data.awards
-        .filter((award) => award.category !== "Service")
-        .forEach((award) =>
-          ["basic", "advanced"].forEach((awardLevel) => {
-            if (
-              (awardLevel === "basic" && !award.basic_available) ||
-              (awardLevel === "advanced" && !award.advanced_available)
-            )
-              return;
-            lines.push([
-              member.name,
-              member.rank,
-              member.squad,
-              award.name,
-              awardLevel,
-              progressMap.get(`${member.id}:${award.code}:${awardLevel}`)
-                ?.status ?? "not_started",
-            ]);
-          }),
+        "School",
+        "Contact Number",
+        "Emergency Contact Number",
+        "Email",
+        "Parents Name",
+        "Demo Record",
+        "Awards Earned",
+        "Awards In Progress or Review",
+        "Pathway Checks Completed",
+        "Pathway Checks Total",
+        "Pathway Readiness Percentage",
+        "Attendance Meetings",
+        "Attendance Present",
+        "Attendance Absent",
+        "Attendance Excused",
+        "Attendance Unmarked",
+        "Attendance Percentage",
+        "Pending Award Submissions",
+        "Latest Pending Submission",
+        ...subscriptionYears.map((year) => `Subscription ${year}`),
+        ...awardColumns.map((column) => column.label),
+        ...attendanceColumns.map((column) => column.label),
+      ];
+      const lines: Array<Array<string | number>> = [headers];
+
+      datasets.forEach((dataset) => {
+        const datasetProgress = new Map(
+          dataset.progress.map((item) => [
+            `${item.member_id}:${item.award_code}:${item.level}`,
+            item,
+          ]),
         );
-    });
-    const csv = lines
+        const datasetAttendance = new Map(
+          dataset.attendance.map((item) => [
+            `${item.session_id}:${item.member_id}`,
+            item.status,
+          ]),
+        );
+        const datasetSubscriptions = new Map(
+          dataset.subscriptions.map((item) => [
+            `${item.member_id}:${item.year}`,
+            Boolean(item.paid),
+          ]),
+        );
+        const pendingByMember = new Map(
+          dataset.submissionNotifications.map((item) => [
+            item.member_id,
+            item,
+          ]),
+        );
+
+        dataset.members.forEach((member) => {
+          const isAwarded = (code: string, awardLevel: string) =>
+            datasetProgress.get(`${member.id}:${code}:${awardLevel}`)
+              ?.status === "awarded";
+          const memberProgress = dataset.progress.filter(
+            (item) => item.member_id === member.id,
+          );
+          const awarded =
+            memberProgress.filter((item) => item.status === "awarded").length +
+            member.service_award_count;
+          const active = memberProgress.filter((item) =>
+            ["in_progress", "submitted", "verified"].includes(item.status),
+          ).length;
+          let pathwayChecks: boolean[];
+          if (dataset.section === "junior") {
+            pathwayChecks = [
+              "white",
+              "green",
+              "purple",
+              "blue",
+              "red",
+              "silver",
+              "gold",
+            ].map((colour) => isAwarded(`junior_${colour}`, "basic"));
+          } else {
+            pathwayChecks = [
+              isAwarded("nco_proficiency", "advanced"),
+              isAwarded("christian_education", "advanced"),
+              isAwarded("drill", "advanced"),
+              isAwarded("recruitment", "basic"),
+              member.service_award_count >= 3,
+            ];
+            const best = dataset.awards
+              .filter((award) => /^[A-D] ·/.test(award.category))
+              .map((award) => ({
+                category: award.category[0],
+                level: isAwarded(award.code, "advanced")
+                  ? "advanced"
+                  : isAwarded(award.code, "basic")
+                    ? "basic"
+                    : null,
+              }))
+              .filter((item) => item.level);
+            pathwayChecks.push(
+              best.length >= 6,
+              new Set(best.map((item) => item.category)).size === 4,
+              best.filter((item) => item.level === "basic").length >= 2,
+              best.filter((item) => item.level === "advanced").length >= 4,
+            );
+          }
+          const pathwayComplete = pathwayChecks.filter(Boolean).length;
+          const attendanceStatuses = dataset.attendanceSessions.map(
+            (session) =>
+              datasetAttendance.get(`${session.id}:${member.id}`) ??
+              "unmarked",
+          );
+          const present = attendanceStatuses.filter(
+            (status) => status === "present",
+          ).length;
+          const absent = attendanceStatuses.filter(
+            (status) => status === "absent",
+          ).length;
+          const excused = attendanceStatuses.filter(
+            (status) => status === "excused",
+          ).length;
+          const unmarked = attendanceStatuses.filter(
+            (status) => status === "unmarked",
+          ).length;
+          const pending = pendingByMember.get(member.id);
+
+          lines.push([
+            member.id,
+            dataset.section === "senior" ? "Senior" : "Junior",
+            dataset.syllabus,
+            member.name,
+            member.rank,
+            member.squad,
+            member.joined_at,
+            joinedMonth(member.joined_at),
+            member.service_years,
+            member.service_award_count,
+            member.school,
+            member.contact_number,
+            member.emergency_contact_number,
+            member.email,
+            member.parents_name,
+            member.is_demo ? "Yes" : "No",
+            awarded,
+            active,
+            pathwayComplete,
+            pathwayChecks.length,
+            Math.round((pathwayComplete / pathwayChecks.length) * 100),
+            attendanceStatuses.length,
+            present,
+            absent,
+            excused,
+            unmarked,
+            attendanceStatuses.length
+              ? Math.round((present / attendanceStatuses.length) * 100)
+              : 0,
+            pending?.pending_count ?? 0,
+            pending?.latest_submitted_at ?? "",
+            ...subscriptionYears.map((year) =>
+              datasetSubscriptions.get(`${member.id}:${year}`)
+                ? "Paid"
+                : "Unpaid",
+            ),
+            ...awardColumns.map((column) =>
+              column.section === dataset.section
+                ? statusLabel[
+                    datasetProgress.get(
+                      `${member.id}:${column.code}:${column.level}`,
+                    )?.status ?? "not_started"
+                  ]
+                : "",
+            ),
+            ...attendanceColumns.map((column) =>
+              column.section === dataset.section
+                ? attendanceLabel[
+                    datasetAttendance.get(
+                      `${column.session.id}:${member.id}`,
+                    ) ?? "unmarked"
+                  ]
+                : "",
+            ),
+          ]);
+        });
+      });
+
+      const csv = lines
       .map((row) =>
         row.map((cell) => `"${String(cell).replaceAll('"', '""')}"`).join(","),
       )
       .join("\n");
-    const link = document.createElement("a");
-    link.href = URL.createObjectURL(new Blob([csv], { type: "text/csv" }));
-    link.download = `11kchbb-app-${new Date().toISOString().slice(0, 10)}.csv`;
-    link.click();
-    URL.revokeObjectURL(link.href);
+      const link = document.createElement("a");
+      link.href = URL.createObjectURL(
+        new Blob([`\ufeff${csv}`], { type: "text/csv;charset=utf-8" }),
+      );
+      link.download = `11kchbb-all-member-records-${new Date().toISOString().slice(0, 10)}.csv`;
+      link.click();
+      URL.revokeObjectURL(link.href);
+      setNotice("All Senior and Junior member records exported successfully.");
+    } catch (cause) {
+      window.alert(
+        cause instanceof Error ? cause.message : "Unable to export records",
+      );
+    } finally {
+      setSaving("");
+    }
   }
 
   if (error)
@@ -1090,11 +1313,18 @@ export default function AwardTracker({
                   </span>
                   <b>›</b>
                 </button>
-                <button onClick={exportCsv}>
+                <button
+                  onClick={exportCsv}
+                  disabled={saving === "export"}
+                >
                   <span className="action-icon">↓</span>
                   <span>
-                    <strong>Export records</strong>
-                    <small>Download a spreadsheet-ready CSV</small>
+                    <strong>
+                      {saving === "export"
+                        ? "Preparing export…"
+                        : "Export all member data"}
+                    </strong>
+                    <small>Members, awards, attendance & subscriptions</small>
                   </span>
                   <b>›</b>
                 </button>
