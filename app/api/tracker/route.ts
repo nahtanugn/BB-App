@@ -243,7 +243,7 @@ const awards: AwardSeed[] = [
   },
   {
     code: "nco_proficiency",
-    name: "NCO Proficiency",
+    name: "NCO Proficiency Star",
     category: "Special",
     basic: 1,
     advanced: 1,

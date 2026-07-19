@@ -153,6 +153,8 @@ test("ships the Malaysia Senior Section catalogue, role-based portals and instal
   assert.match(tracker, /switchSection\("junior"\)/);
   assert.match(tracker, /Junior Gold Award pathway/);
   assert.match(route, /const juniorAwards/);
+  assert.match(route, /NCO Proficiency Star/);
+  assert.match(route, /code: "nco_proficiency"[\s\S]*?basic: 1,[\s\S]*?advanced: 1/);
   assert.match(route, /"White"/);
   assert.match(route, /WHERE section = \?/);
   assert.match(route, /attendance_sessions WHERE section = \?/);
