@@ -448,6 +448,18 @@ async function ensureSchema() {
     db.prepare(
       "CREATE INDEX IF NOT EXISTS attendance_records_member_idx ON attendance_records(member_id)",
     ),
+    db.prepare(`CREATE TABLE IF NOT EXISTS member_subscriptions (
+      member_id INTEGER NOT NULL,
+      year INTEGER NOT NULL,
+      paid INTEGER NOT NULL DEFAULT 0,
+      updated_at TEXT NOT NULL,
+      updated_by TEXT NOT NULL,
+      PRIMARY KEY (member_id, year),
+      FOREIGN KEY (member_id) REFERENCES members(id) ON DELETE CASCADE
+    )`),
+    db.prepare(
+      "CREATE INDEX IF NOT EXISTS member_subscriptions_year_idx ON member_subscriptions(year)",
+    ),
   ]);
 
   const memberColumns = await db
@@ -653,7 +665,8 @@ export async function GET(request: Request) {
     const section = allowedSections.includes(requestedSection)
       ? requestedSection
       : "senior";
-    const [memberResult, sessionResult, attendanceResult] = await Promise.all([
+    const [memberResult, sessionResult, attendanceResult, subscriptionResult] =
+      await Promise.all([
       db
         .prepare(
           "SELECT * FROM members WHERE section = ? ORDER BY name COLLATE NOCASE",
@@ -683,6 +696,12 @@ export async function GET(request: Request) {
             )
             .bind(section)
             .all(),
+      db
+        .prepare(
+          "SELECT ms.member_id, ms.year, ms.paid FROM member_subscriptions ms INNER JOIN members m ON m.id = ms.member_id WHERE m.section = ? ORDER BY ms.year DESC, m.name COLLATE NOCASE",
+        )
+        .bind(section)
+        .all(),
     ]);
     const members = memberResult.results.map((member) => ({
       ...member,
@@ -711,6 +730,7 @@ export async function GET(request: Request) {
       submissionNotifications,
       attendanceSessions: sessionResult.results,
       attendance: attendanceResult.results,
+      subscriptions: subscriptionResult.results,
       syllabus:
         section === "junior"
           ? "BB Malaysia Junior Section"
@@ -870,6 +890,48 @@ export async function POST(request: Request) {
           { error: "Member not found in the selected section" },
           { status: 404 },
         );
+    } else if (action === "update_subscription") {
+      const memberId = Number(body.memberId);
+      const year = Number(body.year);
+      const paid = Boolean(body.paid);
+      const currentYear = Number(
+        new Intl.DateTimeFormat("en", {
+          timeZone: "Asia/Kuching",
+          year: "numeric",
+        }).format(new Date()),
+      );
+      if (
+        !memberId ||
+        !Number.isInteger(year) ||
+        year < 2000 ||
+        year > currentYear + 1
+      )
+        return Response.json(
+          { error: "Select a valid subscription year and member" },
+          { status: 400 },
+        );
+      const validMember = await db
+        .prepare("SELECT id FROM members WHERE id = ? AND section = ?")
+        .bind(memberId, section)
+        .first();
+      if (!validMember)
+        return Response.json(
+          { error: "Member not found in the selected section" },
+          { status: 404 },
+        );
+      const now = new Date().toISOString();
+      await db
+        .prepare(
+          `INSERT INTO member_subscriptions
+          (member_id, year, paid, updated_at, updated_by)
+          VALUES (?, ?, ?, ?, ?)
+          ON CONFLICT(member_id, year) DO UPDATE SET
+            paid = excluded.paid,
+            updated_at = excluded.updated_at,
+            updated_by = excluded.updated_by`,
+        )
+        .bind(memberId, year, paid ? 1 : 0, now, user.email)
+        .run();
     } else if (action === "update_award") {
       const memberId = Number(body.memberId);
       const awardCode = String(body.awardCode ?? "");
@@ -951,6 +1013,10 @@ export async function POST(request: Request) {
         .run();
       await db
         .prepare("DELETE FROM attendance_records WHERE member_id = ?")
+        .bind(memberId)
+        .run();
+      await db
+        .prepare("DELETE FROM member_subscriptions WHERE member_id = ?")
         .bind(memberId)
         .run();
       await db

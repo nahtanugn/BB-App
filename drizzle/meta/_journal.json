@@ -71,6 +71,13 @@
       "when": 1784464516226,
       "tag": "0009_service_award_count",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "6",
+      "when": 1784469387680,
+      "tag": "0010_yearly_subscriptions",
+      "breakpoints": true
     }
   ]
 }

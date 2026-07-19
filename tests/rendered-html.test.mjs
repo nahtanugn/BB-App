@@ -150,6 +150,11 @@ test("ships the Malaysia Senior Section catalogue, role-based portals and instal
   assert.match(tracker, /!canManageAttendance \|\| saving === key/);
   assert.match(tracker, /canEditMembers/);
   assert.match(tracker, /canAddMembers/);
+  assert.match(tracker, /YEARLY SUBSCRIPTION/);
+  assert.match(tracker, /updateSubscription/);
+  assert.match(tracker, /canManageSubscriptions/);
+  assert.match(route, /CREATE TABLE IF NOT EXISTS member_subscriptions/);
+  assert.match(route, /action === "update_subscription"/);
   assert.match(tracker, /section-switch/);
   assert.match(tracker, /switchSection\("junior"\)/);
   assert.match(tracker, /Junior Gold Award pathway/);

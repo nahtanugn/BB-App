@@ -83,6 +83,20 @@ export const attendanceRecords = sqliteTable(
   (table) => [primaryKey({ columns: [table.sessionId, table.memberId] })],
 );
 
+export const memberSubscriptions = sqliteTable(
+  "member_subscriptions",
+  {
+    memberId: integer("member_id")
+      .notNull()
+      .references(() => members.id, { onDelete: "cascade" }),
+    year: integer("year").notNull(),
+    paid: integer("paid", { mode: "boolean" }).notNull().default(false),
+    updatedAt: text("updated_at").notNull(),
+    updatedBy: text("updated_by").notNull(),
+  },
+  (table) => [primaryKey({ columns: [table.memberId, table.year] })],
+);
+
 export const users = sqliteTable("users", {
   id: integer("id").primaryKey({ autoIncrement: true }),
   email: text("email").notNull().unique(),

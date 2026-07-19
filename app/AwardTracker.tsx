@@ -52,6 +52,11 @@ type AttendanceRecord = {
   member_id: number;
   status: AttendanceStatus;
 };
+type SubscriptionRecord = {
+  member_id: number;
+  year: number;
+  paid: number;
+};
 type SubmissionNotification = {
   member_id: number;
   member_name: string;
@@ -64,6 +69,7 @@ type TrackerData = {
   progress: Progress[];
   attendanceSessions: AttendanceSession[];
   attendance: AttendanceRecord[];
+  subscriptions: SubscriptionRecord[];
   submissionNotifications: SubmissionNotification[];
   syllabus: string;
   section: "senior" | "junior";
@@ -158,6 +164,7 @@ export default function AwardTracker({
   const canAddMembers = Boolean(user);
   const canEditMembers = Boolean(user);
   const canManageAttendance = Boolean(user);
+  const canManageSubscriptions = canManageAwards;
   const canViewSubmissions = !isNco;
   const [section, setSection] = useState<"senior" | "junior">("senior");
   const [data, setData] = useState<TrackerData | null>(null);
@@ -167,8 +174,17 @@ export default function AwardTracker({
   const [category, setCategory] = useState("Compulsory");
   const [level, setLevel] = useState<"basic" | "advanced">("basic");
   const [view, setView] = useState<
-    "dashboard" | "matrix" | "members" | "attendance"
+    "dashboard" | "matrix" | "members" | "attendance" | "subscriptions"
   >(isNco ? "attendance" : "dashboard");
+  const currentSubscriptionYear = Number(
+    new Intl.DateTimeFormat("en", {
+      timeZone: "Asia/Kuching",
+      year: "numeric",
+    }).format(new Date()),
+  );
+  const [subscriptionYear, setSubscriptionYear] = useState(
+    currentSubscriptionYear,
+  );
   const [showAdd, setShowAdd] = useState(false);
   const [editingMember, setEditingMember] = useState<Member | null>(null);
   const [joinedAtDraft, setJoinedAtDraft] = useState(
@@ -239,6 +255,14 @@ export default function AwardTracker({
     const map = new Map<string, AttendanceRecord>();
     data?.attendance.forEach((item) =>
       map.set(`${item.session_id}:${item.member_id}`, item),
+    );
+    return map;
+  }, [data]);
+
+  const subscriptionMap = useMemo(() => {
+    const map = new Map<string, boolean>();
+    data?.subscriptions.forEach((item) =>
+      map.set(`${item.member_id}:${item.year}`, Boolean(item.paid)),
     );
     return map;
   }, [data]);
@@ -550,6 +574,43 @@ export default function AwardTracker({
     setSaving("");
   }
 
+  async function updateSubscription(memberId: number, paid: boolean) {
+    const key = `subscription-${subscriptionYear}-${memberId}`;
+    setSaving(key);
+    setNotice("");
+    setData((existing) =>
+      existing
+        ? {
+            ...existing,
+            subscriptions: [
+              ...existing.subscriptions.filter(
+                (item) =>
+                  !(item.member_id === memberId && item.year === subscriptionYear),
+              ),
+              { member_id: memberId, year: subscriptionYear, paid: paid ? 1 : 0 },
+            ],
+          }
+        : existing,
+    );
+    const response = await fetch("/api/tracker", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        action: "update_subscription",
+        section,
+        memberId,
+        year: subscriptionYear,
+        paid,
+      }),
+    });
+    setSaving("");
+    if (!response.ok) {
+      await load();
+      return;
+    }
+    setNotice("Yearly subscription updated successfully.");
+  }
+
   async function deleteAttendanceSession(session: AttendanceSession) {
     if (
       !window.confirm(
@@ -738,6 +799,12 @@ export default function AwardTracker({
           >
             <span>✓</span> Attendance
           </button>
+          <button
+            className={view === "subscriptions" ? "active" : ""}
+            onClick={() => setView("subscriptions")}
+          >
+            <span>◇</span> Subscription
+          </button>
           <button onClick={onOpenResources}>
             <span>↗</span> Resources
           </button>
@@ -782,7 +849,9 @@ export default function AwardTracker({
                   ? "AWARD PROGRESS"
                   : view === "members"
                     ? "MEMBER DIRECTORY"
-                    : "PARADE REGISTER"}
+                    : view === "attendance"
+                      ? "PARADE REGISTER"
+                      : "YEARLY SUBSCRIPTION"}
             </p>
             <h1>
               {view === "dashboard"
@@ -791,7 +860,9 @@ export default function AwardTracker({
                   ? "Award matrix"
                   : view === "members"
                     ? "Members"
-                    : "Attendance"}
+                    : view === "attendance"
+                      ? "Attendance"
+                      : "Subscription"}
             </h1>
           </div>
           <div className="top-actions">
@@ -823,7 +894,7 @@ export default function AwardTracker({
               <button className="primary" onClick={() => setShowSession(true)}>
                 ＋ New meeting
               </button>
-            ) : canAddMembers ? (
+            ) : view !== "subscriptions" && canAddMembers ? (
               <button className="primary" onClick={openAddMember}>
                 ＋ Add member
               </button>
@@ -1471,6 +1542,93 @@ export default function AwardTracker({
                 </div>
               )}
             </article>
+          </section>
+        )}
+
+        {view === "subscriptions" && (
+          <section className="panel subscription-panel">
+            <div className="subscription-heading">
+              <div>
+                <p className="eyebrow">YEARLY SUBSCRIPTION</p>
+                <h2>{subscriptionYear} payment register</h2>
+                <p>
+                  {canManageSubscriptions
+                    ? "Mark each member as paid when their yearly subscription is received."
+                    : "Subscription records are shown in read-only mode."}
+                </p>
+              </div>
+              <label>
+                Year
+                <select
+                  value={subscriptionYear}
+                  onChange={(event) =>
+                    setSubscriptionYear(Number(event.target.value))
+                  }
+                >
+                  {Array.from(
+                    { length: currentSubscriptionYear - 1998 },
+                    (_, index) => currentSubscriptionYear + 1 - index,
+                  ).map((year) => (
+                    <option key={year} value={year}>
+                      {year}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            </div>
+            <div className="subscription-summary">
+              <span className="paid">
+                <strong>
+                  {
+                    filteredMembers.filter((member) =>
+                      subscriptionMap.get(`${member.id}:${subscriptionYear}`),
+                    ).length
+                  }
+                </strong>{" "}
+                Paid
+              </span>
+              <span>
+                <strong>
+                  {
+                    filteredMembers.filter(
+                      (member) =>
+                        !subscriptionMap.get(
+                          `${member.id}:${subscriptionYear}`,
+                        ),
+                    ).length
+                  }
+                </strong>{" "}
+                Unpaid
+              </span>
+            </div>
+            <div className="subscription-rows">
+              {filteredMembers.map((member) => {
+                const key = `subscription-${subscriptionYear}-${member.id}`;
+                const paid =
+                  subscriptionMap.get(`${member.id}:${subscriptionYear}`) ??
+                  false;
+                return (
+                  <div className="subscription-row" key={member.id}>
+                    <div className="avatar small">{initials(member.name)}</div>
+                    <div className="member-meta">
+                      <strong>{member.name}</strong>
+                      <span>
+                        {member.rank} · {member.squad}
+                      </span>
+                    </div>
+                    <button
+                      type="button"
+                      className={paid ? "paid" : "unpaid"}
+                      disabled={!canManageSubscriptions || saving === key}
+                      onClick={() => updateSubscription(member.id, !paid)}
+                      aria-label={`${member.name} subscription for ${subscriptionYear}: ${paid ? "Paid" : "Unpaid"}`}
+                    >
+                      {saving === key ? "Saving…" : paid ? "✓ Paid" : "Unpaid"}
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
           </section>
         )}
       </main>
