@@ -72,7 +72,19 @@ export async function GET(request: Request) {
         member,
       });
     }
-    const memberId = Number(new URL(request.url).searchParams.get("memberId"));
+    const url = new URL(request.url);
+    if (url.searchParams.get("all") === "1") {
+      if (!["admin", "officer"].includes(user.role))
+        return Response.json(
+          { error: "Admin or Officer access required" },
+          { status: 403 },
+        );
+      const submissions = await env.DB.prepare(
+        "SELECT * FROM award_submissions ORDER BY submitted_at DESC",
+      ).all();
+      return Response.json({ submissions: submissions.results });
+    }
+    const memberId = Number(url.searchParams.get("memberId"));
     if (!memberId)
       return Response.json(
         { error: "Select a member to view submissions" },

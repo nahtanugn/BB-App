@@ -3,10 +3,11 @@ import { readFile } from "node:fs/promises";
 import test from "node:test";
 
 test("defines the 11KCHBB App application shell and sharing metadata", async () => {
-  const [layout, tracker, standalone] = await Promise.all([
+  const [layout, tracker, standalone, exportCentre] = await Promise.all([
     readFile(new URL("../app/layout.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/AwardTracker.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/StandaloneApp.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/ExportCentre.tsx", import.meta.url), "utf8"),
   ]);
 
   assert.match(layout, /11KCHBB App · BB Section Tracker/);
@@ -24,6 +25,19 @@ test("defines the 11KCHBB App application shell and sharing metadata", async () 
   assert.match(tracker, /Admin and Officer override only/);
   assert.match(tracker, /required=\{!overrideMemberDetails\}/);
   assert.match(tracker, /overrideRequiredDetails/);
+  assert.match(tracker, /Open Export Centre/);
+  assert.match(tracker, /canUseExportCentre/);
+  assert.match(exportCentre, /Excel workbook/);
+  assert.match(exportCentre, /Print \/ Save as PDF/);
+  assert.match(exportCentre, /Quick CSV backup/);
+  assert.match(exportCentre, /Senior & Junior/);
+  assert.match(exportCentre, /All squads/);
+  assert.match(exportCentre, /All matching members/);
+  assert.match(exportCentre, /Reporting year/);
+  assert.match(exportCentre, /Award Summary/);
+  assert.match(exportCentre, /Attendance Records/);
+  assert.match(exportCentre, /Award Submissions/);
+  assert.match(exportCentre, /Requirements/);
   assert.match(tracker, /<option>Alpha<\/option>/);
   assert.match(tracker, /<option>Bravo<\/option>/);
   assert.match(tracker, /<option>Charlie<\/option>/);
@@ -161,7 +175,7 @@ test("ships the Malaysia Senior Section catalogue, role-based portals and instal
   assert.match(tracker, /YEARLY SUBSCRIPTION/);
   assert.match(tracker, /updateSubscription/);
   assert.match(tracker, /canManageSubscriptions/);
-  assert.match(tracker, /Export all member data/);
+  assert.match(tracker, /Open Export Centre/);
   assert.match(tracker, /11kchbb-all-member-records-/);
   assert.match(
     tracker,
@@ -198,6 +212,8 @@ test("ships the Malaysia Senior Section catalogue, role-based portals and instal
   assert.match(submissionsRoute, /Officer access required/);
   assert.match(submissionsRoute, /WHERE member_id = \?/);
   assert.match(submissionsRoute, /Select a member to view submissions/);
+  assert.match(submissionsRoute, /searchParams\.get\("all"\) === "1"/);
+  assert.match(submissionsRoute, /Admin or Officer access required/);
   assert.match(submissionsRoute, /LOWER\(email\) = LOWER\(\?\)/);
   assert.match(submissions, /Apply for an award/);
   assert.match(submissions, /Submit application/);

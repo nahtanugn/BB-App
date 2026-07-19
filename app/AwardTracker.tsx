@@ -2,6 +2,7 @@
 
 import { FormEvent, useEffect, useMemo, useState } from "react";
 import AwardSubmissions from "./AwardSubmissions";
+import ExportCentre from "./ExportCentre";
 
 type Member = {
   id: number;
@@ -154,6 +155,7 @@ export default function AwardTracker({
   const canManageAttendance = Boolean(user);
   const canManageSubscriptions = canManageAwards;
   const canViewSubmissions = !isNco;
+  const canUseExportCentre = ["admin", "officer"].includes(user?.role ?? "");
   const canOverrideMemberDetails = ["admin", "officer"].includes(
     user?.role ?? "",
   );
@@ -184,6 +186,7 @@ export default function AwardTracker({
   );
   const [submissionMember, setSubmissionMember] = useState<Member | null>(null);
   const [showSession, setShowSession] = useState(false);
+  const [showExportCentre, setShowExportCentre] = useState(false);
   const [activeSessionId, setActiveSessionId] = useState<number | null>(null);
   const [saving, setSaving] = useState("");
 
@@ -1310,21 +1313,16 @@ export default function AwardTracker({
                   </span>
                   <b>›</b>
                 </button>
-                <button
-                  onClick={exportCsv}
-                  disabled={saving === "export"}
-                >
-                  <span className="action-icon">↓</span>
-                  <span>
-                    <strong>
-                      {saving === "export"
-                        ? "Preparing export…"
-                        : "Export all member data"}
-                    </strong>
-                    <small>Members, awards, attendance & subscriptions</small>
-                  </span>
-                  <b>›</b>
-                </button>
+                {canUseExportCentre && (
+                  <button onClick={() => setShowExportCentre(true)}>
+                    <span className="action-icon">↓</span>
+                    <span>
+                      <strong>Open Export Centre</strong>
+                      <small>Excel workbooks, PDF reports & CSV backups</small>
+                    </span>
+                    <b>›</b>
+                  </button>
+                )}
               </article>
             </section>
           </>
@@ -2125,6 +2123,15 @@ export default function AwardTracker({
             </form>
           </section>
         </div>
+      )}
+
+      {showExportCentre && (
+        <ExportCentre
+          currentYear={currentSubscriptionYear}
+          onClose={() => setShowExportCentre(false)}
+          onComplete={setNotice}
+          onLegacyCsv={exportCsv}
+        />
       )}
     </div>
   );

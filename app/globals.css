@@ -401,6 +401,26 @@ h2 { color: var(--navy); }
 .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 13px; }
 .submit { margin-top: 3px; height: 45px; }
 
+.export-backdrop { z-index: 80; }
+.export-centre { width: min(850px, calc(100vw - 28px)); max-height: calc(100vh - 28px); overflow-y: auto; }
+.export-centre .modal-heading { position: sticky; top: 0; z-index: 2; background: white; }
+.export-loading { padding: 45px 24px; color: var(--muted); text-align: center; }
+.export-filter-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 13px; }
+.export-centre fieldset { margin: 0; padding: 14px; border: 1px solid var(--line); border-radius: 10px; }
+.export-centre legend { padding: 0 7px; color: var(--navy); font-size: 9px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; }
+.export-datasets { display: grid; grid-template-columns: repeat(2, 1fr); gap: 9px 15px; }
+.export-datasets label { display: flex; align-items: center; gap: 8px; }
+.export-datasets input, .export-formats input { width: 16px; height: 16px; flex: 0 0 auto; }
+.export-formats { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.export-formats > label { display: flex; grid-template-columns: none; align-items: center; gap: 10px; padding: 12px; border: 1px solid var(--line); border-radius: 9px; cursor: pointer; }
+.export-formats > label.selected { border-color: var(--blue); background: #eef6ff; box-shadow: 0 0 0 2px rgba(18, 105, 199, .1); }
+.export-formats span, .export-formats strong, .export-formats small { display: block; }
+.export-formats small { margin-top: 3px; color: var(--muted); font-size: 8px; font-weight: 500; }
+.export-actions { display: flex; justify-content: flex-end; gap: 10px; }
+.export-actions button { min-height: 42px; padding: 0 18px; border-radius: 8px; border: 1px solid var(--line); font-weight: 800; }
+.export-actions .secondary { background: white; color: var(--navy); }
+.export-actions .primary { border-color: var(--blue); background: var(--blue); color: white; }
+
 .loading-state { min-height: 100vh; display: grid; place-content: center; justify-items: center; gap: 12px; text-align: center; }
 .loading-state h1 { font-size: 34px; }
 .loading-state p { max-width: 430px; color: var(--muted); font-size: 13px; }
@@ -413,6 +433,12 @@ h2 { color: var(--navy); }
   .member-grid { grid-template-columns: repeat(2, 1fr); }
   .dashboard-grid { grid-template-columns: 1fr; }
   .attendance-layout { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 620px) {
+  .export-filter-grid, .export-datasets, .export-formats { grid-template-columns: 1fr; }
+  .export-actions { flex-direction: column-reverse; }
+  .export-actions button { width: 100%; }
 }
 
 @media (max-width: 760px) {
