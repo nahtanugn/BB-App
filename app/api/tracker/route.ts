@@ -749,6 +749,7 @@ export async function POST(request: Request) {
     if (
       ["nco", "squad_leader"].includes(user.role) &&
       ![
+        "create_member",
         "create_attendance_session",
         "update_attendance",
         "update_member",
@@ -757,7 +758,7 @@ export async function POST(request: Request) {
       return Response.json(
         {
           error:
-            "NCO and Squad Leader accounts can manage attendance and edit member details only",
+            "NCO and Squad Leader accounts can add or edit members and manage attendance only",
         },
         { status: 403 },
       );

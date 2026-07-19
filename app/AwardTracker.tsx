@@ -155,6 +155,7 @@ export default function AwardTracker({
   const isNco = user?.role === "nco";
   const isSquadLeader = user?.role === "squad_leader";
   const canManageAwards = !isNco && !isSquadLeader;
+  const canAddMembers = Boolean(user);
   const canEditMembers = Boolean(user);
   const canManageAttendance = Boolean(user);
   const canViewSubmissions = !isNco;
@@ -822,7 +823,7 @@ export default function AwardTracker({
               <button className="primary" onClick={() => setShowSession(true)}>
                 ＋ New meeting
               </button>
-            ) : canManageAwards ? (
+            ) : canAddMembers ? (
               <button className="primary" onClick={openAddMember}>
                 ＋ Add member
               </button>
@@ -992,7 +993,7 @@ export default function AwardTracker({
                   </span>
                   <b>›</b>
                 </button>
-                {canManageAwards && (
+                {canAddMembers && (
                   <button onClick={openAddMember}>
                     <span className="action-icon">＋</span>
                     <span>

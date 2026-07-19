@@ -138,17 +138,18 @@ test("ships the Malaysia Senior Section catalogue, role-based portals and instal
   assert.match(resourcesRoute, /Resources are read-only for this account/);
   assert.match(
     route,
-    /NCO and Squad Leader accounts can manage attendance and edit member details only/,
+    /NCO and Squad Leader accounts can add or edit members and manage attendance only/,
   );
   assert.match(
     route,
-    /"create_attendance_session"[\s\S]*"update_attendance"[\s\S]*"update_member"/,
+    /"create_member"[\s\S]*"create_attendance_session"[\s\S]*"update_attendance"[\s\S]*"update_member"/,
   );
   assert.match(route, /\["nco", "squad_leader"\]\.includes\(user\.role\)/);
   assert.match(tracker, /Awards are shown in read-only mode/);
   assert.match(tracker, /disabled=\{!canManageAwards \|\| saving === key\}/);
   assert.match(tracker, /!canManageAttendance \|\| saving === key/);
   assert.match(tracker, /canEditMembers/);
+  assert.match(tracker, /canAddMembers/);
   assert.match(tracker, /section-switch/);
   assert.match(tracker, /switchSection\("junior"\)/);
   assert.match(tracker, /Junior Gold Award pathway/);
