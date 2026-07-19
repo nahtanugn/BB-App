@@ -70,6 +70,14 @@ function joinedMonth(value: string) {
   return new Date(Number(match[1]), Number(match[2]) - 1, 1).toLocaleDateString("en-MY", { month: "long", year: "numeric" });
 }
 
+function serviceYearsFromJoined(value: string) {
+  const match = /^(\d{4})-(\d{2})$/.exec(value);
+  if (!match) return 0;
+  const current = Object.fromEntries(new Intl.DateTimeFormat("en", { timeZone: "Asia/Kuching", year: "numeric", month: "numeric" }).formatToParts().map((part) => [part.type, part.value]));
+  const years = Number(current.year) - Number(match[1]) - (Number(current.month) < Number(match[2]) ? 1 : 0);
+  return Math.max(0, years);
+}
+
 type AwardTrackerProps = {
   user?: { name: string; email: string; role: "admin" | "officer" | "nco" };
   onLogout?: () => void;
@@ -89,6 +97,7 @@ export default function AwardTracker({ user, onLogout, onManageAccount, onOpenRe
   const [view, setView] = useState<"dashboard" | "matrix" | "members" | "attendance">(isNco ? "attendance" : "dashboard");
   const [showAdd, setShowAdd] = useState(false);
   const [editingMember, setEditingMember] = useState<Member | null>(null);
+  const [joinedAtDraft, setJoinedAtDraft] = useState(new Date().toISOString().slice(0, 7));
   const [submissionMember, setSubmissionMember] = useState<Member | null>(null);
   const [showSession, setShowSession] = useState(false);
   const [activeSessionId, setActiveSessionId] = useState<number | null>(null);
@@ -205,7 +214,7 @@ export default function AwardTracker({ user, onLogout, onManageAccount, onOpenRe
         action: editingMember ? "update_member" : "create_member",
         memberId: editingMember?.id,
         name: form.get("name"), rank: form.get("rank"), squad: form.get("squad"),
-        joinedAt: form.get("joinedAt"), serviceYears: form.get("serviceYears"),
+        joinedAt: form.get("joinedAt"),
         school: form.get("school"), contactNumber: form.get("contactNumber"),
         emergencyContactNumber: form.get("emergencyContactNumber"), email: form.get("email"), parentsName: form.get("parentsName"),
       }),
@@ -221,11 +230,13 @@ export default function AwardTracker({ user, onLogout, onManageAccount, onOpenRe
 
   function openAddMember() {
     setEditingMember(null);
+    setJoinedAtDraft(new Date().toISOString().slice(0, 7));
     setShowAdd(true);
   }
 
   function openEditMember(member: Member) {
     setEditingMember(member);
+    setJoinedAtDraft(member.joined_at.slice(0, 7));
     setShowAdd(true);
   }
 
@@ -360,7 +371,7 @@ export default function AwardTracker({ user, onLogout, onManageAccount, onOpenRe
 
       {submissionMember && user && <div className="modal-backdrop" role="presentation" onMouseDown={() => setSubmissionMember(null)}><section className="modal account-modal member-submission-modal" role="dialog" aria-modal="true" aria-labelledby="submission-member-title" onMouseDown={(event) => event.stopPropagation()}><div className="modal-heading"><div><p className="eyebrow">AWARD SUBMISSIONS</p><h2 id="submission-member-title">{submissionMember.name}</h2><small>{submissionMember.rank} · {submissionMember.squad}</small></div><button onClick={() => setSubmissionMember(null)} aria-label="Close">×</button></div><AwardSubmissions user={user} memberId={submissionMember.id} onChanged={load} /></section></div>}
 
-      {showAdd && <div className="modal-backdrop" role="presentation" onMouseDown={() => { setShowAdd(false); setEditingMember(null); }}><section className="modal" role="dialog" aria-modal="true" aria-labelledby="add-title" onMouseDown={(event) => event.stopPropagation()}><div className="modal-heading"><div><p className="eyebrow">{editingMember ? "EDIT PROFILE" : "NEW PROFILE"}</p><h2 id="add-title">{editingMember ? "Member details" : "Add a Senior member"}</h2></div><button onClick={() => { setShowAdd(false); setEditingMember(null); }} aria-label="Close">×</button></div><form key={editingMember?.id ?? "new"} onSubmit={saveMember}><label>Full name<input name="name" required autoFocus placeholder="e.g. Michelle Tan" defaultValue={editingMember?.name ?? ""} /></label><div className="form-row"><label>Rank<select name="rank" defaultValue={editingMember?.rank ?? "Private"}><option>Private</option><option>Lance Corporal</option><option>Corporal</option><option>Sergeant</option><option>Staff Sergeant</option></select></label><label>Squad<select name="squad" defaultValue={editingMember?.squad ?? "Alpha"}><option>Alpha</option><option>Bravo</option><option>Charlie</option><option>Delta</option></select></label></div><div className="form-row"><label>Joined on<input name="joinedAt" type="month" defaultValue={editingMember?.joined_at.slice(0, 7) ?? new Date().toISOString().slice(0, 7)} /></label><label>Service years<input name="serviceYears" type="number" min="0" defaultValue={editingMember?.service_years ?? 0} /></label></div><div className="form-row"><label>School<input name="school" defaultValue={editingMember?.school ?? ""} /></label><label>Email<input name="email" type="email" defaultValue={editingMember?.email ?? ""} /></label></div><div className="form-row"><label>Contact Number<input name="contactNumber" type="tel" defaultValue={editingMember?.contact_number ?? ""} /></label><label>Emergency Contact Number<input name="emergencyContactNumber" type="tel" defaultValue={editingMember?.emergency_contact_number ?? ""} /></label></div><label>Parents Name<input name="parentsName" defaultValue={editingMember?.parents_name ?? ""} /></label><button className="primary submit" disabled={Boolean(saving)}>{saving ? "Saving…" : editingMember ? "Save details" : "Add member"}</button></form></section></div>}
+      {showAdd && <div className="modal-backdrop" role="presentation" onMouseDown={() => { setShowAdd(false); setEditingMember(null); }}><section className="modal" role="dialog" aria-modal="true" aria-labelledby="add-title" onMouseDown={(event) => event.stopPropagation()}><div className="modal-heading"><div><p className="eyebrow">{editingMember ? "EDIT PROFILE" : "NEW PROFILE"}</p><h2 id="add-title">{editingMember ? "Member details" : "Add a Senior member"}</h2></div><button onClick={() => { setShowAdd(false); setEditingMember(null); }} aria-label="Close">×</button></div><form key={editingMember?.id ?? "new"} onSubmit={saveMember}><label>Full name<input name="name" required autoFocus placeholder="e.g. Michelle Tan" defaultValue={editingMember?.name ?? ""} /></label><div className="form-row"><label>Rank<select name="rank" defaultValue={editingMember?.rank ?? "Private"}><option>Private</option><option>Lance Corporal</option><option>Corporal</option><option>Sergeant</option><option>Staff Sergeant</option></select></label><label>Squad<select name="squad" defaultValue={editingMember?.squad ?? "Alpha"}><option>Alpha</option><option>Bravo</option><option>Charlie</option><option>Delta</option></select></label></div><div className="form-row"><label>Joined on<input name="joinedAt" type="month" value={joinedAtDraft} onChange={(event) => setJoinedAtDraft(event.target.value)} /></label><label>Service years<input name="serviceYears" type="number" readOnly value={serviceYearsFromJoined(joinedAtDraft)} /><small>Calculated automatically from joining month</small></label></div><div className="form-row"><label>School<input name="school" defaultValue={editingMember?.school ?? ""} /></label><label>Email<input name="email" type="email" defaultValue={editingMember?.email ?? ""} /></label></div><div className="form-row"><label>Contact Number<input name="contactNumber" type="tel" defaultValue={editingMember?.contact_number ?? ""} /></label><label>Emergency Contact Number<input name="emergencyContactNumber" type="tel" defaultValue={editingMember?.emergency_contact_number ?? ""} /></label></div><label>Parents Name<input name="parentsName" defaultValue={editingMember?.parents_name ?? ""} /></label><button className="primary submit" disabled={Boolean(saving)}>{saving ? "Saving…" : editingMember ? "Save details" : "Add member"}</button></form></section></div>}
 
       {showSession && <div className="modal-backdrop" role="presentation" onMouseDown={() => setShowSession(false)}><section className="modal compact" role="dialog" aria-modal="true" aria-labelledby="session-title" onMouseDown={(event) => event.stopPropagation()}><div className="modal-heading"><div><p className="eyebrow">NEW REGISTER</p><h2 id="session-title">Create a meeting</h2></div><button onClick={() => setShowSession(false)} aria-label="Close">×</button></div><form onSubmit={createAttendanceSession}><label>Meeting name<input name="title" required defaultValue="Weekly Parade" /></label><label>Meeting date<input name="meetingDate" type="date" required defaultValue={new Date().toISOString().slice(0, 10)} /></label><button className="primary submit" disabled={saving === "new-session"}>{saving === "new-session" ? "Creating…" : "Create register"}</button></form></section></div>}
     </div>

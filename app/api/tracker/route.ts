@@ -58,6 +58,16 @@ const awards: AwardSeed[] = [
 ];
 const allowedSquads = ["Alpha", "Bravo", "Charlie", "Delta"];
 
+function calculateServiceYears(joinedAt: string, today = new Date()) {
+  const match = /^(\d{4})-(\d{2})$/.exec(joinedAt);
+  if (!match) return 0;
+  const current = Object.fromEntries(new Intl.DateTimeFormat("en", { timeZone: "Asia/Kuching", year: "numeric", month: "numeric" }).formatToParts(today).map((part) => [part.type, part.value]));
+  const joinedYear = Number(match[1]);
+  const joinedMonth = Number(match[2]);
+  const years = Number(current.year) - joinedYear - (Number(current.month) < joinedMonth ? 1 : 0);
+  return Math.max(0, years);
+}
+
 let initialized = false;
 
 async function ensureSchema() {
@@ -185,7 +195,7 @@ export async function GET(request: Request) {
     const [memberResult, sessionResult, attendanceResult] = await Promise.all([
       user.role === "nco"
         ? db.prepare("SELECT id, name, rank, '' AS squad, '' AS joined_at, 0 AS service_years, 0 AS is_demo FROM members ORDER BY name COLLATE NOCASE").all()
-        : db.prepare("SELECT * FROM members ORDER BY name COLLATE NOCASE").all(),
+        : db.prepare("SELECT * FROM members ORDER BY name COLLATE NOCASE").all<{ joined_at: string; service_years: number; [key: string]: unknown }>(),
       db.prepare("SELECT * FROM attendance_sessions ORDER BY meeting_date DESC, id DESC").all(),
       user.role === "nco"
         ? db.prepare("SELECT session_id, member_id, status FROM attendance_records").all()
@@ -207,8 +217,12 @@ export async function GET(request: Request) {
       db.prepare("SELECT * FROM member_awards").all(),
       getSubmissionNotifications(),
     ]);
+    const members = memberResult.results.map((member) => ({
+      ...member,
+      service_years: calculateServiceYears(member.joined_at),
+    }));
     return Response.json({
-      members: memberResult.results,
+      members,
       awards: awardResult.results,
       progress: progressResult.results,
       submissionNotifications,
@@ -249,7 +263,7 @@ export async function POST(request: Request) {
           String(body.rank ?? "Private"),
           squad,
           joinedAt,
-          Math.max(0, Number(body.serviceYears ?? 0)),
+          calculateServiceYears(joinedAt),
           String(body.school ?? "").trim(),
           String(body.contactNumber ?? "").trim(),
           String(body.emergencyContactNumber ?? "").trim(),
@@ -271,7 +285,7 @@ export async function POST(request: Request) {
           String(body.rank ?? "Private"),
           squad,
           joinedAt,
-          Math.max(0, Number(body.serviceYears ?? 0)),
+          calculateServiceYears(joinedAt),
           String(body.school ?? "").trim(),
           String(body.contactNumber ?? "").trim(),
           String(body.emergencyContactNumber ?? "").trim(),
