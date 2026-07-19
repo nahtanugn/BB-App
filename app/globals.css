@@ -364,6 +364,13 @@ h2 { color: var(--navy); }
 .submission-error { margin-bottom: 13px; }
 .submission-list { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 13px; }
 .submission-form + .submission-list { margin-top: 16px; }
+.submission-message { margin: 0 0 14px; }
+.submission-portal-toolbar { margin-bottom: 16px; padding: 16px; display: grid; grid-template-columns: minmax(180px, 1.3fr) minmax(170px, .8fr) auto; align-items: end; gap: 12px; }
+.submission-portal-toolbar label { display: grid; gap: 6px; color: var(--navy); font-size: 9px; font-weight: 800; }
+.submission-portal-toolbar input, .submission-portal-toolbar select { width: 100%; height: 39px; padding: 0 10px; border: 1px solid var(--line); border-radius: 8px; background: white; color: var(--ink); }
+.submission-portal-counts { display: flex; gap: 7px; }
+.submission-portal-counts span { min-width: 58px; padding: 7px 9px; border-radius: 8px; background: #f3f7fb; color: var(--muted); font-size: 7px; text-align: center; text-transform: uppercase; }
+.submission-portal-counts strong { display: block; margin-bottom: 2px; color: var(--navy); font-size: 13px; }
 .submission-card { min-height: 205px; padding: 17px; }
 .submission-card-top { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
 .submission-card-top small { color: var(--muted); font-size: 8px; }
@@ -439,6 +446,8 @@ h2 { color: var(--navy); }
   .export-filter-grid, .export-datasets, .export-formats { grid-template-columns: 1fr; }
   .export-actions { flex-direction: column-reverse; }
   .export-actions button { width: 100%; }
+  .submission-portal-toolbar { grid-template-columns: 1fr; align-items: stretch; }
+  .submission-portal-counts span { flex: 1; }
 }
 
 @media (max-width: 760px) {

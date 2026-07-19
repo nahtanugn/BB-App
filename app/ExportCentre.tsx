@@ -563,7 +563,11 @@ export default function ExportCentre({
             item.award_code,
             item.award_name,
             item.level === "advanced" ? "Advanced" : "Basic",
-            item.status,
+            item.status === "approved"
+              ? "Verified · awaiting award"
+              : item.status === "pending"
+                ? "Pending review"
+                : "Rejected",
             item.submitted_at,
             item.reviewed_at ?? "",
             item.reviewed_by ?? "",

@@ -45,13 +45,17 @@ export default function SubmissionsPage({
       <section className="resources-hero submissions-hero">
         <div>
           <p className="eyebrow">11TH KUCHING COMPANY</p>
-          <h1>Award submissions</h1>
+          <h1>
+            {user.role === "admin" || user.role === "officer"
+              ? "Officer Submission Portal"
+              : "Award submissions"}
+          </h1>
           <p>
             {user.role === "member"
               ? "Apply for an award and follow its review status."
               : user.role === "squad_leader"
                 ? "View applications submitted by members."
-                : "Review applications submitted by members."}
+                : "Review all member applications and verify completed awards. Verified applications automatically appear in the Award Matrix as awaiting award."}
           </p>
         </div>
       </section>

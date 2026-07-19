@@ -243,12 +243,73 @@ export async function POST(request: Request) {
       const status = String(body.status ?? "");
       if (!submissionId || !["approved", "rejected"].includes(status))
         return Response.json({ error: "Invalid review" }, { status: 400 });
-      await env.DB.prepare(
-        "UPDATE award_submissions SET status = ?, reviewed_at = ?, reviewed_by = ? WHERE id = ?",
+      const submission = await env.DB.prepare(
+        "SELECT member_id, award_code, level, status FROM award_submissions WHERE id = ?",
       )
-        .bind(status, new Date().toISOString(), user.email, submissionId)
-        .run();
-      return Response.json({ ok: true });
+        .bind(submissionId)
+        .first<{
+          member_id: number | null;
+          award_code: string;
+          level: string;
+          status: string;
+        }>();
+      if (!submission)
+        return Response.json(
+          { error: "Award submission not found" },
+          { status: 404 },
+        );
+      if (submission.status !== "pending")
+        return Response.json(
+          { error: "This submission has already been reviewed" },
+          { status: 409 },
+        );
+      const reviewedAt = new Date().toISOString();
+      const reviewUpdate = env.DB.prepare(
+        "UPDATE award_submissions SET status = ?, reviewed_at = ?, reviewed_by = ? WHERE id = ? AND status = 'pending'",
+      ).bind(status, reviewedAt, user.email, submissionId);
+      if (status === "approved") {
+        if (!submission.member_id)
+          return Response.json(
+            { error: "This submission is not linked to a member profile" },
+            { status: 409 },
+          );
+        const validTarget = await env.DB.prepare(
+          `SELECT m.id FROM members m
+          INNER JOIN award_definitions a ON a.code = ?
+          WHERE m.id = ? AND m.section = a.section`,
+        )
+          .bind(submission.award_code, submission.member_id)
+          .first();
+        if (!validTarget)
+          return Response.json(
+            { error: "The linked member or award is no longer available" },
+            { status: 409 },
+          );
+        await env.DB.batch([
+          reviewUpdate,
+          env.DB.prepare(
+            `INSERT INTO member_awards
+            (member_id, award_code, level, status, awarded_at, updated_at, updated_by)
+            VALUES (?, ?, ?, 'verified', NULL, ?, ?)
+            ON CONFLICT(member_id, award_code, level) DO UPDATE SET
+              status = CASE
+                WHEN member_awards.status = 'awarded' THEN 'awarded'
+                ELSE 'verified'
+              END,
+              updated_at = excluded.updated_at,
+              updated_by = excluded.updated_by`,
+          ).bind(
+            submission.member_id,
+            submission.award_code,
+            submission.level,
+            reviewedAt,
+            user.email,
+          ),
+        ]);
+        return Response.json({ ok: true, matrixStatus: "verified" });
+      }
+      await reviewUpdate.run();
+      return Response.json({ ok: true, matrixStatus: null });
     }
 
     return Response.json({ error: "Unknown action" }, { status: 400 });

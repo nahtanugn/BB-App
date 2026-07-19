@@ -15,6 +15,7 @@ type Award = {
 };
 type Submission = {
   id: number;
+  member_id: number;
   submitted_by_email: string;
   member_name: string;
   award_name: string;
@@ -43,10 +44,16 @@ export default function AwardSubmissions({
   const [busy, setBusy] = useState("");
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
+  const [search, setSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
+  const isOfficerPortal =
+    (user.role === "admin" || user.role === "officer") && !memberId;
   const endpoint =
     user.role === "member"
       ? "/api/submissions"
-      : `/api/submissions?memberId=${memberId ?? ""}`;
+      : isOfficerPortal
+        ? "/api/submissions?all=1"
+        : `/api/submissions?memberId=${memberId ?? ""}`;
 
   async function load() {
     const response = await fetch(endpoint, { cache: "no-store" });
@@ -102,6 +109,17 @@ export default function AwardSubmissions({
     );
     return [...grouped.entries()];
   }, [awards]);
+  const visibleSubmissions = useMemo(() => {
+    const term = search.trim().toLowerCase();
+    return submissions.filter(
+      (submission) =>
+        (statusFilter === "all" || submission.status === statusFilter) &&
+        (!term ||
+          `${submission.member_name} ${submission.award_name} ${submission.submitted_by_email}`
+            .toLowerCase()
+            .includes(term)),
+    );
+  }, [search, statusFilter, submissions]);
 
   function selectAward(code: string) {
     setAwardCode(code);
@@ -143,6 +161,7 @@ export default function AwardSubmissions({
   ) {
     setBusy(`${submission.id}:${status}`);
     setError("");
+    setMessage("");
     const response = await fetch("/api/submissions", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -156,6 +175,11 @@ export default function AwardSubmissions({
     setBusy("");
     if (!response.ok)
       return setError(result.error ?? "Unable to review submission");
+    setMessage(
+      status === "approved"
+        ? `${submission.member_name}'s ${submission.award_name} was verified. Their Award Matrix is now marked Verified, awaiting award.`
+        : `${submission.member_name}'s submission was rejected.`,
+    );
     await load();
     await onChanged?.();
   }
@@ -170,6 +194,8 @@ export default function AwardSubmissions({
           <h2>
             {user.role === "member"
               ? "Apply for an award"
+              : isOfficerPortal
+                ? "Officer Submission Portal"
               : user.role === "squad_leader"
                 ? "Member applications"
                 : "Review member applications"}
@@ -177,6 +203,8 @@ export default function AwardSubmissions({
           <p>
             {user.role === "member"
               ? "Send your completed work to an officer for review."
+              : isOfficerPortal
+                ? "Review every member application. Verification automatically updates the Award Matrix to Verified, awaiting award."
               : user.role === "squad_leader"
                 ? "View submitted applications and their review status."
                 : "Approve or reject award applications submitted by members."}
@@ -264,13 +292,48 @@ export default function AwardSubmissions({
       {error && user.role !== "member" && (
         <p className="form-error submission-error">{error}</p>
       )}
+      {message && user.role !== "member" && (
+        <p className="form-success submission-message">{message}</p>
+      )}
+      {isOfficerPortal && (
+        <div className="submission-portal-toolbar panel">
+          <label>
+            Search submissions
+            <input
+              type="search"
+              value={search}
+              onChange={(event) => setSearch(event.target.value)}
+              placeholder="Member, award or email"
+            />
+          </label>
+          <label>
+            Review status
+            <select
+              value={statusFilter}
+              onChange={(event) => setStatusFilter(event.target.value)}
+            >
+              <option value="all">All submissions</option>
+              <option value="pending">Pending review</option>
+              <option value="approved">Verified · awaiting award</option>
+              <option value="rejected">Rejected</option>
+            </select>
+          </label>
+          <div className="submission-portal-counts">
+            <span><strong>{submissions.length}</strong>Total</span>
+            <span><strong>{submissions.filter((item) => item.status === "pending").length}</strong>Pending</span>
+            <span><strong>{submissions.filter((item) => item.status === "approved").length}</strong>Verified</span>
+          </div>
+        </div>
+      )}
       <div className="submission-list">
-        {submissions.length ? (
-          submissions.map((submission) => (
+        {visibleSubmissions.length ? (
+          visibleSubmissions.map((submission) => (
             <article className="submission-card panel" key={submission.id}>
               <div className="submission-card-top">
                 <span className={`submission-status ${submission.status}`}>
-                  {submission.status}
+                  {submission.status === "approved"
+                    ? "Verified · awaiting award"
+                    : submission.status}
                 </span>
                 <small>
                   {new Date(submission.submitted_at).toLocaleDateString(
@@ -312,8 +375,8 @@ export default function AwardSubmissions({
                       onClick={() => review(submission, "approved")}
                     >
                       {busy === `${submission.id}:approved`
-                        ? "Approving…"
-                        : "Approve"}
+                        ? "Verifying…"
+                        : "Verify & update matrix"}
                     </button>
                     <button
                       className="reject"
@@ -330,7 +393,11 @@ export default function AwardSubmissions({
           ))
         ) : (
           <div className="submission-empty">
-            <strong>No award submissions yet</strong>
+            <strong>
+              {submissions.length
+                ? "No submissions match these filters"
+                : "No award submissions yet"}
+            </strong>
             <p>
               {user.role === "member"
                 ? "Your applications will appear here after you submit them."

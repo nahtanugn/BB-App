@@ -27,6 +27,8 @@ test("defines the 11KCHBB App application shell and sharing metadata", async () 
   assert.match(tracker, /overrideRequiredDetails/);
   assert.match(tracker, /Open Export Centre/);
   assert.match(tracker, /canUseExportCentre/);
+  assert.match(tracker, /Submission portal/);
+  assert.match(tracker, /canReviewSubmissions/);
   assert.match(exportCentre, /Excel workbook/);
   assert.match(exportCentre, /Print \/ Save as PDF/);
   assert.match(exportCentre, /Quick CSV backup/);
@@ -205,11 +207,22 @@ test("ships the Malaysia Senior Section catalogue, role-based portals and instal
   assert.doesNotMatch(resourceLibrary, /import AwardSubmissions/);
   assert.match(submissionsPage, /<AwardSubmissions user=\{user\}/);
   assert.match(submissionsPage, /Award submissions/);
+  assert.match(submissionsPage, /Officer Submission Portal/);
+  assert.match(
+    submissionsPage,
+    /automatically appear in the Award Matrix as awaiting award/,
+  );
   assert.match(
     submissionsRoute,
     /Only member accounts can submit award applications/,
   );
   assert.match(submissionsRoute, /Officer access required/);
+  assert.match(submissionsRoute, /matrixStatus: "verified"/);
+  assert.match(submissionsRoute, /VALUES \(\?, \?, \?, 'verified', NULL, \?, \?\)/);
+  assert.match(
+    submissionsRoute,
+    /WHEN member_awards\.status = 'awarded' THEN 'awarded'/,
+  );
   assert.match(submissionsRoute, /WHERE member_id = \?/);
   assert.match(submissionsRoute, /Select a member to view submissions/);
   assert.match(submissionsRoute, /searchParams\.get\("all"\) === "1"/);
@@ -217,8 +230,12 @@ test("ships the Malaysia Senior Section catalogue, role-based portals and instal
   assert.match(submissionsRoute, /LOWER\(email\) = LOWER\(\?\)/);
   assert.match(submissions, /Apply for an award/);
   assert.match(submissions, /Submit application/);
-  assert.match(submissions, /Approve/);
+  assert.match(submissions, /"approved" \| "rejected"/);
   assert.match(submissions, /Reject/);
+  assert.match(submissions, /Officer Submission Portal/);
+  assert.match(submissions, /Verify & update matrix/);
+  assert.match(submissions, /Verified · awaiting award/);
+  assert.match(submissions, /\/api\/submissions\?all=1/);
   assert.match(memberProgressRoute, /user\.role !== "member"/);
   assert.match(memberProgressRoute, /LOWER\(email\) = LOWER\(\?\)/);
   assert.match(

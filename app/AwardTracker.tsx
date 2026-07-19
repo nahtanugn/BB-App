@@ -155,6 +155,7 @@ export default function AwardTracker({
   const canManageAttendance = Boolean(user);
   const canManageSubscriptions = canManageAwards;
   const canViewSubmissions = !isNco;
+  const canReviewSubmissions = ["admin", "officer"].includes(user?.role ?? "");
   const canUseExportCentre = ["admin", "officer"].includes(user?.role ?? "");
   const canOverrideMemberDetails = ["admin", "officer"].includes(
     user?.role ?? "",
@@ -1028,6 +1029,19 @@ export default function AwardTracker({
           >
             <span>◇</span> Subscription
           </button>
+          {canReviewSubmissions && (
+            <button onClick={onOpenSubmissions}>
+              <span>◆</span> Submission portal
+              {submissionPendingTotal > 0 && (
+                <b
+                  className="nav-badge"
+                  aria-label={`${submissionPendingTotal} submissions awaiting officer review`}
+                >
+                  {submissionPendingTotal}
+                </b>
+              )}
+            </button>
+          )}
           <button onClick={onOpenResources}>
             <span>↗</span> Resources
           </button>
