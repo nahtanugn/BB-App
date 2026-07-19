@@ -46,7 +46,9 @@ test("defines the 11KCHBB App application shell and sharing metadata", async () 
   assert.match(standalone, /Delete\s*<\/button>/);
   assert.match(standalone, /value="squad_leader"/);
   assert.match(standalone, /Assigned squad/);
-  assert.match(standalone, /Squad Leader · own squad details/);
+  assert.match(standalone, /Squad Leader · full read-only access/);
+  assert.match(standalone, /editingUser\.role === "squad_leader"/);
+  assert.match(standalone, /newUserRole === "squad_leader"/);
 });
 
 test("ships the Malaysia Senior Section catalogue, role-based portals and installable shell", async () => {

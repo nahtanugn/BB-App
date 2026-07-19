@@ -29,6 +29,7 @@ export default function StandaloneApp() {
   const [showSubmissions, setShowSubmissions] = useState(false);
   const [users, setUsers] = useState<ManagedUser[]>([]);
   const [editingUser, setEditingUser] = useState<ManagedUser | null>(null);
+  const [newUserRole, setNewUserRole] = useState<User["role"]>("officer");
 
   async function refreshAuth() {
     const response = await fetch("/api/auth", { cache: "no-store" });
@@ -130,6 +131,7 @@ export default function StandaloneApp() {
     if (!response.ok)
       return setError(result.error ?? "Unable to create account");
     event.currentTarget.reset();
+    setNewUserRole("officer");
     setError("");
     await loadUsers();
     setNotice("Account created successfully.");
@@ -489,7 +491,13 @@ export default function StandaloneApp() {
                         Role
                         <select
                           name="role"
-                          defaultValue={editingUser.role}
+                          value={editingUser.role}
+                          onChange={(event) =>
+                            setEditingUser({
+                              ...editingUser,
+                              role: event.target.value as User["role"],
+                            })
+                          }
                           disabled={editingUser.id === auth.user?.id}
                         >
                           <option value="officer">Officer</option>
@@ -497,7 +505,7 @@ export default function StandaloneApp() {
                             NCO · attendance & member details
                           </option>
                           <option value="squad_leader">
-                            Squad Leader · own squad details
+                            Squad Leader · full read-only access
                           </option>
                           <option value="member">
                             Member · resources only
@@ -505,19 +513,20 @@ export default function StandaloneApp() {
                           <option value="admin">Administrator</option>
                         </select>
                       </label>
-                      <label>
-                        Assigned squad
-                        <select
-                          name="squad"
-                          defaultValue={editingUser.squad || "Alpha"}
-                        >
-                          <option>Alpha</option>
-                          <option>Bravo</option>
-                          <option>Charlie</option>
-                          <option>Delta</option>
-                        </select>
-                        <small>Used only when the role is Squad Leader.</small>
-                      </label>
+                      {editingUser.role === "squad_leader" && (
+                        <label>
+                          Assigned squad
+                          <select
+                            name="squad"
+                            defaultValue={editingUser.squad || "Alpha"}
+                          >
+                            <option>Alpha</option>
+                            <option>Bravo</option>
+                            <option>Charlie</option>
+                            <option>Delta</option>
+                          </select>
+                        </label>
+                      )}
                       {editingUser.id === auth.user?.id && (
                         <small>
                           Your administrator role cannot be changed while you
@@ -553,13 +562,19 @@ export default function StandaloneApp() {
                       </label>
                       <label>
                         Role
-                        <select name="role" defaultValue="officer">
+                        <select
+                          name="role"
+                          value={newUserRole}
+                          onChange={(event) =>
+                            setNewUserRole(event.target.value as User["role"])
+                          }
+                        >
                           <option value="officer">Officer</option>
                           <option value="nco">
                             NCO · attendance & member details
                           </option>
                           <option value="squad_leader">
-                            Squad Leader · own squad details
+                            Squad Leader · full read-only access
                           </option>
                           <option value="member">
                             Member · resources only
@@ -568,16 +583,17 @@ export default function StandaloneApp() {
                         </select>
                       </label>
                     </div>
-                    <label>
-                      Assigned squad
-                      <select name="squad" defaultValue="Alpha">
-                        <option>Alpha</option>
-                        <option>Bravo</option>
-                        <option>Charlie</option>
-                        <option>Delta</option>
-                      </select>
-                      <small>Used only when the role is Squad Leader.</small>
-                    </label>
+                    {newUserRole === "squad_leader" && (
+                      <label>
+                        Assigned squad
+                        <select name="squad" defaultValue="Alpha">
+                          <option>Alpha</option>
+                          <option>Bravo</option>
+                          <option>Charlie</option>
+                          <option>Delta</option>
+                        </select>
+                      </label>
+                    )}
                     <button className="primary" disabled={busy}>
                       Create account
                     </button>
