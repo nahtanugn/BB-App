@@ -505,7 +505,7 @@ export default function StandaloneApp() {
                             NCO · attendance & member details
                           </option>
                           <option value="squad_leader">
-                            Squad Leader · full read-only access
+                            Squad Leader · full view & NCO controls
                           </option>
                           <option value="member">
                             Member · resources only
@@ -574,7 +574,7 @@ export default function StandaloneApp() {
                             NCO · attendance & member details
                           </option>
                           <option value="squad_leader">
-                            Squad Leader · full read-only access
+                            Squad Leader · full view & NCO controls
                           </option>
                           <option value="member">
                             Member · resources only

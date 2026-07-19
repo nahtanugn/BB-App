@@ -46,7 +46,7 @@ test("defines the 11KCHBB App application shell and sharing metadata", async () 
   assert.match(standalone, /Delete\s*<\/button>/);
   assert.match(standalone, /value="squad_leader"/);
   assert.match(standalone, /Assigned squad/);
-  assert.match(standalone, /Squad Leader · full read-only access/);
+  assert.match(standalone, /Squad Leader · full view & NCO controls/);
   assert.match(standalone, /editingUser\.role === "squad_leader"/);
   assert.match(standalone, /newUserRole === "squad_leader"/);
 });
@@ -138,14 +138,13 @@ test("ships the Malaysia Senior Section catalogue, role-based portals and instal
   assert.match(resourcesRoute, /Resources are read-only for this account/);
   assert.match(
     route,
-    /NCO accounts can manage attendance and edit member details only/,
+    /NCO and Squad Leader accounts can manage attendance and edit member details only/,
   );
   assert.match(
     route,
     /"create_attendance_session"[\s\S]*"update_attendance"[\s\S]*"update_member"/,
   );
-  assert.match(route, /user\.role === "squad_leader"/);
-  assert.match(route, /Squad leader access is read-only/);
+  assert.match(route, /\["nco", "squad_leader"\]\.includes\(user\.role\)/);
   assert.match(tracker, /Awards are shown in read-only mode/);
   assert.match(tracker, /disabled=\{!canManageAwards \|\| saving === key\}/);
   assert.match(

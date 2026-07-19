@@ -580,17 +580,12 @@ export async function POST(request: Request) {
         { error: "Member accounts can access resources only" },
         { status: 403 },
       );
-    if (user.role === "squad_leader")
-      return Response.json(
-        { error: "Squad leader access is read-only" },
-        { status: 403 },
-      );
     await ensureSchema();
     const db = env.DB;
     const body = (await request.json()) as Record<string, unknown>;
     const action = String(body.action ?? "");
     if (
-      user.role === "nco" &&
+      ["nco", "squad_leader"].includes(user.role) &&
       ![
         "create_attendance_session",
         "update_attendance",
@@ -600,7 +595,7 @@ export async function POST(request: Request) {
       return Response.json(
         {
           error:
-            "NCO accounts can manage attendance and edit member details only",
+            "NCO and Squad Leader accounts can manage attendance and edit member details only",
         },
         { status: 403 },
       );

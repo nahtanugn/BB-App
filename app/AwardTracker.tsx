@@ -154,8 +154,8 @@ export default function AwardTracker({
   const isNco = user?.role === "nco";
   const isSquadLeader = user?.role === "squad_leader";
   const canManageAwards = !isNco && !isSquadLeader;
-  const canEditMembers = !isSquadLeader;
-  const canManageAttendance = !isSquadLeader;
+  const canEditMembers = Boolean(user);
+  const canManageAttendance = Boolean(user);
   const canViewSubmissions = !isNco;
   const [data, setData] = useState<TrackerData | null>(null);
   const [error, setError] = useState("");
