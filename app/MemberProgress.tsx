@@ -2,7 +2,7 @@
 
 import { type CSSProperties, useEffect, useMemo, useState } from "react";
 
-type User = { email: string; role: "admin" | "officer" | "nco" | "member" };
+type User = { email: string; role: "admin" | "officer" | "nco" | "squad_leader" | "member" };
 type Award = { code: string; name: string; category: string; basic_available: number; advanced_available: number };
 type Progress = { award_code: string; level: string; status: string; awarded_at: string | null };
 type ProgressData = {

@@ -192,6 +192,20 @@ export async function GET(request: Request) {
     if (user.role === "member") return Response.json({ error: "Member accounts can access resources only" }, { status: 403 });
     await ensureSchema();
     const db = env.DB;
+    if (user.role === "squad_leader") {
+      if (!allowedSquads.includes(user.squad)) return Response.json({ error: "This squad leader account is not assigned to a valid squad" }, { status: 403 });
+      const memberResult = await db.prepare("SELECT * FROM members WHERE squad = ? ORDER BY name COLLATE NOCASE")
+        .bind(user.squad).all<{ joined_at: string; service_years: number; [key: string]: unknown }>();
+      return Response.json({
+        members: memberResult.results.map((member) => ({ ...member, service_years: calculateServiceYears(member.joined_at) })),
+        awards: [],
+        progress: [],
+        submissionNotifications: [],
+        attendanceSessions: [],
+        attendance: [],
+        syllabus: "BB Malaysia Members' Handbook · August 2024",
+      });
+    }
     const [memberResult, sessionResult, attendanceResult] = await Promise.all([
       db.prepare("SELECT * FROM members ORDER BY name COLLATE NOCASE").all<{ joined_at: string; service_years: number; [key: string]: unknown }>(),
       db.prepare("SELECT * FROM attendance_sessions ORDER BY meeting_date DESC, id DESC").all(),
@@ -238,6 +252,7 @@ export async function POST(request: Request) {
     const user = await getCurrentUser(request);
     if (!user) return Response.json({ error: "Sign in required" }, { status: 401 });
     if (user.role === "member") return Response.json({ error: "Member accounts can access resources only" }, { status: 403 });
+    if (user.role === "squad_leader") return Response.json({ error: "Squad leader access is read-only" }, { status: 403 });
     await ensureSchema();
     const db = env.DB;
     const body = (await request.json()) as Record<string, unknown>;

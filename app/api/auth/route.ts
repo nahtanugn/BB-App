@@ -9,7 +9,8 @@ import {
 } from "../../../lib/auth";
 
 const runtime = getRuntimeEnv();
-const allowedRoles = ["admin", "officer", "nco", "member"];
+const allowedRoles = ["admin", "officer", "nco", "squad_leader", "member"];
+const allowedSquads = ["Alpha", "Bravo", "Charlie", "Delta"];
 
 async function createOrLinkMemberProfile(name: string, email: string, previousEmail?: string) {
   const previousProfile = previousEmail
@@ -35,7 +36,7 @@ export async function GET(request: Request) {
     const url = new URL(request.url);
     if (url.searchParams.get("users") === "1") {
       if (user?.role !== "admin") return Response.json({ error: "Administrator access required" }, { status: 403 });
-      const users = await runtime.DB.prepare("SELECT id, email, name, role, active, created_at FROM users ORDER BY name COLLATE NOCASE").all();
+      const users = await runtime.DB.prepare("SELECT id, email, name, role, squad, active, created_at FROM users ORDER BY name COLLATE NOCASE").all();
       return Response.json({ user, users: users.results });
     }
     return Response.json({
@@ -122,13 +123,16 @@ export async function POST(request: Request) {
       const password = String(body.password ?? "");
       const requestedRole = String(body.role ?? "officer");
       const role = allowedRoles.includes(requestedRole) ? requestedRole : "officer";
+      const requestedSquad = String(body.squad ?? "");
+      const squad = role === "squad_leader" && allowedSquads.includes(requestedSquad) ? requestedSquad : "";
       if (!/^\S+@\S+\.\S+$/.test(email) || !name || password.length < 10) {
         return Response.json({ error: "Enter a valid email, name, and temporary password of at least 10 characters" }, { status: 400 });
       }
       const digest = await passwordDigest(password);
-      const result = await runtime.DB.prepare(`INSERT INTO users (email, name, role, password_hash, password_salt, active, created_at)
-        VALUES (?, ?, ?, ?, ?, 1, ?)`)
-        .bind(email, name, role, digest.hash, digest.salt, new Date().toISOString()).run();
+      if (role === "squad_leader" && !squad) return Response.json({ error: "Select Alpha, Bravo, Charlie, or Delta for the squad leader" }, { status: 400 });
+      const result = await runtime.DB.prepare(`INSERT INTO users (email, name, role, squad, password_hash, password_salt, active, created_at)
+        VALUES (?, ?, ?, ?, ?, ?, 1, ?)`)
+        .bind(email, name, role, squad, digest.hash, digest.salt, new Date().toISOString()).run();
       if (role === "member") {
         try {
           await createOrLinkMemberProfile(name, email);
@@ -164,16 +168,19 @@ export async function POST(request: Request) {
       const email = String(body.email ?? "").trim().toLowerCase();
       const name = String(body.name ?? "").trim();
       const requestedRole = String(body.role ?? "");
+      const requestedSquad = String(body.squad ?? "");
+      const squad = requestedRole === "squad_leader" && allowedSquads.includes(requestedSquad) ? requestedSquad : "";
       if (!targetId || !/^\S+@\S+\.\S+$/.test(email) || !name || !allowedRoles.includes(requestedRole)) {
         return Response.json({ error: "Enter a valid name, email, and role" }, { status: 400 });
       }
       if (targetId === user.id && requestedRole !== "admin") {
         return Response.json({ error: "You cannot remove your own administrator role" }, { status: 400 });
       }
+      if (requestedRole === "squad_leader" && !squad) return Response.json({ error: "Select Alpha, Bravo, Charlie, or Delta for the squad leader" }, { status: 400 });
       const target = await runtime.DB.prepare("SELECT id, email, role FROM users WHERE id = ?").bind(targetId).first<{ id: number; email: string; role: string }>();
       if (!target) return Response.json({ error: "User account not found" }, { status: 404 });
-      await runtime.DB.prepare("UPDATE users SET name = ?, email = ?, role = ? WHERE id = ?")
-        .bind(name, email, requestedRole, targetId).run();
+      await runtime.DB.prepare("UPDATE users SET name = ?, email = ?, role = ?, squad = ? WHERE id = ?")
+        .bind(name, email, requestedRole, squad, targetId).run();
       if (requestedRole === "member") await createOrLinkMemberProfile(name, email, target.role === "member" ? target.email : undefined);
       return Response.json({ ok: true });
     }

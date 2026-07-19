@@ -28,7 +28,7 @@ export async function GET(request: Request) {
   try {
     const user = await getCurrentUser(request);
     if (!user) return Response.json({ error: "Sign in required" }, { status: 401 });
-    if (user.role === "nco") return Response.json({ error: "NCO accounts cannot access award submissions" }, { status: 403 });
+    if (user.role === "nco" || user.role === "squad_leader") return Response.json({ error: "This account cannot access award submissions" }, { status: 403 });
     await ensureSubmissionSchema();
     const awards = await env.DB.prepare("SELECT code, name, category, basic_available, advanced_available FROM award_definitions WHERE code NOT IN ('arts_crafts_hobbies', 'band_proficiency', 'scholastic') ORDER BY sort_order").all();
     if (user.role === "member") {
@@ -52,7 +52,7 @@ export async function POST(request: Request) {
   try {
     const user = await getCurrentUser(request);
     if (!user) return Response.json({ error: "Sign in required" }, { status: 401 });
-    if (user.role === "nco") return Response.json({ error: "NCO accounts cannot access award submissions" }, { status: 403 });
+    if (user.role === "nco" || user.role === "squad_leader") return Response.json({ error: "This account cannot access award submissions" }, { status: 403 });
     await ensureSubmissionSchema();
     const body = (await request.json()) as Record<string, unknown>;
     const action = String(body.action ?? "");

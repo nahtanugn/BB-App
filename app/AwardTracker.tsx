@@ -79,7 +79,7 @@ function serviceYearsFromJoined(value: string) {
 }
 
 type AwardTrackerProps = {
-  user?: { name: string; email: string; role: "admin" | "officer" | "nco" };
+  user?: { name: string; email: string; role: "admin" | "officer" | "nco" | "squad_leader"; squad: string };
   onLogout?: () => void;
   onManageAccount?: () => void;
   onOpenResources?: () => void;
@@ -88,13 +88,15 @@ type AwardTrackerProps = {
 
 export default function AwardTracker({ user, onLogout, onManageAccount, onOpenResources }: AwardTrackerProps) {
   const isNco = user?.role === "nco";
+  const isSquadLeader = user?.role === "squad_leader";
+  const canManageAwards = !isNco && !isSquadLeader;
   const [data, setData] = useState<TrackerData | null>(null);
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
   const [query, setQuery] = useState("");
   const [category, setCategory] = useState("Compulsory");
   const [level, setLevel] = useState<"basic" | "advanced">("basic");
-  const [view, setView] = useState<"dashboard" | "matrix" | "members" | "attendance">(isNco ? "attendance" : "dashboard");
+  const [view, setView] = useState<"dashboard" | "matrix" | "members" | "attendance">(isNco ? "attendance" : isSquadLeader ? "members" : "dashboard");
   const [showAdd, setShowAdd] = useState(false);
   const [editingMember, setEditingMember] = useState<Member | null>(null);
   const [joinedAtDraft, setJoinedAtDraft] = useState(new Date().toISOString().slice(0, 7));
@@ -316,12 +318,12 @@ export default function AwardTracker({ user, onLogout, onManageAccount, onOpenRe
     <div className="app-shell">
       {notice && <div className="action-toast" role="status"><span>✓</span>{notice}<button onClick={() => setNotice("")} aria-label="Dismiss confirmation">×</button></div>}
       <aside className="sidebar">
-        <div className="brand"><div className="brand-mark app-photo" role="img" aria-label="11th Kuching Company" /><div><strong>11KCHBB App</strong><span>{isNco ? "NCO attendance" : "Senior Section tracker"}</span></div></div>
-        <nav className={isNco ? "nco-nav" : ""} aria-label="Primary navigation">
-          {!isNco && <button className={view === "dashboard" ? "active" : ""} onClick={() => setView("dashboard")}><span>⌂</span> Overview</button>}
-          {!isNco && <button className={view === "matrix" ? "active" : ""} onClick={() => setView("matrix")}><span>▦</span> Award matrix</button>}
-          <button className={view === "members" ? "active" : ""} onClick={() => setView("members")}><span>♙</span> Members{!isNco && submissionPendingTotal > 0 && <b className="nav-badge" aria-label={`${submissionPendingTotal} pending award submissions`}>{submissionPendingTotal}</b>}</button>
-          <button className={view === "attendance" ? "active" : ""} onClick={() => setView("attendance")}><span>✓</span> Attendance</button>
+        <div className="brand"><div className="brand-mark app-photo" role="img" aria-label="11th Kuching Company" /><div><strong>11KCHBB App</strong><span>{isNco ? "NCO attendance" : isSquadLeader ? `${user?.squad} Squad` : "Senior Section tracker"}</span></div></div>
+        <nav className={isNco ? "nco-nav" : isSquadLeader ? "squad-leader-nav" : ""} aria-label="Primary navigation">
+          {canManageAwards && <button className={view === "dashboard" ? "active" : ""} onClick={() => setView("dashboard")}><span>⌂</span> Overview</button>}
+          {canManageAwards && <button className={view === "matrix" ? "active" : ""} onClick={() => setView("matrix")}><span>▦</span> Award matrix</button>}
+          <button className={view === "members" ? "active" : ""} onClick={() => setView("members")}><span>♙</span> Members{canManageAwards && submissionPendingTotal > 0 && <b className="nav-badge" aria-label={`${submissionPendingTotal} pending award submissions`}>{submissionPendingTotal}</b>}</button>
+          {!isSquadLeader && <button className={view === "attendance" ? "active" : ""} onClick={() => setView("attendance")}><span>✓</span> Attendance</button>}
           <button onClick={onOpenResources}><span>↗</span> Resources</button>
         </nav>
         <div className="sidebar-note"><span>SYLLABUS</span><strong>August 2024</strong><small>BB Malaysia Senior Section</small></div>
@@ -331,7 +333,7 @@ export default function AwardTracker({ user, onLogout, onManageAccount, onOpenRe
       <main className="main-content">
         <header className="topbar">
           <div><p className="eyebrow">{view === "dashboard" ? "COMPANY OVERVIEW" : view === "matrix" ? "AWARD PROGRESS" : view === "members" ? "MEMBER DIRECTORY" : "PARADE REGISTER"}</p><h1>{view === "dashboard" ? "Shalom" : view === "matrix" ? "Award matrix" : view === "members" ? "Members" : "Attendance"}</h1></div>
-          <div className="top-actions"><label className="search"><span>⌕</span><input aria-label="Search members" placeholder="Search members" value={query} onChange={(event) => setQuery(event.target.value)} /></label>{user && <button className="account-chip" onClick={onManageAccount} title={user.email}>{initials(user.name)}<span>{user.name.split(" ")[0]}</span></button>}{onLogout && <button className="sign-out" onClick={onLogout}>Sign out</button>}{view === "attendance" ? <button className="primary" onClick={() => setShowSession(true)}>＋ New meeting</button> : !isNco ? <button className="primary" onClick={openAddMember}>＋ Add member</button> : null}</div>
+          <div className="top-actions"><label className="search"><span>⌕</span><input aria-label="Search members" placeholder="Search members" value={query} onChange={(event) => setQuery(event.target.value)} /></label>{user && <button className="account-chip" onClick={onManageAccount} title={user.email}>{initials(user.name)}<span>{user.name.split(" ")[0]}</span></button>}{onLogout && <button className="sign-out" onClick={onLogout}>Sign out</button>}{view === "attendance" ? <button className="primary" onClick={() => setShowSession(true)}>＋ New meeting</button> : canManageAwards ? <button className="primary" onClick={openAddMember}>＋ Add member</button> : null}</div>
         </header>
 
         {view === "dashboard" && <>
@@ -361,7 +363,7 @@ export default function AwardTracker({ user, onLogout, onManageAccount, onOpenRe
           <div className="table-scroll"><table className="award-matrix"><thead><tr><th>Member</th>{visibleAwards.map((award) => <th key={award.code}>{award.name}</th>)}</tr></thead><tbody>{filteredMembers.map((member) => <tr key={member.id}><th><div className="table-member"><div className="avatar small">{initials(member.name)}</div><div><strong>{member.name}</strong><span>{member.rank}</span></div></div></th>{visibleAwards.map((award) => { const key = `${member.id}:${award.code}:${level}`; const status = progressMap.get(key)?.status ?? "not_started"; return <td key={award.code}><button disabled={saving === key} className={`status-pill ${status}`} onClick={() => updateAward(member.id, award.code)} aria-label={`${member.name}, ${award.name}: ${statusLabel[status]}`}>{saving === key ? "…" : status === "not_started" ? "—" : statusLabel[status]}</button></td>; })}</tr>)}</tbody></table></div>
         </section>}
 
-        {view === "members" && <section className="member-grid">{filteredMembers.map((member) => { const stats = memberStats(member); const readiness = presidentReadiness(member); const notification = submissionByMember.get(member.id); return <article className="member-card" key={member.id}><div className="member-card-top"><div className="avatar large">{initials(member.name)}</div><div className="card-actions">{!isNco && notification && <span className="member-new-marker">New · {notification.pending_count}</span>}{!isNco && <button className="edit-member" onClick={() => setSubmissionMember(member)}>Submissions</button>}<button className="edit-member" aria-label={`Edit ${member.name}`} onClick={() => openEditMember(member)}>Edit details</button>{!isNco && <button className="more" aria-label={`Remove ${member.name}`} onClick={() => deleteMember(member)}>×</button>}</div></div><h2>{member.name}</h2><p>{member.rank} · Joined {joinedMonth(member.joined_at)}</p>{isNco ? <div className="member-detail-summary"><span><small>Squad</small><strong>{member.squad}</strong></span><span><small>School</small><strong>{member.school || "Not recorded"}</strong></span><span><small>Contact</small><strong>{member.contact_number || "Not recorded"}</strong></span></div> : <><div className="member-numbers"><div><strong>{stats.awarded}</strong><span>Awards</span></div><div><strong>{stats.active}</strong><span>Active</span></div><div><strong>{member.service_years}</strong><span>Years</span></div></div><div className="readiness"><div><span>President’s Award</span><strong>{readiness.complete}/{readiness.total}</strong></div><div className="progress-track"><div style={{ width: `${readiness.percent}%` }} /></div></div></>}</article>; })}</section>}
+        {view === "members" && <section className="member-grid">{filteredMembers.map((member) => { const stats = memberStats(member); const readiness = presidentReadiness(member); const notification = submissionByMember.get(member.id); return <article className="member-card" key={member.id}><div className="member-card-top"><div className="avatar large">{initials(member.name)}</div><div className="card-actions">{canManageAwards && notification && <span className="member-new-marker">New · {notification.pending_count}</span>}{canManageAwards && <button className="edit-member" onClick={() => setSubmissionMember(member)}>Submissions</button>}{!isSquadLeader && <button className="edit-member" aria-label={`Edit ${member.name}`} onClick={() => openEditMember(member)}>Edit details</button>}{canManageAwards && <button className="more" aria-label={`Remove ${member.name}`} onClick={() => deleteMember(member)}>×</button>}</div></div><h2>{member.name}</h2><p>{member.rank} · Joined {joinedMonth(member.joined_at)}</p>{isNco || isSquadLeader ? <div className="member-detail-summary"><span><small>Squad</small><strong>{member.squad}</strong></span><span><small>School</small><strong>{member.school || "Not recorded"}</strong></span><span><small>Contact</small><strong>{member.contact_number || "Not recorded"}</strong></span>{isSquadLeader && <><span><small>Emergency contact</small><strong>{member.emergency_contact_number || "Not recorded"}</strong></span><span><small>Email</small><strong>{member.email || "Not recorded"}</strong></span><span><small>Parents</small><strong>{member.parents_name || "Not recorded"}</strong></span><span><small>Service</small><strong>{member.service_years} year{member.service_years === 1 ? "" : "s"}</strong></span></>}</div> : <><div className="member-numbers"><div><strong>{stats.awarded}</strong><span>Awards</span></div><div><strong>{stats.active}</strong><span>Active</span></div><div><strong>{member.service_years}</strong><span>Years</span></div></div><div className="readiness"><div><span>President’s Award</span><strong>{readiness.complete}/{readiness.total}</strong></div><div className="progress-track"><div style={{ width: `${readiness.percent}%` }} /></div></div></>}</article>; })}</section>}
 
         {view === "attendance" && <section className="attendance-layout">
           <aside className="panel session-list"><div className="panel-heading"><div><p className="eyebrow">MEETINGS</p><h2>Attendance dates</h2></div></div>{data.attendanceSessions.length ? <div className="session-buttons">{data.attendanceSessions.map((session) => { const present = data.attendance.filter((item) => item.session_id === session.id && item.status === "present").length; return <button key={session.id} className={activeSession?.id === session.id ? "active" : ""} onClick={() => setActiveSessionId(session.id)}><span><strong>{session.title}</strong><small>{new Date(`${session.meeting_date}T00:00:00`).toLocaleDateString("en-MY", { day: "numeric", month: "short", year: "numeric" })}</small></span><b>{present}/{data.members.length}</b></button>; })}</div> : <div className="empty-state"><strong>No meetings yet</strong><p>Create your first meeting to start taking attendance.</p><button className="primary" onClick={() => setShowSession(true)}>New meeting</button></div>}</aside>

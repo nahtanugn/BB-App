@@ -4,7 +4,8 @@ export type AppUser = {
   id: number;
   email: string;
   name: string;
-  role: "admin" | "officer" | "nco" | "member";
+  role: "admin" | "officer" | "nco" | "squad_leader" | "member";
+  squad: string;
 };
 
 type RuntimeEnv = {
@@ -25,6 +26,7 @@ export async function ensureAuthSchema() {
       email TEXT NOT NULL UNIQUE COLLATE NOCASE,
       name TEXT NOT NULL,
       role TEXT NOT NULL DEFAULT 'officer',
+      squad TEXT NOT NULL DEFAULT '',
       password_hash TEXT NOT NULL,
       password_salt TEXT NOT NULL,
       active INTEGER NOT NULL DEFAULT 1,
@@ -46,6 +48,10 @@ export async function ensureAuthSchema() {
       window_started_at TEXT NOT NULL
     )`),
   ]);
+  const userColumns = await runtime.DB.prepare("PRAGMA table_info(users)").all<{ name: string }>();
+  if (!userColumns.results.some((column) => column.name === "squad")) {
+    await runtime.DB.prepare("ALTER TABLE users ADD COLUMN squad TEXT NOT NULL DEFAULT ''").run();
+  }
   authInitialized = true;
 }
 
@@ -78,7 +84,7 @@ export async function getCurrentUser(request: Request): Promise<AppUser | null> 
   const token = cookieValue(request.headers.get("cookie"), "anchor_session");
   if (!token) return null;
   const tokenHash = await sha256(token);
-  const user = await runtime.DB.prepare(`SELECT users.id, users.email, users.name, users.role
+  const user = await runtime.DB.prepare(`SELECT users.id, users.email, users.name, users.role, users.squad
     FROM sessions JOIN users ON users.id = sessions.user_id
     WHERE sessions.token_hash = ? AND sessions.expires_at > ? AND users.active = 1`)
     .bind(tokenHash, new Date().toISOString())

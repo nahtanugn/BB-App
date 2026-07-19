@@ -34,7 +34,7 @@ export async function POST(request: Request) {
   try {
     const user = await getCurrentUser(request);
     if (!user) return Response.json({ error: "Sign in required" }, { status: 401 });
-    if (user.role === "member" || user.role === "nco") return Response.json({ error: "Resources are read-only for this account" }, { status: 403 });
+    if (user.role === "member" || user.role === "nco" || user.role === "squad_leader") return Response.json({ error: "Resources are read-only for this account" }, { status: 403 });
     await ensureResourcesSchema();
     const body = (await request.json()) as Record<string, unknown>;
     const action = String(body.action ?? "");

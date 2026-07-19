@@ -43,7 +43,10 @@ test("defines the 11KCHBB App application shell and sharing metadata", async () 
   assert.match(standalone, /Edit account/);
   assert.match(standalone, /Save changes/);
   assert.match(standalone, /Account created successfully/);
-  assert.match(standalone, />Delete<\/button>/);
+  assert.match(standalone, /Delete\s*<\/button>/);
+  assert.match(standalone, /value="squad_leader"/);
+  assert.match(standalone, /Assigned squad/);
+  assert.match(standalone, /Squad Leader · own squad details/);
 });
 
 test("ships the Malaysia Senior Section catalogue, role-based portals and installable shell", async () => {
@@ -96,12 +99,17 @@ test("ships the Malaysia Senior Section catalogue, role-based portals and instal
   assert.match(authRoute, /role === "member"/);
   assert.match(authRoute, /action === "delete_user"/);
   assert.match(authRoute, /You cannot delete your own account/);
-  assert.match(authRoute, /\["admin", "officer", "nco", "member"\]/);
+  assert.match(authRoute, /\["admin", "officer", "nco", "squad_leader", "member"\]/);
+  assert.match(authRoute, /role === "squad_leader"/);
+  assert.match(authRoute, /UPDATE users SET name = \?, email = \?, role = \?, squad = \?/);
   assert.match(resourcesRoute, /user\.role === "member"/);
   assert.match(resourcesRoute, /user\.role === "nco"/);
   assert.match(resourcesRoute, /Resources are read-only for this account/);
   assert.match(route, /NCO accounts can manage attendance and edit member details only/);
   assert.match(route, /\["create_attendance_session", "update_attendance", "update_member"\]/);
+  assert.match(route, /user\.role === "squad_leader"/);
+  assert.match(route, /SELECT \* FROM members WHERE squad = \?/);
+  assert.match(route, /Squad leader access is read-only/);
   assert.match(route, /awards: \[\]/);
   assert.match(resourceLibrary, /Resource library/);
   assert.match(resourceLibrary, /user\.role !== "member"/);

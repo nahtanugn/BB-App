@@ -395,6 +395,7 @@ h2 { color: var(--navy); }
   .brand, .sidebar-note, .open-source { display: none; }
   .sidebar nav { height: 100%; display: grid; grid-template-columns: repeat(5, 1fr); gap: 5px; }
   .sidebar nav.nco-nav { grid-template-columns: repeat(3, 1fr); }
+  .sidebar nav.squad-leader-nav { grid-template-columns: repeat(2, 1fr); }
   .sidebar nav button { justify-content: center; flex-direction: column; gap: 1px; padding: 3px; font-size: 8px; }
   .sidebar nav button span { font-size: 17px; line-height: 1; }
   .sidebar nav .nav-badge { position: absolute; top: 1px; right: 7px; min-width: 17px; height: 17px; font-size: 7px; }

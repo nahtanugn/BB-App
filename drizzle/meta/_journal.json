@@ -50,6 +50,13 @@
       "when": 1784450666639,
       "tag": "0006_rainy_molten_man",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "6",
+      "when": 1784459138404,
+      "tag": "0007_silly_thanos",
+      "breakpoints": true
     }
   ]
 }
