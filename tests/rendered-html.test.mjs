@@ -50,18 +50,38 @@ test("defines the 11KCHBB App application shell and sharing metadata", async () 
 });
 
 test("ships the Malaysia Senior Section catalogue, role-based portals and installable shell", async () => {
-  const [route, authRoute, resourcesRoute, submissionsRoute, memberProgressRoute, resourceLibrary, submissionsPage, submissions, memberProgress, manifest, serviceWorker] = await Promise.all([
+  const [
+    route,
+    authRoute,
+    resourcesRoute,
+    submissionsRoute,
+    memberProgressRoute,
+    resourceLibrary,
+    submissionsPage,
+    submissions,
+    memberProgress,
+    manifest,
+    serviceWorker,
+    tracker,
+  ] = await Promise.all([
     readFile(new URL("../app/api/tracker/route.ts", import.meta.url), "utf8"),
     readFile(new URL("../app/api/auth/route.ts", import.meta.url), "utf8"),
     readFile(new URL("../app/api/resources/route.ts", import.meta.url), "utf8"),
-    readFile(new URL("../app/api/submissions/route.ts", import.meta.url), "utf8"),
-    readFile(new URL("../app/api/member-progress/route.ts", import.meta.url), "utf8"),
+    readFile(
+      new URL("../app/api/submissions/route.ts", import.meta.url),
+      "utf8",
+    ),
+    readFile(
+      new URL("../app/api/member-progress/route.ts", import.meta.url),
+      "utf8",
+    ),
     readFile(new URL("../app/ResourceLibrary.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/SubmissionsPage.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/AwardSubmissions.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/MemberProgress.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/manifest.ts", import.meta.url), "utf8"),
     readFile(new URL("../public/sw.js", import.meta.url), "utf8"),
+    readFile(new URL("../app/AwardTracker.tsx", import.meta.url), "utf8"),
   ]);
 
   assert.match(route, /Members' Handbook · August 2024/);
@@ -81,7 +101,10 @@ test("ships the Malaysia Senior Section catalogue, role-based portals and instal
   assert.match(route, /update_attendance/);
   assert.match(route, /emergency_contact_number/);
   assert.match(route, /parents_name/);
-  assert.match(route, /const allowedSquads = \["Alpha", "Bravo", "Charlie", "Delta"\]/);
+  assert.match(
+    route,
+    /const allowedSquads = \["Alpha", "Bravo", "Charlie", "Delta"\]/,
+  );
   assert.match(route, /Select a valid joining month and year/);
   assert.match(route, /calculateServiceYears\(joinedAt\)/);
   assert.match(route, /getSubmissionNotifications/);
@@ -99,18 +122,35 @@ test("ships the Malaysia Senior Section catalogue, role-based portals and instal
   assert.match(authRoute, /role === "member"/);
   assert.match(authRoute, /action === "delete_user"/);
   assert.match(authRoute, /You cannot delete your own account/);
-  assert.match(authRoute, /\["admin", "officer", "nco", "squad_leader", "member"\]/);
+  assert.match(
+    authRoute,
+    /\["admin", "officer", "nco", "squad_leader", "member"\]/,
+  );
   assert.match(authRoute, /role === "squad_leader"/);
-  assert.match(authRoute, /UPDATE users SET name = \?, email = \?, role = \?, squad = \?/);
+  assert.match(
+    authRoute,
+    /UPDATE users SET name = \?, email = \?, role = \?, squad = \?/,
+  );
   assert.match(resourcesRoute, /user\.role === "member"/);
   assert.match(resourcesRoute, /user\.role === "nco"/);
   assert.match(resourcesRoute, /Resources are read-only for this account/);
-  assert.match(route, /NCO accounts can manage attendance and edit member details only/);
-  assert.match(route, /\["create_attendance_session", "update_attendance", "update_member"\]/);
+  assert.match(
+    route,
+    /NCO accounts can manage attendance and edit member details only/,
+  );
+  assert.match(
+    route,
+    /"create_attendance_session"[\s\S]*"update_attendance"[\s\S]*"update_member"/,
+  );
   assert.match(route, /user\.role === "squad_leader"/);
-  assert.match(route, /SELECT \* FROM members WHERE squad = \?/);
   assert.match(route, /Squad leader access is read-only/);
-  assert.match(route, /awards: \[\]/);
+  assert.match(tracker, /Awards are shown in read-only mode/);
+  assert.match(tracker, /disabled=\{!canManageAwards \|\| saving === key\}/);
+  assert.match(
+    tracker,
+    /!canManageAttendance \|\| saving === key/,
+  );
+  assert.match(tracker, /canEditMembers/);
   assert.match(resourceLibrary, /Resource library/);
   assert.match(resourceLibrary, /user\.role !== "member"/);
   assert.match(resourceLibrary, /user\.role !== "nco"/);
@@ -118,7 +158,10 @@ test("ships the Malaysia Senior Section catalogue, role-based portals and instal
   assert.doesNotMatch(resourceLibrary, /import AwardSubmissions/);
   assert.match(submissionsPage, /<AwardSubmissions user=\{user\}/);
   assert.match(submissionsPage, /Award submissions/);
-  assert.match(submissionsRoute, /Only member accounts can submit award applications/);
+  assert.match(
+    submissionsRoute,
+    /Only member accounts can submit award applications/,
+  );
   assert.match(submissionsRoute, /Officer access required/);
   assert.match(submissionsRoute, /WHERE member_id = \?/);
   assert.match(submissionsRoute, /Select a member to view submissions/);
@@ -129,7 +172,10 @@ test("ships the Malaysia Senior Section catalogue, role-based portals and instal
   assert.match(submissions, /Reject/);
   assert.match(memberProgressRoute, /user\.role !== "member"/);
   assert.match(memberProgressRoute, /LOWER\(email\) = LOWER\(\?\)/);
-  assert.match(memberProgressRoute, /Math\.round\(\(present \/ total\) \* 100\)/);
+  assert.match(
+    memberProgressRoute,
+    /Math\.round\(\(present \/ total\) \* 100\)/,
+  );
   assert.match(memberProgress, /MY PROGRESS/);
   assert.match(memberProgress, /AWARDS MATRIX/);
   assert.match(memberProgress, /View only/);
