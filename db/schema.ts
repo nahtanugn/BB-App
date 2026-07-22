@@ -151,4 +151,6 @@ export const awardSubmissions = sqliteTable("award_submissions", {
   submittedAt: text("submitted_at").notNull(),
   reviewedAt: text("reviewed_at"),
   reviewedBy: text("reviewed_by"),
+  archivedAt: text("archived_at"),
+  archivedBy: text("archived_by"),
 });

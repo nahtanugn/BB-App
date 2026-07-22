@@ -17,7 +17,9 @@ async function ensureSubmissionSchema() {
     status TEXT NOT NULL DEFAULT 'pending',
     submitted_at TEXT NOT NULL,
     reviewed_at TEXT,
-    reviewed_by TEXT
+    reviewed_by TEXT,
+    archived_at TEXT,
+    archived_by TEXT
   )`,
   ).run();
   const columns = await env.DB.prepare(
@@ -26,6 +28,16 @@ async function ensureSubmissionSchema() {
   if (!columns.results.some((column) => column.name === "member_id")) {
     await env.DB.prepare(
       "ALTER TABLE award_submissions ADD COLUMN member_id INTEGER",
+    ).run();
+  }
+  if (!columns.results.some((column) => column.name === "archived_at")) {
+    await env.DB.prepare(
+      "ALTER TABLE award_submissions ADD COLUMN archived_at TEXT",
+    ).run();
+  }
+  if (!columns.results.some((column) => column.name === "archived_by")) {
+    await env.DB.prepare(
+      "ALTER TABLE award_submissions ADD COLUMN archived_by TEXT",
     ).run();
   }
 }
@@ -61,7 +73,7 @@ export async function GET(request: Request) {
           { status: 409 },
         );
       const submissions = await env.DB.prepare(
-        "SELECT * FROM award_submissions WHERE member_id = ? ORDER BY submitted_at DESC",
+        "SELECT * FROM award_submissions WHERE member_id = ? AND archived_at IS NULL ORDER BY submitted_at DESC",
       )
         .bind(member.id)
         .all();
@@ -79,8 +91,16 @@ export async function GET(request: Request) {
           { error: "Admin or Officer access required" },
           { status: 403 },
         );
+      const showArchived = url.searchParams.get("archived") === "1";
+      if (showArchived && user.role !== "admin")
+        return Response.json(
+          { error: "Administrator access required" },
+          { status: 403 },
+        );
       const submissions = await env.DB.prepare(
-        "SELECT * FROM award_submissions ORDER BY submitted_at DESC",
+        `SELECT * FROM award_submissions
+        WHERE archived_at IS ${showArchived ? "NOT NULL" : "NULL"}
+        ORDER BY ${showArchived ? "archived_at" : "submitted_at"} DESC`,
       ).all();
       return Response.json({ submissions: submissions.results });
     }
@@ -101,7 +121,7 @@ export async function GET(request: Request) {
         { status: 404 },
       );
     const submissions = await env.DB.prepare(
-      "SELECT * FROM award_submissions WHERE member_id = ? ORDER BY CASE status WHEN 'pending' THEN 0 ELSE 1 END, submitted_at DESC",
+      "SELECT * FROM award_submissions WHERE member_id = ? AND archived_at IS NULL ORDER BY CASE status WHEN 'pending' THEN 0 ELSE 1 END, submitted_at DESC",
     )
       .bind(member.id)
       .all();
@@ -201,7 +221,7 @@ export async function POST(request: Request) {
           { status: 409 },
         );
       const pending = await env.DB.prepare(
-        "SELECT id FROM award_submissions WHERE member_id = ? AND award_code = ? AND level = ? AND status = 'pending'",
+        "SELECT id FROM award_submissions WHERE member_id = ? AND award_code = ? AND level = ? AND status = 'pending' AND archived_at IS NULL",
       )
         .bind(member.id, awardCode, level)
         .first();
@@ -244,10 +264,10 @@ export async function POST(request: Request) {
       if (!submissionId || !["approved", "rejected"].includes(status))
         return Response.json({ error: "Invalid review" }, { status: 400 });
       const submission = await env.DB.prepare(
-        "SELECT status FROM award_submissions WHERE id = ?",
+        "SELECT status, archived_at FROM award_submissions WHERE id = ?",
       )
         .bind(submissionId)
-        .first<{ status: string }>();
+        .first<{ status: string; archived_at: string | null }>();
       if (!submission)
         return Response.json(
           { error: "Award submission not found" },
@@ -258,12 +278,74 @@ export async function POST(request: Request) {
           { error: "This submission has already been reviewed" },
           { status: 409 },
         );
+      if (submission.archived_at)
+        return Response.json(
+          { error: "Restore this submission before reviewing it" },
+          { status: 409 },
+        );
       const reviewedAt = new Date().toISOString();
       await env.DB.prepare(
         "UPDATE award_submissions SET status = ?, reviewed_at = ?, reviewed_by = ? WHERE id = ? AND status = 'pending'",
       )
         .bind(status, reviewedAt, user.email, submissionId)
         .run();
+      return Response.json({ ok: true });
+    }
+
+    if (action === "archive_submission" || action === "restore_submission") {
+      if (user.role !== "admin")
+        return Response.json(
+          { error: "Administrator access required" },
+          { status: 403 },
+        );
+      const submissionId = Number(body.submissionId);
+      if (!submissionId)
+        return Response.json({ error: "Invalid submission" }, { status: 400 });
+      const submission = await env.DB.prepare(
+        "SELECT id FROM award_submissions WHERE id = ?",
+      )
+        .bind(submissionId)
+        .first();
+      if (!submission)
+        return Response.json(
+          { error: "Award submission not found" },
+          { status: 404 },
+        );
+      if (action === "archive_submission") {
+        await env.DB.prepare(
+          "UPDATE award_submissions SET archived_at = ?, archived_by = ? WHERE id = ?",
+        )
+          .bind(new Date().toISOString(), user.email, submissionId)
+          .run();
+      } else {
+        await env.DB.prepare(
+          "UPDATE award_submissions SET archived_at = NULL, archived_by = NULL WHERE id = ?",
+        )
+          .bind(submissionId)
+          .run();
+      }
+      return Response.json({ ok: true });
+    }
+
+    if (action === "delete_submission") {
+      if (user.role !== "admin")
+        return Response.json(
+          { error: "Administrator access required" },
+          { status: 403 },
+        );
+      const submissionId = Number(body.submissionId);
+      if (!submissionId)
+        return Response.json({ error: "Invalid submission" }, { status: 400 });
+      const result = await env.DB.prepare(
+        "DELETE FROM award_submissions WHERE id = ?",
+      )
+        .bind(submissionId)
+        .run();
+      if (!result.meta.changes)
+        return Response.json(
+          { error: "Award submission not found" },
+          { status: 404 },
+        );
       return Response.json({ ok: true });
     }
 

@@ -619,6 +619,21 @@ async function ensureSchema() {
 
 async function getSubmissionNotifications(section: string) {
   try {
+    const submissionColumns = await env.DB.prepare(
+      "PRAGMA table_info(award_submissions)",
+    ).all<{ name: string }>();
+    if (
+      submissionColumns.results.length &&
+      !submissionColumns.results.some((column) => column.name === "archived_at")
+    ) {
+      try {
+        await env.DB.prepare(
+          "ALTER TABLE award_submissions ADD COLUMN archived_at TEXT",
+        ).run();
+      } catch {
+        // Another request may have added the column concurrently.
+      }
+    }
     const result = await env.DB.prepare(
       `SELECT
       members.id AS member_id,
@@ -627,7 +642,9 @@ async function getSubmissionNotifications(section: string) {
       MAX(award_submissions.submitted_at) AS latest_submitted_at
       FROM award_submissions
       INNER JOIN members ON members.id = award_submissions.member_id
-      WHERE award_submissions.status = 'pending' AND members.section = ?
+      WHERE award_submissions.status = 'pending'
+      AND award_submissions.archived_at IS NULL
+      AND members.section = ?
       GROUP BY members.id, members.name
       ORDER BY latest_submitted_at DESC`,
     )

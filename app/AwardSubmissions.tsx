@@ -26,6 +26,8 @@ type Submission = {
   submitted_at: string;
   reviewed_at: string | null;
   reviewed_by: string | null;
+  archived_at: string | null;
+  archived_by: string | null;
 };
 
 export default function AwardSubmissions({
@@ -48,11 +50,12 @@ export default function AwardSubmissions({
   const [statusFilter, setStatusFilter] = useState("all");
   const isOfficerPortal =
     (user.role === "admin" || user.role === "officer") && !memberId;
+  const showArchived = user.role === "admin" && statusFilter === "archived";
   const endpoint =
     user.role === "member"
       ? "/api/submissions"
       : isOfficerPortal
-        ? "/api/submissions?all=1"
+        ? `/api/submissions?all=1${showArchived ? "&archived=1" : ""}`
         : `/api/submissions?memberId=${memberId ?? ""}`;
 
   async function load() {
@@ -113,7 +116,9 @@ export default function AwardSubmissions({
     const term = search.trim().toLowerCase();
     return submissions.filter(
       (submission) =>
-        (statusFilter === "all" || submission.status === statusFilter) &&
+        (statusFilter === "all" ||
+          statusFilter === "archived" ||
+          submission.status === statusFilter) &&
         (!term ||
           `${submission.member_name} ${submission.award_name} ${submission.submitted_by_email}`
             .toLowerCase()
@@ -179,6 +184,40 @@ export default function AwardSubmissions({
       status === "approved"
         ? `${submission.member_name}'s ${submission.award_name} submission was verified. The Award Matrix was not changed.`
         : `${submission.member_name}'s submission was rejected.`,
+    );
+    await load();
+    await onChanged?.();
+  }
+
+  async function manageSubmission(
+    submission: Submission,
+    action: "archive_submission" | "restore_submission" | "delete_submission",
+  ) {
+    if (
+      action === "delete_submission" &&
+      !window.confirm(
+        `Permanently delete ${submission.member_name}'s ${submission.award_name} submission? This cannot be undone.`,
+      )
+    )
+      return;
+    setBusy(`${submission.id}:${action}`);
+    setError("");
+    setMessage("");
+    const response = await fetch("/api/submissions", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action, submissionId: submission.id }),
+    });
+    const result = (await response.json()) as { error?: string };
+    setBusy("");
+    if (!response.ok)
+      return setError(result.error ?? "Unable to update submission");
+    setMessage(
+      action === "archive_submission"
+        ? "Submission archived."
+        : action === "restore_submission"
+          ? "Submission restored to the active portal."
+          : "Submission permanently deleted.",
     );
     await load();
     await onChanged?.();
@@ -316,6 +355,9 @@ export default function AwardSubmissions({
               <option value="pending">Pending review</option>
               <option value="approved">Verified submissions</option>
               <option value="rejected">Rejected</option>
+              {user.role === "admin" && (
+                <option value="archived">Archived</option>
+              )}
             </select>
           </label>
           <div className="submission-portal-counts">
@@ -389,6 +431,46 @@ export default function AwardSubmissions({
                     </button>
                   </div>
                 )}
+              {user.role === "admin" && (
+                <div className="submission-admin-actions">
+                  {showArchived ? (
+                    <button
+                      className="restore"
+                      disabled={Boolean(busy)}
+                      onClick={() =>
+                        manageSubmission(submission, "restore_submission")
+                      }
+                    >
+                      {busy === `${submission.id}:restore_submission`
+                        ? "Restoring…"
+                        : "Restore"}
+                    </button>
+                  ) : (
+                    <button
+                      className="archive"
+                      disabled={Boolean(busy)}
+                      onClick={() =>
+                        manageSubmission(submission, "archive_submission")
+                      }
+                    >
+                      {busy === `${submission.id}:archive_submission`
+                        ? "Archiving…"
+                        : "Archive"}
+                    </button>
+                  )}
+                  <button
+                    className="delete"
+                    disabled={Boolean(busy)}
+                    onClick={() =>
+                      manageSubmission(submission, "delete_submission")
+                    }
+                  >
+                    {busy === `${submission.id}:delete_submission`
+                      ? "Deleting…"
+                      : "Delete"}
+                  </button>
+                </div>
+              )}
             </article>
           ))
         ) : (
