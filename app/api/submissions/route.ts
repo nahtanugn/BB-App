@@ -15,6 +15,7 @@ async function ensureSubmissionSchema() {
     evidence_url TEXT NOT NULL DEFAULT '',
     notes TEXT NOT NULL DEFAULT '',
     status TEXT NOT NULL DEFAULT 'pending',
+    review_notes TEXT NOT NULL DEFAULT '',
     submitted_at TEXT NOT NULL,
     reviewed_at TEXT,
     reviewed_by TEXT,
@@ -38,6 +39,11 @@ async function ensureSubmissionSchema() {
   if (!columns.results.some((column) => column.name === "archived_by")) {
     await env.DB.prepare(
       "ALTER TABLE award_submissions ADD COLUMN archived_by TEXT",
+    ).run();
+  }
+  if (!columns.results.some((column) => column.name === "review_notes")) {
+    await env.DB.prepare(
+      "ALTER TABLE award_submissions ADD COLUMN review_notes TEXT NOT NULL DEFAULT ''",
     ).run();
   }
 }
@@ -261,8 +267,14 @@ export async function POST(request: Request) {
         );
       const submissionId = Number(body.submissionId);
       const status = String(body.status ?? "");
+      const reviewNotes = String(body.reviewNotes ?? "").trim();
       if (!submissionId || !["approved", "rejected"].includes(status))
         return Response.json({ error: "Invalid review" }, { status: 400 });
+      if (reviewNotes.length > 2000)
+        return Response.json(
+          { error: "Review notes must be 2,000 characters or fewer" },
+          { status: 400 },
+        );
       const submission = await env.DB.prepare(
         "SELECT status, archived_at FROM award_submissions WHERE id = ?",
       )
@@ -285,9 +297,9 @@ export async function POST(request: Request) {
         );
       const reviewedAt = new Date().toISOString();
       await env.DB.prepare(
-        "UPDATE award_submissions SET status = ?, reviewed_at = ?, reviewed_by = ? WHERE id = ? AND status = 'pending'",
+        "UPDATE award_submissions SET status = ?, review_notes = ?, reviewed_at = ?, reviewed_by = ? WHERE id = ? AND status = 'pending'",
       )
-        .bind(status, reviewedAt, user.email, submissionId)
+        .bind(status, reviewNotes, reviewedAt, user.email, submissionId)
         .run();
       return Response.json({ ok: true });
     }

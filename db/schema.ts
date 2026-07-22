@@ -148,6 +148,7 @@ export const awardSubmissions = sqliteTable("award_submissions", {
   evidenceUrl: text("evidence_url").notNull().default(""),
   notes: text("notes").notNull().default(""),
   status: text("status").notNull().default("pending"),
+  reviewNotes: text("review_notes").notNull().default(""),
   submittedAt: text("submitted_at").notNull(),
   reviewedAt: text("reviewed_at"),
   reviewedBy: text("reviewed_by"),

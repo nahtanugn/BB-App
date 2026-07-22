@@ -228,8 +228,10 @@ test("ships the Malaysia Senior Section catalogue, role-based portals and instal
   assert.match(submissions, /"approved" \| "rejected"/);
   assert.match(submissions, /Reject/);
   assert.match(submissions, /Officer Submission Portal/);
-  assert.match(submissions, /Verify submission/);
+  assert.match(submissions, /Review note/);
+  assert.match(submissions, /Approve/);
   assert.match(submissions, /Verified submission/);
+  assert.match(submissionsRoute, /review_notes/);
   assert.match(submissions, /The Award Matrix was not changed/);
   assert.match(submissions, /\/api\/submissions\?all=1/);
   assert.match(memberProgressRoute, /user\.role !== "member"/);

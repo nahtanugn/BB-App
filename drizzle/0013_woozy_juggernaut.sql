@@ -1,0 +1,1 @@
+ALTER TABLE `award_submissions` ADD `review_notes` text DEFAULT '' NOT NULL;

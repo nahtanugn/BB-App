@@ -392,6 +392,14 @@ h2 { color: var(--navy); }
 .submission-actions button { min-height: 34px; padding: 0 12px; border: 0; border-radius: 8px; font-size: 8px; font-weight: 800; }
 .submission-actions .approve { background: #e1f6ec; color: #176941; }
 .submission-actions .reject { background: #ffeded; color: #a93b3b; }
+.submission-review-controls { margin-top: 14px; }
+.submission-review-controls > label { display: grid; gap: 6px; color: var(--navy); font-size: 8px; font-weight: 800; }
+.submission-review-controls > label span { color: var(--muted); font-weight: 600; }
+.submission-review-controls textarea { width: 100%; padding: 9px 10px; resize: vertical; border: 1px solid var(--line); border-radius: 8px; background: white; color: var(--ink); font: inherit; font-size: 9px; line-height: 1.45; }
+.submission-review-controls .submission-actions { margin-top: 9px; }
+.submission-review-note { margin-top: 12px; padding: 10px; border-left: 3px solid var(--blue); border-radius: 0 8px 8px 0; background: var(--blue-soft); }
+.submission-review-note strong { color: var(--navy); font-size: 8px; }
+.submission-review-note p { min-height: 0; margin: 4px 0 0; color: var(--ink); }
 .submission-admin-actions { margin-top: 10px; padding-top: 10px; display: flex; gap: 8px; border-top: 1px solid var(--line); }
 .submission-admin-actions button { min-height: 32px; padding: 0 11px; border: 0; border-radius: 8px; font-size: 8px; font-weight: 800; }
 .submission-admin-actions .archive { background: #eef3f8; color: var(--navy); }

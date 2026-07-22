@@ -23,6 +23,7 @@ type Submission = {
   evidence_url: string;
   notes: string;
   status: "pending" | "approved" | "rejected";
+  review_notes: string;
   submitted_at: string;
   reviewed_at: string | null;
   reviewed_by: string | null;
@@ -48,6 +49,7 @@ export default function AwardSubmissions({
   const [error, setError] = useState("");
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
+  const [reviewNotes, setReviewNotes] = useState<Record<number, string>>({});
   const isOfficerPortal =
     (user.role === "admin" || user.role === "officer") && !memberId;
   const showArchived = user.role === "admin" && statusFilter === "archived";
@@ -174,12 +176,18 @@ export default function AwardSubmissions({
         action: "review_submission",
         submissionId: submission.id,
         status,
+        reviewNotes: reviewNotes[submission.id] ?? "",
       }),
     });
     const result = (await response.json()) as { error?: string };
     setBusy("");
     if (!response.ok)
       return setError(result.error ?? "Unable to review submission");
+    setReviewNotes((current) => {
+      const next = { ...current };
+      delete next[submission.id];
+      return next;
+    });
     setMessage(
       status === "approved"
         ? `${submission.member_name}'s ${submission.award_name} submission was verified. The Award Matrix was not changed.`
@@ -408,27 +416,50 @@ export default function AwardSubmissions({
                   Reviewed by {submission.reviewed_by}
                 </small>
               )}
+              {submission.review_notes && (
+                <div className="submission-review-note">
+                  <strong>Officer review</strong>
+                  <p>{submission.review_notes}</p>
+                </div>
+              )}
               {(user.role === "admin" || user.role === "officer") &&
                 submission.status === "pending" && (
-                  <div className="submission-actions">
-                    <button
-                      className="approve"
-                      disabled={Boolean(busy)}
-                      onClick={() => review(submission, "approved")}
-                    >
-                      {busy === `${submission.id}:approved`
-                        ? "Verifying…"
-                        : "Verify submission"}
-                    </button>
-                    <button
-                      className="reject"
-                      disabled={Boolean(busy)}
-                      onClick={() => review(submission, "rejected")}
-                    >
-                      {busy === `${submission.id}:rejected`
-                        ? "Rejecting…"
-                        : "Reject"}
-                    </button>
+                  <div className="submission-review-controls">
+                    <label>
+                      Review note <span>(optional)</span>
+                      <textarea
+                        rows={3}
+                        maxLength={2000}
+                        value={reviewNotes[submission.id] ?? ""}
+                        onChange={(event) =>
+                          setReviewNotes((current) => ({
+                            ...current,
+                            [submission.id]: event.target.value,
+                          }))
+                        }
+                        placeholder="Add feedback or the reason for your decision"
+                      />
+                    </label>
+                    <div className="submission-actions">
+                      <button
+                        className="approve"
+                        disabled={Boolean(busy)}
+                        onClick={() => review(submission, "approved")}
+                      >
+                        {busy === `${submission.id}:approved`
+                          ? "Approving…"
+                          : "Approve"}
+                      </button>
+                      <button
+                        className="reject"
+                        disabled={Boolean(busy)}
+                        onClick={() => review(submission, "rejected")}
+                      >
+                        {busy === `${submission.id}:rejected`
+                          ? "Rejecting…"
+                          : "Reject"}
+                      </button>
+                    </div>
                   </div>
                 )}
               {user.role === "admin" && (
