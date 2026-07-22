@@ -218,6 +218,8 @@ test("ships the Malaysia Senior Section catalogue, role-based portals and instal
   );
   assert.match(submissionsRoute, /Officer access required/);
   assert.match(submissionsRoute, /INSERT INTO member_awards/);
+  assert.match(submissionsRoute, /'in_progress'/);
+  assert.match(submissions, /marked In progress in the Award Matrix/);
   assert.match(submissionsRoute, /status = 'not_started'/);
   assert.match(submissionsRoute, /member_awards\.status = 'awarded'/);
   assert.match(submissionsRoute, /WHERE member_id = \?/);

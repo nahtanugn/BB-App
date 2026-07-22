@@ -158,7 +158,9 @@ export default function AwardSubmissions({
     if (!response.ok)
       return setError(result.error ?? "Unable to submit application");
     event.currentTarget.reset();
-    setMessage("Your award application has been submitted for officer review.");
+    setMessage(
+      "Your award application has been submitted for officer review and marked In progress in the Award Matrix.",
+    );
     await load();
   }
 

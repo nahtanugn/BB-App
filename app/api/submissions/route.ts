@@ -238,7 +238,8 @@ export async function POST(request: Request) {
           },
           { status: 409 },
         );
-      await env.DB.prepare(
+      const submittedAt = new Date().toISOString();
+      const submissionInsert = env.DB.prepare(
         `INSERT INTO award_submissions
         (member_id, submitted_by_user_id, submitted_by_email, member_name, award_code, award_name, level, evidence_url, notes, status, submitted_at)
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending', ?)`,
@@ -253,10 +254,28 @@ export async function POST(request: Request) {
           level,
           evidenceUrl,
           notes,
-          new Date().toISOString(),
-        )
-        .run();
-      return Response.json({ ok: true });
+          submittedAt,
+        );
+      const matrixUpdate = env.DB.prepare(
+        `INSERT INTO member_awards
+        (member_id, award_code, level, status, awarded_at, updated_at, updated_by)
+        VALUES (?, ?, ?, 'in_progress', NULL, ?, ?)
+        ON CONFLICT(member_id, award_code, level) DO UPDATE SET
+          status = CASE
+            WHEN member_awards.status IN ('verified', 'awarded') THEN member_awards.status
+            ELSE 'in_progress'
+          END,
+          updated_at = CASE
+            WHEN member_awards.status IN ('verified', 'awarded') THEN member_awards.updated_at
+            ELSE excluded.updated_at
+          END,
+          updated_by = CASE
+            WHEN member_awards.status IN ('verified', 'awarded') THEN member_awards.updated_by
+            ELSE excluded.updated_by
+          END`,
+      ).bind(member.id, award.code, level, submittedAt, user.email);
+      await env.DB.batch([submissionInsert, matrixUpdate]);
+      return Response.json({ ok: true, matrixStatus: "in_progress" });
     }
 
     if (action === "review_submission") {
