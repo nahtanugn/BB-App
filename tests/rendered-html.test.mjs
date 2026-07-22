@@ -210,14 +210,16 @@ test("ships the Malaysia Senior Section catalogue, role-based portals and instal
   assert.match(submissionsPage, /Officer Submission Portal/);
   assert.match(
     submissionsPage,
-    /Award Matrix updates remain a separate manual action/,
+    /update the Award Matrix automatically/,
   );
   assert.match(
     submissionsRoute,
     /Only member accounts can submit award applications/,
   );
   assert.match(submissionsRoute, /Officer access required/);
-  assert.doesNotMatch(submissionsRoute, /INSERT INTO member_awards/);
+  assert.match(submissionsRoute, /INSERT INTO member_awards/);
+  assert.match(submissionsRoute, /status = 'not_started'/);
+  assert.match(submissionsRoute, /member_awards\.status = 'awarded'/);
   assert.match(submissionsRoute, /WHERE member_id = \?/);
   assert.match(submissionsRoute, /Select a member to view submissions/);
   assert.match(submissionsRoute, /searchParams\.get\("all"\) === "1"/);
@@ -232,7 +234,8 @@ test("ships the Malaysia Senior Section catalogue, role-based portals and instal
   assert.match(submissions, /Approve/);
   assert.match(submissions, /Verified submission/);
   assert.match(submissionsRoute, /review_notes/);
-  assert.match(submissions, /The Award Matrix was not changed/);
+  assert.match(submissions, /marked Verified in the Award Matrix/);
+  assert.match(submissions, /Edit review note/);
   assert.match(submissions, /\/api\/submissions\?all=1/);
   assert.match(memberProgressRoute, /user\.role !== "member"/);
   assert.match(memberProgressRoute, /LOWER\(email\) = LOWER\(\?\)/);

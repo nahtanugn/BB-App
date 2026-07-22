@@ -276,32 +276,96 @@ export async function POST(request: Request) {
           { status: 400 },
         );
       const submission = await env.DB.prepare(
-        "SELECT status, archived_at FROM award_submissions WHERE id = ?",
+        `SELECT status, archived_at, member_id, submitted_by_email,
+        award_code, level FROM award_submissions WHERE id = ?`,
       )
         .bind(submissionId)
-        .first<{ status: string; archived_at: string | null }>();
+        .first<{
+          status: string;
+          archived_at: string | null;
+          member_id: number | null;
+          submitted_by_email: string;
+          award_code: string;
+          level: string;
+        }>();
       if (!submission)
         return Response.json(
           { error: "Award submission not found" },
           { status: 404 },
-        );
-      if (submission.status !== "pending")
-        return Response.json(
-          { error: "This submission has already been reviewed" },
-          { status: 409 },
         );
       if (submission.archived_at)
         return Response.json(
           { error: "Restore this submission before reviewing it" },
           { status: 409 },
         );
+      let memberId = submission.member_id;
+      if (!memberId) {
+        const linkedMember = await env.DB.prepare(
+          "SELECT id FROM members WHERE LOWER(email) = LOWER(?) LIMIT 1",
+        )
+          .bind(submission.submitted_by_email)
+          .first<{ id: number }>();
+        memberId = linkedMember?.id ?? null;
+      }
+      if (!memberId)
+        return Response.json(
+          { error: "Link this account to a member profile before reviewing" },
+          { status: 409 },
+        );
       const reviewedAt = new Date().toISOString();
-      await env.DB.prepare(
-        "UPDATE award_submissions SET status = ?, review_notes = ?, reviewed_at = ?, reviewed_by = ? WHERE id = ? AND status = 'pending'",
-      )
-        .bind(status, reviewNotes, reviewedAt, user.email, submissionId)
-        .run();
-      return Response.json({ ok: true });
+      const reviewUpdate = env.DB.prepare(
+        "UPDATE award_submissions SET member_id = ?, status = ?, review_notes = ?, reviewed_at = ?, reviewed_by = ? WHERE id = ?",
+      ).bind(
+        memberId,
+        status,
+        reviewNotes,
+        reviewedAt,
+        user.email,
+        submissionId,
+      );
+      const matrixUpdate =
+        status === "approved"
+          ? env.DB.prepare(
+              `INSERT INTO member_awards
+              (member_id, award_code, level, status, awarded_at, updated_at, updated_by)
+              VALUES (?, ?, ?, 'verified', NULL, ?, ?)
+              ON CONFLICT(member_id, award_code, level) DO UPDATE SET
+                status = CASE
+                  WHEN member_awards.status = 'awarded' THEN member_awards.status
+                  ELSE 'verified'
+                END,
+                updated_at = CASE
+                  WHEN member_awards.status = 'awarded' THEN member_awards.updated_at
+                  ELSE excluded.updated_at
+                END,
+                updated_by = CASE
+                  WHEN member_awards.status = 'awarded' THEN member_awards.updated_by
+                  ELSE excluded.updated_by
+                END`,
+            ).bind(
+              memberId,
+              submission.award_code,
+              submission.level,
+              reviewedAt,
+              user.email,
+            )
+          : env.DB.prepare(
+              `UPDATE member_awards
+              SET status = 'not_started', awarded_at = NULL, updated_at = ?, updated_by = ?
+              WHERE member_id = ? AND award_code = ? AND level = ?
+              AND status != 'awarded'`,
+            ).bind(
+              reviewedAt,
+              user.email,
+              memberId,
+              submission.award_code,
+              submission.level,
+            );
+      await env.DB.batch([reviewUpdate, matrixUpdate]);
+      return Response.json({
+        ok: true,
+        matrixStatus: status === "approved" ? "verified" : "not_started",
+      });
     }
 
     if (action === "archive_submission" || action === "restore_submission") {

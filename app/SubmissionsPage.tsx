@@ -55,7 +55,7 @@ export default function SubmissionsPage({
               ? "Apply for an award and follow its review status."
               : user.role === "squad_leader"
                 ? "View applications submitted by members."
-                : "Review all member applications and verify completed submissions. Award Matrix updates remain a separate manual action."}
+                : "Review all member applications, edit decisions when needed, and update the Award Matrix automatically."}
           </p>
         </div>
       </section>

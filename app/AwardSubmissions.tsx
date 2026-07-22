@@ -190,8 +190,8 @@ export default function AwardSubmissions({
     });
     setMessage(
       status === "approved"
-        ? `${submission.member_name}'s ${submission.award_name} submission was verified. The Award Matrix was not changed.`
-        : `${submission.member_name}'s submission was rejected.`,
+        ? `${submission.member_name}'s ${submission.award_name} submission was approved and marked Verified in the Award Matrix.`
+        : `${submission.member_name}'s submission was rejected and the Award Matrix was updated. An existing Awarded result is always protected.`,
     );
     await load();
     await onChanged?.();
@@ -251,7 +251,7 @@ export default function AwardSubmissions({
             {user.role === "member"
               ? "Send your completed work to an officer for review."
               : isOfficerPortal
-                ? "Review every member application. Award Matrix updates remain a separate manual action."
+                ? "Approve or reject applications and revise decisions when needed. Results update the Award Matrix automatically."
               : user.role === "squad_leader"
                 ? "View submitted applications and their review status."
                 : "Verify or reject award applications submitted by members."}
@@ -423,14 +423,21 @@ export default function AwardSubmissions({
                 </div>
               )}
               {(user.role === "admin" || user.role === "officer") &&
-                submission.status === "pending" && (
+                !submission.archived_at && (
                   <div className="submission-review-controls">
                     <label>
-                      Review note <span>(optional)</span>
+                      {submission.status === "pending"
+                        ? "Review note"
+                        : "Edit review note"}{" "}
+                      <span>(optional)</span>
                       <textarea
                         rows={3}
                         maxLength={2000}
-                        value={reviewNotes[submission.id] ?? ""}
+                        value={
+                          reviewNotes[submission.id] ??
+                          submission.review_notes ??
+                          ""
+                        }
                         onChange={(event) =>
                           setReviewNotes((current) => ({
                             ...current,
@@ -442,7 +449,7 @@ export default function AwardSubmissions({
                     </label>
                     <div className="submission-actions">
                       <button
-                        className="approve"
+                        className={`approve ${submission.status === "approved" ? "current" : ""}`}
                         disabled={Boolean(busy)}
                         onClick={() => review(submission, "approved")}
                       >
@@ -451,7 +458,7 @@ export default function AwardSubmissions({
                           : "Approve"}
                       </button>
                       <button
-                        className="reject"
+                        className={`reject ${submission.status === "rejected" ? "current" : ""}`}
                         disabled={Boolean(busy)}
                         onClick={() => review(submission, "rejected")}
                       >
