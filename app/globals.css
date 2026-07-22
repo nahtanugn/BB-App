@@ -291,7 +291,7 @@ h2 { color: var(--navy); }
 .resource-editor > div > p:last-child { margin: 7px 0 0; color: var(--muted); font-size: 9px; line-height: 1.5; }
 .resource-editor form { display: grid; gap: 11px; }
 .resource-editor label { display: grid; gap: 6px; color: var(--navy); font-size: 9px; font-weight: 750; }
-.resource-editor input { width: 100%; height: 40px; padding: 0 10px; border: 1px solid var(--line); border-radius: 8px; background: white; font-size: 10px; }
+.resource-editor input, .resource-editor select { width: 100%; height: 40px; padding: 0 10px; border: 1px solid var(--line); border-radius: 8px; background: white; font-size: 10px; }
 .resource-editor .primary { justify-self: start; }
 .resource-groups { padding: 16px clamp(18px, 7vw, 90px) 60px; }
 .resource-group { margin-bottom: 29px; }
@@ -305,6 +305,11 @@ h2 { color: var(--navy); }
 .resource-card h3 { margin: 2px 24px 7px 0; color: var(--navy); font-family: Georgia, serif; font-size: 16px; }
 .resource-card p { min-height: 42px; margin: 0 0 13px; color: var(--muted); font-size: 9px; line-height: 1.5; }
 .resource-card a { color: var(--blue); font-size: 9px; font-weight: 800; text-decoration: none; }
+.resource-access { display: inline-flex; margin: 0 0 9px; padding: 4px 7px; border-radius: 999px; background: var(--blue-soft); color: var(--blue); font-size: 8px; font-weight: 800; }
+.resource-access-nco { background: #fff4d8; color: #8a5a00; }
+.resource-access-officer { background: #eef0f4; color: var(--navy); }
+.resource-access-editor { margin-top: 13px; display: grid; gap: 5px; color: var(--muted); font-size: 8px; font-weight: 800; }
+.resource-access-editor select { width: 100%; height: 32px; padding: 0 8px; border: 1px solid var(--line); border-radius: 7px; background: white; color: var(--navy); font-size: 9px; }
 .resource-delete { position: absolute; top: 11px; right: 11px; width: 26px; height: 26px; border: 0; border-radius: 7px; background: #f2f4f6; color: var(--muted); }
 .resource-delete:hover { background: #fff0f0; color: var(--danger); }
 .resource-empty { min-height: 360px; display: grid; place-content: center; justify-items: center; text-align: center; }

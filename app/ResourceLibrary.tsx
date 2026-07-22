@@ -14,9 +14,16 @@ type Resource = {
   description: string;
   category: string;
   url: string;
+  access_level: "member" | "nco" | "officer";
   created_at: string;
-  created_by: string;
+  created_by?: string;
 };
+
+const accessLabels = {
+  member: "Members",
+  nco: "NCOs & officers",
+  officer: "Officers only",
+} as const;
 
 export default function ResourceLibrary({
   user,
@@ -34,6 +41,7 @@ export default function ResourceLibrary({
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
   const [busy, setBusy] = useState(false);
+  const canManageResources = user.role === "admin" || user.role === "officer";
 
   async function loadResources() {
     const response = await fetch("/api/resources", { cache: "no-store" });
@@ -100,6 +108,7 @@ export default function ResourceLibrary({
         title: form.get("title"),
         description: form.get("description"),
         category: form.get("category"),
+        accessLevel: form.get("accessLevel"),
         url: form.get("url"),
       }),
     });
@@ -122,6 +131,30 @@ export default function ResourceLibrary({
       }),
     });
     await loadResources();
+  }
+
+  async function updateResourceAccess(
+    resource: Resource,
+    accessLevel: Resource["access_level"],
+  ) {
+    setError("");
+    setNotice("");
+    const response = await fetch("/api/resources", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        action: "update_access",
+        resourceId: resource.id,
+        accessLevel,
+      }),
+    });
+    const result = (await response.json()) as { error?: string };
+    if (!response.ok) {
+      setError(result.error ?? "Unable to update resource access");
+      return;
+    }
+    await loadResources();
+    setNotice(`Access updated for “${resource.title}”.`);
   }
 
   return (
@@ -198,6 +231,14 @@ export default function ResourceLibrary({
               </label>
             </div>
             <label>
+              Who can access this resource?
+              <select name="accessLevel" defaultValue="member">
+                <option value="member">Members, NCOs and officers</option>
+                <option value="nco">NCOs and officers only</option>
+                <option value="officer">Officers only</option>
+              </select>
+            </label>
+            <label>
               Resource link
               <input name="url" type="url" required placeholder="https://…" />
             </label>
@@ -241,10 +282,31 @@ export default function ResourceLibrary({
                     <div className="resource-card-icon">↗</div>
                     <div>
                       <h3>{resource.title}</h3>
+                      <span className={`resource-access resource-access-${resource.access_level}`}>
+                        {accessLabels[resource.access_level] ?? "Members"}
+                      </span>
                       <p>{resource.description || "Shared company resource"}</p>
                       <a href={resource.url} target="_blank" rel="noreferrer">
                         Open resource →
                       </a>
+                      {canManageResources && (
+                        <label className="resource-access-editor">
+                          Access
+                          <select
+                            value={resource.access_level}
+                            onChange={(event) =>
+                              updateResourceAccess(
+                                resource,
+                                event.target.value as Resource["access_level"],
+                              )
+                            }
+                          >
+                            <option value="member">Members and above</option>
+                            <option value="nco">NCOs and officers</option>
+                            <option value="officer">Officers only</option>
+                          </select>
+                        </label>
+                      )}
                     </div>
                     {user.role !== "member" &&
                       user.role !== "nco" &&

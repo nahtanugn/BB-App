@@ -131,6 +131,7 @@ export const resources = sqliteTable("resources", {
   description: text("description").notNull().default(""),
   category: text("category").notNull().default("General"),
   url: text("url").notNull(),
+  accessLevel: text("access_level").notNull().default("member"),
   createdAt: text("created_at").notNull(),
   createdBy: text("created_by").notNull(),
 });

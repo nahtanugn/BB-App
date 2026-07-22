@@ -1,0 +1,1 @@
+ALTER TABLE `resources` ADD `access_level` text DEFAULT 'member' NOT NULL;
