@@ -98,6 +98,10 @@ test("defines the 11KCHBB App application shell and sharing metadata", async () 
   assert.match(styles, /\.modal \{[\s\S]*?max-height: 92dvh;/);
   assert.match(
     styles,
+    /\.modal \{[\s\S]*?overflow-y: auto;[\s\S]*?touch-action: pan-y;/,
+  );
+  assert.match(
+    styles,
     /\.account-modal \{[\s\S]*?overflow-y: auto;[\s\S]*?-webkit-overflow-scrolling: touch;/,
   );
   assert.match(
@@ -387,8 +391,10 @@ test("ships the Malaysia Senior Section catalogue, role-based portals and instal
   assert.match(memberProgress, /View only/);
   assert.match(manifest, /display: "standalone"/);
   assert.match(manifest, /app-photo\.jpeg/);
-  assert.match(serviceWorker, /11kchbb-app-v2/);
+  assert.match(serviceWorker, /11kchbb-app-v3/);
   assert.match(serviceWorker, /event\.request\.mode !== "navigate"/);
   assert.match(serviceWorker, /cache: "no-store"/);
+  assert.match(serviceWorker, /You’re offline/);
+  assert.match(serviceWorker, /Try again/);
   assert.doesNotMatch(serviceWorker, /cache\.addAll\(SHELL\)/);
 });

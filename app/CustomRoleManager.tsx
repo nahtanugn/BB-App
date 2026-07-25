@@ -107,14 +107,26 @@ export default function CustomRoleManager({
     setBusy(false);
   }
   async function removeAssignment(assignment: Assignment) {
-    await fetch("/api/stock", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "remove_role", userId: assignment.user_id, roleId: assignment.role_id }) });
-    await load(); setNotice("Custom role removed from account.");
+    setBusy(true); setError(""); setNotice("");
+    const response = await fetch("/api/stock", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "remove_role", userId: assignment.user_id, roleId: assignment.role_id }) });
+    const result = (await response.json()) as { error?: string };
+    if (!response.ok) {
+      setBusy(false);
+      return setError(result.error ?? "Unable to remove custom role");
+    }
+    await load(); setNotice("Custom role removed from account."); setBusy(false);
   }
   async function deleteRole(role: Role) {
     if (!window.confirm(`Delete the custom role “${role.name}”? All assignments to it will also be removed.`)) return;
-    await fetch("/api/stock", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "delete_role", roleId: role.id }) });
+    setBusy(true); setError(""); setNotice("");
+    const response = await fetch("/api/stock", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "delete_role", roleId: role.id }) });
+    const result = (await response.json()) as { error?: string };
+    if (!response.ok) {
+      setBusy(false);
+      return setError(result.error ?? "Unable to delete custom role");
+    }
     if (editing?.id === role.id) setEditing(null);
-    await load(); setNotice("Custom role deleted.");
+    await load(); setNotice("Custom role deleted."); setBusy(false);
   }
 
   const editingPermissions = (() => {
@@ -149,7 +161,7 @@ export default function CustomRoleManager({
                   <small>{role.description || "No description provided"}</small>
                   <span>{(() => { try { return `${(JSON.parse(role.permissions) as string[]).length} permissions`; } catch { return "0 permissions"; } })()}</span>
                 </div>
-                {!readOnly && <div className="role-card-actions"><button className="text-button" onClick={() => setEditing(role)}>Edit</button><button className="danger-link" onClick={() => deleteRole(role)}>Delete</button></div>}
+                {!readOnly && <div className="role-card-actions"><button className="text-button" disabled={busy} onClick={() => setEditing(role)}>Edit</button><button className="danger-link" disabled={busy} onClick={() => deleteRole(role)}>Delete</button></div>}
               </article>
             ))}
             {!roles.length && <div className="custom-role-empty"><span>+</span><strong>No custom roles yet</strong><p>Create your first role below.</p></div>}
@@ -179,7 +191,7 @@ export default function CustomRoleManager({
             <div><h3>Assign roles</h3><p>Give an account additional access, with an optional expiry date.</p></div>
           </div>
           <div className="assignment-list">
-            {assignments.map((assignment) => <article key={`${assignment.user_id}-${assignment.role_id}`}><span className="role-color" style={{ backgroundColor: assignment.color }} /><div className="role-list-copy"><strong>{assignment.user_name}</strong><small>{assignment.email}</small><span>{assignment.role_name} · {assignment.expires_at ? `expires ${new Date(assignment.expires_at).toLocaleDateString("en-MY")}` : "ongoing access"}</span></div>{!readOnly && <button className="danger-link" onClick={() => removeAssignment(assignment)}>Remove</button>}</article>)}
+            {assignments.map((assignment) => <article key={`${assignment.user_id}-${assignment.role_id}`}><span className="role-color" style={{ backgroundColor: assignment.color }} /><div className="role-list-copy"><strong>{assignment.user_name}</strong><small>{assignment.email}</small><span>{assignment.role_name} · {assignment.expires_at ? `expires ${new Date(assignment.expires_at).toLocaleDateString("en-MY")}` : "ongoing access"}</span></div>{!readOnly && <button className="danger-link" disabled={busy} onClick={() => removeAssignment(assignment)}>Remove</button>}</article>)}
             {!assignments.length && <div className="custom-role-empty"><span>↗</span><strong>No assignments yet</strong><p>Assign a role after creating one.</p></div>}
           </div>
           {!readOnly && <form className="role-form assignment-form" onSubmit={assignRole}>

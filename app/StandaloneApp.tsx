@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useEffect, useState } from "react";
+import { FormEvent, useCallback, useEffect, useState } from "react";
 import AwardTracker from "./AwardTracker";
 import Announcements from "./Announcements";
 import AdminCentre from "./AdminCentre";
@@ -77,6 +77,7 @@ export default function StandaloneApp() {
       auth.user.access_expires_at &&
       auth.user.access_expires_at > new Date().toISOString(),
   );
+  const signedInUserId = auth?.user?.id ?? null;
 
   async function refreshAuth() {
     const response = await fetch("/api/auth", { cache: "no-store" });
@@ -109,20 +110,17 @@ export default function StandaloneApp() {
   }, []);
 
   useEffect(() => {
-    if (!auth?.user) {
-      setStockAccess(false);
-      return;
-    }
+    if (!signedInUserId) return;
     fetch("/api/stock?access=1", { cache: "no-store" })
       .then(async (response) => {
         const result = (await response.json()) as { canOpen?: boolean };
         setStockAccess(response.ok && Boolean(result.canOpen));
       })
       .catch(() => setStockAccess(false));
-  }, [auth?.user?.id]);
+  }, [signedInUserId]);
 
-  async function refreshAnnouncementSummary() {
-    if (!auth?.user) return;
+  const refreshAnnouncementSummary = useCallback(async () => {
+    if (!signedInUserId) return;
     const response = await fetch("/api/announcements/?summary=1", {
       cache: "no-store",
     });
@@ -135,13 +133,14 @@ export default function StandaloneApp() {
       unreadCount: Number(result.unreadCount ?? 0),
       latest: result.latest ?? null,
     });
-  }
+  }, [signedInUserId]);
+
+  const handleAnnouncementsRead = useCallback(() => {
+    setAnnouncementSummary({ unreadCount: 0, latest: null });
+  }, []);
 
   useEffect(() => {
-    if (!auth?.user) {
-      setAnnouncementSummary({ unreadCount: 0, latest: null });
-      return;
-    }
+    if (!signedInUserId) return;
     const checkAnnouncements = () => {
       fetch("/api/announcements/?summary=1", { cache: "no-store" })
         .then(async (response) => {
@@ -160,7 +159,7 @@ export default function StandaloneApp() {
     checkAnnouncements();
     const announcementTimer = window.setInterval(checkAnnouncements, 60_000);
     return () => window.clearInterval(announcementTimer);
-  }, [auth?.user?.id]);
+  }, [signedInUserId]);
 
   async function submitAuth(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -198,6 +197,8 @@ export default function StandaloneApp() {
     setShowUniformRequests(false);
     setShowAnnouncements(false);
     setShowAdminCentre(false);
+    setStockAccess(false);
+    setAnnouncementSummary({ unreadCount: 0, latest: null });
     setAuth((current) => (current ? { ...current, user: null } : current));
   }
 
@@ -499,9 +500,7 @@ export default function StandaloneApp() {
           setShowAnnouncements(false);
           void refreshAnnouncementSummary();
         }}
-        onRead={() =>
-          setAnnouncementSummary({ unreadCount: 0, latest: null })
-        }
+        onRead={handleAnnouncementsRead}
       />
     );
 

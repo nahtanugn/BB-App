@@ -68,7 +68,7 @@ export default function Announcements({
         }
       })
       .catch((cause: unknown) => setError(cause instanceof Error ? cause.message : "Unable to load announcements"));
-  }, []);
+  }, [onRead]);
 
   async function createAnnouncement(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();

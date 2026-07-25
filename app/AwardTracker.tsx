@@ -198,6 +198,7 @@ export default function AwardTracker({
     section === "senior" && roleCanViewSubmissions;
   const [data, setData] = useState<TrackerData | null>(null);
   const [error, setError] = useState("");
+  const [actionError, setActionError] = useState("");
   const [notice, setNotice] = useState("");
   const [query, setQuery] = useState("");
   const [category, setCategory] = useState("Compulsory");
@@ -448,6 +449,7 @@ export default function AwardTracker({
   ) {
     const key = `${memberId}:${awardCode}:${level}`;
     setSaving(key);
+    setActionError("");
     setData((existing) =>
       existing
         ? {
@@ -479,7 +481,11 @@ export default function AwardTracker({
         status: next,
       }),
     });
-    if (!response.ok) await load();
+    if (!response.ok) {
+      const result = (await response.json()) as { error?: string };
+      await load();
+      setActionError(result.error ?? "Unable to update the award");
+    }
     setSaving("");
   }
 
@@ -488,6 +494,7 @@ export default function AwardTracker({
     const key = `service-awards-${member.id}`;
     setSaving(key);
     setNotice("");
+    setActionError("");
     setData((existing) =>
       existing
         ? {
@@ -510,12 +517,15 @@ export default function AwardTracker({
         count: nextCount,
       }),
     });
-    setSaving("");
     if (!response.ok) {
+      const result = (await response.json()) as { error?: string };
       await load();
+      setActionError(result.error ?? "Unable to update the service award count");
+      setSaving("");
       return;
     }
     setNotice("Service award count updated successfully.");
+    setSaving("");
   }
 
   async function saveMember(event: FormEvent<HTMLFormElement>) {
@@ -523,6 +533,7 @@ export default function AwardTracker({
     const form = new FormData(event.currentTarget);
     const wasEditing = Boolean(editingMember);
     setNotice("");
+    setActionError("");
     setSaving(editingMember ? `member-${editingMember.id}` : "new-member");
     const response = await fetch("/api/tracker", {
       method: "POST",
@@ -544,7 +555,6 @@ export default function AwardTracker({
           canOverrideMemberDetails && overrideMemberDetails,
       }),
     });
-    setSaving("");
     if (response.ok) {
       setShowAdd(false);
       setEditingMember(null);
@@ -554,9 +564,11 @@ export default function AwardTracker({
           ? "Member details updated successfully."
           : "Member created successfully.",
       );
+      setSaving("");
     } else {
       const result = (await response.json()) as { error?: string };
-      window.alert(result.error ?? "Unable to save member details");
+      setActionError(result.error ?? "Unable to save member details");
+      setSaving("");
     }
   }
 
@@ -577,7 +589,10 @@ export default function AwardTracker({
   async function deleteMember(member: Member) {
     if (!window.confirm(`Remove ${member.name} and their award records?`))
       return;
-    await fetch("/api/tracker", {
+    setSaving(`delete-member-${member.id}`);
+    setActionError("");
+    setNotice("");
+    const response = await fetch("/api/tracker", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -586,13 +601,22 @@ export default function AwardTracker({
         memberId: member.id,
       }),
     });
+    const result = (await response.json()) as { error?: string };
+    if (!response.ok) {
+      setActionError(result.error ?? "Unable to remove member");
+      setSaving("");
+      return;
+    }
     await load();
+    setNotice(`${member.name} was removed successfully.`);
+    setSaving("");
   }
 
   async function createAttendanceSession(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const form = new FormData(event.currentTarget);
     setNotice("");
+    setActionError("");
     setSaving("new-session");
     const response = await fetch("/api/tracker", {
       method: "POST",
@@ -604,12 +628,16 @@ export default function AwardTracker({
         title: form.get("title"),
       }),
     });
-    setSaving("");
     if (response.ok) {
       setShowSession(false);
       await load();
       setActiveSessionId(null);
       setNotice("Attendance meeting created successfully.");
+      setSaving("");
+    } else {
+      const result = (await response.json()) as { error?: string };
+      setActionError(result.error ?? "Unable to create attendance meeting");
+      setSaving("");
     }
   }
 
@@ -620,6 +648,7 @@ export default function AwardTracker({
   ) {
     const key = `attendance-${sessionId}-${memberId}`;
     setSaving(key);
+    setActionError("");
     setData((existing) =>
       existing
         ? {
@@ -647,7 +676,11 @@ export default function AwardTracker({
         status,
       }),
     });
-    if (!response.ok) await load();
+    if (!response.ok) {
+      const result = (await response.json()) as { error?: string };
+      await load();
+      setActionError(result.error ?? "Unable to update attendance");
+    }
     setSaving("");
   }
 
@@ -655,6 +688,7 @@ export default function AwardTracker({
     const key = `subscription-${subscriptionYear}-${memberId}`;
     setSaving(key);
     setNotice("");
+    setActionError("");
     setData((existing) =>
       existing
         ? {
@@ -680,12 +714,15 @@ export default function AwardTracker({
         paid,
       }),
     });
-    setSaving("");
     if (!response.ok) {
+      const result = (await response.json()) as { error?: string };
       await load();
+      setActionError(result.error ?? "Unable to update subscription");
+      setSaving("");
       return;
     }
     setNotice("Yearly subscription updated successfully.");
+    setSaving("");
   }
 
   async function deleteAttendanceSession(session: AttendanceSession) {
@@ -695,7 +732,10 @@ export default function AwardTracker({
       )
     )
       return;
-    await fetch("/api/tracker", {
+    setSaving(`delete-session-${session.id}`);
+    setActionError("");
+    setNotice("");
+    const response = await fetch("/api/tracker", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -704,8 +744,16 @@ export default function AwardTracker({
         sessionId: session.id,
       }),
     });
+    const result = (await response.json()) as { error?: string };
+    if (!response.ok) {
+      setActionError(result.error ?? "Unable to delete attendance meeting");
+      setSaving("");
+      return;
+    }
     setActiveSessionId(null);
     await load();
+    setNotice("Attendance meeting deleted successfully.");
+    setSaving("");
   }
 
   async function exportCsv() {
@@ -1034,6 +1082,18 @@ export default function AwardTracker({
           <button
             onClick={() => setNotice("")}
             aria-label="Dismiss confirmation"
+          >
+            ×
+          </button>
+        </div>
+      )}
+      {actionError && (
+        <div className="action-toast error" role="alert">
+          <span>!</span>
+          {actionError}
+          <button
+            onClick={() => setActionError("")}
+            aria-label="Dismiss error"
           >
             ×
           </button>

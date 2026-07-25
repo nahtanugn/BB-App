@@ -155,7 +155,10 @@ export default function ResourceLibrary({
 
   async function deleteResource(resource: Resource) {
     if (!window.confirm(`Remove “${resource.title}” from the library?`)) return;
-    await fetch("/api/resources", {
+    setBusy(true);
+    setError("");
+    setNotice("");
+    const response = await fetch("/api/resources", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -163,7 +166,14 @@ export default function ResourceLibrary({
         resourceId: resource.id,
       }),
     });
+    const result = (await response.json()) as { error?: string };
+    if (!response.ok) {
+      setBusy(false);
+      return setError(result.error ?? "Unable to remove resource");
+    }
     await loadResources();
+    setNotice(`“${resource.title}” was removed from the library.`);
+    setBusy(false);
   }
 
   async function updateResourceAccess(
@@ -365,6 +375,7 @@ export default function ResourceLibrary({
                     {canManageResources && (
                       <button
                         className="resource-delete"
+                        disabled={busy}
                         onClick={() => deleteResource(resource)}
                         aria-label={`Remove ${resource.title}`}
                       >
