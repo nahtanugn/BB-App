@@ -50,6 +50,10 @@ function canArchive(user: NonNullable<Awaited<ReturnType<typeof getCurrentUser>>
   );
 }
 
+function canDelete(user: NonNullable<Awaited<ReturnType<typeof getCurrentUser>>>) {
+  return user.role === "admin" || hasTemporaryAdminAccess(user);
+}
+
 export async function GET(request: Request) {
   try {
     const user = await getCurrentUser(request);
@@ -81,6 +85,7 @@ export async function GET(request: Request) {
       unreadCount: unread.length,
       canAnnounce: canAnnounce(user),
       canArchive: canArchive(user),
+      canDelete: canDelete(user),
     });
   } catch (error) {
     return Response.json({ error: error instanceof Error ? error.message : "Unable to load announcements" }, { status: 500 });
@@ -104,10 +109,30 @@ export async function POST(request: Request) {
       const expiresAt = /^\d{4}-\d{2}-\d{2}$/.test(expiresOn) ? `${expiresOn}T15:59:59.999Z` : null;
       if (!title || !message) return Response.json({ error: "Enter a title and announcement message" }, { status: 400 });
       if (title.length > 120 || message.length > 4000) return Response.json({ error: "The announcement is too long" }, { status: 400 });
+      const duplicateWindow = new Date(Date.now() - 30_000).toISOString();
+      const duplicate = await runtime.DB.prepare(`SELECT id FROM announcements
+        WHERE created_by_user_id = ? AND title = ? AND body = ?
+          AND created_at > ? AND archived_at IS NULL LIMIT 1`)
+        .bind(user.id, title, message, duplicateWindow).first<{ id: number }>();
+      if (duplicate) return Response.json({ ok: true, duplicatePrevented: true });
       await runtime.DB.prepare(`INSERT INTO announcements
         (title, body, priority, expires_at, created_by_user_id, created_by_name, created_at)
         VALUES (?, ?, ?, ?, ?, ?, ?)`)
         .bind(title, message, priority, expiresAt, user.id, user.name, new Date().toISOString()).run();
+      return Response.json({ ok: true });
+    }
+
+    if (action === "delete_announcement") {
+      if (!canDelete(user)) return Response.json({ error: "Administrator access required" }, { status: 403 });
+      const announcementId = Number(body.announcementId);
+      if (!announcementId) return Response.json({ error: "Announcement not found" }, { status: 404 });
+      const announcement = await runtime.DB.prepare("SELECT id FROM announcements WHERE id = ?")
+        .bind(announcementId).first<{ id: number }>();
+      if (!announcement) return Response.json({ error: "Announcement not found" }, { status: 404 });
+      await runtime.DB.batch([
+        runtime.DB.prepare("DELETE FROM announcement_reads WHERE announcement_id = ?").bind(announcementId),
+        runtime.DB.prepare("DELETE FROM announcements WHERE id = ?").bind(announcementId),
+      ]);
       return Response.json({ ok: true });
     }
 

@@ -17,6 +17,7 @@ type AnnouncementData = {
   unreadCount: number;
   canAnnounce: boolean;
   canArchive: boolean;
+  canDelete: boolean;
 };
 
 export default function Announcements({
@@ -84,29 +85,58 @@ export default function Announcements({
         expiresOn: form.get("expiresOn"),
       }),
     });
-    const result = (await response.json()) as { error?: string };
+    const result = (await response.json()) as { error?: string; duplicatePrevented?: boolean };
     setBusy(false);
     if (!response.ok) return setError(result.error ?? "Unable to publish announcement");
     event.currentTarget.reset();
     await load(false);
-    setNotice("Announcement published to everyone.");
+    setNotice(
+      result.duplicatePrevented
+        ? "This announcement was already published. A duplicate was prevented."
+        : "Announcement published to everyone.",
+    );
   }
 
   async function archiveAnnouncement(announcement: Announcement) {
     if (!window.confirm(`Archive “${announcement.title}”?`)) return;
+    setBusy(true); setError(""); setNotice("");
     const response = await fetch("/api/announcements/", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ action: "archive_announcement", announcementId: announcement.id }),
     });
     const result = (await response.json()) as { error?: string };
+    setBusy(false);
     if (!response.ok) return setError(result.error ?? "Unable to archive announcement");
     await load(false);
     setNotice("Announcement archived.");
   }
 
+  async function deleteAnnouncement(announcement: Announcement) {
+    if (!window.confirm(`Permanently delete “${announcement.title}”? This cannot be undone.`)) return;
+    setBusy(true); setError(""); setNotice("");
+    const response = await fetch("/api/announcements/", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action: "delete_announcement", announcementId: announcement.id }),
+    });
+    const result = (await response.json()) as { error?: string };
+    setBusy(false);
+    if (!response.ok) return setError(result.error ?? "Unable to delete announcement");
+    await load(false);
+    onRead();
+    setNotice("Announcement permanently deleted.");
+  }
+
   return (
     <main className="announcement-shell">
+      {notice && (
+        <div className="action-toast" role="status">
+          <span>✓</span>
+          {notice}
+          <button onClick={() => setNotice("")} aria-label="Dismiss confirmation">×</button>
+        </div>
+      )}
       <header className="stock-topbar">
         <div className="resource-brand">
           <div className="brand-mark app-photo" role="img" aria-label="11th Kuching Company" />
@@ -124,7 +154,6 @@ export default function Announcements({
           <h1>Announcements</h1>
           <p>Official notices shared with every signed-in member, NCO and officer.</p>
         </div>
-        {notice && <p className="form-success" role="status">{notice}</p>}
         {error && <p className="form-error">{error}</p>}
         {data?.canAnnounce && (
           <section className="announcement-composer">
@@ -151,7 +180,14 @@ export default function Announcements({
                 </div>
                 <h3>{announcement.title}</h3>
                 <p>{announcement.body}</p>
-                <footer><span>Posted by {announcement.created_by_name}</span>{announcement.expires_at && <span>Available until {new Date(announcement.expires_at).toLocaleDateString("en-MY")}</span>}{data.canArchive && <button className="danger-link" onClick={() => archiveAnnouncement(announcement)}>Archive</button>}</footer>
+                <footer>
+                  <span>Posted by {announcement.created_by_name}</span>
+                  {announcement.expires_at && <span>Available until {new Date(announcement.expires_at).toLocaleDateString("en-MY")}</span>}
+                  <div className="announcement-admin-actions">
+                    {data.canArchive && <button disabled={busy} className="text-button" onClick={() => archiveAnnouncement(announcement)}>Archive</button>}
+                    {data.canDelete && <button disabled={busy} className="danger-link" onClick={() => deleteAnnouncement(announcement)}>Delete</button>}
+                  </div>
+                </footer>
               </article>
             ))}
             {data && !data.announcements.length && <p className="empty-inline">No announcements have been published yet.</p>}
