@@ -64,6 +64,9 @@ test("defines the 11KCHBB App application shell and sharing metadata", async () 
   assert.match(standalone, /Edit account/);
   assert.match(standalone, /Save changes/);
   assert.match(standalone, /Account created successfully/);
+  assert.match(standalone, /Login not\s*created/);
+  assert.match(standalone, /Create login/);
+  assert.match(standalone, /Create member login/);
   assert.match(standalone, /Delete\s*<\/button>/);
   assert.match(standalone, /value="squad_leader"/);
   assert.match(standalone, /Assigned squad/);
@@ -150,6 +153,8 @@ test("ships the Malaysia Senior Section catalogue, role-based portals and instal
   assert.match(authRoute, /action === "update_user"/);
   assert.match(authRoute, /You cannot remove your own administrator role/);
   assert.match(authRoute, /createOrLinkMemberProfile/);
+  assert.match(authRoute, /pendingMembers/);
+  assert.match(authRoute, /LEFT JOIN users u ON LOWER\(u\.email\)/);
   assert.match(authRoute, /VALUES \(\?, 'Private', \?, \?, \?/);
   assert.match(authRoute, /role === "member"/);
   assert.match(authRoute, /action === "delete_user"/);

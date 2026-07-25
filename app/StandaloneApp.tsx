@@ -13,6 +13,14 @@ type User = {
   squad: string;
 };
 type ManagedUser = User & { active: number; created_at: string };
+type PendingMember = {
+  id: number;
+  email: string;
+  name: string;
+  squad: string;
+  section: "senior" | "junior";
+  created_at: string;
+};
 type AuthState = {
   user: User | null;
   setupRequired: boolean;
@@ -28,6 +36,9 @@ export default function StandaloneApp() {
   const [showResources, setShowResources] = useState(false);
   const [showSubmissions, setShowSubmissions] = useState(false);
   const [users, setUsers] = useState<ManagedUser[]>([]);
+  const [pendingMembers, setPendingMembers] = useState<PendingMember[]>([]);
+  const [pendingAccountMember, setPendingAccountMember] =
+    useState<PendingMember | null>(null);
   const [editingUser, setEditingUser] = useState<ManagedUser | null>(null);
   const [newUserRole, setNewUserRole] = useState<User["role"]>("officer");
 
@@ -100,14 +111,19 @@ export default function StandaloneApp() {
     const response = await fetch("/api/auth?users=1", { cache: "no-store" });
     const result = (await response.json()) as {
       users?: ManagedUser[];
+      pendingMembers?: PendingMember[];
       error?: string;
     };
-    if (response.ok) setUsers(result.users ?? []);
+    if (response.ok) {
+      setUsers(result.users ?? []);
+      setPendingMembers(result.pendingMembers ?? []);
+    }
   }
 
   async function openAccount() {
     setShowAccount(true);
     setEditingUser(null);
+    setPendingAccountMember(null);
     setError("");
     setNotice("");
     if (auth?.user?.role === "admin") await loadUsers();
@@ -138,6 +154,7 @@ export default function StandaloneApp() {
       return setError(result.error ?? "Unable to create account");
     event.currentTarget.reset();
     setNewUserRole("officer");
+    setPendingAccountMember(null);
     setError("");
     await loadUsers();
     setNotice("Account created successfully.");
@@ -461,6 +478,28 @@ export default function StandaloneApp() {
                         </div>
                       </div>
                     ))}
+                    {pendingMembers.map((member) => (
+                      <div key={`pending-member-${member.id}`}>
+                        <span>
+                          <strong>{member.name}</strong>
+                          <small>
+                            {member.email} · Member · {member.squad} · Login not
+                            created
+                          </small>
+                        </span>
+                        <div className="user-actions">
+                          <button
+                            className="text-button"
+                            onClick={() => {
+                              setPendingAccountMember(member);
+                              setNewUserRole("member");
+                            }}
+                          >
+                            Create login
+                          </button>
+                        </div>
+                      </div>
+                    ))}
                   </div>
                   {editingUser && (
                     <form
@@ -559,16 +598,57 @@ export default function StandaloneApp() {
                       </button>
                     </form>
                   )}
-                  <form className="create-user-form" onSubmit={createUser}>
-                    <h3>Add an account</h3>
+                  <form
+                    key={pendingAccountMember?.id ?? "new-account"}
+                    className="create-user-form"
+                    onSubmit={createUser}
+                  >
+                    <div className="account-section-heading">
+                      <div>
+                        <h3>
+                          {pendingAccountMember
+                            ? `Create login for ${pendingAccountMember.name}`
+                            : "Add an account"}
+                        </h3>
+                        {pendingAccountMember && (
+                          <p>
+                            Set a temporary password to activate this member’s
+                            login.
+                          </p>
+                        )}
+                      </div>
+                      {pendingAccountMember && (
+                        <button
+                          type="button"
+                          className="text-button"
+                          onClick={() => {
+                            setPendingAccountMember(null);
+                            setNewUserRole("officer");
+                          }}
+                        >
+                          Cancel
+                        </button>
+                      )}
+                    </div>
                     <div className="form-row">
                       <label>
                         Name
-                        <input name="name" required />
+                        <input
+                          name="name"
+                          required
+                          readOnly={Boolean(pendingAccountMember)}
+                          defaultValue={pendingAccountMember?.name ?? ""}
+                        />
                       </label>
                       <label>
                         Email
-                        <input name="email" type="email" required />
+                        <input
+                          name="email"
+                          type="email"
+                          required
+                          readOnly={Boolean(pendingAccountMember)}
+                          defaultValue={pendingAccountMember?.email ?? ""}
+                        />
                       </label>
                     </div>
                     <div className="form-row">
@@ -586,6 +666,7 @@ export default function StandaloneApp() {
                         <select
                           name="role"
                           value={newUserRole}
+                          disabled={Boolean(pendingAccountMember)}
                           onChange={(event) =>
                             setNewUserRole(event.target.value as User["role"])
                           }
@@ -602,6 +683,9 @@ export default function StandaloneApp() {
                           </option>
                           <option value="admin">Administrator</option>
                         </select>
+                        {pendingAccountMember && (
+                          <input type="hidden" name="role" value="member" />
+                        )}
                       </label>
                     </div>
                     {["nco", "squad_leader", "member"].includes(
@@ -609,7 +693,10 @@ export default function StandaloneApp() {
                     ) && (
                       <label>
                         Assigned squad
-                        <select name="squad" defaultValue="Alpha">
+                        <select
+                          name="squad"
+                          defaultValue={pendingAccountMember?.squad ?? "Alpha"}
+                        >
                           <option>Alpha</option>
                           <option>Bravo</option>
                           <option>Charlie</option>
@@ -620,14 +707,23 @@ export default function StandaloneApp() {
                     {newUserRole === "member" && (
                       <label>
                         Member section
-                        <select name="memberSection" defaultValue="senior">
+                        <select
+                          name="memberSection"
+                          defaultValue={
+                            pendingAccountMember?.section ?? "senior"
+                          }
+                        >
                           <option value="senior">Senior</option>
                           <option value="junior">Junior</option>
                         </select>
                       </label>
                     )}
                     <button className="primary" disabled={busy}>
-                      Create account
+                      {busy
+                        ? "Creating…"
+                        : pendingAccountMember
+                          ? "Create member login"
+                          : "Create account"}
                     </button>
                   </form>
                 </section>

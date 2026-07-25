@@ -81,7 +81,18 @@ export async function GET(request: Request) {
       const users = await runtime.DB.prepare(
         "SELECT id, email, name, role, squad, active, created_at FROM users ORDER BY name COLLATE NOCASE",
       ).all();
-      return Response.json({ user, users: users.results });
+      const pendingMembers = await runtime.DB.prepare(
+        `SELECT m.id, m.email, m.name, m.squad, m.section, m.created_at
+        FROM members m
+        LEFT JOIN users u ON LOWER(u.email) = LOWER(m.email)
+        WHERE TRIM(m.email) != '' AND u.id IS NULL
+        ORDER BY m.name COLLATE NOCASE`,
+      ).all();
+      return Response.json({
+        user,
+        users: users.results,
+        pendingMembers: pendingMembers.results,
+      });
     }
     return Response.json({
       user,
