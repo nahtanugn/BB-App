@@ -39,6 +39,8 @@ export default function ResourceLibrary({
   onManageAccount,
   onOpenStock,
   onOpenUniformRequests,
+  onOpenAnnouncements,
+  announcementSummary,
   onLogout,
 }: {
   user: User;
@@ -47,6 +49,11 @@ export default function ResourceLibrary({
   onManageAccount?: () => void;
   onOpenStock?: () => void;
   onOpenUniformRequests?: () => void;
+  onOpenAnnouncements?: () => void;
+  announcementSummary?: {
+    unreadCount: number;
+    latest: { title: string; body: string; priority: string } | null;
+  };
   onLogout: () => void;
 }) {
   const [resources, setResources] = useState<Resource[]>([]);
@@ -210,10 +217,25 @@ export default function ResourceLibrary({
           {onOpenUniformRequests && (
             <button onClick={onOpenUniformRequests}>Uniform requests</button>
           )}
+          {onOpenAnnouncements && (
+            <button onClick={onOpenAnnouncements}>
+              Announcements
+              {announcementSummary && announcementSummary.unreadCount > 0
+                ? ` (${announcementSummary.unreadCount})`
+                : ""}
+            </button>
+          )}
           {onBack && <button onClick={onBack}>Back to tracker</button>}
           <button onClick={onLogout}>Sign out</button>
         </div>
       </header>
+      {announcementSummary && announcementSummary.unreadCount > 0 && announcementSummary.latest && (
+        <button className={`announcement-alert resource-announcement-alert ${announcementSummary.latest.priority}`} onClick={onOpenAnnouncements}>
+          <span>!</span>
+          <div><strong>{announcementSummary.latest.title}</strong><small>{announcementSummary.latest.body}</small></div>
+          <b>{announcementSummary.unreadCount} new</b>
+        </button>
+      )}
       <section className="resources-hero">
         <div>
           <p className="eyebrow">11TH KUCHING COMPANY</p>

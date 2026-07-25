@@ -147,6 +147,11 @@ type AwardTrackerProps = {
   onOpenResources?: () => void;
   onOpenStock?: () => void;
   onOpenUniformRequests?: () => void;
+  onOpenAnnouncements?: () => void;
+  announcementSummary?: {
+    unreadCount: number;
+    latest: { title: string; body: string; priority: string } | null;
+  };
   onOpenSubmissions?: (section: "senior" | "junior") => void;
 };
 
@@ -157,6 +162,8 @@ export default function AwardTracker({
   onOpenResources,
   onOpenStock,
   onOpenUniformRequests,
+  onOpenAnnouncements,
+  announcementSummary,
   onOpenSubmissions,
 }: AwardTrackerProps) {
   const hasTemporaryAdminAccess = Boolean(
@@ -1023,6 +1030,16 @@ export default function AwardTracker({
           </button>
         </div>
       )}
+      {announcementSummary && announcementSummary.unreadCount > 0 && announcementSummary.latest && (
+        <button className={`announcement-alert ${announcementSummary.latest.priority}`} onClick={onOpenAnnouncements}>
+          <span>!</span>
+          <div>
+            <strong>{announcementSummary.latest.title}</strong>
+            <small>{announcementSummary.latest.body}</small>
+          </div>
+          <b>{announcementSummary.unreadCount} new</b>
+        </button>
+      )}
       <aside className="sidebar">
         <div className="brand">
           <div
@@ -1127,6 +1144,14 @@ export default function AwardTracker({
           {onOpenUniformRequests && (
             <button className="nav-secondary" onClick={onOpenUniformRequests}>
               <span>▤</span> Uniform requests
+            </button>
+          )}
+          {onOpenAnnouncements && (
+            <button className="nav-secondary" onClick={onOpenAnnouncements}>
+              <span>◉</span> Announcements
+              {announcementSummary && announcementSummary.unreadCount > 0 && (
+                <b className="nav-badge">{announcementSummary.unreadCount}</b>
+              )}
             </button>
           )}
           <button
@@ -1262,6 +1287,25 @@ export default function AwardTracker({
                   <small>Request parts or review member requests</small>
                 </div>
                 <b>›</b>
+              </button>
+            )}
+            {onOpenAnnouncements && (
+              <button
+                onClick={() => {
+                  setShowMobileMenu(false);
+                  onOpenAnnouncements();
+                }}
+              >
+                <span>◉</span>
+                <div>
+                  <strong>Announcements</strong>
+                  <small>Company-wide notices</small>
+                </div>
+                {announcementSummary && announcementSummary.unreadCount > 0 ? (
+                  <b className="menu-count">{announcementSummary.unreadCount}</b>
+                ) : (
+                  <b>›</b>
+                )}
               </button>
             )}
           </section>

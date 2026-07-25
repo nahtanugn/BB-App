@@ -236,3 +236,28 @@ export const uniformRequests = sqliteTable("uniform_requests", {
   issuedBy: text("issued_by"),
   cancelledAt: text("cancelled_at"),
 });
+
+export const announcements = sqliteTable("announcements", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  title: text("title").notNull(),
+  body: text("body").notNull(),
+  priority: text("priority").notNull().default("normal"),
+  expiresAt: text("expires_at"),
+  createdByUserId: integer("created_by_user_id").notNull(),
+  createdByName: text("created_by_name").notNull(),
+  createdAt: text("created_at").notNull(),
+  archivedAt: text("archived_at"),
+  archivedBy: text("archived_by"),
+});
+
+export const announcementReads = sqliteTable(
+  "announcement_reads",
+  {
+    announcementId: integer("announcement_id").notNull(),
+    userId: integer("user_id").notNull(),
+    readAt: text("read_at").notNull(),
+  },
+  (table) => [
+    primaryKey({ columns: [table.announcementId, table.userId] }),
+  ],
+);

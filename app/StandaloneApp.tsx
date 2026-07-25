@@ -2,6 +2,7 @@
 
 import { FormEvent, useEffect, useState } from "react";
 import AwardTracker from "./AwardTracker";
+import Announcements from "./Announcements";
 import CustomRoleManager from "./CustomRoleManager";
 import ResourceLibrary from "./ResourceLibrary";
 import StockCentre from "./StockCentre";
@@ -50,6 +51,11 @@ export default function StandaloneApp() {
   const [showSubmissions, setShowSubmissions] = useState(false);
   const [showStock, setShowStock] = useState(false);
   const [showUniformRequests, setShowUniformRequests] = useState(false);
+  const [showAnnouncements, setShowAnnouncements] = useState(false);
+  const [announcementSummary, setAnnouncementSummary] = useState<{
+    unreadCount: number;
+    latest: { title: string; body: string; priority: string } | null;
+  }>({ unreadCount: 0, latest: null });
   const [stockAccess, setStockAccess] = useState(false);
   const [submissionSection, setSubmissionSection] = useState<
     "senior" | "junior"
@@ -110,6 +116,47 @@ export default function StandaloneApp() {
       .catch(() => setStockAccess(false));
   }, [auth?.user?.id]);
 
+  async function refreshAnnouncementSummary() {
+    if (!auth?.user) return;
+    const response = await fetch("/api/announcements/?summary=1", {
+      cache: "no-store",
+    });
+    if (!response.ok) return;
+    const result = (await response.json()) as {
+      unreadCount?: number;
+      latest?: { title: string; body: string; priority: string } | null;
+    };
+    setAnnouncementSummary({
+      unreadCount: Number(result.unreadCount ?? 0),
+      latest: result.latest ?? null,
+    });
+  }
+
+  useEffect(() => {
+    if (!auth?.user) {
+      setAnnouncementSummary({ unreadCount: 0, latest: null });
+      return;
+    }
+    const checkAnnouncements = () => {
+      fetch("/api/announcements/?summary=1", { cache: "no-store" })
+        .then(async (response) => {
+          if (!response.ok) return;
+          const result = (await response.json()) as {
+            unreadCount?: number;
+            latest?: { title: string; body: string; priority: string } | null;
+          };
+          setAnnouncementSummary({
+            unreadCount: Number(result.unreadCount ?? 0),
+            latest: result.latest ?? null,
+          });
+        })
+        .catch(() => undefined);
+    };
+    checkAnnouncements();
+    const announcementTimer = window.setInterval(checkAnnouncements, 60_000);
+    return () => window.clearInterval(announcementTimer);
+  }, [auth?.user?.id]);
+
   async function submitAuth(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const form = new FormData(event.currentTarget);
@@ -144,6 +191,7 @@ export default function StandaloneApp() {
     setShowSubmissions(false);
     setShowStock(false);
     setShowUniformRequests(false);
+    setShowAnnouncements(false);
     setAuth((current) => (current ? { ...current, user: null } : current));
   }
 
@@ -420,6 +468,21 @@ export default function StandaloneApp() {
       />
     );
 
+  if (showAnnouncements)
+    return (
+      <Announcements
+        userName={auth.user.name}
+        onLogout={logout}
+        onBack={() => {
+          setShowAnnouncements(false);
+          void refreshAnnouncementSummary();
+        }}
+        onRead={() =>
+          setAnnouncementSummary({ unreadCount: 0, latest: null })
+        }
+      />
+    );
+
   if (
     (auth.user.role === "member" && !hasTemporaryAdminAccess) ||
     showResources
@@ -441,6 +504,8 @@ export default function StandaloneApp() {
             stockAccess ? () => setShowStock(true) : undefined
           }
           onOpenUniformRequests={() => setShowUniformRequests(true)}
+          onOpenAnnouncements={() => setShowAnnouncements(true)}
+          announcementSummary={announcementSummary}
           onBack={
             auth.user.role === "member"
               ? undefined
@@ -526,6 +591,8 @@ export default function StandaloneApp() {
         onOpenResources={() => setShowResources(true)}
         onOpenStock={stockAccess ? () => setShowStock(true) : undefined}
         onOpenUniformRequests={() => setShowUniformRequests(true)}
+        onOpenAnnouncements={() => setShowAnnouncements(true)}
+        announcementSummary={announcementSummary}
         onOpenSubmissions={(section) => {
           setSubmissionSection(section);
           setShowSubmissions(true);
