@@ -38,6 +38,7 @@ export default function AdminCentre({
   const [users, setUsers] = useState<ManagedUser[]>([]);
   const [pendingMembers, setPendingMembers] = useState<PendingMember[]>([]);
   const [editingUser, setEditingUser] = useState<ManagedUser | null>(null);
+  const [resettingUser, setResettingUser] = useState<ManagedUser | null>(null);
   const [pendingAccountMember, setPendingAccountMember] = useState<PendingMember | null>(null);
   const [newRole, setNewRole] = useState<Role>("officer");
   const [newTemporaryAccess, setNewTemporaryAccess] = useState("");
@@ -154,6 +155,30 @@ export default function AdminCentre({
     setNotice(`Account ${user.active ? "disabled" : "enabled"} successfully.`);
   }
 
+  async function resetPassword(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!resettingUser) return;
+    const form = new FormData(event.currentTarget);
+    setBusy(true); setError(""); setNotice("");
+    const response = await fetch("/api/auth", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        action: "reset_password",
+        userId: resettingUser.id,
+        temporaryPassword: form.get("temporaryPassword"),
+      }),
+    });
+    const result = (await response.json()) as { error?: string };
+    setBusy(false);
+    if (!response.ok)
+      return setError(result.error ?? "Unable to reset password");
+    setResettingUser(null);
+    setNotice(
+      `${resettingUser.name}'s password was reset. Their existing sessions were signed out.`,
+    );
+  }
+
   async function deleteUser(user: ManagedUser) {
     if (!window.confirm(`Delete the login account for ${user.name}? Their member profile, attendance and awards will remain.`)) return;
     setBusy(true); setError(""); setNotice("");
@@ -204,7 +229,19 @@ export default function AdminCentre({
                     <div className="admin-user-avatar">{user.name.split(/\s+/).map((part) => part[0]).join("").slice(0, 2).toUpperCase()}</div>
                     <div><strong>{user.name}</strong><small>{user.email}</small><span>{user.role.replaceAll("_", " ")}{user.squad ? ` · ${user.squad}` : ""}{!user.active ? " · Disabled" : ""}</span></div>
                     {!readOnly && <div className="admin-account-actions">
-                      <button className="text-button" onClick={() => setEditingUser(user)}>Edit</button>
+                      <button className="text-button" onClick={() => { setResettingUser(null); setEditingUser(user); }}>Edit</button>
+                      <button
+                        className="text-button"
+                        disabled={busy || user.id === currentUser.id}
+                        onClick={() => {
+                          setEditingUser(null);
+                          setResettingUser(user);
+                          setError("");
+                          setNotice("");
+                        }}
+                      >
+                        Reset password
+                      </button>
                       <button disabled={busy || user.id === currentUser.id} className={user.active ? "danger-link" : "text-button"} onClick={() => setUserActive(user)}>{user.active ? "Disable" : "Enable"}</button>
                       <button disabled={busy || user.id === currentUser.id} className="danger-link" onClick={() => deleteUser(user)}>Delete</button>
                     </div>}
@@ -214,13 +251,42 @@ export default function AdminCentre({
               {pendingMembers.length > 0 && (
                 <div className="pending-login-panel">
                   <h3>Members without login accounts</h3>
-                  {pendingMembers.map((member) => <article key={member.id}><div><strong>{member.name}</strong><small>{member.email} · {member.section} · {member.squad}</small></div>{!readOnly && <button className="text-button" onClick={() => { setPendingAccountMember(member); setNewRole("member"); setNewTemporaryAccess(""); }}>Create login</button>}</article>)}
+                  {pendingMembers.map((member) => <article key={member.id}><div><strong>{member.name}</strong><small>{member.email} · {member.section} · {member.squad}</small></div>{!readOnly && <button className="text-button" onClick={() => { setResettingUser(null); setEditingUser(null); setPendingAccountMember(member); setNewRole("member"); setNewTemporaryAccess(""); }}>Create login</button>}</article>)}
                 </div>
               )}
             </section>
             <section className="admin-account-editor">
               {readOnly ? (
                 <div className="read-only-panel"><p className="eyebrow">READ ONLY</p><h2>Account details are protected</h2><p>Viewer accounts can inspect every account but cannot create, edit, disable, or delete accounts.</p></div>
+              ) : resettingUser ? (
+                <form key={`reset-${resettingUser.id}`} onSubmit={resetPassword}>
+                  <div className="account-section-heading">
+                    <div>
+                      <p className="eyebrow">PASSWORD RESET</p>
+                      <h2>{resettingUser.name}</h2>
+                    </div>
+                    <button type="button" className="text-button" onClick={() => setResettingUser(null)}>Cancel</button>
+                  </div>
+                  <p className="account-editor-note">
+                    Set a temporary password for this account. The user will be
+                    signed out on every device and can replace it after logging
+                    in again.
+                  </p>
+                  <label>
+                    New temporary password
+                    <input
+                      name="temporaryPassword"
+                      type="password"
+                      minLength={10}
+                      required
+                      autoComplete="new-password"
+                    />
+                    <small>At least 10 characters.</small>
+                  </label>
+                  <button className="primary" disabled={busy}>
+                    {busy ? "Resetting…" : "Reset password"}
+                  </button>
+                </form>
               ) : editingUser ? (
                 <form key={editingUser.id} onSubmit={updateUser}>
                   <div className="account-section-heading"><div><p className="eyebrow">EDIT ACCOUNT</p><h2>{editingUser.name}</h2></div><button type="button" className="text-button" onClick={() => setEditingUser(null)}>Cancel</button></div>

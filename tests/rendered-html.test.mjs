@@ -223,6 +223,9 @@ test("ships the Malaysia Senior Section catalogue, role-based portals and instal
   assert.match(authRoute, /role === "member"/);
   assert.match(authRoute, /action === "delete_user"/);
   assert.match(authRoute, /You cannot delete your own account/);
+  assert.match(authRoute, /action === "reset_password"/);
+  assert.match(authRoute, /Temporary password must be at least 10 characters/);
+  assert.match(authRoute, /DELETE FROM sessions WHERE user_id = \?/);
   assert.match(
     authRoute,
     /"admin",\s*"officer",\s*"nco",\s*"squad_leader",\s*"viewer",\s*"member"/,

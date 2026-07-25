@@ -379,6 +379,41 @@ export async function POST(request: Request) {
       return Response.json({ ok: true });
     }
 
+    if (action === "reset_password") {
+      const targetId = Number(body.userId);
+      const temporaryPassword = String(body.temporaryPassword ?? "");
+      if (!targetId || targetId === user.id)
+        return Response.json(
+          { error: "Use Change my password for your own account" },
+          { status: 400 },
+        );
+      if (temporaryPassword.length < 10)
+        return Response.json(
+          { error: "Temporary password must be at least 10 characters" },
+          { status: 400 },
+        );
+      const target = await runtime.DB.prepare(
+        "SELECT id FROM users WHERE id = ?",
+      )
+        .bind(targetId)
+        .first<{ id: number }>();
+      if (!target)
+        return Response.json(
+          { error: "User account not found" },
+          { status: 404 },
+        );
+      const digest = await passwordDigest(temporaryPassword);
+      await runtime.DB.batch([
+        runtime.DB.prepare(
+          "UPDATE users SET password_hash = ?, password_salt = ? WHERE id = ?",
+        ).bind(digest.hash, digest.salt, targetId),
+        runtime.DB.prepare("DELETE FROM sessions WHERE user_id = ?").bind(
+          targetId,
+        ),
+      ]);
+      return Response.json({ ok: true });
+    }
+
     if (action === "delete_user") {
       const targetId = Number(body.userId);
       if (!targetId || targetId === user.id)

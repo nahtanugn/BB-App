@@ -1351,6 +1351,15 @@ h1 { font-size: clamp(30px, 3.1vw, 46px); line-height: 1; letter-spacing: -1.5px
 }
 .read-only-panel h2 { margin: 6px 0 9px; color: var(--navy); font-family: Georgia, serif; }
 .read-only-panel p:last-child { margin: 0; color: var(--muted); line-height: 1.6; }
+.account-editor-note {
+  margin: 0;
+  padding: 12px 14px;
+  border-radius: 10px;
+  background: #eef6ff;
+  color: var(--muted);
+  font-size: 10px;
+  line-height: 1.55;
+}
 .custom-role-layout { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
 .custom-role-layout > div { min-width: 0; }
 .custom-role-layout h4 { margin: 10px 0; color: var(--navy); font-size: 11px; }
