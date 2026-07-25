@@ -92,7 +92,11 @@ export async function GET(request: Request) {
           { status: 403 },
         );
       const users = await runtime.DB.prepare(
-        "SELECT id, email, name, role, squad, temporary_access_role, access_expires_at, active, created_at FROM users ORDER BY name COLLATE NOCASE",
+        `SELECT users.id, users.email, users.name, users.role, users.squad,
+          users.temporary_access_role, users.access_expires_at, users.active, users.created_at,
+          (SELECT members.section FROM members
+            WHERE LOWER(members.email) = LOWER(users.email) LIMIT 1) AS member_section
+        FROM users ORDER BY users.name COLLATE NOCASE`,
       ).all();
       const pendingMembers = await runtime.DB.prepare(
         `SELECT m.id, m.email, m.name, m.squad, m.section, m.created_at

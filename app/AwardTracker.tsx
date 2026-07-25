@@ -152,6 +152,7 @@ type AwardTrackerProps = {
     unreadCount: number;
     latest: { title: string; body: string; priority: string } | null;
   };
+  onOpenAdminCentre?: () => void;
   onOpenSubmissions?: (section: "senior" | "junior") => void;
 };
 
@@ -164,6 +165,7 @@ export default function AwardTracker({
   onOpenUniformRequests,
   onOpenAnnouncements,
   announcementSummary,
+  onOpenAdminCentre,
   onOpenSubmissions,
 }: AwardTrackerProps) {
   const hasTemporaryAdminAccess = Boolean(
@@ -1154,6 +1156,11 @@ export default function AwardTracker({
               )}
             </button>
           )}
+          {onOpenAdminCentre && (
+            <button className="nav-secondary" onClick={onOpenAdminCentre}>
+              <span>⚙</span> Admin Centre
+            </button>
+          )}
           <button
             className={`mobile-more ${showMobileMenu || view === "subscriptions" ? "active" : ""}`}
             onClick={() => setShowMobileMenu((current) => !current)}
@@ -1306,6 +1313,21 @@ export default function AwardTracker({
                 ) : (
                   <b>›</b>
                 )}
+              </button>
+            )}
+            {onOpenAdminCentre && (
+              <button
+                onClick={() => {
+                  setShowMobileMenu(false);
+                  onOpenAdminCentre();
+                }}
+              >
+                <span>⚙</span>
+                <div>
+                  <strong>Admin Centre</strong>
+                  <small>Roles, access and membership accounts</small>
+                </div>
+                <b>›</b>
               </button>
             )}
           </section>

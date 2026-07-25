@@ -3,6 +3,7 @@
 import { FormEvent, useEffect, useState } from "react";
 import AwardTracker from "./AwardTracker";
 import Announcements from "./Announcements";
+import AdminCentre from "./AdminCentre";
 import CustomRoleManager from "./CustomRoleManager";
 import ResourceLibrary from "./ResourceLibrary";
 import StockCentre from "./StockCentre";
@@ -52,6 +53,7 @@ export default function StandaloneApp() {
   const [showStock, setShowStock] = useState(false);
   const [showUniformRequests, setShowUniformRequests] = useState(false);
   const [showAnnouncements, setShowAnnouncements] = useState(false);
+  const [showAdminCentre, setShowAdminCentre] = useState(false);
   const [announcementSummary, setAnnouncementSummary] = useState<{
     unreadCount: number;
     latest: { title: string; body: string; priority: string } | null;
@@ -192,6 +194,7 @@ export default function StandaloneApp() {
     setShowStock(false);
     setShowUniformRequests(false);
     setShowAnnouncements(false);
+    setShowAdminCentre(false);
     setAuth((current) => (current ? { ...current, user: null } : current));
   }
 
@@ -483,6 +486,18 @@ export default function StandaloneApp() {
       />
     );
 
+  if (showAdminCentre && auth.user.role === "admin")
+    return (
+      <AdminCentre
+        currentUser={auth.user}
+        onLogout={logout}
+        onBack={() => {
+          setShowAdminCentre(false);
+          void refreshAuth();
+        }}
+      />
+    );
+
   if (
     (auth.user.role === "member" && !hasTemporaryAdminAccess) ||
     showResources
@@ -593,6 +608,11 @@ export default function StandaloneApp() {
         onOpenUniformRequests={() => setShowUniformRequests(true)}
         onOpenAnnouncements={() => setShowAnnouncements(true)}
         announcementSummary={announcementSummary}
+        onOpenAdminCentre={
+          auth.user.role === "admin"
+            ? () => setShowAdminCentre(true)
+            : undefined
+        }
         onOpenSubmissions={(section) => {
           setSubmissionSection(section);
           setShowSubmissions(true);
