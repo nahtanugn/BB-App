@@ -6,7 +6,13 @@ import MemberProgress from "./MemberProgress";
 type User = {
   name: string;
   email: string;
-  role: "admin" | "officer" | "nco" | "squad_leader" | "member";
+  role:
+    | "admin"
+    | "temporary_admin"
+    | "officer"
+    | "nco"
+    | "squad_leader"
+    | "member";
 };
 type Resource = {
   id: number;
@@ -43,7 +49,11 @@ export default function ResourceLibrary({
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
   const [busy, setBusy] = useState(false);
-  const canManageResources = user.role === "admin" || user.role === "officer";
+  const canManageResources = [
+    "admin",
+    "temporary_admin",
+    "officer",
+  ].includes(user.role);
 
   async function loadResources() {
     const response = await fetch("/api/resources", { cache: "no-store" });
@@ -171,7 +181,7 @@ export default function ResourceLibrary({
           <div>
             <strong>11KCHBB App</strong>
             <span>
-              {["admin", "officer"].includes(user.role)
+              {["admin", "temporary_admin", "officer"].includes(user.role)
                 ? "Resource management"
                 : "Resource library"}
             </span>
@@ -266,7 +276,8 @@ export default function ResourceLibrary({
           {notice}
         </p>
       )}
-      {error && user.role !== "admin" && user.role !== "officer" && (
+      {error &&
+        !["admin", "temporary_admin", "officer"].includes(user.role) && (
         <p className="form-error resource-error">{error}</p>
       )}
       <MemberProgress user={user} />

@@ -778,7 +778,11 @@ export async function POST(request: Request) {
     const section = allowedSections.includes(requestedSection)
       ? requestedSection
       : "senior";
-    const canOverrideMemberDetails = ["admin", "officer"].includes(user.role);
+    const canOverrideMemberDetails = [
+      "admin",
+      "temporary_admin",
+      "officer",
+    ].includes(user.role);
     const overrideRequiredDetails =
       canOverrideMemberDetails && body.overrideRequiredDetails === true;
     if (
@@ -839,7 +843,7 @@ export async function POST(request: Request) {
       if (missingDetails.length && !overrideRequiredDetails)
         return Response.json(
           {
-            error: `Complete all member details. Missing: ${missingDetails.map(([label]) => label).join(", ")}. Only Admins and Officers can override this requirement.`,
+            error: `Complete all member details. Missing: ${missingDetails.map(([label]) => label).join(", ")}. Only Admins, Temporary Admins and Officers can override this requirement.`,
           },
           { status: 400 },
         );
@@ -905,7 +909,7 @@ export async function POST(request: Request) {
       if (missingDetails.length && !overrideRequiredDetails)
         return Response.json(
           {
-            error: `Complete all member details. Missing: ${missingDetails.map(([label]) => label).join(", ")}. Only Admins and Officers can override this requirement.`,
+            error: `Complete all member details. Missing: ${missingDetails.map(([label]) => label).join(", ")}. Only Admins, Temporary Admins and Officers can override this requirement.`,
           },
           { status: 400 },
         );

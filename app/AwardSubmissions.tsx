@@ -4,7 +4,13 @@ import { FormEvent, useEffect, useMemo, useState } from "react";
 
 type User = {
   name: string;
-  role: "admin" | "officer" | "nco" | "squad_leader" | "member";
+  role:
+    | "admin"
+    | "temporary_admin"
+    | "officer"
+    | "nco"
+    | "squad_leader"
+    | "member";
 };
 type Award = {
   code: string;
@@ -52,9 +58,11 @@ export default function AwardSubmissions({
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [reviewNotes, setReviewNotes] = useState<Record<number, string>>({});
+  const operationalAdminRoles = ["admin", "temporary_admin", "officer"];
   const isOfficerPortal =
-    (user.role === "admin" || user.role === "officer") && !memberId;
-  const showArchived = user.role === "admin" && statusFilter === "archived";
+    operationalAdminRoles.includes(user.role) && !memberId;
+  const canArchive = ["admin", "temporary_admin"].includes(user.role);
+  const showArchived = canArchive && statusFilter === "archived";
   const endpoint =
     user.role === "member"
       ? "/api/submissions"
@@ -367,7 +375,7 @@ export default function AwardSubmissions({
               <option value="pending">Pending review</option>
               <option value="approved">Verified submissions</option>
               <option value="rejected">Rejected</option>
-              {user.role === "admin" && (
+              {canArchive && (
                 <option value="archived">Archived</option>
               )}
             </select>
@@ -426,7 +434,7 @@ export default function AwardSubmissions({
                   <p>{submission.review_notes}</p>
                 </div>
               )}
-              {(user.role === "admin" || user.role === "officer") &&
+              {operationalAdminRoles.includes(user.role) &&
                 !submission.archived_at && (
                   <div className="submission-review-controls">
                     <label>
@@ -473,7 +481,7 @@ export default function AwardSubmissions({
                     </div>
                   </div>
                 )}
-              {user.role === "admin" && (
+              {canArchive && (
                 <div className="submission-admin-actions">
                   {showArchived ? (
                     <button
@@ -500,17 +508,19 @@ export default function AwardSubmissions({
                         : "Archive"}
                     </button>
                   )}
-                  <button
-                    className="delete"
-                    disabled={Boolean(busy)}
-                    onClick={() =>
-                      manageSubmission(submission, "delete_submission")
-                    }
-                  >
-                    {busy === `${submission.id}:delete_submission`
-                      ? "Deleting…"
-                      : "Delete"}
-                  </button>
+                  {user.role === "admin" && (
+                    <button
+                      className="delete"
+                      disabled={Boolean(busy)}
+                      onClick={() =>
+                        manageSubmission(submission, "delete_submission")
+                      }
+                    >
+                      {busy === `${submission.id}:delete_submission`
+                        ? "Deleting…"
+                        : "Delete"}
+                    </button>
+                  )}
                 </div>
               )}
             </article>

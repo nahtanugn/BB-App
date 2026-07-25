@@ -4,8 +4,15 @@ export type AppUser = {
   id: number;
   email: string;
   name: string;
-  role: "admin" | "officer" | "nco" | "squad_leader" | "member";
+  role:
+    | "admin"
+    | "temporary_admin"
+    | "officer"
+    | "nco"
+    | "squad_leader"
+    | "member";
   squad: string;
+  access_expires_at: string | null;
 };
 
 type RuntimeEnv = {
@@ -27,6 +34,7 @@ export async function ensureAuthSchema() {
       name TEXT NOT NULL,
       role TEXT NOT NULL DEFAULT 'officer',
       squad TEXT NOT NULL DEFAULT '',
+      access_expires_at TEXT,
       password_hash TEXT NOT NULL,
       password_salt TEXT NOT NULL,
       active INTEGER NOT NULL DEFAULT 1,
@@ -51,6 +59,9 @@ export async function ensureAuthSchema() {
   const userColumns = await runtime.DB.prepare("PRAGMA table_info(users)").all<{ name: string }>();
   if (!userColumns.results.some((column) => column.name === "squad")) {
     await runtime.DB.prepare("ALTER TABLE users ADD COLUMN squad TEXT NOT NULL DEFAULT ''").run();
+  }
+  if (!userColumns.results.some((column) => column.name === "access_expires_at")) {
+    await runtime.DB.prepare("ALTER TABLE users ADD COLUMN access_expires_at TEXT").run();
   }
   authInitialized = true;
 }
@@ -84,10 +95,12 @@ export async function getCurrentUser(request: Request): Promise<AppUser | null> 
   const token = cookieValue(request.headers.get("cookie"), "anchor_session");
   if (!token) return null;
   const tokenHash = await sha256(token);
-  const user = await runtime.DB.prepare(`SELECT users.id, users.email, users.name, users.role, users.squad
+  const now = new Date().toISOString();
+  const user = await runtime.DB.prepare(`SELECT users.id, users.email, users.name, users.role, users.squad, users.access_expires_at
     FROM sessions JOIN users ON users.id = sessions.user_id
-    WHERE sessions.token_hash = ? AND sessions.expires_at > ? AND users.active = 1`)
-    .bind(tokenHash, new Date().toISOString())
+    WHERE sessions.token_hash = ? AND sessions.expires_at > ? AND users.active = 1
+    AND (users.role != 'temporary_admin' OR (users.access_expires_at IS NOT NULL AND users.access_expires_at > ?))`)
+    .bind(tokenHash, now, now)
     .first<AppUser>();
   return user ?? null;
 }

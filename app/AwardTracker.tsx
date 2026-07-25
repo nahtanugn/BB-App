@@ -132,7 +132,12 @@ type AwardTrackerProps = {
   user?: {
     name: string;
     email: string;
-    role: "admin" | "officer" | "nco" | "squad_leader";
+    role:
+      | "admin"
+      | "temporary_admin"
+      | "officer"
+      | "nco"
+      | "squad_leader";
     squad: string;
   };
   onLogout?: () => void;
@@ -156,9 +161,10 @@ export default function AwardTracker({
   const canManageAttendance = Boolean(user);
   const canManageSubscriptions = canManageAwards;
   const canViewSubmissions = !isNco;
-  const canReviewSubmissions = ["admin", "officer"].includes(user?.role ?? "");
-  const canUseExportCentre = ["admin", "officer"].includes(user?.role ?? "");
-  const canOverrideMemberDetails = ["admin", "officer"].includes(
+  const operationalAdminRoles = ["admin", "temporary_admin", "officer"];
+  const canReviewSubmissions = operationalAdminRoles.includes(user?.role ?? "");
+  const canUseExportCentre = operationalAdminRoles.includes(user?.role ?? "");
+  const canOverrideMemberDetails = operationalAdminRoles.includes(
     user?.role ?? "",
   );
   const [section, setSection] = useState<"senior" | "junior">("senior");

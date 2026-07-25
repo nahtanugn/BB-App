@@ -9,10 +9,20 @@ type User = {
   id: number;
   email: string;
   name: string;
-  role: "admin" | "officer" | "nco" | "squad_leader" | "member";
+  role:
+    | "admin"
+    | "temporary_admin"
+    | "officer"
+    | "nco"
+    | "squad_leader"
+    | "member";
   squad: string;
 };
-type ManagedUser = User & { active: number; created_at: string };
+type ManagedUser = User & {
+  active: number;
+  access_expires_at: string | null;
+  created_at: string;
+};
 type PendingMember = {
   id: number;
   email: string;
@@ -148,6 +158,7 @@ export default function StandaloneApp() {
         password: form.get("password"),
         role: form.get("role"),
         squad: form.get("squad"),
+        accessExpiresOn: form.get("accessExpiresOn"),
         memberSection: form.get("memberSection"),
       }),
     });
@@ -222,6 +233,7 @@ export default function StandaloneApp() {
             ? editingUser.role
             : form.get("role"),
         squad: form.get("squad"),
+        accessExpiresOn: form.get("accessExpiresOn"),
         memberSection: form.get("memberSection"),
       }),
     });
@@ -529,6 +541,10 @@ export default function StandaloneApp() {
                             user.squad
                               ? ` · ${user.squad}`
                               : ""}
+                            {user.role === "temporary_admin" &&
+                            user.access_expires_at
+                              ? ` · Expires ${new Date(user.access_expires_at).toLocaleDateString("en-MY")}`
+                              : ""}
                           </small>
                         </span>
                         <div className="user-actions">
@@ -629,6 +645,9 @@ export default function StandaloneApp() {
                           disabled={editingUser.id === auth.user?.id}
                         >
                           <option value="officer">Officer</option>
+                          <option value="temporary_admin">
+                            Temporary Admin · operational access
+                          </option>
                           <option value="nco">
                             NCO · attendance & member details
                           </option>
@@ -655,6 +674,28 @@ export default function StandaloneApp() {
                             <option>Charlie</option>
                             <option>Delta</option>
                           </select>
+                        </label>
+                      )}
+                      {editingUser.role === "temporary_admin" && (
+                        <label>
+                          Access expires on
+                          <input
+                            name="accessExpiresOn"
+                            type="date"
+                            required
+                            min={new Intl.DateTimeFormat("en-CA", {
+                              timeZone: "Asia/Kuching",
+                              year: "numeric",
+                              month: "2-digit",
+                              day: "2-digit",
+                            }).format(new Date())}
+                            defaultValue={
+                              editingUser.access_expires_at?.slice(0, 10) ?? ""
+                            }
+                          />
+                          <small>
+                            Access ends at midnight Malaysia time on this date.
+                          </small>
                         </label>
                       )}
                       {editingUser.role === "member" && (
@@ -751,6 +792,9 @@ export default function StandaloneApp() {
                           }
                         >
                           <option value="officer">Officer</option>
+                          <option value="temporary_admin">
+                            Temporary Admin · operational access
+                          </option>
                           <option value="nco">
                             NCO · attendance & member details
                           </option>
@@ -781,6 +825,25 @@ export default function StandaloneApp() {
                           <option>Charlie</option>
                           <option>Delta</option>
                         </select>
+                      </label>
+                    )}
+                    {newUserRole === "temporary_admin" && (
+                      <label>
+                        Access expires on
+                        <input
+                          name="accessExpiresOn"
+                          type="date"
+                          required
+                          min={new Intl.DateTimeFormat("en-CA", {
+                            timeZone: "Asia/Kuching",
+                            year: "numeric",
+                            month: "2-digit",
+                            day: "2-digit",
+                          }).format(new Date())}
+                        />
+                        <small>
+                          Access ends at midnight Malaysia time on this date.
+                        </small>
                       </label>
                     )}
                     {newUserRole === "member" && (

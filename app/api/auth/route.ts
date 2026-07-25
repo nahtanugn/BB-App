@@ -9,8 +9,22 @@ import {
 } from "../../../lib/auth";
 
 const runtime = getRuntimeEnv();
-const allowedRoles = ["admin", "officer", "nco", "squad_leader", "member"];
+const allowedRoles = [
+  "admin",
+  "temporary_admin",
+  "officer",
+  "nco",
+  "squad_leader",
+  "member",
+];
 const allowedSquads = ["Alpha", "Bravo", "Charlie", "Delta"];
+
+function temporaryAccessExpiry(role: string, value: unknown) {
+  if (role !== "temporary_admin") return null;
+  const date = String(value ?? "");
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) return null;
+  return `${date}T15:59:59.999Z`;
+}
 
 async function createOrLinkMemberProfile(
   name: string,
@@ -79,7 +93,7 @@ export async function GET(request: Request) {
           { status: 403 },
         );
       const users = await runtime.DB.prepare(
-        "SELECT id, email, name, role, squad, active, created_at FROM users ORDER BY name COLLATE NOCASE",
+        "SELECT id, email, name, role, squad, access_expires_at, active, created_at FROM users ORDER BY name COLLATE NOCASE",
       ).all();
       const pendingMembers = await runtime.DB.prepare(
         `SELECT m.id, m.email, m.name, m.squad, m.section, m.created_at
@@ -170,11 +184,13 @@ export async function POST(request: Request) {
           { status: 429 },
         );
       const row = await runtime.DB.prepare(
-        "SELECT id, password_hash, password_salt, active FROM users WHERE email = ?",
+        "SELECT id, role, access_expires_at, password_hash, password_salt, active FROM users WHERE email = ?",
       )
         .bind(email)
         .first<{
           id: number;
+          role: string;
+          access_expires_at: string | null;
           password_hash: string;
           password_salt: string;
           active: number;
@@ -187,6 +203,19 @@ export async function POST(request: Request) {
         return Response.json(
           { error: "Email or password is incorrect" },
           { status: 401 },
+        );
+      }
+      if (
+        row.role === "temporary_admin" &&
+        (!row.access_expires_at ||
+          row.access_expires_at <= new Date().toISOString())
+      ) {
+        await runtime.DB.prepare("DELETE FROM sessions WHERE user_id = ?")
+          .bind(row.id)
+          .run();
+        return Response.json(
+          { error: "This temporary administrator access has expired" },
+          { status: 403 },
         );
       }
       await runtime.DB.prepare("DELETE FROM auth_attempts WHERE identity = ?")
@@ -265,6 +294,10 @@ export async function POST(request: Request) {
       const role = allowedRoles.includes(requestedRole)
         ? requestedRole
         : "officer";
+      const accessExpiresAt = temporaryAccessExpiry(
+        role,
+        body.accessExpiresOn,
+      );
       const requestedSquad = String(body.squad ?? "");
       const squad =
         ["nco", "squad_leader", "member"].includes(role) &&
@@ -289,15 +322,24 @@ export async function POST(request: Request) {
           },
           { status: 400 },
         );
+      if (
+        role === "temporary_admin" &&
+        (!accessExpiresAt || accessExpiresAt <= new Date().toISOString())
+      )
+        return Response.json(
+          { error: "Select a future expiry date for temporary admin access" },
+          { status: 400 },
+        );
       const result = await runtime.DB.prepare(
-        `INSERT INTO users (email, name, role, squad, password_hash, password_salt, active, created_at)
-        VALUES (?, ?, ?, ?, ?, ?, 1, ?)`,
+        `INSERT INTO users (email, name, role, squad, access_expires_at, password_hash, password_salt, active, created_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?, 1, ?)`,
       )
         .bind(
           email,
           name,
           role,
           squad,
+          accessExpiresAt,
           digest.hash,
           digest.salt,
           new Date().toISOString(),
@@ -378,6 +420,10 @@ export async function POST(request: Request) {
           ? "junior"
           : "senior";
       const requestedSquad = String(body.squad ?? "");
+      const accessExpiresAt = temporaryAccessExpiry(
+        requestedRole,
+        body.accessExpiresOn,
+      );
       const squad =
         ["nco", "squad_leader", "member"].includes(requestedRole) &&
         allowedSquads.includes(requestedSquad)
@@ -411,6 +457,14 @@ export async function POST(request: Request) {
           },
           { status: 400 },
         );
+      if (
+        requestedRole === "temporary_admin" &&
+        (!accessExpiresAt || accessExpiresAt <= new Date().toISOString())
+      )
+        return Response.json(
+          { error: "Select a future expiry date for temporary admin access" },
+          { status: 400 },
+        );
       const target = await runtime.DB.prepare(
         "SELECT id, email, role FROM users WHERE id = ?",
       )
@@ -422,9 +476,9 @@ export async function POST(request: Request) {
           { status: 404 },
         );
       await runtime.DB.prepare(
-        "UPDATE users SET name = ?, email = ?, role = ?, squad = ? WHERE id = ?",
+        "UPDATE users SET name = ?, email = ?, role = ?, squad = ?, access_expires_at = ? WHERE id = ?",
       )
-        .bind(name, email, requestedRole, squad, targetId)
+        .bind(name, email, requestedRole, squad, accessExpiresAt, targetId)
         .run();
       if (requestedRole === "member")
         await createOrLinkMemberProfile(

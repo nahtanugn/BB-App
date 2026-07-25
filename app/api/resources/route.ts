@@ -38,7 +38,7 @@ export async function GET(request: Request) {
           ? "WHERE access_level IN ('member', 'nco')"
           : "";
     const fields =
-      user.role === "admin" || user.role === "officer"
+      ["admin", "temporary_admin", "officer"].includes(user.role)
         ? "*"
         : "id, title, description, category, url, access_level, created_at";
     const result = await env.DB.prepare(

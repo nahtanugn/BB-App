@@ -6,7 +6,13 @@ import AwardSubmissions from "./AwardSubmissions";
 type User = {
   name: string;
   email: string;
-  role: "admin" | "officer" | "nco" | "squad_leader" | "member";
+  role:
+    | "admin"
+    | "temporary_admin"
+    | "officer"
+    | "nco"
+    | "squad_leader"
+    | "member";
 };
 
 export default function SubmissionsPage({
@@ -23,8 +29,9 @@ export default function SubmissionsPage({
   const [section, setSection] = useState<"senior" | "junior">(
     initialSection,
   );
-  const canReviewAll =
-    user.role === "admin" || user.role === "officer";
+  const canReviewAll = ["admin", "temporary_admin", "officer"].includes(
+    user.role,
+  );
   return (
     <main className="resources-shell submissions-page">
       <header className="resources-topbar">

@@ -74,6 +74,10 @@ test("defines the 11KCHBB App application shell and sharing metadata", async () 
   assert.match(standalone, /value="squad_leader"/);
   assert.match(standalone, /Assigned squad/);
   assert.match(standalone, /Squad Leader · full view & NCO controls/);
+  assert.match(standalone, /value="temporary_admin"/);
+  assert.match(standalone, /Temporary Admin · operational access/);
+  assert.match(standalone, /Access expires on/);
+  assert.match(standalone, /accessExpiresOn/);
   assert.match(
     standalone,
     /\["nco", "squad_leader", "member"\]\.includes\(\s*editingUser\.role/,
@@ -142,7 +146,10 @@ test("ships the Malaysia Senior Section catalogue, role-based portals and instal
   );
   assert.match(route, /Select a valid joining year/);
   assert.match(route, /Complete all member details/);
-  assert.match(route, /Only Admins and Officers can override this requirement/);
+  assert.match(
+    route,
+    /Only Admins, Temporary Admins and Officers can override this requirement/,
+  );
   assert.match(route, /canOverrideMemberDetails/);
   assert.match(route, /calculateServiceYears\(joinedAt\)/);
   assert.match(route, /getSubmissionNotifications/);
@@ -164,8 +171,11 @@ test("ships the Malaysia Senior Section catalogue, role-based portals and instal
   assert.match(authRoute, /You cannot delete your own account/);
   assert.match(
     authRoute,
-    /\["admin", "officer", "nco", "squad_leader", "member"\]/,
+    /"admin",\s*"temporary_admin",\s*"officer",\s*"nco",\s*"squad_leader",\s*"member"/,
   );
+  assert.match(authRoute, /temporaryAccessExpiry/);
+  assert.match(authRoute, /access_expires_at/);
+  assert.match(authRoute, /temporary administrator access has expired/);
   assert.match(
     authRoute,
     /\["nco", "squad_leader", "member"\]\.includes\(role\)/,
@@ -181,7 +191,7 @@ test("ships the Malaysia Senior Section catalogue, role-based portals and instal
   );
   assert.match(
     authRoute,
-    /UPDATE users SET name = \?, email = \?, role = \?, squad = \?/,
+    /UPDATE users SET name = \?, email = \?, role = \?, squad = \?, access_expires_at = \?/,
   );
   assert.match(resourcesRoute, /user\.role === "member"/);
   assert.match(resourcesRoute, /user\.role === "nco"/);
@@ -264,7 +274,10 @@ test("ships the Malaysia Senior Section catalogue, role-based portals and instal
     submissionsRoute,
     /Only member accounts can submit award applications/,
   );
-  assert.match(submissionsRoute, /Officer access required/);
+  assert.match(
+    submissionsRoute,
+    /Admin, Temporary Admin or Officer access required/,
+  );
   assert.match(submissionsRoute, /INSERT INTO member_awards/);
   assert.match(submissionsRoute, /'in_progress'/);
   assert.match(submissions, /marked In progress in the Award Matrix/);
@@ -273,7 +286,10 @@ test("ships the Malaysia Senior Section catalogue, role-based portals and instal
   assert.match(submissionsRoute, /WHERE member_id = \?/);
   assert.match(submissionsRoute, /Select a member to view submissions/);
   assert.match(submissionsRoute, /searchParams\.get\("all"\) === "1"/);
-  assert.match(submissionsRoute, /Admin or Officer access required/);
+  assert.match(
+    submissionsRoute,
+    /Admin, Temporary Admin or Officer access required/,
+  );
   assert.match(submissionsRoute, /LOWER\(email\) = LOWER\(\?\)/);
   assert.match(submissions, /Apply for an award/);
   assert.match(submissions, /Submit application/);

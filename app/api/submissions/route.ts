@@ -92,15 +92,18 @@ export async function GET(request: Request) {
     }
     const url = new URL(request.url);
     if (url.searchParams.get("all") === "1") {
-      if (!["admin", "officer"].includes(user.role))
+      if (!["admin", "temporary_admin", "officer"].includes(user.role))
         return Response.json(
-          { error: "Admin or Officer access required" },
+          { error: "Admin, Temporary Admin or Officer access required" },
           { status: 403 },
         );
       const showArchived = url.searchParams.get("archived") === "1";
       const requestedSection = url.searchParams.get("section") ?? "senior";
       const section = requestedSection === "junior" ? "junior" : "senior";
-      if (showArchived && user.role !== "admin")
+      if (
+        showArchived &&
+        !["admin", "temporary_admin"].includes(user.role)
+      )
         return Response.json(
           { error: "Administrator access required" },
           { status: 403 },
@@ -284,9 +287,11 @@ export async function POST(request: Request) {
     }
 
     if (action === "review_submission") {
-      if (user.role !== "admin" && user.role !== "officer")
+      if (
+        !["admin", "temporary_admin", "officer"].includes(user.role)
+      )
         return Response.json(
-          { error: "Officer access required" },
+          { error: "Admin, Temporary Admin or Officer access required" },
           { status: 403 },
         );
       const submissionId = Number(body.submissionId);
@@ -393,9 +398,9 @@ export async function POST(request: Request) {
     }
 
     if (action === "archive_submission" || action === "restore_submission") {
-      if (user.role !== "admin")
+      if (!["admin", "temporary_admin"].includes(user.role))
         return Response.json(
-          { error: "Administrator access required" },
+          { error: "Administrator or Temporary Administrator access required" },
           { status: 403 },
         );
       const submissionId = Number(body.submissionId);

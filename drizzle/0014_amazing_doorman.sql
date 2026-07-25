@@ -1,0 +1,1 @@
+ALTER TABLE `users` ADD `access_expires_at` text;
