@@ -67,13 +67,20 @@ export async function GET(request: Request) {
     if (!user)
       return Response.json({ error: "Sign in required" }, { status: 401 });
     const hasTemporaryAccess = hasTemporaryAdminAccess(user);
-    if (user.role === "nco" && !hasTemporaryAccess)
+    const url = new URL(request.url);
+    const isPersonalRequest =
+      !hasTemporaryAccess &&
+      (user.role === "member" ||
+        (["nco", "squad_leader"].includes(user.role) &&
+          url.searchParams.get("all") !== "1" &&
+          !url.searchParams.has("memberId")));
+    if (user.role === "nco" && !hasTemporaryAccess && !isPersonalRequest)
       return Response.json(
         { error: "This account cannot access award submissions" },
         { status: 403 },
       );
     await ensureSubmissionSchema();
-    if (user.role === "member" && !hasTemporaryAccess) {
+    if (isPersonalRequest) {
       const member = await env.DB.prepare(
         "SELECT id, name, section FROM members WHERE LOWER(email) = LOWER(?) LIMIT 1",
       )
@@ -96,7 +103,6 @@ export async function GET(request: Request) {
         member,
       });
     }
-    const url = new URL(request.url);
     if (url.searchParams.get("all") === "1") {
       if (!hasOperationalAdminAccess(user))
         return Response.json(
@@ -170,22 +176,20 @@ export async function POST(request: Request) {
     if (!user)
       return Response.json({ error: "Sign in required" }, { status: 401 });
     const hasTemporaryAccess = hasTemporaryAdminAccess(user);
-    if (
-      (user.role === "nco" || user.role === "squad_leader") &&
-      !hasTemporaryAccess
-    )
-      return Response.json(
-        { error: "This account cannot access award submissions" },
-        { status: 403 },
-      );
     await ensureSubmissionSchema();
     const body = (await request.json()) as Record<string, unknown>;
     const action = String(body.action ?? "");
 
     if (action === "create_submission") {
-      if (user.role !== "member" || hasTemporaryAccess)
+      if (
+        !["member", "nco", "squad_leader"].includes(user.role) ||
+        hasTemporaryAccess
+      )
         return Response.json(
-          { error: "Only member accounts can submit award applications" },
+          {
+            error:
+              "Only linked member, NCO or squad leader accounts can submit award applications",
+          },
           { status: 403 },
         );
       const memberName = user.name.trim();

@@ -515,8 +515,8 @@ h2 { color: var(--navy); }
   .sidebar { position: fixed; z-index: 20; top: auto; bottom: 0; left: 0; right: 0; width: 100%; height: 64px; padding: 7px 10px max(7px, env(safe-area-inset-bottom)); display: block; box-shadow: 0 -7px 25px rgba(5,29,52,.16); }
   .brand, .sidebar-note, .open-source { display: none; }
   .sidebar nav { height: 100%; display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 3px; }
-  .sidebar nav.nco-nav { grid-template-columns: repeat(5, 1fr); }
-  .sidebar nav.squad-leader-nav { grid-template-columns: repeat(6, 1fr); }
+  .sidebar nav.nco-nav { grid-template-columns: repeat(6, 1fr); }
+  .sidebar nav.squad-leader-nav { grid-template-columns: repeat(7, minmax(0, 1fr)); }
   .sidebar nav button { justify-content: center; flex-direction: column; gap: 1px; padding: 3px; font-size: 8px; }
   .sidebar nav button span { font-size: 17px; line-height: 1; }
   .sidebar nav .nav-badge { position: absolute; top: 1px; right: 7px; min-width: 17px; height: 17px; font-size: 7px; }
@@ -974,8 +974,8 @@ h1 { font-size: clamp(30px, 3.1vw, 46px); line-height: 1; letter-spacing: -1.5px
     backdrop-filter: blur(18px);
   }
   .sidebar nav { gap: 3px; grid-template-columns: repeat(7, minmax(0, 1fr)); }
-  .sidebar nav.nco-nav { grid-template-columns: repeat(5, 1fr); }
-  .sidebar nav.squad-leader-nav { grid-template-columns: repeat(6, 1fr); }
+  .sidebar nav.nco-nav { grid-template-columns: repeat(6, 1fr); }
+  .sidebar nav.squad-leader-nav { grid-template-columns: repeat(7, minmax(0, 1fr)); }
   .sidebar nav button {
     min-width: 0;
     min-height: 62px;

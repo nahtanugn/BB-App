@@ -93,11 +93,10 @@ export default function SubmissionsPage({
               : "Award submissions"}
           </h1>
           <p>
-            {user.role === "member" && !hasTemporaryAdminAccess
+            {["member", "nco", "squad_leader"].includes(user.role) &&
+            !hasTemporaryAdminAccess
               ? "Apply for an award and follow its review status."
-              : user.role === "squad_leader"
-                ? "View applications submitted by members."
-                : "Review all member applications, edit decisions when needed, and update the Award Matrix automatically."}
+              : "Review all member applications, edit decisions when needed, and update the Award Matrix automatically."}
           </p>
         </div>
       </section>

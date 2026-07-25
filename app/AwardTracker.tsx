@@ -173,6 +173,7 @@ export default function AwardTracker({
     ["admin", "officer"].includes(user?.role ?? "") ||
     hasTemporaryAdminAccess;
   const canReviewSubmissions = hasOperationalAdminAccess;
+  const canSubmitPersonalAwards = isNco || isSquadLeader;
   const canUseExportCentre = hasOperationalAdminAccess;
   const canOverrideMemberDetails = hasOperationalAdminAccess;
   const [section, setSection] = useState<"senior" | "junior">("senior");
@@ -1081,10 +1082,11 @@ export default function AwardTracker({
           >
             <span>◇</span> Subscription
           </button>
-          {canReviewSubmissions && (
+          {(canReviewSubmissions || canSubmitPersonalAwards) && (
             <button onClick={() => onOpenSubmissions?.(section)}>
-              <span>◆</span> Submission portal
-              {submissionPendingTotal > 0 && (
+              <span>◆</span>{" "}
+              {canReviewSubmissions ? "Submission portal" : "My submissions"}
+              {canReviewSubmissions && submissionPendingTotal > 0 && (
                 <b
                   className="nav-badge"
                   aria-label={`${submissionPendingTotal} submissions awaiting officer review`}

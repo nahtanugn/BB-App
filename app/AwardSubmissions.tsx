@@ -66,13 +66,15 @@ export default function AwardSubmissions({
   );
   const hasOperationalAdminAccess =
     ["admin", "officer"].includes(user.role) || hasTemporaryAdminAccess;
-  const isPersonalMember =
-    user.role === "member" && !hasTemporaryAdminAccess;
+  const isPersonalApplicant =
+    !memberId &&
+    ["member", "nco", "squad_leader"].includes(user.role) &&
+    !hasTemporaryAdminAccess;
   const isOfficerPortal = hasOperationalAdminAccess && !memberId;
   const canArchive = user.role === "admin" || hasTemporaryAdminAccess;
   const showArchived = canArchive && statusFilter === "archived";
   const endpoint =
-    isPersonalMember
+    isPersonalApplicant
       ? "/api/submissions"
       : isOfficerPortal
         ? `/api/submissions?all=1&section=${section}${showArchived ? "&archived=1" : ""}`
@@ -251,15 +253,13 @@ export default function AwardSubmissions({
     await onChanged?.();
   }
 
-  if (user.role === "nco" && !hasTemporaryAdminAccess) return null;
-
   return (
     <section className="submission-section">
       <div className="submission-heading">
         <div>
           <p className="eyebrow">AWARD SUBMISSIONS</p>
           <h2>
-            {isPersonalMember
+            {isPersonalApplicant
               ? "Apply for an award"
               : isOfficerPortal
                 ? "Officer Submission Portal"
@@ -268,7 +268,7 @@ export default function AwardSubmissions({
                 : "Review member applications"}
           </h2>
           <p>
-            {isPersonalMember
+            {isPersonalApplicant
               ? "Send your completed work to an officer for review."
               : isOfficerPortal
                 ? "Approve or reject applications and revise decisions when needed. Results update the Award Matrix automatically."
@@ -282,7 +282,7 @@ export default function AwardSubmissions({
           pending
         </span>
       </div>
-      {isPersonalMember && (
+      {isPersonalApplicant && (
         <form className="submission-form panel" onSubmit={submitApplication}>
           <div className="form-row">
             <label>
@@ -356,10 +356,10 @@ export default function AwardSubmissions({
           </button>
         </form>
       )}
-      {error && !isPersonalMember && (
+      {error && !isPersonalApplicant && (
         <p className="form-error submission-error">{error}</p>
       )}
-      {message && !isPersonalMember && (
+      {message && !isPersonalApplicant && (
         <p className="form-success submission-message">{message}</p>
       )}
       {isOfficerPortal && (
@@ -417,7 +417,7 @@ export default function AwardSubmissions({
               </h3>
               <p className="submission-member">
                 {submission.member_name}
-                {!isPersonalMember
+                {!isPersonalApplicant
                   ? ` · ${submission.submitted_by_email}`
                   : ""}
               </p>
@@ -541,7 +541,7 @@ export default function AwardSubmissions({
                 : "No award submissions yet"}
             </strong>
             <p>
-              {isPersonalMember
+              {isPersonalApplicant
                 ? "Your applications will appear here after you submit them."
                 : "Member applications will appear here for review."}
             </p>

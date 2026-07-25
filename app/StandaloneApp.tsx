@@ -391,7 +391,7 @@ export default function StandaloneApp() {
           user={auth.user}
           onLogout={logout}
           onOpenSubmissions={
-            auth.user.role === "member"
+            ["member", "nco", "squad_leader"].includes(auth.user.role)
               ? () => setShowSubmissions(true)
               : undefined
           }

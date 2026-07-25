@@ -195,7 +195,8 @@ export default function ResourceLibrary({
             <strong>{user.name}</strong>
             <small>{user.role}</small>
           </span>
-          {user.role === "member" && onOpenSubmissions && (
+          {["member", "nco", "squad_leader"].includes(user.role) &&
+            onOpenSubmissions && (
             <button onClick={onOpenSubmissions}>Award submissions</button>
           )}
           {user.role === "member" && onManageAccount && (

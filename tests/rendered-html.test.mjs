@@ -70,10 +70,10 @@ test("defines the 11KCHBB App application shell and sharing metadata", async () 
     styles,
     /\.sidebar nav \{[^}]*grid-template-columns: repeat\(7, minmax\(0, 1fr\)\)/,
   );
-  assert.match(styles, /\.sidebar nav\.nco-nav \{[^}]*repeat\(5, 1fr\)/);
+  assert.match(styles, /\.sidebar nav\.nco-nav \{[^}]*repeat\(6, 1fr\)/);
   assert.match(
     styles,
-    /\.sidebar nav\.squad-leader-nav \{[^}]*repeat\(6, 1fr\)/,
+    /\.sidebar nav\.squad-leader-nav \{[^}]*repeat\(7, minmax\(0, 1fr\)\)/,
   );
   assert.match(styles, /11KCHBB responsive command-centre redesign/);
   assert.match(styles, /\.primary \{[\s\S]*?min-height: 46px;/);
@@ -305,8 +305,11 @@ test("ships the Malaysia Senior Section catalogue, role-based portals and instal
   );
   assert.match(
     submissionsRoute,
-    /Only member accounts can submit award applications/,
+    /Only linked member, NCO or squad leader accounts can submit award applications/,
   );
+  assert.match(submissionsRoute, /\["member", "nco", "squad_leader"\]/);
+  assert.match(submissions, /isPersonalApplicant/);
+  assert.match(tracker, /My submissions/);
   assert.match(
     submissionsRoute,
     /Admin, Temporary Admin or Officer access required/,
