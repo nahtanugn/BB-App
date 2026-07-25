@@ -2,7 +2,9 @@
 
 import { FormEvent, useEffect, useState } from "react";
 import AwardTracker from "./AwardTracker";
+import CustomRoleManager from "./CustomRoleManager";
 import ResourceLibrary from "./ResourceLibrary";
+import StockCentre from "./StockCentre";
 import SubmissionsPage from "./SubmissionsPage";
 
 type User = {
@@ -45,6 +47,8 @@ export default function StandaloneApp() {
   const [showAccount, setShowAccount] = useState(false);
   const [showResources, setShowResources] = useState(false);
   const [showSubmissions, setShowSubmissions] = useState(false);
+  const [showStock, setShowStock] = useState(false);
+  const [stockAccess, setStockAccess] = useState(false);
   const [submissionSection, setSubmissionSection] = useState<
     "senior" | "junior"
   >("senior");
@@ -91,6 +95,19 @@ export default function StandaloneApp() {
       );
   }, []);
 
+  useEffect(() => {
+    if (!auth?.user) {
+      setStockAccess(false);
+      return;
+    }
+    fetch("/api/stock?access=1", { cache: "no-store" })
+      .then(async (response) => {
+        const result = (await response.json()) as { canOpen?: boolean };
+        setStockAccess(response.ok && Boolean(result.canOpen));
+      })
+      .catch(() => setStockAccess(false));
+  }, [auth?.user?.id]);
+
   async function submitAuth(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const form = new FormData(event.currentTarget);
@@ -123,6 +140,7 @@ export default function StandaloneApp() {
     setShowAccount(false);
     setShowResources(false);
     setShowSubmissions(false);
+    setShowStock(false);
     setAuth((current) => (current ? { ...current, user: null } : current));
   }
 
@@ -381,6 +399,15 @@ export default function StandaloneApp() {
       />
     );
 
+  if (showStock)
+    return (
+      <StockCentre
+        userName={auth.user.name}
+        onLogout={logout}
+        onBack={() => setShowStock(false)}
+      />
+    );
+
   if (
     (auth.user.role === "member" && !hasTemporaryAdminAccess) ||
     showResources
@@ -397,6 +424,9 @@ export default function StandaloneApp() {
           }
           onManageAccount={
             auth.user.role === "member" ? openAccount : undefined
+          }
+          onOpenStock={
+            stockAccess ? () => setShowStock(true) : undefined
           }
           onBack={
             auth.user.role === "member"
@@ -481,6 +511,7 @@ export default function StandaloneApp() {
         onLogout={logout}
         onManageAccount={openAccount}
         onOpenResources={() => setShowResources(true)}
+        onOpenStock={stockAccess ? () => setShowStock(true) : undefined}
         onOpenSubmissions={(section) => {
           setSubmissionSection(section);
           setShowSubmissions(true);
@@ -927,6 +958,7 @@ export default function StandaloneApp() {
                           : "Create account"}
                     </button>
                   </form>
+                  <CustomRoleManager users={users} />
                 </section>
               )}
               {notice && (

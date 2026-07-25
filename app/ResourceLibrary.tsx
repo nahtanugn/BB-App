@@ -37,12 +37,14 @@ export default function ResourceLibrary({
   onBack,
   onOpenSubmissions,
   onManageAccount,
+  onOpenStock,
   onLogout,
 }: {
   user: User;
   onBack?: () => void;
   onOpenSubmissions?: () => void;
   onManageAccount?: () => void;
+  onOpenStock?: () => void;
   onLogout: () => void;
 }) {
   const [resources, setResources] = useState<Resource[]>([]);
@@ -202,6 +204,7 @@ export default function ResourceLibrary({
           {user.role === "member" && onManageAccount && (
             <button onClick={onManageAccount}>Change password</button>
           )}
+          {onOpenStock && <button onClick={onOpenStock}>Stock Centre</button>}
           {onBack && <button onClick={onBack}>Back to tracker</button>}
           <button onClick={onLogout}>Sign out</button>
         </div>

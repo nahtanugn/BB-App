@@ -113,6 +113,20 @@
       "when": 1784966117062,
       "tag": "0015_sour_mister_sinister",
       "breakpoints": true
+    },
+    {
+      "idx": 16,
+      "version": "6",
+      "when": 1784973204214,
+      "tag": "0016_certain_solo",
+      "breakpoints": true
+    },
+    {
+      "idx": 17,
+      "version": "6",
+      "when": 1784973224386,
+      "tag": "0017_fantastic_lester",
+      "breakpoints": true
     }
   ]
 }

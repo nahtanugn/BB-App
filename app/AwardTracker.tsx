@@ -145,6 +145,7 @@ type AwardTrackerProps = {
   onLogout?: () => void;
   onManageAccount?: () => void;
   onOpenResources?: () => void;
+  onOpenStock?: () => void;
   onOpenSubmissions?: (section: "senior" | "junior") => void;
 };
 
@@ -153,6 +154,7 @@ export default function AwardTracker({
   onLogout,
   onManageAccount,
   onOpenResources,
+  onOpenStock,
   onOpenSubmissions,
 }: AwardTrackerProps) {
   const hasTemporaryAdminAccess = Boolean(
@@ -1115,6 +1117,11 @@ export default function AwardTracker({
           <button className="nav-secondary" onClick={onOpenResources}>
             <span>↗</span> Resources
           </button>
+          {onOpenStock && (
+            <button className="nav-secondary" onClick={onOpenStock}>
+              <span>▣</span> Stock Centre
+            </button>
+          )}
           <button
             className={`mobile-more ${showMobileMenu || view === "subscriptions" ? "active" : ""}`}
             onClick={() => setShowMobileMenu((current) => !current)}
@@ -1220,6 +1227,21 @@ export default function AwardTracker({
               </div>
               <b>›</b>
             </button>
+            {onOpenStock && (
+              <button
+                onClick={() => {
+                  setShowMobileMenu(false);
+                  onOpenStock();
+                }}
+              >
+                <span>▣</span>
+                <div>
+                  <strong>Stock Centre</strong>
+                  <small>Uniforms, awards and issue history</small>
+                </div>
+                <b>›</b>
+              </button>
+            )}
           </section>
         </div>
       )}

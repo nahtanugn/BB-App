@@ -157,3 +157,63 @@ export const awardSubmissions = sqliteTable("award_submissions", {
   archivedAt: text("archived_at"),
   archivedBy: text("archived_by"),
 });
+
+export const customRoles = sqliteTable("custom_roles", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  name: text("name").notNull().unique(),
+  color: text("color").notNull().default("#2878d4"),
+  description: text("description").notNull().default(""),
+  permissions: text("permissions").notNull().default("[]"),
+  createdBy: integer("created_by").notNull(),
+  createdAt: text("created_at").notNull(),
+  updatedAt: text("updated_at").notNull(),
+});
+
+export const userCustomRoles = sqliteTable(
+  "user_custom_roles",
+  {
+    userId: integer("user_id").notNull(),
+    roleId: integer("role_id").notNull(),
+    expiresAt: text("expires_at"),
+    assignedBy: integer("assigned_by").notNull(),
+    assignedAt: text("assigned_at").notNull(),
+  },
+  (table) => [primaryKey({ columns: [table.userId, table.roleId] })],
+);
+
+export const stockItems = sqliteTable("stock_items", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  sourceKey: text("source_key").notNull().unique(),
+  name: text("name").notNull(),
+  stockType: text("stock_type").notNull(),
+  section: text("section").notNull(),
+  category: text("category").notNull().default(""),
+  variant: text("variant").notNull().default(""),
+  condition: text("condition").notNull().default("current"),
+  reorderLevel: integer("reorder_level").notNull().default(0),
+  notes: text("notes").notNull().default(""),
+  active: integer("active", { mode: "boolean" }).notNull().default(true),
+  createdAt: text("created_at").notNull(),
+  updatedAt: text("updated_at").notNull(),
+});
+
+export const stockTransactions = sqliteTable("stock_transactions", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  itemId: integer("item_id").notNull(),
+  transactionType: text("transaction_type").notNull(),
+  quantityDelta: integer("quantity_delta").notNull(),
+  memberId: integer("member_id"),
+  notes: text("notes").notNull().default(""),
+  createdBy: integer("created_by").notNull(),
+  createdByName: text("created_by_name").notNull(),
+  createdAt: text("created_at").notNull(),
+});
+
+export const stockAuditLog = sqliteTable("stock_audit_log", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  action: text("action").notNull(),
+  details: text("details").notNull().default(""),
+  actorUserId: integer("actor_user_id").notNull(),
+  actorName: text("actor_name").notNull(),
+  createdAt: text("created_at").notNull(),
+});
