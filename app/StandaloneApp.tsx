@@ -427,7 +427,8 @@ export default function StandaloneApp() {
                           <strong>{user.name}</strong>
                           <small>
                             {user.email} · {user.role}
-                            {user.role === "squad_leader" && user.squad
+                            {["nco", "squad_leader"].includes(user.role) &&
+                            user.squad
                               ? ` · ${user.squad}`
                               : ""}
                           </small>
@@ -520,7 +521,7 @@ export default function StandaloneApp() {
                           <option value="admin">Administrator</option>
                         </select>
                       </label>
-                      {editingUser.role === "squad_leader" && (
+                      {["nco", "squad_leader"].includes(editingUser.role) && (
                         <label>
                           Assigned squad
                           <select
@@ -599,7 +600,7 @@ export default function StandaloneApp() {
                         </select>
                       </label>
                     </div>
-                    {newUserRole === "squad_leader" && (
+                    {["nco", "squad_leader"].includes(newUserRole) && (
                       <label>
                         Assigned squad
                         <select name="squad" defaultValue="Alpha">

@@ -68,8 +68,14 @@ test("defines the 11KCHBB App application shell and sharing metadata", async () 
   assert.match(standalone, /value="squad_leader"/);
   assert.match(standalone, /Assigned squad/);
   assert.match(standalone, /Squad Leader · full view & NCO controls/);
-  assert.match(standalone, /editingUser\.role === "squad_leader"/);
-  assert.match(standalone, /newUserRole === "squad_leader"/);
+  assert.match(
+    standalone,
+    /\["nco", "squad_leader"\]\.includes\(editingUser\.role\)/,
+  );
+  assert.match(
+    standalone,
+    /\["nco", "squad_leader"\]\.includes\(newUserRole\)/,
+  );
 });
 
 test("ships the Malaysia Senior Section catalogue, role-based portals and installable shell", async () => {
@@ -152,7 +158,14 @@ test("ships the Malaysia Senior Section catalogue, role-based portals and instal
     authRoute,
     /\["admin", "officer", "nco", "squad_leader", "member"\]/,
   );
-  assert.match(authRoute, /role === "squad_leader"/);
+  assert.match(
+    authRoute,
+    /\["nco", "squad_leader"\]\.includes\(role\)/,
+  );
+  assert.match(
+    authRoute,
+    /\["nco", "squad_leader"\]\.includes\(requestedRole\)/,
+  );
   assert.match(
     authRoute,
     /UPDATE users SET name = \?, email = \?, role = \?, squad = \?/,
@@ -169,9 +182,19 @@ test("ships the Malaysia Senior Section catalogue, role-based portals and instal
     /"create_member"[\s\S]*"create_attendance_session"[\s\S]*"update_attendance"[\s\S]*"update_member"/,
   );
   assert.match(route, /\["nco", "squad_leader"\]\.includes\(user\.role\)/);
+  assert.match(route, /m\.squad = \?/);
+  assert.match(
+    route,
+    /validAttendanceTarget\.squad !== user\.squad/,
+  );
   assert.match(tracker, /Awards are shown in read-only mode/);
   assert.match(tracker, /disabled=\{!canManageAwards \|\| saving === key\}/);
   assert.match(tracker, /!canManageAttendance \|\| saving === key/);
+  assert.match(
+    tracker,
+    /filteredMembers\.filter\(\(member\) => member\.squad === user\?\.squad\)/,
+  );
+  assert.match(tracker, /\{present\}\/\{attendanceMembers\.length\}/);
   assert.match(tracker, /canEditMembers/);
   assert.match(tracker, /canAddMembers/);
   assert.match(tracker, /YEARLY SUBSCRIPTION/);

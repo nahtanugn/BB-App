@@ -246,7 +246,8 @@ export async function POST(request: Request) {
         : "officer";
       const requestedSquad = String(body.squad ?? "");
       const squad =
-        role === "squad_leader" && allowedSquads.includes(requestedSquad)
+        ["nco", "squad_leader"].includes(role) &&
+        allowedSquads.includes(requestedSquad)
           ? requestedSquad
           : "";
       if (!/^\S+@\S+\.\S+$/.test(email) || !name || password.length < 10) {
@@ -259,11 +260,11 @@ export async function POST(request: Request) {
         );
       }
       const digest = await passwordDigest(password);
-      if (role === "squad_leader" && !squad)
+      if (["nco", "squad_leader"].includes(role) && !squad)
         return Response.json(
           {
             error:
-              "Select Alpha, Bravo, Charlie, or Delta for the squad leader",
+              "Select Alpha, Bravo, Charlie, or Delta for the NCO or squad leader",
           },
           { status: 400 },
         );
@@ -356,7 +357,7 @@ export async function POST(request: Request) {
           : "senior";
       const requestedSquad = String(body.squad ?? "");
       const squad =
-        requestedRole === "squad_leader" &&
+        ["nco", "squad_leader"].includes(requestedRole) &&
         allowedSquads.includes(requestedSquad)
           ? requestedSquad
           : "";
@@ -377,11 +378,11 @@ export async function POST(request: Request) {
           { status: 400 },
         );
       }
-      if (requestedRole === "squad_leader" && !squad)
+      if (["nco", "squad_leader"].includes(requestedRole) && !squad)
         return Response.json(
           {
             error:
-              "Select Alpha, Bravo, Charlie, or Delta for the squad leader",
+              "Select Alpha, Bravo, Charlie, or Delta for the NCO or squad leader",
           },
           { status: 400 },
         );

@@ -282,6 +282,14 @@ export default function AwardTracker({
     );
   }, [data, query]);
 
+  const attendanceMembers = useMemo(
+    () =>
+      isNco || isSquadLeader
+        ? filteredMembers.filter((member) => member.squad === user?.squad)
+        : filteredMembers,
+    [filteredMembers, isNco, isSquadLeader, user?.squad],
+  );
+
   const visibleAwards = useMemo(
     () =>
       (data?.awards ?? []).filter(
@@ -1628,6 +1636,13 @@ export default function AwardTracker({
                 <div>
                   <p className="eyebrow">MEETINGS</p>
                   <h2>Attendance dates</h2>
+                  {(isNco || isSquadLeader) && (
+                    <small>
+                      {user?.squad
+                        ? `${user.squad} Squad only`
+                        : "Ask an administrator to assign your squad"}
+                    </small>
+                  )}
                 </div>
               </div>
               {data.attendanceSessions.length ? (
@@ -1659,7 +1674,7 @@ export default function AwardTracker({
                           </small>
                         </span>
                         <b>
-                          {present}/{data.members.length}
+                          {present}/{attendanceMembers.length}
                         </b>
                       </button>
                     );
@@ -1719,7 +1734,7 @@ export default function AwardTracker({
                       <span key={status} className={status}>
                         <strong>
                           {
-                            filteredMembers.filter(
+                            attendanceMembers.filter(
                               (member) =>
                                 (attendanceMap.get(
                                   `${activeSession.id}:${member.id}`,
@@ -1732,7 +1747,7 @@ export default function AwardTracker({
                     ))}
                   </div>
                   <div className="attendance-rows">
-                    {filteredMembers.map((member) => {
+                    {attendanceMembers.map((member) => {
                       const key = `attendance-${activeSession.id}-${member.id}`;
                       const current =
                         attendanceMap.get(`${activeSession.id}:${member.id}`)

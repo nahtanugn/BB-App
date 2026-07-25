@@ -691,12 +691,16 @@ export async function GET(request: Request) {
         )
         .bind(section)
         .all(),
-      user.role === "nco"
+      ["nco", "squad_leader"].includes(user.role)
         ? db
             .prepare(
-              "SELECT ar.session_id, ar.member_id, ar.status FROM attendance_records ar INNER JOIN attendance_sessions s ON s.id = ar.session_id WHERE s.section = ?",
+              `SELECT ar.session_id, ar.member_id, ar.status
+              FROM attendance_records ar
+              INNER JOIN attendance_sessions s ON s.id = ar.session_id
+              INNER JOIN members m ON m.id = ar.member_id
+              WHERE s.section = ? AND m.section = ? AND m.squad = ?`,
             )
-            .bind(section)
+            .bind(section, section, user.squad)
             .all()
         : db
             .prepare(
@@ -1101,18 +1105,37 @@ export async function POST(request: Request) {
           { error: "Invalid attendance update" },
           { status: 400 },
         );
+      if (
+        ["nco", "squad_leader"].includes(user.role) &&
+        !allowedSquads.includes(user.squad)
+      )
+        return Response.json(
+          {
+            error:
+              "Your account must be assigned to Alpha, Bravo, Charlie, or Delta before taking attendance",
+          },
+          { status: 403 },
+        );
       const validAttendanceTarget = await db
         .prepare(
-          `SELECT m.id FROM members m
+          `SELECT m.id, m.squad FROM members m
         INNER JOIN attendance_sessions s ON s.id = ?
         WHERE m.id = ? AND m.section = ? AND s.section = ?`,
         )
         .bind(sessionId, memberId, section, section)
-        .first();
+        .first<{ id: number; squad: string }>();
       if (!validAttendanceTarget)
         return Response.json(
           { error: "Meeting and member must belong to the selected section" },
           { status: 400 },
+        );
+      if (
+        ["nco", "squad_leader"].includes(user.role) &&
+        validAttendanceTarget.squad !== user.squad
+      )
+        return Response.json(
+          { error: "You can only update attendance for your assigned squad" },
+          { status: 403 },
         );
       const now = new Date().toISOString();
       await db
