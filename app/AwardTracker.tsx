@@ -128,6 +128,18 @@ function serviceYearsFromJoined(value: string) {
   return Math.max(0, currentYear - Number(match[1]));
 }
 
+function malaysiaDateKey(date = new Date()) {
+  const parts = new Intl.DateTimeFormat("en", {
+    timeZone: "Asia/Kuching",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).formatToParts(date);
+  const value = (type: "year" | "month" | "day") =>
+    parts.find((part) => part.type === type)?.value ?? "";
+  return `${value("year")}-${value("month")}-${value("day")}`;
+}
+
 type AwardTrackerProps = {
   user?: {
     name: string;
@@ -309,12 +321,36 @@ export default function AwardTracker({
       ),
     [data?.attendanceSessions],
   );
+  const closestAttendanceSession = useMemo(() => {
+    const today = malaysiaDateKey();
+    const todayTime = Date.parse(`${today}T00:00:00Z`);
+    return orderedAttendanceSessions.reduce<AttendanceSession | null>(
+      (closest, session) => {
+        if (!closest) return session;
+        const sessionDistance = Math.abs(
+          Date.parse(`${session.meeting_date}T00:00:00Z`) - todayTime,
+        );
+        const closestDistance = Math.abs(
+          Date.parse(`${closest.meeting_date}T00:00:00Z`) - todayTime,
+        );
+        if (sessionDistance < closestDistance) return session;
+        if (
+          sessionDistance === closestDistance &&
+          session.meeting_date >= today &&
+          closest.meeting_date < today
+        )
+          return session;
+        return closest;
+      },
+      null,
+    );
+  }, [orderedAttendanceSessions]);
 
   const activeSession =
     orderedAttendanceSessions.find(
       (session) => session.id === activeSessionId,
     ) ??
-    orderedAttendanceSessions[orderedAttendanceSessions.length - 1] ??
+    closestAttendanceSession ??
     null;
 
   const filteredMembers = useMemo(() => {
@@ -2009,7 +2045,9 @@ export default function AwardTracker({
                         );
                       })}
                     </select>
-                    <small>Earliest to latest</small>
+                    <small>
+                      Earliest to latest · closest meeting selected automatically
+                    </small>
                   </label>
                   <div className="selected-session-card">
                     {(() => {

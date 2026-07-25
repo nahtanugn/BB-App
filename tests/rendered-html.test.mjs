@@ -20,6 +20,9 @@ test("defines the 11KCHBB App application shell and sharing metadata", async () 
   assert.match(tracker, /aria-label="Attendance meeting date"/);
   assert.match(tracker, /Earliest to latest/);
   assert.match(tracker, /orderedAttendanceSessions/);
+  assert.match(tracker, /closestAttendanceSession/);
+  assert.match(tracker, /malaysiaDateKey/);
+  assert.match(tracker, /closest meeting selected automatically/);
   assert.match(tracker, /className="session-date"/);
   assert.match(tracker, /dateTime=\{activeSession\.meeting_date\}/);
   assert.match(tracker, /className="session-count"/);
