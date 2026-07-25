@@ -12,6 +12,7 @@ type Member = {
   joined_at: string;
   service_years: number;
   service_award_count: number;
+  band_member: number;
   school: string;
   contact_number: string;
   emergency_contact_number: string;
@@ -58,6 +59,11 @@ type SubscriptionRecord = {
   year: number;
   paid: number;
 };
+type BandSubscriptionRecord = {
+  member_id: number;
+  year: number;
+  status: "unpaid" | "paid" | "exempt";
+};
 type SubmissionNotification = {
   member_id: number;
   member_name: string;
@@ -71,6 +77,7 @@ type TrackerData = {
   attendanceSessions: AttendanceSession[];
   attendance: AttendanceRecord[];
   subscriptions: SubscriptionRecord[];
+  bandSubscriptions: BandSubscriptionRecord[];
   submissionNotifications: SubmissionNotification[];
   syllabus: string;
   section: "senior" | "junior";
@@ -155,6 +162,7 @@ type AwardTrackerProps = {
     temporary_access_role: string;
     access_expires_at: string | null;
     member_section?: string;
+    custom_permissions?: string[];
   };
   onLogout?: () => void;
   onManageAccount?: () => void;
@@ -192,18 +200,35 @@ export default function AwardTracker({
   const isSquadLeader =
     user?.role === "squad_leader" && !hasTemporaryAdminAccess;
   const isViewer = user?.role === "viewer";
-  const canManageAwards = !isNco && !isSquadLeader && !isViewer;
-  const canAddMembers = Boolean(user) && !isViewer;
-  const canEditMembers = Boolean(user) && !isViewer;
-  const canManageAttendance = Boolean(user) && !isViewer;
-  const canManageSubscriptions = canManageAwards;
-  const roleCanViewSubmissions = !isNco;
+  const hasPermission = (permission: string) =>
+    user?.custom_permissions?.includes(permission) ?? false;
+  const baseOperationalAccess =
+    ["admin", "officer"].includes(user?.role ?? "") ||
+    hasTemporaryAdminAccess;
+  const baseNcoAccess =
+    ["nco", "squad_leader"].includes(user?.role ?? "") &&
+    !hasTemporaryAdminAccess;
+  const canManageAwards =
+    baseOperationalAccess || hasPermission("awards.manage");
+  const canAddMembers =
+    baseOperationalAccess || baseNcoAccess || hasPermission("members.create");
+  const canEditMembers =
+    baseOperationalAccess || baseNcoAccess || hasPermission("members.edit");
+  const canManageAttendance =
+    baseOperationalAccess || baseNcoAccess || hasPermission("attendance.manage");
+  const canManageSubscriptions =
+    baseOperationalAccess || hasPermission("subscriptions.company.manage");
+  const canManageBandSubscriptions =
+    baseOperationalAccess || hasPermission("subscriptions.band.manage");
+  const roleCanViewSubmissions =
+    !isNco || hasPermission("submissions.view");
   const hasOperationalAdminAccess =
     ["admin", "officer"].includes(user?.role ?? "") ||
     hasTemporaryAdminAccess;
   const canReviewSubmissions = hasOperationalAdminAccess;
   const canSubmitPersonalAwards = isNco || isSquadLeader;
-  const canUseExportCentre = hasOperationalAdminAccess || isViewer;
+  const canUseExportCentre =
+    hasOperationalAdminAccess || isViewer || hasPermission("exports.full");
   const canOverrideMemberDetails = hasOperationalAdminAccess;
   const [section, setSection] = useState<"senior" | "junior">("senior");
   const canViewSubmissions =
@@ -226,6 +251,9 @@ export default function AwardTracker({
   );
   const [subscriptionYear, setSubscriptionYear] = useState(
     currentSubscriptionYear,
+  );
+  const [subscriptionType, setSubscriptionType] = useState<"company" | "band">(
+    "company",
   );
   const [showAdd, setShowAdd] = useState(false);
   const [editingMember, setEditingMember] = useState<Member | null>(null);
@@ -309,6 +337,13 @@ export default function AwardTracker({
     const map = new Map<string, boolean>();
     data?.subscriptions.forEach((item) =>
       map.set(`${item.member_id}:${item.year}`, Boolean(item.paid)),
+    );
+    return map;
+  }, [data]);
+  const bandSubscriptionMap = useMemo(() => {
+    const map = new Map<string, BandSubscriptionRecord["status"]>();
+    data?.bandSubscriptions.forEach((item) =>
+      map.set(`${item.member_id}:${item.year}`, item.status),
     );
     return map;
   }, [data]);
@@ -596,6 +631,7 @@ export default function AwardTracker({
         emergencyContactNumber: form.get("emergencyContactNumber"),
         email: form.get("email"),
         parentsName: form.get("parentsName"),
+        bandMember: form.get("bandMember") === "on",
         overrideRequiredDetails:
           canOverrideMemberDetails && overrideMemberDetails,
       }),
@@ -767,6 +803,50 @@ export default function AwardTracker({
       return;
     }
     setNotice("Yearly subscription updated successfully.");
+    setSaving("");
+  }
+
+  async function updateBandSubscription(
+    memberId: number,
+    status: BandSubscriptionRecord["status"],
+  ) {
+    const key = `band-subscription-${subscriptionYear}-${memberId}`;
+    setSaving(key);
+    setNotice("");
+    setActionError("");
+    setData((existing) =>
+      existing
+        ? {
+            ...existing,
+            bandSubscriptions: [
+              ...existing.bandSubscriptions.filter(
+                (item) =>
+                  !(item.member_id === memberId && item.year === subscriptionYear),
+              ),
+              { member_id: memberId, year: subscriptionYear, status },
+            ],
+          }
+        : existing,
+    );
+    const response = await fetch("/api/tracker", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        action: "update_band_subscription",
+        section,
+        memberId,
+        year: subscriptionYear,
+        status,
+      }),
+    });
+    if (!response.ok) {
+      const result = (await response.json()) as { error?: string };
+      await load();
+      setActionError(result.error ?? "Unable to update band subscription");
+      setSaving("");
+      return;
+    }
+    setNotice("Band subscription updated successfully.");
     setSaving("");
   }
 
@@ -2224,39 +2304,66 @@ export default function AwardTracker({
           <section className="panel subscription-panel">
             <div className="subscription-heading">
               <div>
-                <p className="eyebrow">YEARLY SUBSCRIPTION</p>
-                <h2>{subscriptionYear} payment register</h2>
+                <p className="eyebrow">SUBSCRIPTION REGISTER</p>
+                <h2>
+                  {subscriptionYear} {subscriptionType === "band" ? "band" : "company"} subscription
+                </h2>
                 <p>
-                  {canManageSubscriptions
-                    ? "Mark each member as paid when their yearly subscription is received."
+                  {(subscriptionType === "band"
+                    ? canManageBandSubscriptions
+                    : canManageSubscriptions)
+                    ? subscriptionType === "band"
+                      ? "Track only members who participate in band. No fee amount is recorded."
+                      : "Mark each member as paid when their yearly subscription is received."
                     : "Subscription records are shown in read-only mode."}
                 </p>
               </div>
-              <label>
-                Year
-                <select
-                  value={subscriptionYear}
-                  onChange={(event) =>
-                    setSubscriptionYear(Number(event.target.value))
-                  }
-                >
-                  {Array.from(
-                    { length: currentSubscriptionYear - 1998 },
-                    (_, index) => currentSubscriptionYear + 1 - index,
-                  ).map((year) => (
-                    <option key={year} value={year}>
-                      {year}
-                    </option>
-                  ))}
-                </select>
-              </label>
+              <div className="subscription-controls">
+                <div className="section-switch" aria-label="Subscription type">
+                  <button
+                    type="button"
+                    className={subscriptionType === "company" ? "active" : ""}
+                    onClick={() => setSubscriptionType("company")}
+                  >
+                    Company
+                  </button>
+                  <button
+                    type="button"
+                    className={subscriptionType === "band" ? "active" : ""}
+                    onClick={() => setSubscriptionType("band")}
+                  >
+                    Band
+                  </button>
+                </div>
+                <label>
+                  Year
+                  <select
+                    value={subscriptionYear}
+                    onChange={(event) =>
+                      setSubscriptionYear(Number(event.target.value))
+                    }
+                  >
+                    {Array.from(
+                      { length: currentSubscriptionYear - 1998 },
+                      (_, index) => currentSubscriptionYear + 1 - index,
+                    ).map((year) => (
+                      <option key={year} value={year}>
+                        {year}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              </div>
             </div>
             <div className="subscription-summary">
               <span className="paid">
                 <strong>
                   {
                     filteredMembers.filter((member) =>
-                      subscriptionMap.get(`${member.id}:${subscriptionYear}`),
+                      subscriptionType === "band"
+                        ? Boolean(member.band_member) &&
+                          bandSubscriptionMap.get(`${member.id}:${subscriptionYear}`) === "paid"
+                        : subscriptionMap.get(`${member.id}:${subscriptionYear}`),
                     ).length
                   }
                 </strong>{" "}
@@ -2267,21 +2374,42 @@ export default function AwardTracker({
                   {
                     filteredMembers.filter(
                       (member) =>
-                        !subscriptionMap.get(
-                          `${member.id}:${subscriptionYear}`,
-                        ),
+                        subscriptionType === "band"
+                          ? Boolean(member.band_member) &&
+                            (bandSubscriptionMap.get(`${member.id}:${subscriptionYear}`) ?? "unpaid") === "unpaid"
+                          : !subscriptionMap.get(`${member.id}:${subscriptionYear}`),
                     ).length
                   }
                 </strong>{" "}
                 Unpaid
               </span>
+              {subscriptionType === "band" && (
+                <span>
+                  <strong>
+                    {filteredMembers.filter(
+                      (member) =>
+                        Boolean(member.band_member) &&
+                        bandSubscriptionMap.get(`${member.id}:${subscriptionYear}`) === "exempt",
+                    ).length}
+                  </strong>{" "}
+                  Exempt
+                </span>
+              )}
             </div>
             <div className="subscription-rows">
-              {filteredMembers.map((member) => {
-                const key = `subscription-${subscriptionYear}-${member.id}`;
+              {filteredMembers
+                .filter((member) => subscriptionType === "company" || Boolean(member.band_member))
+                .map((member) => {
+                const key =
+                  subscriptionType === "band"
+                    ? `band-subscription-${subscriptionYear}-${member.id}`
+                    : `subscription-${subscriptionYear}-${member.id}`;
                 const paid =
                   subscriptionMap.get(`${member.id}:${subscriptionYear}`) ??
                   false;
+                const bandStatus =
+                  bandSubscriptionMap.get(`${member.id}:${subscriptionYear}`) ??
+                  "unpaid";
                 return (
                   <div className="subscription-row" key={member.id}>
                     <div className="avatar small">{initials(member.name)}</div>
@@ -2291,18 +2419,44 @@ export default function AwardTracker({
                         {member.rank} · {member.squad}
                       </span>
                     </div>
-                    <button
-                      type="button"
-                      className={paid ? "paid" : "unpaid"}
-                      disabled={!canManageSubscriptions || saving === key}
-                      onClick={() => updateSubscription(member.id, !paid)}
-                      aria-label={`${member.name} subscription for ${subscriptionYear}: ${paid ? "Paid" : "Unpaid"}`}
-                    >
-                      {saving === key ? "Saving…" : paid ? "✓ Paid" : "Unpaid"}
-                    </button>
+                    {subscriptionType === "band" ? (
+                      <select
+                        className={`subscription-status ${bandStatus}`}
+                        value={bandStatus}
+                        disabled={!canManageBandSubscriptions || saving === key}
+                        onChange={(event) =>
+                          updateBandSubscription(
+                            member.id,
+                            event.target.value as BandSubscriptionRecord["status"],
+                          )
+                        }
+                        aria-label={`${member.name} band subscription for ${subscriptionYear}`}
+                      >
+                        <option value="unpaid">Unpaid</option>
+                        <option value="paid">Paid</option>
+                        <option value="exempt">Exempt</option>
+                      </select>
+                    ) : (
+                      <button
+                        type="button"
+                        className={paid ? "paid" : "unpaid"}
+                        disabled={!canManageSubscriptions || saving === key}
+                        onClick={() => updateSubscription(member.id, !paid)}
+                        aria-label={`${member.name} subscription for ${subscriptionYear}: ${paid ? "Paid" : "Unpaid"}`}
+                      >
+                        {saving === key ? "Saving…" : paid ? "✓ Paid" : "Unpaid"}
+                      </button>
+                    )}
                   </div>
                 );
               })}
+              {subscriptionType === "band" &&
+                !filteredMembers.some((member) => Boolean(member.band_member)) && (
+                  <div className="empty-state large">
+                    <strong>No band members in this section</strong>
+                    <p>Edit a member profile and turn on Band member.</p>
+                  </div>
+                )}
             </div>
           </section>
         )}
@@ -2736,6 +2890,19 @@ export default function AwardTracker({
                   required={!overrideMemberDetails}
                   defaultValue={editingMember?.parents_name ?? ""}
                 />
+              </label>
+              <label className="override-details band-member-field">
+                <input
+                  name="bandMember"
+                  type="checkbox"
+                  defaultChecked={Boolean(editingMember?.band_member)}
+                />
+                <span>
+                  Band member
+                  <small>
+                    Include this member in the separate band subscription register
+                  </small>
+                </span>
               </label>
               {canOverrideMemberDetails && (
                 <label className="override-details">

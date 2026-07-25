@@ -15,6 +15,7 @@ export type AppUser = {
   member_section: string;
   temporary_access_role: string;
   access_expires_at: string | null;
+  custom_permissions: string[];
 };
 
 type RuntimeEnv = {
@@ -165,7 +166,30 @@ export async function getCurrentUser(request: Request): Promise<AppUser | null> 
     WHERE sessions.token_hash = ? AND sessions.expires_at > ? AND users.active = 1`)
     .bind(now, tokenHash, now)
     .first<AppUser>();
-  return user ?? null;
+  if (!user) return null;
+  if (user.role === "viewer") return { ...user, custom_permissions: [] };
+  const tables = await runtime.DB.prepare(`SELECT COUNT(*) AS total FROM sqlite_master
+    WHERE type = 'table' AND name IN ('custom_roles', 'user_custom_roles')`)
+    .first<{ total: number }>();
+  if (Number(tables?.total ?? 0) < 2)
+    return { ...user, custom_permissions: [] };
+  const roleRows = await runtime.DB.prepare(`SELECT r.permissions
+    FROM user_custom_roles ur
+    JOIN custom_roles r ON r.id = ur.role_id
+    WHERE ur.user_id = ? AND (ur.expires_at IS NULL OR ur.expires_at > ?)`)
+    .bind(user.id, now)
+    .all<{ permissions: string }>();
+  const permissions = new Set<string>();
+  for (const row of roleRows.results) {
+    try {
+      const values = JSON.parse(row.permissions);
+      if (Array.isArray(values))
+        values.forEach((value) => permissions.add(String(value)));
+    } catch {
+      // Ignore malformed legacy permission data.
+    }
+  }
+  return { ...user, custom_permissions: [...permissions] };
 }
 
 export async function createSession(userId: number) {

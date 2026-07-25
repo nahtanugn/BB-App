@@ -5,9 +5,9 @@ import {
 } from "../../../lib/auth";
 import {
   canViewStockType,
+  APP_PERMISSIONS,
   ensureStockSchema,
   getStockPermissions,
-  STOCK_PERMISSIONS,
 } from "../../../lib/stock";
 
 const runtime = getRuntimeEnv();
@@ -23,7 +23,7 @@ const validTransactionTypes = [
 
 function jsonPermissions(value: unknown) {
   const requested = Array.isArray(value) ? value.map(String) : [];
-  return STOCK_PERMISSIONS.filter((permission) => requested.includes(permission));
+  return APP_PERMISSIONS.filter((permission) => requested.includes(permission));
 }
 
 async function audit(user: NonNullable<Awaited<ReturnType<typeof getCurrentUser>>>, action: string, details: string) {

@@ -16,6 +16,7 @@ type User = {
   temporary_access_role: string;
   access_expires_at: string | null;
   member_section?: string;
+  custom_permissions?: string[];
 };
 type Resource = {
   id: number;
@@ -70,7 +71,9 @@ export default function ResourceLibrary({
       user.access_expires_at > new Date().toISOString(),
   );
   const canManageResources =
-    ["admin", "officer"].includes(user.role) || hasTemporaryAdminAccess;
+    ["admin", "officer"].includes(user.role) ||
+    hasTemporaryAdminAccess ||
+    Boolean(user.custom_permissions?.includes("resources.manage"));
 
   async function loadResources() {
     const response = await fetch("/api/resources", { cache: "no-store" });

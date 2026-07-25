@@ -14,6 +14,7 @@ export const members = sqliteTable("members", {
   joinedAt: text("joined_at").notNull(),
   serviceYears: integer("service_years").notNull().default(0),
   serviceAwardCount: integer("service_award_count").notNull().default(0),
+  bandMember: integer("band_member", { mode: "boolean" }).notNull().default(false),
   school: text("school").notNull().default(""),
   contactNumber: text("contact_number").notNull().default(""),
   emergencyContactNumber: text("emergency_contact_number")
@@ -91,6 +92,20 @@ export const memberSubscriptions = sqliteTable(
       .references(() => members.id, { onDelete: "cascade" }),
     year: integer("year").notNull(),
     paid: integer("paid", { mode: "boolean" }).notNull().default(false),
+    updatedAt: text("updated_at").notNull(),
+    updatedBy: text("updated_by").notNull(),
+  },
+  (table) => [primaryKey({ columns: [table.memberId, table.year] })],
+);
+
+export const bandSubscriptions = sqliteTable(
+  "band_subscriptions",
+  {
+    memberId: integer("member_id")
+      .notNull()
+      .references(() => members.id, { onDelete: "cascade" }),
+    year: integer("year").notNull(),
+    status: text("status").notNull().default("unpaid"),
     updatedAt: text("updated_at").notNull(),
     updatedBy: text("updated_by").notNull(),
   },

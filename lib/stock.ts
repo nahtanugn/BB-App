@@ -15,6 +15,31 @@ export const STOCK_PERMISSIONS = [
 
 export type StockPermission = (typeof STOCK_PERMISSIONS)[number];
 
+export const APP_PERMISSIONS = [
+  ...STOCK_PERMISSIONS,
+  "members.view",
+  "members.create",
+  "members.edit",
+  "members.delete",
+  "attendance.view",
+  "attendance.manage",
+  "awards.view",
+  "awards.manage",
+  "submissions.view",
+  "submissions.review",
+  "subscriptions.company.view",
+  "subscriptions.company.manage",
+  "subscriptions.band.view",
+  "subscriptions.band.manage",
+  "resources.view_all",
+  "resources.manage",
+  "announcements.publish",
+  "announcements.manage",
+  "exports.full",
+] as const;
+
+export type AppPermission = (typeof APP_PERMISSIONS)[number];
+
 type SeedItem = {
   key: string;
   name: string;
@@ -248,18 +273,12 @@ export async function ensureStockSchema(db: D1Database) {
   initialized = true;
 }
 
-export async function getStockPermissions(db: D1Database, user: AppUser) {
-  if (user.role === "viewer") {
-    return [
-      "stock.view_uniform",
-      "stock.view_awards",
-      "stock.view_history",
-      "stock.export",
-    ];
-  }
-  if (user.role === "admin" || (user.temporary_access_role === "temporary_admin" && user.access_expires_at && user.access_expires_at > new Date().toISOString())) {
-    return [...STOCK_PERMISSIONS];
-  }
+export async function getCustomPermissions(db: D1Database, user: AppUser) {
+  if (user.role === "viewer") return [];
+  const tables = await db.prepare(`SELECT COUNT(*) AS total FROM sqlite_master
+    WHERE type = 'table' AND name IN ('custom_roles', 'user_custom_roles')`)
+    .first<{ total: number }>();
+  if (Number(tables?.total ?? 0) < 2) return [];
   const rows = await db.prepare(`SELECT r.permissions
     FROM user_custom_roles ur
     JOIN custom_roles r ON r.id = ur.role_id
@@ -275,6 +294,22 @@ export async function getStockPermissions(db: D1Database, user: AppUser) {
       // Ignore malformed legacy role permission data.
     }
   }
+  return APP_PERMISSIONS.filter((permission) => granted.has(permission));
+}
+
+export async function getStockPermissions(db: D1Database, user: AppUser) {
+  if (user.role === "viewer") {
+    return [
+      "stock.view_uniform",
+      "stock.view_awards",
+      "stock.view_history",
+      "stock.export",
+    ];
+  }
+  if (user.role === "admin" || (user.temporary_access_role === "temporary_admin" && user.access_expires_at && user.access_expires_at > new Date().toISOString())) {
+    return [...STOCK_PERMISSIONS];
+  }
+  const granted = new Set(await getCustomPermissions(db, user));
   return STOCK_PERMISSIONS.filter((permission) => granted.has(permission));
 }
 

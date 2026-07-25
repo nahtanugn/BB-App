@@ -17,6 +17,7 @@ type Member = {
   joined_at: string;
   service_years: number;
   service_award_count: number;
+  band_member: number;
   school: string;
   contact_number: string;
   emergency_contact_number: string;
@@ -50,6 +51,11 @@ type TrackerData = {
     status: AttendanceStatus;
   }>;
   subscriptions: Array<{ member_id: number; year: number; paid: number }>;
+  bandSubscriptions: Array<{
+    member_id: number;
+    year: number;
+    status: "unpaid" | "paid" | "exempt";
+  }>;
   syllabus: string;
   section: "senior" | "junior";
 };
@@ -272,6 +278,7 @@ export default function ExportCentre({
           currentYear,
           ...datasets.flatMap((dataset) => [
             ...dataset.subscriptions.map((item) => item.year),
+            ...dataset.bandSubscriptions.map((item) => item.year),
             ...dataset.attendanceSessions.map((item) =>
               Number(item.meeting_date.slice(0, 4)),
             ),
@@ -514,21 +521,43 @@ export default function ExportCentre({
         reportYear === "all" ? years : [Number(reportYear)];
       sheets.push({
         name: "Subscriptions",
-        headers: ["Year", "Section", "Member ID", "Full Name", "Squad", "Status"],
+        headers: ["Year", "Type", "Section", "Member ID", "Full Name", "Squad", "Status"],
         rows: selected.flatMap(({ dataset, member: item }) =>
-          selectedYears.map((year) => {
+          selectedYears.flatMap((year) => {
             const paid = dataset.subscriptions.some(
               (record) =>
                 record.member_id === item.id && record.year === year && record.paid,
             );
-            return [
-              year,
-              sectionLabel(dataset.section),
-              item.id,
-              item.name,
-              item.squad,
-              paid ? "Paid" : "Unpaid",
-            ];
+            const rows: Array<Array<string | number>> = [[
+                year,
+                "Company",
+                sectionLabel(dataset.section),
+                item.id,
+                item.name,
+                item.squad,
+                paid ? "Paid" : "Unpaid",
+            ]];
+            if (item.band_member) {
+              const bandStatus =
+                dataset.bandSubscriptions.find(
+                  (record) =>
+                    record.member_id === item.id && record.year === year,
+                )?.status ?? "unpaid";
+              rows.push([
+                year,
+                "Band",
+                sectionLabel(dataset.section),
+                item.id,
+                item.name,
+                item.squad,
+                bandStatus === "exempt"
+                  ? "Exempt"
+                  : bandStatus === "paid"
+                    ? "Paid"
+                    : "Unpaid",
+              ]);
+            }
+            return rows;
           }),
         ),
       });

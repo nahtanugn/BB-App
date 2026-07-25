@@ -15,6 +15,7 @@ type User = {
     | "member";
   temporary_access_role: string;
   access_expires_at: string | null;
+  custom_permissions?: string[];
 };
 
 export default function SubmissionsPage({
@@ -39,7 +40,12 @@ export default function SubmissionsPage({
   );
   const canReviewAll =
     ["admin", "officer", "viewer"].includes(user.role) ||
-    hasTemporaryAdminAccess;
+    hasTemporaryAdminAccess ||
+    Boolean(
+      user.custom_permissions?.some((permission) =>
+        ["submissions.view", "submissions.review"].includes(permission),
+      ),
+    );
   return (
     <main className="resources-shell submissions-page">
       <header className="resources-topbar">

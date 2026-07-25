@@ -8,6 +8,55 @@ type Assignment = { user_id: number; role_id: number; expires_at: string | null;
 
 const permissionGroups = [
   {
+    title: "Members",
+    description: "Member directory and profile records",
+    options: [
+      ["members.view", "View all member details"],
+      ["members.create", "Add members"],
+      ["members.edit", "Edit member details"],
+      ["members.delete", "Delete members"],
+    ],
+  },
+  {
+    title: "Attendance",
+    description: "Meeting dates and parade registers",
+    options: [
+      ["attendance.view", "View attendance"],
+      ["attendance.manage", "Create meetings and update attendance"],
+    ],
+  },
+  {
+    title: "Awards & submissions",
+    description: "Award records and member applications",
+    options: [
+      ["awards.view", "View award matrix"],
+      ["awards.manage", "Update member awards"],
+      ["submissions.view", "View award submissions"],
+      ["submissions.review", "Approve or reject submissions"],
+    ],
+  },
+  {
+    title: "Subscriptions",
+    description: "Company and band payment registers",
+    options: [
+      ["subscriptions.company.view", "View company subscriptions"],
+      ["subscriptions.company.manage", "Update company subscriptions"],
+      ["subscriptions.band.view", "View band subscriptions"],
+      ["subscriptions.band.manage", "Update band subscriptions"],
+    ],
+  },
+  {
+    title: "Resources & announcements",
+    description: "Shared information for the company",
+    options: [
+      ["resources.view_all", "View all resource levels"],
+      ["resources.manage", "Add and delete resources"],
+      ["announcements.publish", "Publish announcements"],
+      ["announcements.manage", "Manage announcements"],
+      ["exports.full", "Export all company data"],
+    ],
+  },
+  {
     title: "Uniform store",
     description: "Uniform stock and member requests",
     options: [

@@ -109,7 +109,11 @@ export async function GET(request: Request) {
       });
     }
     if (url.searchParams.get("all") === "1") {
-      if (!hasOperationalAdminAccess(user) && user.role !== "viewer")
+      if (
+        !hasOperationalAdminAccess(user) &&
+        user.role !== "viewer" &&
+        !user.custom_permissions.includes("submissions.view")
+      )
         return Response.json(
           { error: "Admin, Temporary Admin or Officer access required" },
           { status: 403 },
@@ -322,7 +326,10 @@ export async function POST(request: Request) {
     }
 
     if (action === "review_submission") {
-      if (!hasOperationalAdminAccess(user))
+      if (
+        !hasOperationalAdminAccess(user) &&
+        !user.custom_permissions.includes("submissions.review")
+      )
         return Response.json(
           { error: "Admin, Temporary Admin or Officer access required" },
           { status: 403 },

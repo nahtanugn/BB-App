@@ -39,19 +39,25 @@ async function ensureAnnouncementSchema() {
 function canAnnounce(user: NonNullable<Awaited<ReturnType<typeof getCurrentUser>>>) {
   return (
     ["admin", "officer", "nco", "squad_leader"].includes(user.role) ||
-    hasTemporaryAdminAccess(user)
+    hasTemporaryAdminAccess(user) ||
+    user.custom_permissions.includes("announcements.publish")
   );
 }
 
 function canArchive(user: NonNullable<Awaited<ReturnType<typeof getCurrentUser>>>) {
   return (
     ["admin", "officer"].includes(user.role) ||
-    hasTemporaryAdminAccess(user)
+    hasTemporaryAdminAccess(user) ||
+    user.custom_permissions.includes("announcements.manage")
   );
 }
 
 function canDelete(user: NonNullable<Awaited<ReturnType<typeof getCurrentUser>>>) {
-  return user.role === "admin" || hasTemporaryAdminAccess(user);
+  return (
+    user.role === "admin" ||
+    hasTemporaryAdminAccess(user) ||
+    user.custom_permissions.includes("announcements.manage")
+  );
 }
 
 export async function GET(request: Request) {

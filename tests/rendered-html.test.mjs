@@ -301,9 +301,11 @@ test("ships the Malaysia Senior Section catalogue, role-based portals and instal
   assert.match(tracker, /canEditMembers/);
   assert.match(tracker, /canAddMembers/);
   assert.match(tracker, /const isViewer = user\?\.role === "viewer"/);
-  assert.match(tracker, /Boolean\(user\) && !isViewer/);
-  assert.match(tracker, /YEARLY SUBSCRIPTION/);
+  assert.match(tracker, /hasPermission\("members\.create"\)/);
+  assert.match(tracker, /SUBSCRIPTION REGISTER/);
   assert.match(tracker, /updateSubscription/);
+  assert.match(tracker, /updateBandSubscription/);
+  assert.match(tracker, /No fee amount is recorded/);
   assert.match(tracker, /canManageSubscriptions/);
   assert.match(tracker, /Open Export Centre/);
   assert.match(tracker, /11kchbb-all-member-records-/);

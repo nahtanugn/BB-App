@@ -398,6 +398,7 @@ async function ensureSchema() {
       joined_at TEXT NOT NULL,
       service_years INTEGER NOT NULL DEFAULT 0,
       service_award_count INTEGER NOT NULL DEFAULT 0,
+      band_member INTEGER NOT NULL DEFAULT 0,
       school TEXT NOT NULL DEFAULT '',
       contact_number TEXT NOT NULL DEFAULT '',
       emergency_contact_number TEXT NOT NULL DEFAULT '',
@@ -462,6 +463,18 @@ async function ensureSchema() {
     db.prepare(
       "CREATE INDEX IF NOT EXISTS member_subscriptions_year_idx ON member_subscriptions(year)",
     ),
+    db.prepare(`CREATE TABLE IF NOT EXISTS band_subscriptions (
+      member_id INTEGER NOT NULL,
+      year INTEGER NOT NULL,
+      status TEXT NOT NULL DEFAULT 'unpaid',
+      updated_at TEXT NOT NULL,
+      updated_by TEXT NOT NULL,
+      PRIMARY KEY (member_id, year),
+      FOREIGN KEY (member_id) REFERENCES members(id) ON DELETE CASCADE
+    )`),
+    db.prepare(
+      "CREATE INDEX IF NOT EXISTS band_subscriptions_year_idx ON band_subscriptions(year)",
+    ),
   ]);
 
   const memberColumns = await db
@@ -491,6 +504,10 @@ async function ensureSchema() {
     [
       "service_award_count",
       "ALTER TABLE members ADD COLUMN service_award_count INTEGER NOT NULL DEFAULT 0",
+    ],
+    [
+      "band_member",
+      "ALTER TABLE members ADD COLUMN band_member INTEGER NOT NULL DEFAULT 0",
     ],
   ].filter(([column]) => !existingMemberColumns.has(column));
   if (missingMemberColumns.length) {
@@ -673,7 +690,16 @@ export async function GET(request: Request) {
     if (!user)
       return Response.json({ error: "Sign in required" }, { status: 401 });
     const hasTemporaryAccess = hasTemporaryAdminAccess(user);
-    if (user.role === "member" && !hasTemporaryAccess)
+    const trackerPermissions = user.custom_permissions.filter((permission) =>
+      ["members.", "attendance.", "awards.", "subscriptions.", "exports."].some(
+        (prefix) => permission.startsWith(prefix),
+      ),
+    );
+    if (
+      user.role === "member" &&
+      !hasTemporaryAccess &&
+      !trackerPermissions.length
+    )
       return Response.json(
         { error: "Member accounts can access resources only" },
         { status: 403 },
@@ -685,7 +711,7 @@ export async function GET(request: Request) {
     const section = allowedSections.includes(requestedSection)
       ? requestedSection
       : "senior";
-    const [memberResult, sessionResult, attendanceResult, subscriptionResult] =
+    const [memberResult, sessionResult, attendanceResult, subscriptionResult, bandSubscriptionResult] =
       await Promise.all([
       db
         .prepare(
@@ -726,6 +752,12 @@ export async function GET(request: Request) {
         )
         .bind(section)
         .all(),
+      db
+        .prepare(
+          "SELECT bs.member_id, bs.year, bs.status FROM band_subscriptions bs INNER JOIN members m ON m.id = bs.member_id WHERE m.section = ? ORDER BY bs.year DESC, m.name COLLATE NOCASE",
+        )
+        .bind(section)
+        .all(),
     ]);
     const members = memberResult.results.map((member) => ({
       ...member,
@@ -755,6 +787,7 @@ export async function GET(request: Request) {
       attendanceSessions: sessionResult.results,
       attendance: attendanceResult.results,
       subscriptions: subscriptionResult.results,
+      bandSubscriptions: bandSubscriptionResult.results,
       syllabus:
         section === "junior"
           ? "BB Malaysia Junior Section"
@@ -783,15 +816,35 @@ export async function POST(request: Request) {
         { status: 403 },
       );
     const hasTemporaryAccess = hasTemporaryAdminAccess(user);
-    if (user.role === "member" && !hasTemporaryAccess)
-      return Response.json(
-        { error: "Member accounts can access resources only" },
-        { status: 403 },
-      );
     await ensureSchema();
     const db = env.DB;
     const body = (await request.json()) as Record<string, unknown>;
     const action = String(body.action ?? "");
+    const requiredPermission: Record<string, string> = {
+      create_member: "members.create",
+      update_member: "members.edit",
+      delete_member: "members.delete",
+      create_attendance_session: "attendance.manage",
+      delete_attendance_session: "attendance.manage",
+      update_attendance: "attendance.manage",
+      update_award: "awards.manage",
+      update_service_award_count: "awards.manage",
+      update_subscription: "subscriptions.company.manage",
+      update_band_subscription: "subscriptions.band.manage",
+    };
+    const customAllowsAction = Boolean(
+      requiredPermission[action] &&
+        user.custom_permissions.includes(requiredPermission[action]),
+    );
+    if (
+      user.role === "member" &&
+      !hasTemporaryAccess &&
+      !customAllowsAction
+    )
+      return Response.json(
+        { error: "This action has not been granted to your custom role" },
+        { status: 403 },
+      );
     const requestedSection = String(body.section ?? "senior");
     const section = allowedSections.includes(requestedSection)
       ? requestedSection
@@ -802,6 +855,7 @@ export async function POST(request: Request) {
     if (
       ["nco", "squad_leader"].includes(user.role) &&
       !hasTemporaryAccess &&
+      !customAllowsAction &&
       ![
         "create_member",
         "create_attendance_session",
@@ -833,6 +887,7 @@ export async function POST(request: Request) {
         .trim()
         .toLowerCase();
       const parentsName = String(body.parentsName ?? "").trim();
+      const bandMember = body.bandMember === true;
       if (!name)
         return Response.json(
           { error: "Member name is required" },
@@ -865,8 +920,8 @@ export async function POST(request: Request) {
       await db
         .prepare(
           `INSERT INTO members
-        (name, rank, squad, section, joined_at, service_years, school, contact_number, emergency_contact_number, email, parents_name, is_demo, created_at)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, ?)`,
+        (name, rank, squad, section, joined_at, service_years, band_member, school, contact_number, emergency_contact_number, email, parents_name, is_demo, created_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, ?)`,
         )
         .bind(
           name,
@@ -875,6 +930,7 @@ export async function POST(request: Request) {
           section,
           joinedAt,
           calculateServiceYears(joinedAt),
+          bandMember ? 1 : 0,
           school,
           contactNumber,
           emergencyContactNumber,
@@ -899,6 +955,7 @@ export async function POST(request: Request) {
         .trim()
         .toLowerCase();
       const parentsName = String(body.parentsName ?? "").trim();
+      const bandMember = body.bandMember === true;
       if (!memberId || !name)
         return Response.json(
           { error: "Valid member details are required" },
@@ -930,7 +987,7 @@ export async function POST(request: Request) {
         );
       await db
         .prepare(
-          `UPDATE members SET name = ?, rank = ?, squad = ?, joined_at = ?, service_years = ?, school = ?, contact_number = ?, emergency_contact_number = ?, email = ?, parents_name = ? WHERE id = ? AND section = ?`,
+          `UPDATE members SET name = ?, rank = ?, squad = ?, joined_at = ?, service_years = ?, band_member = ?, school = ?, contact_number = ?, emergency_contact_number = ?, email = ?, parents_name = ? WHERE id = ? AND section = ?`,
         )
         .bind(
           name,
@@ -938,6 +995,7 @@ export async function POST(request: Request) {
           squad,
           joinedAt,
           calculateServiceYears(joinedAt),
+          bandMember ? 1 : 0,
           school,
           contactNumber,
           emergencyContactNumber,
@@ -1007,6 +1065,41 @@ export async function POST(request: Request) {
             updated_by = excluded.updated_by`,
         )
         .bind(memberId, year, paid ? 1 : 0, now, user.email)
+        .run();
+    } else if (action === "update_band_subscription") {
+      const memberId = Number(body.memberId);
+      const year = Number(body.year);
+      const status = String(body.status ?? "unpaid");
+      const currentYear = new Date().getUTCFullYear();
+      if (
+        !memberId ||
+        !Number.isInteger(year) ||
+        year < 2000 ||
+        year > currentYear + 1 ||
+        !["unpaid", "paid", "exempt"].includes(status)
+      )
+        return Response.json(
+          { error: "Select a valid band subscription record" },
+          { status: 400 },
+        );
+      const validMember = await db
+        .prepare("SELECT id FROM members WHERE id = ? AND section = ? AND band_member = 1")
+        .bind(memberId, section)
+        .first();
+      if (!validMember)
+        return Response.json(
+          { error: "This person is not marked as a band member" },
+          { status: 400 },
+        );
+      const now = new Date().toISOString();
+      await db.prepare(`INSERT INTO band_subscriptions
+        (member_id, year, status, updated_at, updated_by)
+        VALUES (?, ?, ?, ?, ?)
+        ON CONFLICT(member_id, year) DO UPDATE SET
+          status = excluded.status,
+          updated_at = excluded.updated_at,
+          updated_by = excluded.updated_by`)
+        .bind(memberId, year, status, now, user.email)
         .run();
     } else if (action === "update_award") {
       const memberId = Number(body.memberId);
@@ -1093,6 +1186,10 @@ export async function POST(request: Request) {
         .run();
       await db
         .prepare("DELETE FROM member_subscriptions WHERE member_id = ?")
+        .bind(memberId)
+        .run();
+      await db
+        .prepare("DELETE FROM band_subscriptions WHERE member_id = ?")
         .bind(memberId)
         .run();
       await db

@@ -25,6 +25,7 @@ type User = {
   member_section: string;
   temporary_access_role: string;
   access_expires_at: string | null;
+  custom_permissions: string[];
 };
 type ManagedUser = User & {
   active: number;
@@ -78,6 +79,17 @@ export default function StandaloneApp() {
       auth.user.access_expires_at > new Date().toISOString(),
   );
   const signedInUserId = auth?.user?.id ?? null;
+  const hasCustomTrackerAccess = Boolean(
+    auth?.user?.custom_permissions?.some((permission) =>
+      [
+        "members.",
+        "attendance.",
+        "awards.",
+        "subscriptions.",
+        "exports.",
+      ].some((prefix) => permission.startsWith(prefix)),
+    ),
+  );
 
   async function refreshAuth() {
     const response = await fetch("/api/auth", { cache: "no-store" });
@@ -517,7 +529,9 @@ export default function StandaloneApp() {
     );
 
   if (
-    (auth.user.role === "member" && !hasTemporaryAdminAccess) ||
+    (auth.user.role === "member" &&
+      !hasTemporaryAdminAccess &&
+      !hasCustomTrackerAccess) ||
     showResources
   )
     return (

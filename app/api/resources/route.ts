@@ -36,8 +36,9 @@ export async function GET(request: Request) {
     if (!user) return Response.json({ error: "Sign in required" }, { status: 401 });
     await ensureResourcesSchema();
     const hasTemporaryAccess = hasTemporaryAdminAccess(user);
+    const canViewAll = user.custom_permissions.includes("resources.view_all");
     const accessFilter =
-      user.role === "member" && !hasTemporaryAccess
+      user.role === "member" && !hasTemporaryAccess && !canViewAll
         ? "WHERE access_level = 'member'"
         : (user.role === "nco" || user.role === "squad_leader") &&
             !hasTemporaryAccess
@@ -60,7 +61,11 @@ export async function POST(request: Request) {
   try {
     const user = await getCurrentUser(request);
     if (!user) return Response.json({ error: "Sign in required" }, { status: 401 });
-    if (!hasOperationalAdminAccess(user)) return Response.json({ error: "Resources are read-only for this account" }, { status: 403 });
+    if (
+      !hasOperationalAdminAccess(user) &&
+      !user.custom_permissions.includes("resources.manage")
+    )
+      return Response.json({ error: "Resources are read-only for this account" }, { status: 403 });
     await ensureResourcesSchema();
     const body = (await request.json()) as Record<string, unknown>;
     const action = String(body.action ?? "");
