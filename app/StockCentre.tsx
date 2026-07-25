@@ -48,6 +48,7 @@ export default function StockCentre({
   const [query, setQuery] = useState("");
   const [section, setSection] = useState("all");
   const [condition, setCondition] = useState("all");
+  const [category, setCategory] = useState("all");
   const [selected, setSelected] = useState<StockItem | null>(null);
   const [showAdd, setShowAdd] = useState(false);
   const [error, setError] = useState("");
@@ -84,9 +85,41 @@ export default function StockCentre({
       if (tab === "award" && item.stock_type !== "award") return false;
       if (section !== "all" && item.section !== section) return false;
       if (condition !== "all" && item.condition !== condition) return false;
+      if (category !== "all" && item.category !== category) return false;
       return !term || `${item.name} ${item.variant} ${item.category}`.toLowerCase().includes(term);
     });
-  }, [condition, data, query, section, tab]);
+  }, [category, condition, data, query, section, tab]);
+  const categoryOptions = useMemo(() => {
+    if (!data) return [];
+    return [...new Set(data.items
+      .filter((item) => {
+        if (tab === "award" && item.stock_type !== "award") return false;
+        if (tab === "uniform" && item.stock_type !== "uniform") return false;
+        return section === "all" || item.section === section;
+      })
+      .map((item) => item.category))]
+      .filter(Boolean)
+      .sort((a, b) => a.localeCompare(b));
+  }, [data, section, tab]);
+  const awardGroups = useMemo(() => {
+    if (tab !== "award") return [];
+    const groups = new Map<string, StockItem[]>();
+    visibleItems.forEach((item) => {
+      const key = `${item.section}::${item.category}`;
+      groups.set(key, [...(groups.get(key) ?? []), item]);
+    });
+    const sectionOrder = { senior: 0, junior: 1, shared: 2 };
+    return [...groups.entries()]
+      .map(([key, items]) => {
+        const [groupSection, groupCategory] = key.split("::");
+        return { section: groupSection, category: groupCategory, items };
+      })
+      .sort((a, b) =>
+        (sectionOrder[a.section as keyof typeof sectionOrder] ?? 9) -
+          (sectionOrder[b.section as keyof typeof sectionOrder] ?? 9) ||
+        a.category.localeCompare(b.category),
+      );
+  }, [tab, visibleItems]);
   const summary = useMemo(() => {
     const items = data?.items ?? [];
     return {
@@ -187,10 +220,10 @@ export default function StockCentre({
               <article><span>Issued records</span><strong>{summary.issued}</strong><small>units in recent history</small></article>
             </div>
             <div className="stock-tabs" role="tablist">
-              <button className={tab === "overview" ? "active" : ""} onClick={() => setTab("overview")}>All stock</button>
-              {canViewUniform && <button className={tab === "uniform" ? "active" : ""} onClick={() => setTab("uniform")}>Uniforms</button>}
-              {canViewAwards && <button className={tab === "award" ? "active" : ""} onClick={() => setTab("award")}>Awards</button>}
-              {data.permissions.includes("stock.view_history") && <button className={tab === "history" ? "active" : ""} onClick={() => setTab("history")}>History</button>}
+              <button className={tab === "overview" ? "active" : ""} onClick={() => { setTab("overview"); setCategory("all"); }}>All stock</button>
+              {canViewUniform && <button className={tab === "uniform" ? "active" : ""} onClick={() => { setTab("uniform"); setCategory("all"); }}>Uniforms</button>}
+              {canViewAwards && <button className={tab === "award" ? "active" : ""} onClick={() => { setTab("award"); setCategory("all"); }}>Awards</button>}
+              {data.permissions.includes("stock.view_history") && <button className={tab === "history" ? "active" : ""} onClick={() => { setTab("history"); setCategory("all"); }}>History</button>}
             </div>
             {tab === "history" ? (
               <div className="stock-history">
@@ -204,13 +237,51 @@ export default function StockCentre({
               </div>
             ) : (
               <>
-                <div className="stock-filters">
+                <div className="stock-filters stock-filters-categorised">
                   <label className="stock-search"><span>⌕</span><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search stock" /></label>
-                  <select value={section} onChange={(event) => setSection(event.target.value)} aria-label="Filter by section"><option value="all">All sections</option><option value="senior">Senior</option><option value="junior">Junior</option><option value="shared">Shared</option></select>
+                  <select value={section} onChange={(event) => { setSection(event.target.value); setCategory("all"); }} aria-label="Filter by section"><option value="all">All sections</option><option value="senior">Senior Section</option><option value="junior">Junior Section</option><option value="shared">Shared</option></select>
+                  <select value={category} onChange={(event) => setCategory(event.target.value)} aria-label="Filter by category"><option value="all">All categories</option>{categoryOptions.map((option) => <option value={option} key={option}>{option}</option>)}</select>
                   <select value={condition} onChange={(event) => setCondition(event.target.value)} aria-label="Filter by condition"><option value="all">All conditions</option><option value="current">Current</option><option value="old">Old · usable</option><option value="defective">Defective</option></select>
                 </div>
-                <div className="stock-grid">
-                  {visibleItems.map((item) => {
+                {tab === "award" ? (
+                  <div className="award-stock-groups">
+                    {awardGroups.map((group, index) => (
+                      <section className="award-stock-group" key={`${group.section}-${group.category}`}>
+                        {(index === 0 || awardGroups[index - 1]?.section !== group.section) && (
+                          <div className="award-section-heading">
+                            <p className="eyebrow">{group.section.toUpperCase()} SECTION</p>
+                            <h2>{group.section === "junior" ? "Junior Section Awards" : "Senior Section Awards"}</h2>
+                          </div>
+                        )}
+                        <div className="award-category-heading">
+                          <h3>{group.category}</h3>
+                          <span>{group.items.length} stock {group.items.length === 1 ? "entry" : "entries"}</span>
+                        </div>
+                        <div className="stock-grid">
+                          {group.items.map((item) => {
+                            const canManage = data.permissions.includes("stock.manage_awards") || canAdjust;
+                            const canIssue = data.permissions.includes("stock.issue_awards");
+                            return (
+                              <article className={`stock-card ${item.condition}`} key={item.id}>
+                                <div className="stock-card-top"><span>{item.stock_type}</span><b>{item.section}</b></div>
+                                <h3>{item.name}</h3>
+                                <p>{[item.variant, item.category].filter(Boolean).join(" · ")}</p>
+                                <div className="stock-balance"><strong>{item.quantity}</strong><span>on hand</span></div>
+                                <div className="stock-card-footer">
+                                  <span className={`condition-pill ${item.condition}`}>{item.condition === "old" ? "Old · usable" : item.condition}</span>
+                                  {(canManage || canIssue) && <button onClick={() => setSelected(item)}>Update</button>}
+                                </div>
+                              </article>
+                            );
+                          })}
+                        </div>
+                      </section>
+                    ))}
+                    {!awardGroups.length && <p className="empty-inline">No award stock matches these filters.</p>}
+                  </div>
+                ) : (
+                  <div className="stock-grid">
+                    {visibleItems.map((item) => {
                     const canManage = data.permissions.includes(item.stock_type === "award" ? "stock.manage_awards" : "stock.manage_uniform") || canAdjust;
                     const canIssue = data.permissions.includes(item.stock_type === "award" ? "stock.issue_awards" : "stock.issue_uniform");
                     return (
@@ -225,8 +296,9 @@ export default function StockCentre({
                         </div>
                       </article>
                     );
-                  })}
-                </div>
+                    })}
+                  </div>
+                )}
               </>
             )}
           </>

@@ -1262,6 +1262,7 @@ h1 { font-size: clamp(30px, 3.1vw, 46px); line-height: 1; letter-spacing: -1.5px
 .stock-tabs button { min-height: 36px; padding: 0 15px; border: 0; border-radius: 8px; background: transparent; color: var(--muted); font-weight: 750; }
 .stock-tabs button.active { background: var(--navy); color: white; }
 .stock-filters { margin: 14px 0; display: grid; grid-template-columns: minmax(240px, 1fr) 170px 170px; gap: 10px; }
+.stock-filters-categorised { grid-template-columns: minmax(220px, 1fr) repeat(3, minmax(145px, 175px)); }
 .stock-filters select, .stock-search { min-height: 44px; border: 1px solid var(--line); border-radius: 10px; background: white; }
 .stock-filters select { padding: 0 12px; color: var(--ink); }
 .stock-search { display: flex; align-items: center; gap: 8px; padding: 0 13px; }
@@ -1309,6 +1310,14 @@ h1 { font-size: clamp(30px, 3.1vw, 46px); line-height: 1; letter-spacing: -1.5px
 .permission-grid input { width: 15px; min-height: 15px; }
 .role-form-actions { display: flex; justify-content: flex-end; gap: 8px; }
 .empty-inline { padding: 15px; margin: 0; color: var(--muted); font-size: 9px; }
+.award-stock-groups { display: grid; gap: 22px; }
+.award-stock-group { display: grid; gap: 10px; }
+.award-section-heading { margin-top: 8px; padding: 18px 20px; border-radius: 14px; background: linear-gradient(135deg, var(--navy), var(--navy-2)); color: white; }
+.award-section-heading .eyebrow { color: #a9cceb; }
+.award-section-heading h2 { margin: 4px 0 0; color: white; font-family: Georgia, serif; font-size: 24px; }
+.award-category-heading { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; padding: 2px 3px; }
+.award-category-heading h3 { margin: 0; color: var(--navy); font-family: Georgia, serif; font-size: 18px; }
+.award-category-heading span { color: var(--muted); font-size: 9px; }
 
 @media (max-width: 1000px) {
   .stock-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
@@ -1325,6 +1334,7 @@ h1 { font-size: clamp(30px, 3.1vw, 46px); line-height: 1; letter-spacing: -1.5px
   .stock-tabs { width: 100%; overflow-x: auto; }
   .stock-tabs button { flex: 1 0 auto; }
   .stock-filters { grid-template-columns: 1fr 1fr; }
+  .stock-filters-categorised { grid-template-columns: 1fr 1fr; }
   .stock-search { grid-column: 1 / -1; }
   .stock-grid { grid-template-columns: 1fr 1fr; gap: 9px; }
   .stock-card { min-height: 190px; padding: 14px; }
@@ -1332,6 +1342,8 @@ h1 { font-size: clamp(30px, 3.1vw, 46px); line-height: 1; letter-spacing: -1.5px
   .stock-history time { grid-column: 2; text-align: left; }
   .custom-role-layout { grid-template-columns: 1fr; }
   .permission-grid { grid-template-columns: 1fr; }
+  .award-section-heading { padding: 15px; }
+  .award-section-heading h2 { font-size: 20px; }
 }
 
 @media (max-width: 430px) {

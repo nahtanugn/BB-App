@@ -67,11 +67,14 @@ const uniformSeeds: SeedItem[] = [
 const awardSeeds: SeedItem[] = [
   ...[
     ["Scholastics Bronze", 18], ["Scholastics Silver", 2], ["Scholastics Gold", 2],
-    ["Junior Service", 11], ["Link Badge", 13], ["Three Year Service", 12], ["Long (Five) Year Service", 1],
+    ["Junior Service", 11], ["Link Badge", 13],
     ["NCO Proficiency", 0], ["Advanced Patch", 27],
-  ].map(([name, quantity]) => ({ key: `award-${String(name).toLowerCase().replace(/[^a-z0-9]+/g, "-")}`, name: String(name), type: "award" as const, section: "senior" as const, category: "Senior & Special", quantity: Number(quantity) })),
-  { key: "award-one-year-service-current", name: "One Year Service · Senior", type: "award", section: "senior", category: "Service", condition: "current", quantity: 5 },
-  { key: "award-one-year-service-old", name: "One Year Service · Senior", type: "award", section: "senior", category: "Service", condition: "old", quantity: 3 },
+  ].map(([name, quantity]) => ({ key: `award-${String(name).toLowerCase().replace(/[^a-z0-9]+/g, "-")}`, name: String(name), type: "award" as const, section: "senior" as const, category: "Special Awards", quantity: Number(quantity) })),
+  ...[
+    ["Three Year Service", 12], ["Long (Five) Year Service", 1],
+  ].map(([name, quantity]) => ({ key: `award-${String(name).toLowerCase().replace(/[^a-z0-9]+/g, "-")}`, name: String(name), type: "award" as const, section: "senior" as const, category: "Service Awards", quantity: Number(quantity) })),
+  { key: "award-one-year-service-current", name: "One Year Service · Senior", type: "award", section: "senior", category: "Service Awards", condition: "current", quantity: 5 },
+  { key: "award-one-year-service-old", name: "One Year Service · Senior", type: "award", section: "senior", category: "Service Awards", condition: "old", quantity: 3 },
   ...[
     ["Target", 7], ["Christian Education", 13], ["Drill", 3], ["Recruitment", 11],
   ].map(([name, quantity]) => ({ key: `award-compulsory-${String(name).toLowerCase().replace(/[^a-z0-9]+/g, "-")}`, name: String(name), type: "award" as const, section: "senior" as const, category: "Compulsory", quantity: Number(quantity) })),
@@ -183,6 +186,17 @@ export async function ensureStockSchema(db: D1Database) {
         .run();
     }
   }
+  await db.batch([
+    db.prepare(`UPDATE stock_items SET category = 'Special Awards'
+      WHERE stock_type = 'award' AND section = 'senior'
+        AND name IN ('Scholastics Bronze', 'Scholastics Silver', 'Scholastics Gold',
+          'Junior Service', 'Link Badge', 'NCO Proficiency', 'Advanced Patch')`),
+    db.prepare(`UPDATE stock_items SET category = 'Service Awards'
+      WHERE stock_type = 'award' AND section = 'senior'
+        AND name IN ('One Year Service · Senior', 'Three Year Service', 'Long (Five) Year Service')`),
+    db.prepare(`UPDATE stock_items SET category = 'Junior Awards'
+      WHERE stock_type = 'award' AND section = 'junior'`),
+  ]);
   initialized = true;
 }
 
