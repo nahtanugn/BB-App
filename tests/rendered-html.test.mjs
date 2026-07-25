@@ -75,6 +75,11 @@ test("defines the 11KCHBB App application shell and sharing metadata", async () 
     styles,
     /\.sidebar nav\.squad-leader-nav \{[^}]*repeat\(6, 1fr\)/,
   );
+  assert.match(styles, /Consistent usability and accessibility layer/);
+  assert.match(styles, /\.primary \{ min-height: 46px; font-size: 13px;/);
+  assert.match(styles, /\.auth-card input \{ min-height: 50px;/);
+  assert.match(styles, /\.modal \{[\s\S]*?max-height: 92dvh;/);
+  assert.match(styles, /\.sidebar nav button \{[\s\S]*?min-height: 58px;/);
   assert.match(standalone, /Company portal/);
   assert.match(standalone, /Create your administrator account/);
   assert.match(standalone, /Edit account/);

@@ -569,6 +569,191 @@ h2 { color: var(--navy); }
   .submission-heading { align-items: flex-start; }
 }
 
+/* Consistent usability and accessibility layer */
+body { font-size: 14px; line-height: 1.5; }
+button, a, input, select, textarea { -webkit-tap-highlight-color: transparent; }
+button { transition: background-color .16s ease, border-color .16s ease, color .16s ease, box-shadow .16s ease; }
+button:disabled { cursor: not-allowed; opacity: .55; }
+input, select, textarea { accent-color: var(--blue); }
+input::placeholder, textarea::placeholder { color: #8b97a7; opacity: 1; }
+textarea:focus-visible { outline: 3px solid rgba(28, 111, 209, .25); outline-offset: 2px; }
+
+.sidebar nav button { min-height: 46px; font-size: 14px; }
+.section-switch button { min-height: 34px; padding-inline: 15px; font-size: 11px; }
+.eyebrow { font-size: 10px; line-height: 1.2; }
+.search, .resource-search { min-height: 46px; }
+.search input, .resource-search input { font-size: 13px; }
+.primary { min-height: 46px; font-size: 13px; }
+.account-chip, .sign-out { min-height: 42px; font-size: 11px; }
+.text-button { min-height: 38px; padding: 0 8px; font-size: 11px; }
+.panel, .member-card, .resource-card { border-color: #d7e0e8; box-shadow: var(--shadow); }
+.panel-heading h2 { font-size: 20px; }
+.panel-heading { min-height: 80px; }
+.stat-card span { font-size: 10px; }
+.stat-card small { font-size: 11px; line-height: 1.4; }
+.member-meta strong, .table-member strong { font-size: 12px; }
+.member-meta span, .table-member span { font-size: 10px; }
+.quick-actions > button { min-height: 76px; }
+.quick-actions button span strong { font-size: 12px; }
+.quick-actions button span small { font-size: 10px; line-height: 1.4; }
+.notification-list span strong { font-size: 12px; }
+.notification-list span small, .notification-empty { font-size: 10px; }
+.category-tabs button, .level-toggle button { min-height: 36px; font-size: 11px; }
+.matrix-help { font-size: 11px; line-height: 1.5; }
+.legend { font-size: 9px; }
+.award-matrix thead th { font-size: 11px; }
+.status-select { min-height: 38px; padding-inline: 10px; font-size: 11px; }
+.service-count-control button { width: 36px; height: 36px; }
+.edit-member { min-height: 38px; height: auto; padding: 0 12px; font-size: 11px; }
+.more { width: 38px; height: 38px; }
+.member-card h2 { font-size: 21px; }
+.member-card > p, .member-numbers span, .readiness > div:first-child { font-size: 11px; }
+.member-profile-details dt, .member-profile-stats small { font-size: 10px; }
+.member-profile-details dd { font-size: 12px; }
+.member-profile-attendance span, .member-profile-awards > div > span { font-size: 11px; }
+.member-profile-awards > div > span small, .member-profile-empty { font-size: 9px; }
+.member-profile-footer button { min-height: 40px; font-size: 11px; }
+.member-profile-footer span { font-size: 10px; }
+
+.attendance-heading small { font-size: 11px; }
+.attendance-summary span, .subscription-summary span { font-size: 10px; }
+.attendance-row, .subscription-row { min-height: 72px; }
+.attendance-options button { min-height: 38px; padding-inline: 12px; font-size: 10px; }
+.subscription-heading p:not(.eyebrow), .subscription-heading label { font-size: 11px; }
+.subscription-heading select { min-height: 42px; font-size: 12px; }
+.subscription-row > button { min-height: 38px; font-size: 10px; }
+.empty-state p { font-size: 12px; }
+
+.modal-heading { align-items: center; }
+.modal-heading > button { width: 40px; height: 40px; flex: 0 0 auto; }
+.modal label, .inline-form label, .create-user-form label { font-size: 12px; }
+.modal input, .modal select,
+.inline-form input, .create-user-form input, .create-user-form select {
+  min-height: 46px;
+  height: auto;
+  font-size: 13px;
+}
+.modal label > small, .account-section-heading p { font-size: 10px; line-height: 1.5; }
+.account-content h3 { font-size: 19px; }
+.user-list > div { min-height: 68px; padding: 12px 14px; }
+.user-list strong { font-size: 12px; }
+.user-list small { font-size: 10px; line-height: 1.45; }
+.form-error, .form-success { padding: 12px 14px; font-size: 11px; line-height: 1.5; }
+
+.auth-card label { font-size: 12px; }
+.auth-card input { min-height: 50px; height: auto; font-size: 14px; }
+.auth-brand strong { font-size: 17px; }
+.auth-brand span { font-size: 11px; }
+.auth-copy { font-size: 13px; }
+.auth-card > small { font-size: 10px; }
+
+.resource-brand strong { font-size: 16px; }
+.resource-brand span { font-size: 11px; }
+.resource-user strong { font-size: 11px; }
+.resource-user small { font-size: 10px; }
+.resource-user button { min-height: 40px; padding-inline: 12px; font-size: 10px; }
+.resources-hero p:not(.eyebrow) { font-size: 13px; line-height: 1.6; }
+.resource-editor h2 { font-size: 23px; }
+.resource-editor > div > p:last-child, .resource-editor label { font-size: 11px; }
+.resource-editor input, .resource-editor select { min-height: 46px; height: auto; font-size: 13px; }
+.resource-category span { font-size: 10px; }
+.resource-card { min-height: 190px; }
+.resource-card h3 { font-size: 19px; }
+.resource-card p { font-size: 11px; }
+.resource-card a { display: inline-flex; min-height: 38px; align-items: center; font-size: 11px; }
+.resource-access, .resource-access-editor { font-size: 10px; }
+.resource-access-editor select { min-height: 40px; height: auto; font-size: 11px; }
+.resource-delete { width: 38px; height: 38px; }
+
+.member-progress-heading p:not(.eyebrow),
+.progress-unlinked > p:last-child,
+.submission-heading p:not(.eyebrow) { font-size: 11px; }
+.attendance-percentage small, .personal-award-total small { font-size: 10px; line-height: 1.45; }
+.attendance-breakdown span { font-size: 10px; }
+.personal-award-matrix th, .personal-award-matrix td { font-size: 10px; }
+.personal-award-matrix tbody th { font-size: 11px; }
+.progress-status { min-width: 78px; padding: 6px 9px; font-size: 9px; }
+.submission-form label, .submission-portal-toolbar label { font-size: 11px; }
+.submission-form input, .submission-form select,
+.submission-portal-toolbar input, .submission-portal-toolbar select {
+  min-height: 46px;
+  height: auto;
+  font-size: 13px;
+}
+.submission-form textarea, .submission-review-controls textarea { font-size: 12px; }
+.submission-card { min-height: 220px; }
+.submission-card-top small, .review-note { font-size: 10px; }
+.submission-status { font-size: 9px; }
+.submission-card h3 { font-size: 18px; }
+.submission-card p, .submission-card a { font-size: 11px; }
+.submission-review-controls > label { font-size: 11px; }
+.submission-actions button, .submission-admin-actions button { min-height: 40px; font-size: 10px; }
+.submission-empty p { font-size: 11px; }
+
+@media (max-width: 760px) {
+  .app-shell { padding-bottom: calc(78px + env(safe-area-inset-bottom)); }
+  .sidebar {
+    height: calc(72px + env(safe-area-inset-bottom));
+    padding: 6px 5px max(6px, env(safe-area-inset-bottom));
+  }
+  .sidebar nav { gap: 2px; }
+  .sidebar nav button {
+    min-width: 0;
+    min-height: 58px;
+    padding: 4px 1px;
+    gap: 2px;
+    font-size: 9px;
+    line-height: 1.05;
+    overflow-wrap: anywhere;
+  }
+  .sidebar nav button span { width: auto; font-size: 19px; }
+  .main-content { padding: 22px 14px 34px; }
+  .topbar { margin-bottom: 20px; }
+  .top-actions { display: grid; grid-template-columns: 1fr auto auto; gap: 8px; }
+  .top-actions .search { grid-column: 1 / -1; }
+  .top-actions .primary { grid-column: 1 / -1; width: 100%; }
+  .account-chip > span { max-width: 120px; overflow: hidden; text-overflow: ellipsis; }
+  .stat-grid { gap: 10px; }
+  .stat-card { min-height: 128px; }
+  .panel-heading { padding-inline: 16px; }
+  .matrix-toolbar, .matrix-help { padding-inline: 14px; }
+  .card-actions { width: 100%; margin-top: 12px; justify-content: flex-start; }
+  .member-card-top { flex-wrap: wrap; }
+  .edit-member { flex: 1 1 auto; }
+  .modal-backdrop { padding: 0; place-items: end center; }
+  .modal {
+    width: 100%;
+    max-height: 92dvh;
+    border-radius: 18px 18px 0 0;
+  }
+  .modal-heading { position: sticky; top: 0; z-index: 3; padding: 17px 18px; background: white; }
+  .modal form { padding: 18px; }
+  .resources-topbar { padding: 14px; }
+  .resource-user { flex-wrap: wrap; }
+  .resource-user > span { flex: 1 1 100%; }
+  .resources-hero { padding: 30px 18px 24px; }
+  .resource-editor, .member-progress-section, .submission-section { margin-inline: 14px; }
+  .resource-groups { padding-inline: 14px; }
+  .submission-card { min-height: 0; }
+}
+
+@media (max-width: 460px) {
+  h1 { font-size: 30px; }
+  .stat-card span { max-width: 88px; line-height: 1.3; }
+  .stat-card small { max-width: 105px; }
+  .attendance-options button { padding-inline: 6px; }
+  .member-profile-heading .avatar { display: none; }
+  .member-profile-section { padding: 14px; }
+  .member-profile-footer { padding-inline: 14px; }
+  .user-list > div { align-items: flex-start; flex-direction: column; }
+  .user-actions { width: 100%; justify-content: flex-start; }
+  .user-actions button { min-height: 38px; }
+  .auth-screen { padding: 14px; }
+  .auth-card { padding: 26px 20px; }
+  .resource-user button { flex: 1 1 auto; }
+  .submission-actions, .submission-admin-actions { display: grid; grid-template-columns: 1fr 1fr; }
+}
+
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; transition-duration: .01ms !important; }
 }
