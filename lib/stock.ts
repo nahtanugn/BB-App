@@ -196,6 +196,31 @@ export async function ensureStockSchema(db: D1Database) {
         AND name IN ('One Year Service · Senior', 'Three Year Service', 'Long (Five) Year Service')`),
     db.prepare(`UPDATE stock_items SET category = 'Junior Awards'
       WHERE stock_type = 'award' AND section = 'junior'`),
+    db.prepare(`UPDATE stock_items SET category = 'Shirts'
+      WHERE stock_type = 'uniform'
+        AND name IN ('Navy Blue Shirt', 'Junior Navy Blue Shirt', 'Company T-shirt')`),
+    db.prepare(`UPDATE stock_items SET category = 'Trousers'
+      WHERE stock_type = 'uniform' AND name = 'Navy Blue Trousers'`),
+    db.prepare(`UPDATE stock_items SET category = 'Footwear'
+      WHERE stock_type = 'uniform' AND name IN ('Marching Boots', 'Navy Blue Socks')`),
+    db.prepare(`UPDATE stock_items SET category = 'Headwear'
+      WHERE stock_type = 'uniform'
+        AND name IN ('Cap (excluding badge)', 'Cap', 'Glengarry', 'Senior Cap Badge', 'Junior Cap Badge')`),
+    db.prepare(`UPDATE stock_items SET category = 'Belts & Sashes'
+      WHERE stock_type = 'uniform'
+        AND name IN ('Leather Belt', 'Belt Buckle', 'White Nylon Belt',
+          'Red Sash (Sergeant)', 'Blue Sash (Staff Sergeant)')`),
+    db.prepare(`UPDATE stock_items SET category = 'Rank Insignia & Armlets'
+      WHERE stock_type = 'uniform'
+        AND (name LIKE 'Chevron · %' OR name LIKE 'Armlet · %'
+          OR name LIKE '% Right Armlet' OR name LIKE '% Left Armlet'
+          OR name = 'Junior Leader Armlet')`),
+    db.prepare(`UPDATE stock_items SET category = 'Lanyards & Whistles'
+      WHERE stock_type = 'uniform'
+        AND (name LIKE '%Lanyard%' OR name = 'Lanyard Whistle')`),
+    db.prepare(`UPDATE stock_items SET category = 'Accessories'
+      WHERE stock_type = 'uniform'
+        AND name IN ('Haversack', 'Haversack Loop', 'Slide', 'Pin', 'Sky Blue Tie')`),
   ]);
   initialized = true;
 }

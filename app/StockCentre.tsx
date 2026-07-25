@@ -101,8 +101,8 @@ export default function StockCentre({
       .filter(Boolean)
       .sort((a, b) => a.localeCompare(b));
   }, [data, section, tab]);
-  const awardGroups = useMemo(() => {
-    if (tab !== "award") return [];
+  const categorisedGroups = useMemo(() => {
+    if (!["award", "uniform"].includes(tab)) return [];
     const groups = new Map<string, StockItem[]>();
     visibleItems.forEach((item) => {
       const key = `${item.section}::${item.category}`;
@@ -243,14 +243,18 @@ export default function StockCentre({
                   <select value={category} onChange={(event) => setCategory(event.target.value)} aria-label="Filter by category"><option value="all">All categories</option>{categoryOptions.map((option) => <option value={option} key={option}>{option}</option>)}</select>
                   <select value={condition} onChange={(event) => setCondition(event.target.value)} aria-label="Filter by condition"><option value="all">All conditions</option><option value="current">Current</option><option value="old">Old · usable</option><option value="defective">Defective</option></select>
                 </div>
-                {tab === "award" ? (
+                {["award", "uniform"].includes(tab) ? (
                   <div className="award-stock-groups">
-                    {awardGroups.map((group, index) => (
+                    {categorisedGroups.map((group, index) => (
                       <section className="award-stock-group" key={`${group.section}-${group.category}`}>
-                        {(index === 0 || awardGroups[index - 1]?.section !== group.section) && (
+                        {(index === 0 || categorisedGroups[index - 1]?.section !== group.section) && (
                           <div className="award-section-heading">
                             <p className="eyebrow">{group.section.toUpperCase()} SECTION</p>
-                            <h2>{group.section === "junior" ? "Junior Section Awards" : "Senior Section Awards"}</h2>
+                            <h2>
+                              {group.section === "shared"
+                                ? `Shared ${tab === "uniform" ? "Uniform" : "Award"} Stock`
+                                : `${group.section === "junior" ? "Junior" : "Senior"} Section ${tab === "uniform" ? "Uniform" : "Awards"}`}
+                            </h2>
                           </div>
                         )}
                         <div className="award-category-heading">
@@ -259,8 +263,8 @@ export default function StockCentre({
                         </div>
                         <div className="stock-grid">
                           {group.items.map((item) => {
-                            const canManage = data.permissions.includes("stock.manage_awards") || canAdjust;
-                            const canIssue = data.permissions.includes("stock.issue_awards");
+                            const canManage = data.permissions.includes(tab === "award" ? "stock.manage_awards" : "stock.manage_uniform") || canAdjust;
+                            const canIssue = data.permissions.includes(tab === "award" ? "stock.issue_awards" : "stock.issue_uniform");
                             return (
                               <article className={`stock-card ${item.condition}`} key={item.id}>
                                 <div className="stock-card-top"><span>{item.stock_type}</span><b>{item.section}</b></div>
@@ -277,7 +281,7 @@ export default function StockCentre({
                         </div>
                       </section>
                     ))}
-                    {!awardGroups.length && <p className="empty-inline">No award stock matches these filters.</p>}
+                    {!categorisedGroups.length && <p className="empty-inline">No {tab} stock matches these filters.</p>}
                   </div>
                 ) : (
                   <div className="stock-grid">
