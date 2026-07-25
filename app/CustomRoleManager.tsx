@@ -53,7 +53,9 @@ export default function CustomRoleManager({
 
   async function saveRole(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    const form = new FormData(event.currentTarget);
+    const formElement = event.currentTarget;
+    const form = new FormData(formElement);
+    const wasEditing = Boolean(editing);
     setBusy(true); setError(""); setNotice("");
     const response = await fetch("/api/stock", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({
       action: editing ? "update_role" : "create_role",
@@ -62,22 +64,29 @@ export default function CustomRoleManager({
       permissions: form.getAll("permissions"),
     }) });
     const result = (await response.json()) as { error?: string };
+    if (!response.ok) {
+      setBusy(false);
+      return setError(result.error ?? "Unable to save role");
+    }
+    formElement.reset(); setEditing(null); await load();
+    setNotice(wasEditing ? "Custom role updated." : "Custom role created.");
     setBusy(false);
-    if (!response.ok) return setError(result.error ?? "Unable to save role");
-    event.currentTarget.reset(); setEditing(null); await load();
-    setNotice(editing ? "Custom role updated." : "Custom role created.");
   }
   async function assignRole(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    const form = new FormData(event.currentTarget);
+    const formElement = event.currentTarget;
+    const form = new FormData(formElement);
     setBusy(true); setError(""); setNotice("");
     const response = await fetch("/api/stock", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({
       action: "assign_role", userId: form.get("userId"), roleId: form.get("roleId"), expiresOn: form.get("expiresOn"),
     }) });
     const result = (await response.json()) as { error?: string };
+    if (!response.ok) {
+      setBusy(false);
+      return setError(result.error ?? "Unable to assign role");
+    }
+    formElement.reset(); await load(); setNotice("Custom role assigned.");
     setBusy(false);
-    if (!response.ok) return setError(result.error ?? "Unable to assign role");
-    event.currentTarget.reset(); await load(); setNotice("Custom role assigned.");
   }
   async function removeAssignment(assignment: Assignment) {
     await fetch("/api/stock", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "remove_role", userId: assignment.user_id, roleId: assignment.role_id }) });

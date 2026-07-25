@@ -161,7 +161,8 @@ export default function AwardSubmissions({
 
   async function submitApplication(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    const form = new FormData(event.currentTarget);
+    const formElement = event.currentTarget;
+    const form = new FormData(formElement);
     setBusy("submit");
     setError("");
     setMessage("");
@@ -178,14 +179,16 @@ export default function AwardSubmissions({
       }),
     });
     const result = (await response.json()) as { error?: string };
-    setBusy("");
-    if (!response.ok)
+    if (!response.ok) {
+      setBusy("");
       return setError(result.error ?? "Unable to submit application");
-    event.currentTarget.reset();
+    }
+    formElement.reset();
+    await load();
     setMessage(
       "Your award application has been submitted for officer review and marked In progress in the Award Matrix.",
     );
-    await load();
+    setBusy("");
   }
 
   async function review(
@@ -206,9 +209,10 @@ export default function AwardSubmissions({
       }),
     });
     const result = (await response.json()) as { error?: string };
-    setBusy("");
-    if (!response.ok)
+    if (!response.ok) {
+      setBusy("");
       return setError(result.error ?? "Unable to review submission");
+    }
     setReviewNotes((current) => {
       const next = { ...current };
       delete next[submission.id];
@@ -221,6 +225,7 @@ export default function AwardSubmissions({
     );
     await load();
     await onChanged?.();
+    setBusy("");
   }
 
   async function manageSubmission(
@@ -243,9 +248,10 @@ export default function AwardSubmissions({
       body: JSON.stringify({ action, submissionId: submission.id }),
     });
     const result = (await response.json()) as { error?: string };
-    setBusy("");
-    if (!response.ok)
+    if (!response.ok) {
+      setBusy("");
       return setError(result.error ?? "Unable to update submission");
+    }
     setMessage(
       action === "archive_submission"
         ? "Submission archived."
@@ -255,6 +261,7 @@ export default function AwardSubmissions({
     );
     await load();
     await onChanged?.();
+    setBusy("");
   }
 
   return (

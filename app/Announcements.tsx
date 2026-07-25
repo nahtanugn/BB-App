@@ -72,7 +72,8 @@ export default function Announcements({
 
   async function createAnnouncement(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    const form = new FormData(event.currentTarget);
+    const formElement = event.currentTarget;
+    const form = new FormData(formElement);
     setBusy(true); setError(""); setNotice("");
     const response = await fetch("/api/announcements/", {
       method: "POST",
@@ -86,15 +87,18 @@ export default function Announcements({
       }),
     });
     const result = (await response.json()) as { error?: string; duplicatePrevented?: boolean };
-    setBusy(false);
-    if (!response.ok) return setError(result.error ?? "Unable to publish announcement");
-    event.currentTarget.reset();
+    if (!response.ok) {
+      setBusy(false);
+      return setError(result.error ?? "Unable to publish announcement");
+    }
+    formElement.reset();
     await load(false);
     setNotice(
       result.duplicatePrevented
         ? "This announcement was already published. A duplicate was prevented."
         : "Announcement published to everyone.",
     );
+    setBusy(false);
   }
 
   async function archiveAnnouncement(announcement: Announcement) {
@@ -106,10 +110,13 @@ export default function Announcements({
       body: JSON.stringify({ action: "archive_announcement", announcementId: announcement.id }),
     });
     const result = (await response.json()) as { error?: string };
-    setBusy(false);
-    if (!response.ok) return setError(result.error ?? "Unable to archive announcement");
+    if (!response.ok) {
+      setBusy(false);
+      return setError(result.error ?? "Unable to archive announcement");
+    }
     await load(false);
     setNotice("Announcement archived.");
+    setBusy(false);
   }
 
   async function deleteAnnouncement(announcement: Announcement) {
@@ -121,11 +128,14 @@ export default function Announcements({
       body: JSON.stringify({ action: "delete_announcement", announcementId: announcement.id }),
     });
     const result = (await response.json()) as { error?: string };
-    setBusy(false);
-    if (!response.ok) return setError(result.error ?? "Unable to delete announcement");
+    if (!response.ok) {
+      setBusy(false);
+      return setError(result.error ?? "Unable to delete announcement");
+    }
     await load(false);
     onRead();
     setNotice("Announcement permanently deleted.");
+    setBusy(false);
   }
 
   return (

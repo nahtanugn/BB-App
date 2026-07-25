@@ -125,7 +125,8 @@ export default function ResourceLibrary({
 
   async function createResource(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    const form = new FormData(event.currentTarget);
+    const formElement = event.currentTarget;
+    const form = new FormData(formElement);
     setBusy(true);
     setError("");
     setNotice("");
@@ -142,11 +143,14 @@ export default function ResourceLibrary({
       }),
     });
     const result = (await response.json()) as { error?: string };
-    setBusy(false);
-    if (!response.ok) return setError(result.error ?? "Unable to add resource");
-    event.currentTarget.reset();
+    if (!response.ok) {
+      setBusy(false);
+      return setError(result.error ?? "Unable to add resource");
+    }
+    formElement.reset();
     await loadResources();
     setNotice("Resource created successfully.");
+    setBusy(false);
   }
 
   async function deleteResource(resource: Resource) {

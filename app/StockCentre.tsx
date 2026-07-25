@@ -152,11 +152,14 @@ export default function StockCentre({
       }),
     });
     const result = (await response.json()) as { error?: string };
-    setBusy(false);
-    if (!response.ok) return setError(result.error ?? "Unable to save transaction");
+    if (!response.ok) {
+      setBusy(false);
+      return setError(result.error ?? "Unable to save transaction");
+    }
     setSelected(null);
     await load();
     setNotice(`${selected.name} updated successfully.`);
+    setBusy(false);
   }
 
   async function createItem(event: FormEvent<HTMLFormElement>) {
@@ -181,11 +184,14 @@ export default function StockCentre({
       }),
     });
     const result = (await response.json()) as { error?: string };
-    setBusy(false);
-    if (!response.ok) return setError(result.error ?? "Unable to add item");
+    if (!response.ok) {
+      setBusy(false);
+      return setError(result.error ?? "Unable to add item");
+    }
     setShowAdd(false);
     await load();
     setNotice("Stock item created successfully.");
+    setBusy(false);
   }
 
   if (!data && !error)

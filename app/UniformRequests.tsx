@@ -103,7 +103,8 @@ export default function UniformRequests({
 
   async function createRequest(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    const form = new FormData(event.currentTarget);
+    const formElement = event.currentTarget;
+    const form = new FormData(formElement);
     setBusy(true); setError(""); setNotice("");
     const response = await fetch("/api/uniform-requests/", {
       method: "POST",
@@ -117,25 +118,33 @@ export default function UniformRequests({
       }),
     });
     const result = (await response.json()) as { error?: string };
-    setBusy(false);
-    if (!response.ok) return setError(result.error ?? "Unable to submit request");
-    event.currentTarget.reset();
+    if (!response.ok) {
+      setBusy(false);
+      return setError(result.error ?? "Unable to submit request");
+    }
+    formElement.reset();
     setSelectedItemId("");
     await load();
     setNotice("Uniform request submitted successfully.");
+    setBusy(false);
   }
 
   async function cancelRequest(request: UniformRequest) {
     if (!window.confirm(`Cancel your request for ${request.item_name}?`)) return;
+    setBusy(true); setError(""); setNotice("");
     const response = await fetch("/api/uniform-requests/", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ action: "cancel_request", requestId: request.id }),
     });
     const result = (await response.json()) as { error?: string };
-    if (!response.ok) return setError(result.error ?? "Unable to cancel request");
+    if (!response.ok) {
+      setBusy(false);
+      return setError(result.error ?? "Unable to cancel request");
+    }
     await load();
     setNotice("Uniform request cancelled.");
+    setBusy(false);
   }
 
   async function reviewRequest(request: UniformRequest, status: string, formElement: HTMLFormElement) {
@@ -152,14 +161,17 @@ export default function UniformRequests({
       }),
     });
     const result = (await response.json()) as { error?: string };
-    setBusy(false);
-    if (!response.ok) return setError(result.error ?? "Unable to update request");
+    if (!response.ok) {
+      setBusy(false);
+      return setError(result.error ?? "Unable to update request");
+    }
     await load();
     setNotice(
       status === "issued"
         ? "Uniform issued and stock balance updated."
         : `Request marked ${statusLabels[status as keyof typeof statusLabels].toLowerCase()}.`,
     );
+    setBusy(false);
   }
 
   return (

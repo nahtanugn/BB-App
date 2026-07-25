@@ -226,7 +226,8 @@ export default function StandaloneApp() {
 
   async function createUser(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    const form = new FormData(event.currentTarget);
+    const formElement = event.currentTarget;
+    const form = new FormData(formElement);
     setBusy(true);
     setError("");
     setNotice("");
@@ -246,21 +247,25 @@ export default function StandaloneApp() {
       }),
     });
     const result = (await response.json()) as { error?: string };
-    setBusy(false);
-    if (!response.ok)
+    if (!response.ok) {
+      setBusy(false);
       return setError(result.error ?? "Unable to create account");
-    event.currentTarget.reset();
+    }
+    formElement.reset();
     setNewUserRole("officer");
     setNewTemporaryAccessRole("");
     setPendingAccountMember(null);
     setError("");
     await loadUsers();
     setNotice("Account created successfully.");
+    setBusy(false);
   }
 
   async function setUserActive(user: ManagedUser) {
+    setBusy(true);
+    setError("");
     setNotice("");
-    await fetch("/api/auth", {
+    const response = await fetch("/api/auth", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -269,8 +274,14 @@ export default function StandaloneApp() {
         active: !user.active,
       }),
     });
+    const result = (await response.json()) as { error?: string };
+    if (!response.ok) {
+      setBusy(false);
+      return setError(result.error ?? "Unable to update account");
+    }
     await loadUsers();
     setNotice(`Account ${user.active ? "disabled" : "enabled"} successfully.`);
+    setBusy(false);
   }
 
   async function deleteUser(user: ManagedUser) {
@@ -289,12 +300,14 @@ export default function StandaloneApp() {
       body: JSON.stringify({ action: "delete_user", userId: user.id }),
     });
     const result = (await response.json()) as { error?: string };
-    setBusy(false);
-    if (!response.ok)
+    if (!response.ok) {
+      setBusy(false);
       return setError(result.error ?? "Unable to delete account");
+    }
     if (editingUser?.id === user.id) setEditingUser(null);
     await loadUsers();
     setNotice("Account deleted successfully. Member records were preserved.");
+    setBusy(false);
   }
 
   async function updateUser(event: FormEvent<HTMLFormElement>) {
@@ -326,19 +339,22 @@ export default function StandaloneApp() {
       }),
     });
     const result = (await response.json()) as { error?: string };
-    setBusy(false);
-    if (!response.ok)
+    if (!response.ok) {
+      setBusy(false);
       return setError(result.error ?? "Unable to update account");
+    }
     const editedCurrentUser = editingUser.id === auth?.user?.id;
     setEditingUser(null);
     await loadUsers();
     if (editedCurrentUser) await refreshAuth();
     setNotice("Account updated successfully.");
+    setBusy(false);
   }
 
   async function changePassword(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    const form = new FormData(event.currentTarget);
+    const formElement = event.currentTarget;
+    const form = new FormData(formElement);
     setBusy(true);
     setError("");
     setNotice("");
@@ -355,7 +371,7 @@ export default function StandaloneApp() {
     setBusy(false);
     if (!response.ok)
       return setError(result.error ?? "Unable to change password");
-    event.currentTarget.reset();
+    formElement.reset();
     setNotice("Password updated successfully.");
   }
 

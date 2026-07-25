@@ -87,7 +87,8 @@ export default function AdminCentre({
 
   async function createUser(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    const form = new FormData(event.currentTarget);
+    const formElement = event.currentTarget;
+    const form = new FormData(formElement);
     setBusy(true); setError(""); setNotice("");
     const response = await fetch("/api/auth", {
       method: "POST",
@@ -105,12 +106,15 @@ export default function AdminCentre({
       }),
     });
     const result = (await response.json()) as { error?: string };
-    setBusy(false);
-    if (!response.ok) return setError(result.error ?? "Unable to create account");
-    event.currentTarget.reset();
+    if (!response.ok) {
+      setBusy(false);
+      return setError(result.error ?? "Unable to create account");
+    }
+    formElement.reset();
     setNewRole("officer"); setNewTemporaryAccess(""); setPendingAccountMember(null);
     await load();
     setNotice("Account created successfully.");
+    setBusy(false);
   }
 
   async function updateUser(event: FormEvent<HTMLFormElement>) {
@@ -134,11 +138,14 @@ export default function AdminCentre({
       }),
     });
     const result = (await response.json()) as { error?: string };
-    setBusy(false);
-    if (!response.ok) return setError(result.error ?? "Unable to update account");
+    if (!response.ok) {
+      setBusy(false);
+      return setError(result.error ?? "Unable to update account");
+    }
     setEditingUser(null);
     await load();
     setNotice("Account details and role updated.");
+    setBusy(false);
   }
 
   async function setUserActive(user: ManagedUser) {
@@ -149,10 +156,13 @@ export default function AdminCentre({
       body: JSON.stringify({ action: "set_user_active", userId: user.id, active: !user.active }),
     });
     const result = (await response.json()) as { error?: string };
-    setBusy(false);
-    if (!response.ok) return setError(result.error ?? "Unable to update account");
+    if (!response.ok) {
+      setBusy(false);
+      return setError(result.error ?? "Unable to update account");
+    }
     await load();
     setNotice(`Account ${user.active ? "disabled" : "enabled"} successfully.`);
+    setBusy(false);
   }
 
   async function resetPassword(event: FormEvent<HTMLFormElement>) {
@@ -170,13 +180,15 @@ export default function AdminCentre({
       }),
     });
     const result = (await response.json()) as { error?: string };
-    setBusy(false);
-    if (!response.ok)
+    if (!response.ok) {
+      setBusy(false);
       return setError(result.error ?? "Unable to reset password");
+    }
     setResettingUser(null);
     setNotice(
       `${resettingUser.name}'s password was reset. Their existing sessions were signed out.`,
     );
+    setBusy(false);
   }
 
   async function deleteUser(user: ManagedUser) {
@@ -188,11 +200,14 @@ export default function AdminCentre({
       body: JSON.stringify({ action: "delete_user", userId: user.id }),
     });
     const result = (await response.json()) as { error?: string };
-    setBusy(false);
-    if (!response.ok) return setError(result.error ?? "Unable to delete account");
+    if (!response.ok) {
+      setBusy(false);
+      return setError(result.error ?? "Unable to delete account");
+    }
     if (editingUser?.id === user.id) setEditingUser(null);
     await load();
     setNotice("Login account deleted. Member records were preserved.");
+    setBusy(false);
   }
 
   return (
