@@ -17,7 +17,9 @@ async function createOrLinkMemberProfile(
   email: string,
   previousEmail?: string,
   section = "senior",
+  squad = "Alpha",
 ) {
+  const memberSquad = allowedSquads.includes(squad) ? squad : "Alpha";
   const previousProfile = previousEmail
     ? await runtime.DB.prepare(
         "SELECT id FROM members WHERE LOWER(email) = LOWER(?) LIMIT 1",
@@ -27,9 +29,9 @@ async function createOrLinkMemberProfile(
     : null;
   if (previousProfile) {
     await runtime.DB.prepare(
-      "UPDATE members SET name = ?, email = ? WHERE id = ?",
+      "UPDATE members SET name = ?, email = ?, squad = ? WHERE id = ?",
     )
-      .bind(name, email, previousProfile.id)
+      .bind(name, email, memberSquad, previousProfile.id)
       .run();
     return;
   }
@@ -38,14 +40,22 @@ async function createOrLinkMemberProfile(
   )
     .bind(email)
     .first<{ id: number }>();
-  if (existingProfile) return;
+  if (existingProfile) {
+    await runtime.DB.prepare(
+      "UPDATE members SET name = ?, squad = ? WHERE id = ?",
+    )
+      .bind(name, memberSquad, existingProfile.id)
+      .run();
+    return;
+  }
   await runtime.DB.prepare(
     `INSERT INTO members
     (name, rank, squad, section, joined_at, service_years, school, contact_number, emergency_contact_number, email, parents_name, is_demo, created_at)
-    VALUES (?, 'Private', 'Alpha', ?, ?, 0, '', '', '', ?, '', 0, ?)`,
+    VALUES (?, 'Private', ?, ?, ?, 0, '', '', '', ?, '', 0, ?)`,
   )
     .bind(
       name,
+      memberSquad,
       section === "junior" ? "junior" : "senior",
       String(new Date().getUTCFullYear()),
       email,
@@ -246,7 +256,7 @@ export async function POST(request: Request) {
         : "officer";
       const requestedSquad = String(body.squad ?? "");
       const squad =
-        ["nco", "squad_leader"].includes(role) &&
+        ["nco", "squad_leader", "member"].includes(role) &&
         allowedSquads.includes(requestedSquad)
           ? requestedSquad
           : "";
@@ -260,11 +270,11 @@ export async function POST(request: Request) {
         );
       }
       const digest = await passwordDigest(password);
-      if (["nco", "squad_leader"].includes(role) && !squad)
+      if (["nco", "squad_leader", "member"].includes(role) && !squad)
         return Response.json(
           {
             error:
-              "Select Alpha, Bravo, Charlie, or Delta for the NCO or squad leader",
+              "Select Alpha, Bravo, Charlie, or Delta for the account",
           },
           { status: 400 },
         );
@@ -289,6 +299,7 @@ export async function POST(request: Request) {
             email,
             undefined,
             memberSection,
+            squad,
           );
         } catch (error) {
           await runtime.DB.prepare("DELETE FROM users WHERE id = ?")
@@ -357,7 +368,7 @@ export async function POST(request: Request) {
           : "senior";
       const requestedSquad = String(body.squad ?? "");
       const squad =
-        ["nco", "squad_leader"].includes(requestedRole) &&
+        ["nco", "squad_leader", "member"].includes(requestedRole) &&
         allowedSquads.includes(requestedSquad)
           ? requestedSquad
           : "";
@@ -378,11 +389,14 @@ export async function POST(request: Request) {
           { status: 400 },
         );
       }
-      if (["nco", "squad_leader"].includes(requestedRole) && !squad)
+      if (
+        ["nco", "squad_leader", "member"].includes(requestedRole) &&
+        !squad
+      )
         return Response.json(
           {
             error:
-              "Select Alpha, Bravo, Charlie, or Delta for the NCO or squad leader",
+              "Select Alpha, Bravo, Charlie, or Delta for the account",
           },
           { status: 400 },
         );
@@ -407,6 +421,7 @@ export async function POST(request: Request) {
           email,
           target.role === "member" ? target.email : undefined,
           memberSection,
+          squad,
         );
       return Response.json({ ok: true });
     }

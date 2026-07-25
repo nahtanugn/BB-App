@@ -70,11 +70,11 @@ test("defines the 11KCHBB App application shell and sharing metadata", async () 
   assert.match(standalone, /Squad Leader · full view & NCO controls/);
   assert.match(
     standalone,
-    /\["nco", "squad_leader"\]\.includes\(editingUser\.role\)/,
+    /\["nco", "squad_leader", "member"\]\.includes\(\s*editingUser\.role/,
   );
   assert.match(
     standalone,
-    /\["nco", "squad_leader"\]\.includes\(newUserRole\)/,
+    /\["nco", "squad_leader", "member"\]\.includes\(\s*newUserRole/,
   );
 });
 
@@ -150,7 +150,7 @@ test("ships the Malaysia Senior Section catalogue, role-based portals and instal
   assert.match(authRoute, /action === "update_user"/);
   assert.match(authRoute, /You cannot remove your own administrator role/);
   assert.match(authRoute, /createOrLinkMemberProfile/);
-  assert.match(authRoute, /'Private', 'Alpha'/);
+  assert.match(authRoute, /VALUES \(\?, 'Private', \?, \?, \?/);
   assert.match(authRoute, /role === "member"/);
   assert.match(authRoute, /action === "delete_user"/);
   assert.match(authRoute, /You cannot delete your own account/);
@@ -160,11 +160,16 @@ test("ships the Malaysia Senior Section catalogue, role-based portals and instal
   );
   assert.match(
     authRoute,
-    /\["nco", "squad_leader"\]\.includes\(role\)/,
+    /\["nco", "squad_leader", "member"\]\.includes\(role\)/,
   );
   assert.match(
     authRoute,
-    /\["nco", "squad_leader"\]\.includes\(requestedRole\)/,
+    /\["nco", "squad_leader", "member"\]\.includes\(requestedRole\)/,
+  );
+  assert.match(authRoute, /memberSection,\s*squad/);
+  assert.match(
+    authRoute,
+    /UPDATE members SET name = \?, email = \?, squad = \?/,
   );
   assert.match(
     authRoute,
