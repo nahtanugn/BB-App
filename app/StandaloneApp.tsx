@@ -21,6 +21,7 @@ type User = {
     | "squad_leader"
     | "member";
   squad: string;
+  member_section: string;
   temporary_access_role: string;
   access_expires_at: string | null;
 };
@@ -508,7 +509,8 @@ export default function StandaloneApp() {
           user={auth.user}
           onLogout={logout}
           onOpenSubmissions={
-            ["member", "nco", "squad_leader"].includes(auth.user.role)
+            ["member", "nco", "squad_leader"].includes(auth.user.role) &&
+            auth.user.member_section !== "junior"
               ? () => setShowSubmissions(true)
               : undefined
           }

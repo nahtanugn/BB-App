@@ -14,6 +14,7 @@ type User = {
     | "member";
   temporary_access_role: string;
   access_expires_at: string | null;
+  member_section?: string;
 };
 type Resource = {
   id: number;

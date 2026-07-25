@@ -141,6 +141,7 @@ type AwardTrackerProps = {
     squad: string;
     temporary_access_role: string;
     access_expires_at: string | null;
+    member_section?: string;
   };
   onLogout?: () => void;
   onManageAccount?: () => void;
@@ -181,7 +182,7 @@ export default function AwardTracker({
   const canEditMembers = Boolean(user);
   const canManageAttendance = Boolean(user);
   const canManageSubscriptions = canManageAwards;
-  const canViewSubmissions = !isNco;
+  const roleCanViewSubmissions = !isNco;
   const hasOperationalAdminAccess =
     ["admin", "officer"].includes(user?.role ?? "") ||
     hasTemporaryAdminAccess;
@@ -190,6 +191,8 @@ export default function AwardTracker({
   const canUseExportCentre = hasOperationalAdminAccess;
   const canOverrideMemberDetails = hasOperationalAdminAccess;
   const [section, setSection] = useState<"senior" | "junior">("senior");
+  const canViewSubmissions =
+    section === "senior" && roleCanViewSubmissions;
   const [data, setData] = useState<TrackerData | null>(null);
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
@@ -1118,7 +1121,8 @@ export default function AwardTracker({
           >
             <span>◇</span> Subscription
           </button>
-          {(canReviewSubmissions || canSubmitPersonalAwards) && (
+          {section === "senior" &&
+            (canReviewSubmissions || canSubmitPersonalAwards) && (
             <button
               className="nav-secondary"
               onClick={() => onOpenSubmissions?.(section)}
@@ -1226,7 +1230,8 @@ export default function AwardTracker({
               </div>
               <b>›</b>
             </button>
-            {(canReviewSubmissions || canSubmitPersonalAwards) && (
+            {section === "senior" &&
+              (canReviewSubmissions || canSubmitPersonalAwards) && (
               <button
                 onClick={() => {
                   setShowMobileMenu(false);

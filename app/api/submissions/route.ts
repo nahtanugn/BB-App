@@ -91,6 +91,11 @@ export async function GET(request: Request) {
           { error: "Your account is not linked to a member profile" },
           { status: 409 },
         );
+      if (member.section === "junior")
+        return Response.json(
+          { error: "Award submissions are not available for the Junior Section" },
+          { status: 403 },
+        );
       const submissions = await env.DB.prepare(
         "SELECT * FROM award_submissions WHERE member_id = ? AND archived_at IS NULL ORDER BY submitted_at DESC",
       )
@@ -111,7 +116,12 @@ export async function GET(request: Request) {
         );
       const showArchived = url.searchParams.get("archived") === "1";
       const requestedSection = url.searchParams.get("section") ?? "senior";
-      const section = requestedSection === "junior" ? "junior" : "senior";
+      if (requestedSection === "junior")
+        return Response.json(
+          { error: "The Junior Section submission portal has been removed" },
+          { status: 404 },
+        );
+      const section = "senior";
       if (
         showArchived &&
         !hasAdminOrTemporaryAccess(user)
@@ -145,6 +155,11 @@ export async function GET(request: Request) {
       return Response.json(
         { error: "Member profile not found" },
         { status: 404 },
+      );
+    if (member.section === "junior")
+      return Response.json(
+        { error: "Award submissions are not available for the Junior Section" },
+        { status: 403 },
       );
     const submissions = await env.DB.prepare(
       "SELECT * FROM award_submissions WHERE member_id = ? AND archived_at IS NULL ORDER BY CASE status WHEN 'pending' THEN 0 ELSE 1 END, submitted_at DESC",
@@ -239,10 +254,15 @@ export async function POST(request: Request) {
         );
       }
       const member = await env.DB.prepare(
-        "SELECT id, name FROM members WHERE LOWER(email) = LOWER(?) LIMIT 1",
+        "SELECT id, name, section FROM members WHERE LOWER(email) = LOWER(?) LIMIT 1",
       )
         .bind(user.email)
-        .first<{ id: number; name: string }>();
+        .first<{ id: number; name: string; section: string }>();
+      if (member?.section === "junior")
+        return Response.json(
+          { error: "Award submissions are not available for the Junior Section" },
+          { status: 403 },
+        );
       if (!member)
         return Response.json(
           { error: "Your account is not linked to a member profile" },

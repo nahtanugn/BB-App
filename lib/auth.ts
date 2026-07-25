@@ -11,6 +11,7 @@ export type AppUser = {
     | "squad_leader"
     | "member";
   squad: string;
+  member_section: string;
   temporary_access_role: string;
   access_expires_at: string | null;
 };
@@ -148,6 +149,8 @@ export async function getCurrentUser(request: Request): Promise<AppUser | null> 
   const tokenHash = await sha256(token);
   const now = new Date().toISOString();
   const user = await runtime.DB.prepare(`SELECT users.id, users.email, users.name, users.role, users.squad,
+      COALESCE((SELECT members.section FROM members
+        WHERE LOWER(members.email) = LOWER(users.email) LIMIT 1), '') AS member_section,
       CASE
         WHEN users.temporary_access_role = 'temporary_admin'
           AND users.access_expires_at IS NOT NULL
