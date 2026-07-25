@@ -152,8 +152,9 @@ h2 { color: var(--navy); }
 .table-member strong, .table-member span { display: block; }
 .table-member strong { color: var(--ink); font-size: 10px; }
 .table-member span { margin-top: 2px; color: var(--muted); font-size: 8px; font-weight: 500; }
-.status-pill { min-width: 73px; min-height: 27px; padding: 5px 8px; border: 1px solid var(--line); border-radius: 99px; background: white; color: #9aa4af; font-size: 8px; font-weight: 750; }
-.status-pill:hover { transform: translateY(-1px); box-shadow: 0 4px 10px rgba(0,0,0,.06); }
+.status-select { min-width: 108px; min-height: 30px; padding: 5px 8px; border: 1px solid var(--line); border-radius: 8px; background: white; color: #6f7b88; font-size: 8px; font-weight: 750; cursor: pointer; }
+.status-select:hover:not(:disabled) { box-shadow: 0 4px 10px rgba(0,0,0,.06); }
+.status-select:disabled { cursor: not-allowed; opacity: .72; }
 .service-count-control { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-width: 104px; }
 .service-count-control button { width: 27px; height: 27px; padding: 0; border: 1px solid var(--line); border-radius: 50%; background: white; color: var(--navy); font-weight: 800; cursor: pointer; }
 .service-count-control button:disabled { cursor: not-allowed; opacity: .35; }

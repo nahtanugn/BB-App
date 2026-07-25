@@ -198,6 +198,10 @@ test("ships the Malaysia Senior Section catalogue, role-based portals and instal
     /validAttendanceTarget\.squad !== user\.squad/,
   );
   assert.match(tracker, /Awards are shown in read-only mode/);
+  assert.match(tracker, /className=\{`status-select \$\{status\}`\}/);
+  assert.match(tracker, /value=\{status\}/);
+  assert.match(tracker, /event\.target\.value as Status/);
+  assert.match(tracker, /Choose an award status from each dropdown/);
   assert.match(tracker, /disabled=\{!canManageAwards \|\| saving === key\}/);
   assert.match(tracker, /!canManageAttendance \|\| saving === key/);
   assert.match(

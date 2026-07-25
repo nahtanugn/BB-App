@@ -377,11 +377,12 @@ export default function AwardTracker({
     };
   }
 
-  async function updateAward(memberId: number, awardCode: string) {
+  async function updateAward(
+    memberId: number,
+    awardCode: string,
+    next: Status,
+  ) {
     const key = `${memberId}:${awardCode}:${level}`;
-    const current = progressMap.get(key)?.status ?? "not_started";
-    const next =
-      statusOrder[(statusOrder.indexOf(current) + 1) % statusOrder.length];
     setSaving(key);
     setData((existing) =>
       existing
@@ -1392,7 +1393,7 @@ export default function AwardTracker({
                     ? "Use + or − to record how many One-Year Service Awards each member has"
                     : "Service award counts are shown in read-only mode"
                   : canManageAwards
-                    ? "Tap a status to move it forward"
+                    ? "Choose an award status from each dropdown"
                     : "Awards are shown in read-only mode"}
               </span>
               {category !== "Service" && <div>
@@ -1480,18 +1481,26 @@ export default function AwardTracker({
                           progressMap.get(key)?.status ?? "not_started";
                         return (
                           <td key={award.code}>
-                            <button
+                            <select
                               disabled={!canManageAwards || saving === key}
-                              className={`status-pill ${status}`}
-                              onClick={() => updateAward(member.id, award.code)}
+                              className={`status-select ${status}`}
+                              value={status}
+                              onChange={(event) =>
+                                updateAward(
+                                  member.id,
+                                  award.code,
+                                  event.target.value as Status,
+                                )
+                              }
                               aria-label={`${member.name}, ${award.name}: ${statusLabel[status]}`}
+                              aria-busy={saving === key}
                             >
-                              {saving === key
-                                ? "…"
-                                : status === "not_started"
-                                  ? "—"
-                                  : statusLabel[status]}
-                            </button>
+                              {statusOrder.map((option) => (
+                                <option key={option} value={option}>
+                                  {statusLabel[option]}
+                                </option>
+                              ))}
+                            </select>
                           </td>
                         );
                       })}
