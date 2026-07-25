@@ -207,6 +207,7 @@ export default function AwardTracker({
   const [showExportCentre, setShowExportCentre] = useState(false);
   const [activeSessionId, setActiveSessionId] = useState<number | null>(null);
   const [saving, setSaving] = useState("");
+  const [showMobileMenu, setShowMobileMenu] = useState(false);
 
   async function load() {
     try {
@@ -1044,21 +1045,30 @@ export default function AwardTracker({
         >
           {!isNco && (
             <button
-              className={view === "dashboard" ? "active" : ""}
-              onClick={() => setView("dashboard")}
+              className={`nav-primary ${view === "dashboard" ? "active" : ""}`}
+              onClick={() => {
+                setView("dashboard");
+                setShowMobileMenu(false);
+              }}
             >
               <span>⌂</span> Overview
             </button>
           )}
           <button
-            className={view === "matrix" ? "active" : ""}
-            onClick={() => setView("matrix")}
+            className={`nav-primary ${view === "matrix" ? "active" : ""}`}
+            onClick={() => {
+              setView("matrix");
+              setShowMobileMenu(false);
+            }}
           >
             <span>▦</span> Award matrix
           </button>
           <button
-            className={view === "members" ? "active" : ""}
-            onClick={() => setView("members")}
+            className={`nav-primary ${view === "members" ? "active" : ""}`}
+            onClick={() => {
+              setView("members");
+              setShowMobileMenu(false);
+            }}
           >
             <span>♙</span> Members
             {canViewSubmissions && submissionPendingTotal > 0 && (
@@ -1071,19 +1081,25 @@ export default function AwardTracker({
             )}
           </button>
           <button
-            className={view === "attendance" ? "active" : ""}
-            onClick={() => setView("attendance")}
+            className={`nav-primary ${view === "attendance" ? "active" : ""}`}
+            onClick={() => {
+              setView("attendance");
+              setShowMobileMenu(false);
+            }}
           >
             <span>✓</span> Attendance
           </button>
           <button
-            className={view === "subscriptions" ? "active" : ""}
+            className={`nav-secondary ${view === "subscriptions" ? "active" : ""}`}
             onClick={() => setView("subscriptions")}
           >
             <span>◇</span> Subscription
           </button>
           {(canReviewSubmissions || canSubmitPersonalAwards) && (
-            <button onClick={() => onOpenSubmissions?.(section)}>
+            <button
+              className="nav-secondary"
+              onClick={() => onOpenSubmissions?.(section)}
+            >
               <span>◆</span>{" "}
               {canReviewSubmissions ? "Submission portal" : "My submissions"}
               {canReviewSubmissions && submissionPendingTotal > 0 && (
@@ -1096,8 +1112,16 @@ export default function AwardTracker({
               )}
             </button>
           )}
-          <button onClick={onOpenResources}>
+          <button className="nav-secondary" onClick={onOpenResources}>
             <span>↗</span> Resources
+          </button>
+          <button
+            className={`mobile-more ${showMobileMenu || view === "subscriptions" ? "active" : ""}`}
+            onClick={() => setShowMobileMenu((current) => !current)}
+            aria-expanded={showMobileMenu}
+            aria-controls="mobile-more-menu"
+          >
+            <span>•••</span> More
           </button>
         </nav>
         <div className="sidebar-note">
@@ -1115,6 +1139,90 @@ export default function AwardTracker({
           </div>
         </div>
       </aside>
+
+      {showMobileMenu && (
+        <div
+          className="mobile-nav-menu-backdrop"
+          role="presentation"
+          onMouseDown={() => setShowMobileMenu(false)}
+        >
+          <section
+            id="mobile-more-menu"
+            className="mobile-nav-menu"
+            role="dialog"
+            aria-modal="true"
+            aria-label="More navigation"
+            onMouseDown={(event) => event.stopPropagation()}
+          >
+            <div className="mobile-nav-menu-heading">
+              <div>
+                <p className="eyebrow">MORE</p>
+                <strong>Company tools</strong>
+              </div>
+              <button
+                onClick={() => setShowMobileMenu(false)}
+                aria-label="Close more menu"
+              >
+                ×
+              </button>
+            </div>
+            <button
+              className={view === "subscriptions" ? "active" : ""}
+              onClick={() => {
+                setView("subscriptions");
+                setShowMobileMenu(false);
+              }}
+            >
+              <span>◇</span>
+              <div>
+                <strong>Subscription</strong>
+                <small>View yearly payment status</small>
+              </div>
+              <b>›</b>
+            </button>
+            {(canReviewSubmissions || canSubmitPersonalAwards) && (
+              <button
+                onClick={() => {
+                  setShowMobileMenu(false);
+                  onOpenSubmissions?.(section);
+                }}
+              >
+                <span>◆</span>
+                <div>
+                  <strong>
+                    {canReviewSubmissions
+                      ? "Submission portal"
+                      : "My submissions"}
+                  </strong>
+                  <small>
+                    {canReviewSubmissions
+                      ? "Review award applications"
+                      : "Apply for your own awards"}
+                  </small>
+                </div>
+                {canReviewSubmissions && submissionPendingTotal > 0 ? (
+                  <b className="menu-count">{submissionPendingTotal}</b>
+                ) : (
+                  <b>›</b>
+                )}
+              </button>
+            )}
+            <button
+              onClick={() => {
+                setShowMobileMenu(false);
+                onOpenResources?.();
+              }}
+            >
+              <span>↗</span>
+              <div>
+                <strong>Resources</strong>
+                <small>Open company materials</small>
+              </div>
+              <b>›</b>
+            </button>
+          </section>
+        </div>
+      )}
 
       <main className="main-content">
         <header className="topbar">

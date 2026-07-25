@@ -68,13 +68,17 @@ test("defines the 11KCHBB App application shell and sharing metadata", async () 
   assert.match(tracker, /Edit details/);
   assert.match(
     styles,
-    /\.sidebar nav \{[^}]*grid-template-columns: repeat\(7, minmax\(0, 1fr\)\)/,
+    /\.sidebar nav \{[^}]*grid-template-columns: repeat\(5, minmax\(0, 1fr\)\)/,
   );
-  assert.match(styles, /\.sidebar nav\.nco-nav \{[^}]*repeat\(6, 1fr\)/);
+  assert.match(styles, /\.sidebar nav\.nco-nav \{[^}]*repeat\(4, 1fr\)/);
   assert.match(
     styles,
-    /\.sidebar nav\.squad-leader-nav \{[^}]*repeat\(7, minmax\(0, 1fr\)\)/,
+    /\.sidebar nav\.squad-leader-nav \{[^}]*repeat\(5, minmax\(0, 1fr\)\)/,
   );
+  assert.match(tracker, /className="mobile-nav-menu"/);
+  assert.match(tracker, /aria-controls="mobile-more-menu"/);
+  assert.match(styles, /\.sidebar nav \.nav-secondary \{ display: none; \}/);
+  assert.match(styles, /\.sidebar nav \.mobile-more \{ display: flex; \}/);
   assert.match(styles, /11KCHBB responsive command-centre redesign/);
   assert.match(styles, /\.primary \{[\s\S]*?min-height: 46px;/);
   assert.match(styles, /\.auth-card input \{ min-height: 52px;/);
