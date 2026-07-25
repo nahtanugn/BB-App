@@ -103,6 +103,7 @@ export const users = sqliteTable("users", {
   name: text("name").notNull(),
   role: text("role").notNull().default("officer"),
   squad: text("squad").notNull().default(""),
+  temporaryAccessRole: text("temporary_access_role").notNull().default(""),
   accessExpiresAt: text("access_expires_at"),
   passwordHash: text("password_hash").notNull(),
   passwordSalt: text("password_salt").notNull(),

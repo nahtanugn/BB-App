@@ -11,16 +11,16 @@ type User = {
   name: string;
   role:
     | "admin"
-    | "temporary_admin"
     | "officer"
     | "nco"
     | "squad_leader"
     | "member";
   squad: string;
+  temporary_access_role: string;
+  access_expires_at: string | null;
 };
 type ManagedUser = User & {
   active: number;
-  access_expires_at: string | null;
   created_at: string;
 };
 type PendingMember = {
@@ -54,6 +54,12 @@ export default function StandaloneApp() {
     useState<PendingMember | null>(null);
   const [editingUser, setEditingUser] = useState<ManagedUser | null>(null);
   const [newUserRole, setNewUserRole] = useState<User["role"]>("officer");
+  const [newTemporaryAccessRole, setNewTemporaryAccessRole] = useState("");
+  const hasTemporaryAdminAccess = Boolean(
+    auth?.user?.temporary_access_role === "temporary_admin" &&
+      auth.user.access_expires_at &&
+      auth.user.access_expires_at > new Date().toISOString(),
+  );
 
   async function refreshAuth() {
     const response = await fetch("/api/auth", { cache: "no-store" });
@@ -137,6 +143,7 @@ export default function StandaloneApp() {
     setShowAccount(true);
     setEditingUser(null);
     setPendingAccountMember(null);
+    setNewTemporaryAccessRole("");
     setError("");
     setNotice("");
     if (auth?.user?.role === "admin") await loadUsers();
@@ -158,6 +165,7 @@ export default function StandaloneApp() {
         password: form.get("password"),
         role: form.get("role"),
         squad: form.get("squad"),
+        temporaryAccessRole: form.get("temporaryAccessRole"),
         accessExpiresOn: form.get("accessExpiresOn"),
         memberSection: form.get("memberSection"),
       }),
@@ -168,6 +176,7 @@ export default function StandaloneApp() {
       return setError(result.error ?? "Unable to create account");
     event.currentTarget.reset();
     setNewUserRole("officer");
+    setNewTemporaryAccessRole("");
     setPendingAccountMember(null);
     setError("");
     await loadUsers();
@@ -233,6 +242,10 @@ export default function StandaloneApp() {
             ? editingUser.role
             : form.get("role"),
         squad: form.get("squad"),
+        temporaryAccessRole:
+          editingUser.id === auth?.user?.id
+            ? editingUser.temporary_access_role
+            : form.get("temporaryAccessRole"),
         accessExpiresOn: form.get("accessExpiresOn"),
         memberSection: form.get("memberSection"),
       }),
@@ -368,7 +381,10 @@ export default function StandaloneApp() {
       />
     );
 
-  if (auth.user.role === "member" || showResources)
+  if (
+    (auth.user.role === "member" && !hasTemporaryAdminAccess) ||
+    showResources
+  )
     return (
       <>
         <ResourceLibrary
@@ -541,9 +557,9 @@ export default function StandaloneApp() {
                             user.squad
                               ? ` · ${user.squad}`
                               : ""}
-                            {user.role === "temporary_admin" &&
-                            user.access_expires_at
-                              ? ` · Expires ${new Date(user.access_expires_at).toLocaleDateString("en-MY")}`
+                            {user.temporary_access_role ===
+                              "temporary_admin" && user.access_expires_at
+                              ? ` · Temporary Admin until ${new Date(user.access_expires_at).toLocaleDateString("en-MY")}`
                               : ""}
                           </small>
                         </span>
@@ -588,6 +604,7 @@ export default function StandaloneApp() {
                             onClick={() => {
                               setPendingAccountMember(member);
                               setNewUserRole("member");
+                              setNewTemporaryAccessRole("");
                             }}
                           >
                             Create login
@@ -645,9 +662,6 @@ export default function StandaloneApp() {
                           disabled={editingUser.id === auth.user?.id}
                         >
                           <option value="officer">Officer</option>
-                          <option value="temporary_admin">
-                            Temporary Admin · operational access
-                          </option>
                           <option value="nco">
                             NCO · attendance & member details
                           </option>
@@ -660,23 +674,35 @@ export default function StandaloneApp() {
                           <option value="admin">Administrator</option>
                         </select>
                       </label>
-                      {["nco", "squad_leader", "member"].includes(
-                        editingUser.role,
-                      ) && (
-                        <label>
-                          Assigned squad
-                          <select
-                            name="squad"
-                            defaultValue={editingUser.squad || "Alpha"}
-                          >
-                            <option>Alpha</option>
-                            <option>Bravo</option>
-                            <option>Charlie</option>
-                            <option>Delta</option>
-                          </select>
-                        </label>
-                      )}
-                      {editingUser.role === "temporary_admin" && (
+                      <label>
+                        Temporary access
+                        <select
+                          name="temporaryAccessRole"
+                          value={editingUser.temporary_access_role}
+                          disabled={editingUser.id === auth.user?.id}
+                          onChange={(event) =>
+                            setEditingUser({
+                              ...editingUser,
+                              temporary_access_role: event.target.value,
+                              access_expires_at:
+                                event.target.value === "temporary_admin"
+                                  ? editingUser.access_expires_at
+                                  : null,
+                            })
+                          }
+                        >
+                          <option value="">None</option>
+                          <option value="temporary_admin">
+                            Temporary Admin · operational access
+                          </option>
+                        </select>
+                        <small>
+                          This is additional access and does not change the
+                          account’s normal role.
+                        </small>
+                      </label>
+                      {editingUser.temporary_access_role ===
+                        "temporary_admin" && (
                         <label>
                           Access expires on
                           <input
@@ -696,6 +722,22 @@ export default function StandaloneApp() {
                           <small>
                             Access ends at midnight Malaysia time on this date.
                           </small>
+                        </label>
+                      )}
+                      {["nco", "squad_leader", "member"].includes(
+                        editingUser.role,
+                      ) && (
+                        <label>
+                          Assigned squad
+                          <select
+                            name="squad"
+                            defaultValue={editingUser.squad || "Alpha"}
+                          >
+                            <option>Alpha</option>
+                            <option>Bravo</option>
+                            <option>Charlie</option>
+                            <option>Delta</option>
+                          </select>
                         </label>
                       )}
                       {editingUser.role === "member" && (
@@ -744,6 +786,7 @@ export default function StandaloneApp() {
                           onClick={() => {
                             setPendingAccountMember(null);
                             setNewUserRole("officer");
+                            setNewTemporaryAccessRole("");
                           }}
                         >
                           Cancel
@@ -792,9 +835,6 @@ export default function StandaloneApp() {
                           }
                         >
                           <option value="officer">Officer</option>
-                          <option value="temporary_admin">
-                            Temporary Admin · operational access
-                          </option>
                           <option value="nco">
                             NCO · attendance & member details
                           </option>
@@ -811,23 +851,26 @@ export default function StandaloneApp() {
                         )}
                       </label>
                     </div>
-                    {["nco", "squad_leader", "member"].includes(
-                      newUserRole,
-                    ) && (
-                      <label>
-                        Assigned squad
-                        <select
-                          name="squad"
-                          defaultValue={pendingAccountMember?.squad ?? "Alpha"}
-                        >
-                          <option>Alpha</option>
-                          <option>Bravo</option>
-                          <option>Charlie</option>
-                          <option>Delta</option>
-                        </select>
-                      </label>
-                    )}
-                    {newUserRole === "temporary_admin" && (
+                    <label>
+                      Temporary access
+                      <select
+                        name="temporaryAccessRole"
+                        value={newTemporaryAccessRole}
+                        onChange={(event) =>
+                          setNewTemporaryAccessRole(event.target.value)
+                        }
+                      >
+                        <option value="">None</option>
+                        <option value="temporary_admin">
+                          Temporary Admin · operational access
+                        </option>
+                      </select>
+                      <small>
+                        Optional additional access. The normal role above is
+                        retained.
+                      </small>
+                    </label>
+                    {newTemporaryAccessRole === "temporary_admin" && (
                       <label>
                         Access expires on
                         <input
@@ -844,6 +887,22 @@ export default function StandaloneApp() {
                         <small>
                           Access ends at midnight Malaysia time on this date.
                         </small>
+                      </label>
+                    )}
+                    {["nco", "squad_leader", "member"].includes(
+                      newUserRole,
+                    ) && (
+                      <label>
+                        Assigned squad
+                        <select
+                          name="squad"
+                          defaultValue={pendingAccountMember?.squad ?? "Alpha"}
+                        >
+                          <option>Alpha</option>
+                          <option>Bravo</option>
+                          <option>Charlie</option>
+                          <option>Delta</option>
+                        </select>
                       </label>
                     )}
                     {newUserRole === "member" && (

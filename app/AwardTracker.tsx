@@ -134,11 +134,13 @@ type AwardTrackerProps = {
     email: string;
     role:
       | "admin"
-      | "temporary_admin"
       | "officer"
       | "nco"
-      | "squad_leader";
+      | "squad_leader"
+      | "member";
     squad: string;
+    temporary_access_role: string;
+    access_expires_at: string | null;
   };
   onLogout?: () => void;
   onManageAccount?: () => void;
@@ -153,20 +155,26 @@ export default function AwardTracker({
   onOpenResources,
   onOpenSubmissions,
 }: AwardTrackerProps) {
-  const isNco = user?.role === "nco";
-  const isSquadLeader = user?.role === "squad_leader";
+  const hasTemporaryAdminAccess = Boolean(
+    user?.temporary_access_role === "temporary_admin" &&
+      user.access_expires_at &&
+      user.access_expires_at > new Date().toISOString(),
+  );
+  const isNco = user?.role === "nco" && !hasTemporaryAdminAccess;
+  const isSquadLeader =
+    user?.role === "squad_leader" && !hasTemporaryAdminAccess;
   const canManageAwards = !isNco && !isSquadLeader;
   const canAddMembers = Boolean(user);
   const canEditMembers = Boolean(user);
   const canManageAttendance = Boolean(user);
   const canManageSubscriptions = canManageAwards;
   const canViewSubmissions = !isNco;
-  const operationalAdminRoles = ["admin", "temporary_admin", "officer"];
-  const canReviewSubmissions = operationalAdminRoles.includes(user?.role ?? "");
-  const canUseExportCentre = operationalAdminRoles.includes(user?.role ?? "");
-  const canOverrideMemberDetails = operationalAdminRoles.includes(
-    user?.role ?? "",
-  );
+  const hasOperationalAdminAccess =
+    ["admin", "officer"].includes(user?.role ?? "") ||
+    hasTemporaryAdminAccess;
+  const canReviewSubmissions = hasOperationalAdminAccess;
+  const canUseExportCentre = hasOperationalAdminAccess;
+  const canOverrideMemberDetails = hasOperationalAdminAccess;
   const [section, setSection] = useState<"senior" | "junior">("senior");
   const [data, setData] = useState<TrackerData | null>(null);
   const [error, setError] = useState("");

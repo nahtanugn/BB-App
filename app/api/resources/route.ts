@@ -1,5 +1,9 @@
 import { env } from "cloudflare:workers";
-import { getCurrentUser } from "../../../lib/auth";
+import {
+  getCurrentUser,
+  hasOperationalAdminAccess,
+  hasTemporaryAdminAccess,
+} from "../../../lib/auth";
 
 let initialized = false;
 
@@ -31,14 +35,16 @@ export async function GET(request: Request) {
     const user = await getCurrentUser(request);
     if (!user) return Response.json({ error: "Sign in required" }, { status: 401 });
     await ensureResourcesSchema();
+    const hasTemporaryAccess = hasTemporaryAdminAccess(user);
     const accessFilter =
-      user.role === "member"
+      user.role === "member" && !hasTemporaryAccess
         ? "WHERE access_level = 'member'"
-        : user.role === "nco" || user.role === "squad_leader"
+        : (user.role === "nco" || user.role === "squad_leader") &&
+            !hasTemporaryAccess
           ? "WHERE access_level IN ('member', 'nco')"
           : "";
     const fields =
-      ["admin", "temporary_admin", "officer"].includes(user.role)
+      hasOperationalAdminAccess(user)
         ? "*"
         : "id, title, description, category, url, access_level, created_at";
     const result = await env.DB.prepare(
@@ -54,7 +60,7 @@ export async function POST(request: Request) {
   try {
     const user = await getCurrentUser(request);
     if (!user) return Response.json({ error: "Sign in required" }, { status: 401 });
-    if (user.role === "member" || user.role === "nco" || user.role === "squad_leader") return Response.json({ error: "Resources are read-only for this account" }, { status: 403 });
+    if (!hasOperationalAdminAccess(user)) return Response.json({ error: "Resources are read-only for this account" }, { status: 403 });
     await ensureResourcesSchema();
     const body = (await request.json()) as Record<string, unknown>;
     const action = String(body.action ?? "");

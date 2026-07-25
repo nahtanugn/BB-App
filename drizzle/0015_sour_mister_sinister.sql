@@ -1,0 +1,1 @@
+ALTER TABLE `users` ADD `temporary_access_role` text DEFAULT '' NOT NULL;

@@ -81,7 +81,12 @@ test("defines the 11KCHBB App application shell and sharing metadata", async () 
   assert.match(standalone, /Assigned squad/);
   assert.match(standalone, /Squad Leader · full view & NCO controls/);
   assert.match(standalone, /value="temporary_admin"/);
+  assert.match(standalone, /name="temporaryAccessRole"/);
   assert.match(standalone, /Temporary Admin · operational access/);
+  assert.match(
+    standalone,
+    /additional access and does not change the\s*account’s normal role/,
+  );
   assert.match(standalone, /Access expires on/);
   assert.match(standalone, /accessExpiresOn/);
   assert.match(
@@ -177,11 +182,15 @@ test("ships the Malaysia Senior Section catalogue, role-based portals and instal
   assert.match(authRoute, /You cannot delete your own account/);
   assert.match(
     authRoute,
-    /"admin",\s*"temporary_admin",\s*"officer",\s*"nco",\s*"squad_leader",\s*"member"/,
+    /"admin",\s*"officer",\s*"nco",\s*"squad_leader",\s*"member"/,
+  );
+  assert.doesNotMatch(
+    authRoute,
+    /const allowedRoles = \[[\s\S]*?"temporary_admin"[\s\S]*?\];/,
   );
   assert.match(authRoute, /temporaryAccessExpiry/);
+  assert.match(authRoute, /temporaryAccessRole/);
   assert.match(authRoute, /access_expires_at/);
-  assert.match(authRoute, /temporary administrator access has expired/);
   assert.match(
     authRoute,
     /\["nco", "squad_leader", "member"\]\.includes\(role\)/,
@@ -197,7 +206,7 @@ test("ships the Malaysia Senior Section catalogue, role-based portals and instal
   );
   assert.match(
     authRoute,
-    /UPDATE users SET name = \?, email = \?, role = \?, squad = \?, access_expires_at = \?/,
+    /UPDATE users SET name = \?, email = \?, role = \?, squad = \?, temporary_access_role = \?, access_expires_at = \?/,
   );
   assert.match(resourcesRoute, /user\.role === "member"/);
   assert.match(resourcesRoute, /user\.role === "nco"/);
@@ -257,8 +266,8 @@ test("ships the Malaysia Senior Section catalogue, role-based portals and instal
   assert.match(route, /WHERE section = \?/);
   assert.match(route, /attendance_sessions WHERE section = \?/);
   assert.match(resourceLibrary, /Resource library/);
-  assert.match(resourceLibrary, /user\.role !== "member"/);
-  assert.match(resourceLibrary, /user\.role !== "nco"/);
+  assert.match(resourceLibrary, /canManageResources/);
+  assert.match(resourceLibrary, /hasTemporaryAdminAccess/);
   assert.match(resourceLibrary, /onManageAccount/);
   assert.match(resourceLibrary, /Change password/);
   assert.match(resourceLibrary, /Resource created successfully/);

@@ -6,11 +6,12 @@ type User = {
   name: string;
   role:
     | "admin"
-    | "temporary_admin"
     | "officer"
     | "nco"
     | "squad_leader"
     | "member";
+  temporary_access_role: string;
+  access_expires_at: string | null;
 };
 type Award = {
   code: string;
@@ -58,13 +59,20 @@ export default function AwardSubmissions({
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [reviewNotes, setReviewNotes] = useState<Record<number, string>>({});
-  const operationalAdminRoles = ["admin", "temporary_admin", "officer"];
-  const isOfficerPortal =
-    operationalAdminRoles.includes(user.role) && !memberId;
-  const canArchive = ["admin", "temporary_admin"].includes(user.role);
+  const hasTemporaryAdminAccess = Boolean(
+    user.temporary_access_role === "temporary_admin" &&
+      user.access_expires_at &&
+      user.access_expires_at > new Date().toISOString(),
+  );
+  const hasOperationalAdminAccess =
+    ["admin", "officer"].includes(user.role) || hasTemporaryAdminAccess;
+  const isPersonalMember =
+    user.role === "member" && !hasTemporaryAdminAccess;
+  const isOfficerPortal = hasOperationalAdminAccess && !memberId;
+  const canArchive = user.role === "admin" || hasTemporaryAdminAccess;
   const showArchived = canArchive && statusFilter === "archived";
   const endpoint =
-    user.role === "member"
+    isPersonalMember
       ? "/api/submissions"
       : isOfficerPortal
         ? `/api/submissions?all=1&section=${section}${showArchived ? "&archived=1" : ""}`
@@ -243,7 +251,7 @@ export default function AwardSubmissions({
     await onChanged?.();
   }
 
-  if (user.role === "nco") return null;
+  if (user.role === "nco" && !hasTemporaryAdminAccess) return null;
 
   return (
     <section className="submission-section">
@@ -251,7 +259,7 @@ export default function AwardSubmissions({
         <div>
           <p className="eyebrow">AWARD SUBMISSIONS</p>
           <h2>
-            {user.role === "member"
+            {isPersonalMember
               ? "Apply for an award"
               : isOfficerPortal
                 ? "Officer Submission Portal"
@@ -260,7 +268,7 @@ export default function AwardSubmissions({
                 : "Review member applications"}
           </h2>
           <p>
-            {user.role === "member"
+            {isPersonalMember
               ? "Send your completed work to an officer for review."
               : isOfficerPortal
                 ? "Approve or reject applications and revise decisions when needed. Results update the Award Matrix automatically."
@@ -274,7 +282,7 @@ export default function AwardSubmissions({
           pending
         </span>
       </div>
-      {user.role === "member" && (
+      {isPersonalMember && (
         <form className="submission-form panel" onSubmit={submitApplication}>
           <div className="form-row">
             <label>
@@ -348,10 +356,10 @@ export default function AwardSubmissions({
           </button>
         </form>
       )}
-      {error && user.role !== "member" && (
+      {error && !isPersonalMember && (
         <p className="form-error submission-error">{error}</p>
       )}
-      {message && user.role !== "member" && (
+      {message && !isPersonalMember && (
         <p className="form-success submission-message">{message}</p>
       )}
       {isOfficerPortal && (
@@ -409,7 +417,7 @@ export default function AwardSubmissions({
               </h3>
               <p className="submission-member">
                 {submission.member_name}
-                {user.role !== "member"
+                {!isPersonalMember
                   ? ` · ${submission.submitted_by_email}`
                   : ""}
               </p>
@@ -434,7 +442,7 @@ export default function AwardSubmissions({
                   <p>{submission.review_notes}</p>
                 </div>
               )}
-              {operationalAdminRoles.includes(user.role) &&
+              {hasOperationalAdminAccess &&
                 !submission.archived_at && (
                   <div className="submission-review-controls">
                     <label>
@@ -533,7 +541,7 @@ export default function AwardSubmissions({
                 : "No award submissions yet"}
             </strong>
             <p>
-              {user.role === "member"
+              {isPersonalMember
                 ? "Your applications will appear here after you submit them."
                 : "Member applications will appear here for review."}
             </p>

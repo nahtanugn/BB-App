@@ -6,12 +6,12 @@ export type AppUser = {
   name: string;
   role:
     | "admin"
-    | "temporary_admin"
     | "officer"
     | "nco"
     | "squad_leader"
     | "member";
   squad: string;
+  temporary_access_role: string;
   access_expires_at: string | null;
 };
 
@@ -34,6 +34,7 @@ export async function ensureAuthSchema() {
       name TEXT NOT NULL,
       role TEXT NOT NULL DEFAULT 'officer',
       squad TEXT NOT NULL DEFAULT '',
+      temporary_access_role TEXT NOT NULL DEFAULT '',
       access_expires_at TEXT,
       password_hash TEXT NOT NULL,
       password_salt TEXT NOT NULL,
@@ -63,11 +64,61 @@ export async function ensureAuthSchema() {
   if (!userColumns.results.some((column) => column.name === "access_expires_at")) {
     await runtime.DB.prepare("ALTER TABLE users ADD COLUMN access_expires_at TEXT").run();
   }
+  if (!userColumns.results.some((column) => column.name === "temporary_access_role")) {
+    await runtime.DB.prepare(
+      "ALTER TABLE users ADD COLUMN temporary_access_role TEXT NOT NULL DEFAULT ''",
+    ).run();
+  }
+  const membersTable = await runtime.DB.prepare(
+    "SELECT name FROM sqlite_master WHERE type = 'table' AND name = 'members'",
+  ).first<{ name: string }>();
+  if (membersTable) {
+    await runtime.DB.prepare(`UPDATE users
+      SET temporary_access_role = 'temporary_admin',
+          role = CASE
+            WHEN EXISTS (
+              SELECT 1 FROM members
+              WHERE LOWER(members.email) = LOWER(users.email)
+            ) THEN 'member'
+            ELSE 'officer'
+          END
+      WHERE role = 'temporary_admin'`).run();
+  } else {
+    await runtime.DB.prepare(`UPDATE users
+      SET temporary_access_role = 'temporary_admin', role = 'officer'
+      WHERE role = 'temporary_admin'`).run();
+  }
   authInitialized = true;
 }
 
 export function getRuntimeEnv() {
   return runtime;
+}
+
+export function hasTemporaryAdminAccess(user: AppUser | null | undefined) {
+  return Boolean(
+    user?.temporary_access_role === "temporary_admin" &&
+      user.access_expires_at &&
+      user.access_expires_at > new Date().toISOString(),
+  );
+}
+
+export function hasOperationalAdminAccess(
+  user: AppUser | null | undefined,
+) {
+  return Boolean(
+    user &&
+      (["admin", "officer"].includes(user.role) ||
+        hasTemporaryAdminAccess(user)),
+  );
+}
+
+export function hasAdminOrTemporaryAccess(
+  user: AppUser | null | undefined,
+) {
+  return Boolean(
+    user && (user.role === "admin" || hasTemporaryAdminAccess(user)),
+  );
 }
 
 export async function passwordDigest(password: string, salt?: string) {
@@ -96,11 +147,18 @@ export async function getCurrentUser(request: Request): Promise<AppUser | null> 
   if (!token) return null;
   const tokenHash = await sha256(token);
   const now = new Date().toISOString();
-  const user = await runtime.DB.prepare(`SELECT users.id, users.email, users.name, users.role, users.squad, users.access_expires_at
+  const user = await runtime.DB.prepare(`SELECT users.id, users.email, users.name, users.role, users.squad,
+      CASE
+        WHEN users.temporary_access_role = 'temporary_admin'
+          AND users.access_expires_at IS NOT NULL
+          AND users.access_expires_at > ?
+        THEN users.temporary_access_role
+        ELSE ''
+      END AS temporary_access_role,
+      users.access_expires_at
     FROM sessions JOIN users ON users.id = sessions.user_id
-    WHERE sessions.token_hash = ? AND sessions.expires_at > ? AND users.active = 1
-    AND (users.role != 'temporary_admin' OR (users.access_expires_at IS NOT NULL AND users.access_expires_at > ?))`)
-    .bind(tokenHash, now, now)
+    WHERE sessions.token_hash = ? AND sessions.expires_at > ? AND users.active = 1`)
+    .bind(now, tokenHash, now)
     .first<AppUser>();
   return user ?? null;
 }

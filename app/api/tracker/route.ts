@@ -1,5 +1,9 @@
 import { env } from "cloudflare:workers";
-import { getCurrentUser } from "../../../lib/auth";
+import {
+  getCurrentUser,
+  hasOperationalAdminAccess,
+  hasTemporaryAdminAccess,
+} from "../../../lib/auth";
 
 type AwardSeed = {
   code: string;
@@ -661,7 +665,8 @@ export async function GET(request: Request) {
     const user = await getCurrentUser(request);
     if (!user)
       return Response.json({ error: "Sign in required" }, { status: 401 });
-    if (user.role === "member")
+    const hasTemporaryAccess = hasTemporaryAdminAccess(user);
+    if (user.role === "member" && !hasTemporaryAccess)
       return Response.json(
         { error: "Member accounts can access resources only" },
         { status: 403 },
@@ -691,7 +696,7 @@ export async function GET(request: Request) {
         )
         .bind(section)
         .all(),
-      ["nco", "squad_leader"].includes(user.role)
+      ["nco", "squad_leader"].includes(user.role) && !hasTemporaryAccess
         ? db
             .prepare(
               `SELECT ar.session_id, ar.member_id, ar.status
@@ -765,7 +770,8 @@ export async function POST(request: Request) {
     const user = await getCurrentUser(request);
     if (!user)
       return Response.json({ error: "Sign in required" }, { status: 401 });
-    if (user.role === "member")
+    const hasTemporaryAccess = hasTemporaryAdminAccess(user);
+    if (user.role === "member" && !hasTemporaryAccess)
       return Response.json(
         { error: "Member accounts can access resources only" },
         { status: 403 },
@@ -778,15 +784,12 @@ export async function POST(request: Request) {
     const section = allowedSections.includes(requestedSection)
       ? requestedSection
       : "senior";
-    const canOverrideMemberDetails = [
-      "admin",
-      "temporary_admin",
-      "officer",
-    ].includes(user.role);
+    const canOverrideMemberDetails = hasOperationalAdminAccess(user);
     const overrideRequiredDetails =
       canOverrideMemberDetails && body.overrideRequiredDetails === true;
     if (
       ["nco", "squad_leader"].includes(user.role) &&
+      !hasTemporaryAccess &&
       ![
         "create_member",
         "create_attendance_session",
@@ -1111,6 +1114,7 @@ export async function POST(request: Request) {
         );
       if (
         ["nco", "squad_leader"].includes(user.role) &&
+        !hasTemporaryAccess &&
         !allowedSquads.includes(user.squad)
       )
         return Response.json(
@@ -1135,6 +1139,7 @@ export async function POST(request: Request) {
         );
       if (
         ["nco", "squad_leader"].includes(user.role) &&
+        !hasTemporaryAccess &&
         validAttendanceTarget.squad !== user.squad
       )
         return Response.json(

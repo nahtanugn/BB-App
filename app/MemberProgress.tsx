@@ -6,11 +6,12 @@ type User = {
   email: string;
   role:
     | "admin"
-    | "temporary_admin"
     | "officer"
     | "nco"
     | "squad_leader"
     | "member";
+  temporary_access_role: string;
+  access_expires_at: string | null;
 };
 type Award = { code: string; name: string; category: string; basic_available: number; advanced_available: number };
 type Progress = { award_code: string; level: string; status: string };

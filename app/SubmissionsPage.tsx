@@ -8,11 +8,12 @@ type User = {
   email: string;
   role:
     | "admin"
-    | "temporary_admin"
     | "officer"
     | "nco"
     | "squad_leader"
     | "member";
+  temporary_access_role: string;
+  access_expires_at: string | null;
 };
 
 export default function SubmissionsPage({
@@ -29,9 +30,13 @@ export default function SubmissionsPage({
   const [section, setSection] = useState<"senior" | "junior">(
     initialSection,
   );
-  const canReviewAll = ["admin", "temporary_admin", "officer"].includes(
-    user.role,
+  const hasTemporaryAdminAccess = Boolean(
+    user.temporary_access_role === "temporary_admin" &&
+      user.access_expires_at &&
+      user.access_expires_at > new Date().toISOString(),
   );
+  const canReviewAll =
+    ["admin", "officer"].includes(user.role) || hasTemporaryAdminAccess;
   return (
     <main className="resources-shell submissions-page">
       <header className="resources-topbar">
@@ -52,7 +57,9 @@ export default function SubmissionsPage({
             <small>{user.role}</small>
           </span>
           <button onClick={onBack}>
-            {user.role === "member" ? "Back to resources" : "Back to tracker"}
+            {user.role === "member" && !hasTemporaryAdminAccess
+              ? "Back to resources"
+              : "Back to tracker"}
           </button>
           <button onClick={onLogout}>Sign out</button>
         </div>
@@ -86,7 +93,7 @@ export default function SubmissionsPage({
               : "Award submissions"}
           </h1>
           <p>
-            {user.role === "member"
+            {user.role === "member" && !hasTemporaryAdminAccess
               ? "Apply for an award and follow its review status."
               : user.role === "squad_leader"
                 ? "View applications submitted by members."

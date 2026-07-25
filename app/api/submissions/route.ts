@@ -1,5 +1,10 @@
 import { env } from "cloudflare:workers";
-import { getCurrentUser } from "../../../lib/auth";
+import {
+  getCurrentUser,
+  hasAdminOrTemporaryAccess,
+  hasOperationalAdminAccess,
+  hasTemporaryAdminAccess,
+} from "../../../lib/auth";
 
 async function ensureSubmissionSchema() {
   await env.DB.prepare(
@@ -61,13 +66,14 @@ export async function GET(request: Request) {
     const user = await getCurrentUser(request);
     if (!user)
       return Response.json({ error: "Sign in required" }, { status: 401 });
-    if (user.role === "nco")
+    const hasTemporaryAccess = hasTemporaryAdminAccess(user);
+    if (user.role === "nco" && !hasTemporaryAccess)
       return Response.json(
         { error: "This account cannot access award submissions" },
         { status: 403 },
       );
     await ensureSubmissionSchema();
-    if (user.role === "member") {
+    if (user.role === "member" && !hasTemporaryAccess) {
       const member = await env.DB.prepare(
         "SELECT id, name, section FROM members WHERE LOWER(email) = LOWER(?) LIMIT 1",
       )
@@ -92,7 +98,7 @@ export async function GET(request: Request) {
     }
     const url = new URL(request.url);
     if (url.searchParams.get("all") === "1") {
-      if (!["admin", "temporary_admin", "officer"].includes(user.role))
+      if (!hasOperationalAdminAccess(user))
         return Response.json(
           { error: "Admin, Temporary Admin or Officer access required" },
           { status: 403 },
@@ -102,7 +108,7 @@ export async function GET(request: Request) {
       const section = requestedSection === "junior" ? "junior" : "senior";
       if (
         showArchived &&
-        !["admin", "temporary_admin"].includes(user.role)
+        !hasAdminOrTemporaryAccess(user)
       )
         return Response.json(
           { error: "Administrator access required" },
@@ -163,7 +169,11 @@ export async function POST(request: Request) {
     const user = await getCurrentUser(request);
     if (!user)
       return Response.json({ error: "Sign in required" }, { status: 401 });
-    if (user.role === "nco" || user.role === "squad_leader")
+    const hasTemporaryAccess = hasTemporaryAdminAccess(user);
+    if (
+      (user.role === "nco" || user.role === "squad_leader") &&
+      !hasTemporaryAccess
+    )
       return Response.json(
         { error: "This account cannot access award submissions" },
         { status: 403 },
@@ -173,7 +183,7 @@ export async function POST(request: Request) {
     const action = String(body.action ?? "");
 
     if (action === "create_submission") {
-      if (user.role !== "member")
+      if (user.role !== "member" || hasTemporaryAccess)
         return Response.json(
           { error: "Only member accounts can submit award applications" },
           { status: 403 },
@@ -287,9 +297,7 @@ export async function POST(request: Request) {
     }
 
     if (action === "review_submission") {
-      if (
-        !["admin", "temporary_admin", "officer"].includes(user.role)
-      )
+      if (!hasOperationalAdminAccess(user))
         return Response.json(
           { error: "Admin, Temporary Admin or Officer access required" },
           { status: 403 },
@@ -398,7 +406,7 @@ export async function POST(request: Request) {
     }
 
     if (action === "archive_submission" || action === "restore_submission") {
-      if (!["admin", "temporary_admin"].includes(user.role))
+      if (!hasAdminOrTemporaryAccess(user))
         return Response.json(
           { error: "Administrator or Temporary Administrator access required" },
           { status: 403 },

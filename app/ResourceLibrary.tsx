@@ -8,11 +8,12 @@ type User = {
   email: string;
   role:
     | "admin"
-    | "temporary_admin"
     | "officer"
     | "nco"
     | "squad_leader"
     | "member";
+  temporary_access_role: string;
+  access_expires_at: string | null;
 };
 type Resource = {
   id: number;
@@ -49,11 +50,13 @@ export default function ResourceLibrary({
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
   const [busy, setBusy] = useState(false);
-  const canManageResources = [
-    "admin",
-    "temporary_admin",
-    "officer",
-  ].includes(user.role);
+  const hasTemporaryAdminAccess = Boolean(
+    user.temporary_access_role === "temporary_admin" &&
+      user.access_expires_at &&
+      user.access_expires_at > new Date().toISOString(),
+  );
+  const canManageResources =
+    ["admin", "officer"].includes(user.role) || hasTemporaryAdminAccess;
 
   async function loadResources() {
     const response = await fetch("/api/resources", { cache: "no-store" });
@@ -181,7 +184,7 @@ export default function ResourceLibrary({
           <div>
             <strong>11KCHBB App</strong>
             <span>
-              {["admin", "temporary_admin", "officer"].includes(user.role)
+              {canManageResources
                 ? "Resource management"
                 : "Resource library"}
             </span>
@@ -221,9 +224,7 @@ export default function ResourceLibrary({
           />
         </label>
       </section>
-      {user.role !== "member" &&
-        user.role !== "nco" &&
-        user.role !== "squad_leader" && (
+      {canManageResources && (
         <section className="resource-editor panel">
           <div>
             <p className="eyebrow">ADD TO LIBRARY</p>
@@ -276,8 +277,7 @@ export default function ResourceLibrary({
           {notice}
         </p>
       )}
-      {error &&
-        !["admin", "temporary_admin", "officer"].includes(user.role) && (
+      {error && !canManageResources && (
         <p className="form-error resource-error">{error}</p>
       )}
       <MemberProgress user={user} />
@@ -324,9 +324,7 @@ export default function ResourceLibrary({
                         </label>
                       )}
                     </div>
-                    {user.role !== "member" &&
-                      user.role !== "nco" &&
-                      user.role !== "squad_leader" && (
+                    {canManageResources && (
                       <button
                         className="resource-delete"
                         onClick={() => deleteResource(resource)}
@@ -349,7 +347,7 @@ export default function ResourceLibrary({
             />
             <h2>No resources yet</h2>
             <p>
-              {["member", "nco", "squad_leader"].includes(user.role)
+              {!canManageResources
                 ? "An officer will add materials here soon."
                 : "Add the first link to start the shared library."}
             </p>
