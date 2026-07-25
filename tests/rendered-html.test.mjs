@@ -81,6 +81,10 @@ test("defines the 11KCHBB App application shell and sharing metadata", async () 
   assert.match(styles, /\.topbar \{[\s\S]*?backdrop-filter: blur\(16px\)/);
   assert.match(styles, /\.stat-card::after/);
   assert.match(styles, /\.member-card::before/);
+  assert.match(tracker, /className="category-select"/);
+  assert.match(tracker, /aria-label="Award category"/);
+  assert.match(styles, /\.category-select \{ display: none; \}/);
+  assert.match(styles, /\.category-tabs \{ display: none; \}/);
   assert.match(styles, /\.modal \{[\s\S]*?max-height: 92dvh;/);
   assert.match(styles, /\.sidebar nav button \{[\s\S]*?min-height: 62px;/);
   assert.match(standalone, /Company portal/);

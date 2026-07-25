@@ -1413,6 +1413,24 @@ export default function AwardTracker({
                   </button>
                 ))}
               </div>
+              <label className="category-select">
+                <span>Category</span>
+                <select
+                  value={category}
+                  onChange={(event) => {
+                    const nextCategory = event.target.value;
+                    setCategory(nextCategory);
+                    if (nextCategory === "Service") setLevel("basic");
+                  }}
+                  aria-label="Award category"
+                >
+                  {categories.map((item) => (
+                    <option key={item} value={item}>
+                      {item}
+                    </option>
+                  ))}
+                </select>
+              </label>
               {section === "senior" && category !== "Service" && (
                 <div className="level-toggle">
                   <button
