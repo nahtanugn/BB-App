@@ -267,6 +267,13 @@ const awards: AwardSeed[] = [
     advanced: 0,
   },
   {
+    code: "gold_award",
+    name: "Gold Award",
+    category: "Special",
+    basic: 1,
+    advanced: 0,
+  },
+  {
     code: "scholastics_bronze",
     name: "Scholastics Bronze",
     category: "Special",

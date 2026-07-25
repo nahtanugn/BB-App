@@ -334,6 +334,7 @@ export default function AwardTracker({
       (data?.awards ?? []).filter(
         (award) =>
           award.category === category &&
+          (category !== "Service" || award.code === "one_year_service") &&
           (level === "basic"
             ? award.basic_available
             : award.advanced_available),
@@ -1690,7 +1691,9 @@ export default function AwardTracker({
               </div>}
             </div>
             <div className="table-scroll">
-              <table className="award-matrix">
+              <table
+                className={`award-matrix${category === "Service" ? " service-matrix" : ""}`}
+              >
                 <thead>
                   <tr>
                     <th>Member</th>

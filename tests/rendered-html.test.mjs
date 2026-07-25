@@ -93,6 +93,8 @@ test("defines the 11KCHBB App application shell and sharing metadata", async () 
   assert.match(tracker, /aria-label="Award category"/);
   assert.match(styles, /\.category-select \{ display: none; \}/);
   assert.match(styles, /\.category-tabs \{ display: none; \}/);
+  assert.match(tracker, /className=\{`award-matrix\$\{category === "Service" \? " service-matrix" : ""\}`\}/);
+  assert.match(styles, /\.service-matrix \.service-count-control button \{[\s\S]*?width: 46px;[\s\S]*?height: 46px;/);
   assert.match(styles, /\.modal \{[\s\S]*?max-height: 92dvh;/);
   assert.match(
     styles,
@@ -185,6 +187,7 @@ test("ships the Malaysia Senior Section catalogue, role-based portals and instal
   assert.match(route, /Scholastics Bronze/);
   assert.match(route, /Scholastics Silver/);
   assert.match(route, /Scholastics Gold/);
+  assert.match(route, /name: "Gold Award"/);
   assert.match(route, /create_attendance_session/);
   assert.match(route, /update_attendance/);
   assert.match(route, /emergency_contact_number/);

@@ -590,6 +590,44 @@ h2 { color: var(--navy); }
   .category-tabs { width: 100%; }
   .matrix-help { align-items: flex-start; flex-direction: column; gap: 8px; }
   .table-scroll { max-height: calc(100vh - 315px); }
+  .service-matrix {
+    width: 100%;
+    min-width: 0;
+    table-layout: fixed;
+  }
+  .service-matrix thead th:first-child {
+    width: 58%;
+    min-width: 0;
+  }
+  .service-matrix thead th:last-child {
+    width: 42%;
+    min-width: 0;
+  }
+  .service-matrix tbody th {
+    min-width: 0;
+  }
+  .service-matrix th,
+  .service-matrix td {
+    padding-inline: 12px;
+  }
+  .service-matrix .service-count-control {
+    width: 100%;
+    min-width: 0;
+    gap: 10px;
+  }
+  .service-matrix .service-count-control button {
+    width: 46px;
+    height: 46px;
+    flex: 0 0 46px;
+    border-color: #bfd1e2;
+    background: #f4f9ff;
+    font-size: 22px;
+    touch-action: manipulation;
+  }
+  .service-matrix .service-count-control strong {
+    min-width: 24px;
+    font-size: 20px;
+  }
 }
 
 @media (max-width: 460px) {
@@ -616,6 +654,17 @@ h2 { color: var(--navy); }
   .personal-stat-grid { grid-template-columns: 1fr; }
   .submission-list { grid-template-columns: 1fr; }
   .submission-heading { align-items: flex-start; }
+  .service-matrix thead th:first-child { width: 54%; }
+  .service-matrix thead th:last-child { width: 46%; }
+  .service-matrix th,
+  .service-matrix td { padding-inline: 8px; }
+  .service-matrix .table-member { gap: 7px; }
+  .service-matrix .service-count-control { gap: 6px; }
+  .service-matrix .service-count-control button {
+    width: 44px;
+    height: 44px;
+    flex-basis: 44px;
+  }
 }
 
 /* 11KCHBB responsive command-centre redesign */
