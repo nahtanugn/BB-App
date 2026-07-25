@@ -225,21 +225,15 @@ h2 { color: var(--navy); }
 
 .attendance-layout { display: grid; grid-template-columns: minmax(235px, .62fr) minmax(0, 1.65fr); gap: 15px; align-items: start; }
 .session-list { overflow: hidden; }
-.session-buttons { padding: 9px; display: grid; gap: 8px; max-height: calc(100vh - 245px); overflow-y: auto; }
-.session-buttons button {
-  min-height: 82px;
-  padding: 10px;
-  border: 1px solid #e1e8ef;
-  border-radius: 13px;
-  background: white;
-  display: grid;
-  grid-template-columns: 52px minmax(0, 1fr) auto;
-  align-items: center;
-  gap: 11px;
-  text-align: left;
-}
-.session-buttons button:hover { border-color: #bad3ec; background: #f8fbff; }
-.session-buttons button.active { border-color: #88b9eb; background: var(--blue-soft); box-shadow: 0 7px 18px rgba(18, 107, 213, .12); }
+.attendance-session-picker { padding: 14px; display: grid; gap: 12px; }
+.attendance-session-picker > label { display: grid; gap: 7px; color: var(--navy); font-size: 10px; font-weight: 800; }
+.attendance-session-picker select { width: 100%; min-height: 46px; padding: 0 38px 0 12px; border: 1px solid #cfdce8; border-radius: 11px; background: white; color: var(--ink); font-size: 11px; font-weight: 700; }
+.attendance-session-picker select:focus { border-color: var(--blue); box-shadow: 0 0 0 3px rgba(28,111,209,.12); outline: 0; }
+.attendance-session-picker label > small { color: var(--muted); font-size: 8px; font-weight: 600; }
+.selected-session-card { min-height: 82px; padding: 10px; display: grid; grid-template-columns: 52px minmax(0, 1fr) auto; align-items: center; gap: 11px; border: 1px solid #bad3ec; border-radius: 13px; background: var(--blue-soft); box-shadow: 0 7px 18px rgba(18,107,213,.1); }
+.selected-session-card .session-date { background: var(--navy); color: white; }
+.selected-session-card .session-date span { color: var(--gold); }
+.selected-session-card .session-date small { color: #c5d7e8; }
 .session-date {
   min-height: 61px;
   padding: 6px 4px;
@@ -254,9 +248,6 @@ h2 { color: var(--navy); }
 .session-date span { color: var(--blue); font-size: 8px; font-weight: 900; letter-spacing: .08em; }
 .session-date strong { margin: 4px 0 3px; font-family: Georgia, serif; font-size: 23px; }
 .session-date small { color: var(--muted); font-size: 8px; font-weight: 700; }
-.session-buttons button.active .session-date { background: var(--navy); color: white; }
-.session-buttons button.active .session-date span { color: var(--gold); }
-.session-buttons button.active .session-date small { color: #c5d7e8; }
 .session-info strong, .session-info small,
 .session-count strong, .session-count small { display: block; }
 .session-info strong { color: var(--ink); font-size: 11px; }
@@ -573,22 +564,9 @@ h2 { color: var(--navy); }
   .member-grid { grid-template-columns: 1fr; }
   .attendance-layout { display: block; }
   .attendance-register { margin-top: 14px; }
+  .attendance-session-picker { padding: 12px; }
+  .attendance-session-picker select { min-height: 50px; font-size: 13px; }
   .subscription-heading { align-items: flex-start; flex-direction: column; }
-  .session-buttons {
-    max-height: none;
-    padding: 10px;
-    display: flex;
-    gap: 10px;
-    overflow-x: auto;
-    overflow-y: hidden;
-    scroll-snap-type: x mandatory;
-    scrollbar-width: thin;
-  }
-  .session-buttons button {
-    min-width: min(255px, 82vw);
-    flex: 0 0 auto;
-    scroll-snap-align: start;
-  }
   .matrix-toolbar { align-items: flex-start; flex-direction: column; }
   .category-tabs { width: 100%; }
   .matrix-help { align-items: flex-start; flex-direction: column; gap: 8px; }

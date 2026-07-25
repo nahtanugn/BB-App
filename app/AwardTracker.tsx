@@ -301,11 +301,20 @@ export default function AwardTracker({
     return map;
   }, [data]);
 
+  const orderedAttendanceSessions = useMemo(
+    () =>
+      [...(data?.attendanceSessions ?? [])].sort(
+        (a, b) =>
+          a.meeting_date.localeCompare(b.meeting_date) || a.id - b.id,
+      ),
+    [data?.attendanceSessions],
+  );
+
   const activeSession =
-    data?.attendanceSessions.find(
+    orderedAttendanceSessions.find(
       (session) => session.id === activeSessionId,
     ) ??
-    data?.attendanceSessions[0] ??
+    orderedAttendanceSessions[orderedAttendanceSessions.length - 1] ??
     null;
 
   const filteredMembers = useMemo(() => {
@@ -1973,62 +1982,85 @@ export default function AwardTracker({
                   )}
                 </div>
               </div>
-              {data.attendanceSessions.length ? (
-                <div className="session-buttons">
-                  {data.attendanceSessions.map((session) => {
-                    const present = data.attendance.filter(
-                      (item) =>
-                        item.session_id === session.id &&
-                        item.status === "present",
-                    ).length;
-                    const meetingDate = new Date(
-                      `${session.meeting_date}T00:00:00`,
-                    );
-                    return (
-                      <button
-                        key={session.id}
-                        className={
-                          activeSession?.id === session.id ? "active" : ""
-                        }
-                        onClick={() => setActiveSessionId(session.id)}
-                      >
-                        <time
-                          className="session-date"
-                          dateTime={session.meeting_date}
-                        >
-                          <span>
-                            {meetingDate
-                              .toLocaleDateString("en-MY", { month: "short" })
-                              .toUpperCase()}
-                          </span>
-                          <strong>
+              {orderedAttendanceSessions.length && activeSession ? (
+                <div className="attendance-session-picker">
+                  <label>
+                    Select meeting
+                    <select
+                      aria-label="Attendance meeting date"
+                      value={String(activeSession.id)}
+                      onChange={(event) =>
+                        setActiveSessionId(Number(event.target.value))
+                      }
+                    >
+                      {orderedAttendanceSessions.map((session) => {
+                        const meetingDate = new Date(
+                          `${session.meeting_date}T00:00:00`,
+                        );
+                        return (
+                          <option value={session.id} key={session.id}>
                             {meetingDate.toLocaleDateString("en-MY", {
                               day: "2-digit",
-                            })}
-                          </strong>
-                          <small>
-                            {meetingDate.toLocaleDateString("en-MY", {
-                              weekday: "short",
-                            })}
-                          </small>
-                        </time>
-                        <span className="session-info">
-                          <strong>{session.title}</strong>
-                          <small>
-                            {meetingDate.toLocaleDateString("en-MY", {
+                              month: "short",
                               year: "numeric",
-                            })}
-                          </small>
-                        </span>
-                        <span className="session-count">
-                          <strong>
-                            {present}/{attendanceMembers.length}
-                          </strong>
-                          <small>Present</small>
-                        </span>
-                      </button>
-                    );
-                  })}
+                            })}{" "}
+                            — {session.title}
+                          </option>
+                        );
+                      })}
+                    </select>
+                    <small>Earliest to latest</small>
+                  </label>
+                  <div className="selected-session-card">
+                    {(() => {
+                      const meetingDate = new Date(
+                        `${activeSession.meeting_date}T00:00:00`,
+                      );
+                      const present = data.attendance.filter(
+                        (item) =>
+                          item.session_id === activeSession.id &&
+                          item.status === "present",
+                      ).length;
+                      return (
+                        <>
+                          <time
+                            className="session-date"
+                            dateTime={activeSession.meeting_date}
+                          >
+                            <span>
+                              {meetingDate
+                                .toLocaleDateString("en-MY", { month: "short" })
+                                .toUpperCase()}
+                            </span>
+                            <strong>
+                              {meetingDate.toLocaleDateString("en-MY", {
+                                day: "2-digit",
+                              })}
+                            </strong>
+                            <small>
+                              {meetingDate.toLocaleDateString("en-MY", {
+                                weekday: "short",
+                              })}
+                            </small>
+                          </time>
+                          <span className="session-info">
+                            <strong>{activeSession.title}</strong>
+                            <small>
+                              {meetingDate.toLocaleDateString("en-MY", {
+                                year: "numeric",
+                              })}
+                            </small>
+                          </span>
+                          <span className="session-count">
+                            <strong>
+                              {present}/{attendanceMembers.length}
+                            </strong>
+                            <small>Present</small>
+                          </span>
+                        </>
+                      );
+                    })()}
+                  </div>
                 </div>
               ) : (
                 <div className="empty-state">

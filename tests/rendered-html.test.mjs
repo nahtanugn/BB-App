@@ -17,10 +17,12 @@ test("defines the 11KCHBB App application shell and sharing metadata", async () 
   assert.match(layout, /\/app-photo\.jpeg/);
   assert.match(tracker, /Preparing your award records/);
   assert.match(tracker, /Attendance dates/);
+  assert.match(tracker, /aria-label="Attendance meeting date"/);
+  assert.match(tracker, /Earliest to latest/);
+  assert.match(tracker, /orderedAttendanceSessions/);
   assert.match(tracker, /className="session-date"/);
-  assert.match(tracker, /dateTime=\{session\.meeting_date\}/);
+  assert.match(tracker, /dateTime=\{activeSession\.meeting_date\}/);
   assert.match(tracker, /className="session-count"/);
-  assert.match(styles, /scroll-snap-type: x mandatory/);
   assert.match(tracker, /Member details/);
   assert.match(tracker, /School/);
   assert.match(tracker, /Contact Number/);
@@ -196,6 +198,10 @@ test("ships the Malaysia Senior Section catalogue, role-based portals and instal
   assert.match(route, /name: "Gold Award"/);
   assert.match(route, /create_attendance_session/);
   assert.match(route, /update_attendance/);
+  assert.match(
+    route,
+    /ORDER BY meeting_date ASC, id ASC/,
+  );
   assert.match(route, /emergency_contact_number/);
   assert.match(route, /parents_name/);
   assert.match(

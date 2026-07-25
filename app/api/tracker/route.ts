@@ -699,7 +699,7 @@ export async function GET(request: Request) {
         }>(),
       db
         .prepare(
-          "SELECT * FROM attendance_sessions WHERE section = ? ORDER BY meeting_date DESC, id DESC",
+          "SELECT * FROM attendance_sessions WHERE section = ? ORDER BY meeting_date ASC, id ASC",
         )
         .bind(section)
         .all(),
