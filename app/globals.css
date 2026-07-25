@@ -816,6 +816,18 @@ h1 { font-size: clamp(30px, 3.1vw, 46px); line-height: 1; letter-spacing: -1.5px
   border-radius: 22px;
   box-shadow: 0 30px 90px rgba(4, 26, 48, .3);
 }
+.account-modal {
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable;
+  -webkit-overflow-scrolling: touch;
+}
+.account-modal .modal-heading {
+  position: sticky;
+  top: 0;
+  z-index: 4;
+}
 .modal-heading {
   min-height: 88px;
   padding: 21px 24px;
