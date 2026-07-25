@@ -6,17 +6,35 @@ type UserOption = { id: number; name: string; email: string };
 type Role = { id: number; name: string; color: string; description: string; permissions: string };
 type Assignment = { user_id: number; role_id: number; expires_at: string | null; user_name: string; email: string; role_name: string; color: string };
 
-const permissionOptions = [
-  ["stock.view_uniform", "View uniform stock"],
-  ["stock.manage_uniform", "Receive & return uniforms"],
-  ["stock.issue_uniform", "Issue uniforms"],
-  ["stock.view_awards", "View award stock"],
-  ["stock.manage_awards", "Receive & return awards"],
-  ["stock.issue_awards", "Issue awards"],
-  ["stock.adjust", "Adjust stock & add catalogue items"],
-  ["stock.view_history", "View transaction history"],
-  ["stock.export", "Export stock data"],
-  ["stock.manage_uniform_requests", "Review and issue uniform requests"],
+const permissionGroups = [
+  {
+    title: "Uniform store",
+    description: "Uniform stock and member requests",
+    options: [
+      ["stock.view_uniform", "View uniform stock"],
+      ["stock.manage_uniform", "Receive and return uniforms"],
+      ["stock.issue_uniform", "Issue uniforms"],
+      ["stock.manage_uniform_requests", "Review and issue uniform requests"],
+    ],
+  },
+  {
+    title: "Award store",
+    description: "Award stock and distribution",
+    options: [
+      ["stock.view_awards", "View award stock"],
+      ["stock.manage_awards", "Receive and return awards"],
+      ["stock.issue_awards", "Issue awards"],
+    ],
+  },
+  {
+    title: "Stock administration",
+    description: "Catalogue, records and exports",
+    options: [
+      ["stock.adjust", "Adjust stock and add catalogue items"],
+      ["stock.view_history", "View transaction history"],
+      ["stock.export", "Export stock data"],
+    ],
+  },
 ] as const;
 
 export default function CustomRoleManager({
@@ -104,44 +122,74 @@ export default function CustomRoleManager({
   })();
   return (
     <section className="custom-role-manager">
-      <div className="account-section-heading"><div><h3>Custom access roles</h3><p>Create Discord-style additional roles, then assign any number of them to an account. These roles control the Stock Centre without changing the person’s normal app role.</p></div></div>
+      <div className="custom-role-intro">
+        <div>
+          <p className="eyebrow">ADDITIONAL ACCESS</p>
+          <h2>Custom access roles</h2>
+          <p>Create a role with only the permissions it needs, then assign it to one or more accounts. A person’s normal app role will not change.</p>
+        </div>
+        <div className="custom-role-summary" aria-label="Custom role summary">
+          <article><strong>{roles.length}</strong><span>Roles</span></article>
+          <article><strong>{assignments.length}</strong><span>Assignments</span></article>
+        </div>
+      </div>
       {notice && <p className="form-success">{notice}</p>}{error && <p className="form-error">{error}</p>}
       <div className="custom-role-layout">
-        <div>
-          <h4>Roles</h4>
+        <section className="custom-role-column">
+          <div className="custom-role-section-heading">
+            <span className="custom-role-step">1</span>
+            <div><h3>Create access roles</h3><p>Choose what each operational role is allowed to do.</p></div>
+          </div>
           <div className="role-list">
             {roles.map((role) => (
               <article key={role.id}>
                 <span className="role-color" style={{ backgroundColor: role.color }} />
-                <div><strong>{role.name}</strong><small>{role.description || "No description"}</small></div>
-                {!readOnly && <button className="text-button" onClick={() => setEditing(role)}>Edit</button>}
-                {!readOnly && <button className="danger-link" onClick={() => deleteRole(role)}>Delete</button>}
+                <div className="role-list-copy">
+                  <strong>{role.name}</strong>
+                  <small>{role.description || "No description provided"}</small>
+                  <span>{(() => { try { return `${(JSON.parse(role.permissions) as string[]).length} permissions`; } catch { return "0 permissions"; } })()}</span>
+                </div>
+                {!readOnly && <div className="role-card-actions"><button className="text-button" onClick={() => setEditing(role)}>Edit</button><button className="danger-link" onClick={() => deleteRole(role)}>Delete</button></div>}
               </article>
             ))}
-            {!roles.length && <p className="empty-inline">No custom roles yet.</p>}
+            {!roles.length && <div className="custom-role-empty"><span>+</span><strong>No custom roles yet</strong><p>Create your first role below.</p></div>}
           </div>
           {!readOnly && <form key={editing?.id ?? "new-role"} className="role-form" onSubmit={saveRole}>
-            <h4>{editing ? `Edit ${editing.name}` : "Create a role"}</h4>
-            <div className="form-row"><label>Role name<input name="name" required defaultValue={editing?.name ?? ""} placeholder="e.g. Quartermaster" /></label><label>Colour<input name="color" type="color" defaultValue={editing?.color ?? "#2878d4"} /></label></div>
+            <div className="role-form-heading"><div><p className="eyebrow">{editing ? "EDIT ROLE" : "NEW ROLE"}</p><h3>{editing ? editing.name : "Role details"}</h3></div>{editing && <button type="button" className="text-button" onClick={() => setEditing(null)}>Cancel</button>}</div>
+            <div className="role-form-fields">
+              <label>Role name<input name="name" required defaultValue={editing?.name ?? ""} placeholder="e.g. Quartermaster" /></label>
+              <label className="role-colour-field">Role colour<span><input name="color" type="color" defaultValue={editing?.color ?? "#2878d4"} /><small>Used to identify this role</small></span></label>
+            </div>
             <label>Description<input name="description" defaultValue={editing?.description ?? ""} placeholder="What this role is responsible for" /></label>
-            <fieldset className="permission-grid"><legend>Permissions</legend>{permissionOptions.map(([value, label]) => <label key={`${editing?.id ?? "new"}-${value}`}><input type="checkbox" name="permissions" value={value} defaultChecked={editingPermissions.includes(value)} /><span>{label}</span></label>)}</fieldset>
+            <fieldset className="permission-grid">
+              <legend>Choose permissions</legend>
+              {permissionGroups.map((group) => (
+                <section className="permission-group" key={group.title}>
+                  <div><strong>{group.title}</strong><small>{group.description}</small></div>
+                  <div>{group.options.map(([value, label]) => <label key={`${editing?.id ?? "new"}-${value}`}><input type="checkbox" name="permissions" value={value} defaultChecked={editingPermissions.includes(value)} /><span>{label}</span></label>)}</div>
+                </section>
+              ))}
+            </fieldset>
             <div className="role-form-actions">{editing && <button type="button" className="secondary" onClick={() => setEditing(null)}>Cancel</button>}<button className="primary" disabled={busy}>{busy ? "Saving…" : editing ? "Save role" : "Create role"}</button></div>
           </form>}
-        </div>
-        <div>
-          <h4>Assignments</h4>
-          <div className="assignment-list">
-            {assignments.map((assignment) => <article key={`${assignment.user_id}-${assignment.role_id}`}><span className="role-color" style={{ backgroundColor: assignment.color }} /><div><strong>{assignment.user_name}</strong><small>{assignment.role_name}{assignment.expires_at ? ` · until ${new Date(assignment.expires_at).toLocaleDateString("en-MY")}` : " · no expiry"}</small></div>{!readOnly && <button className="danger-link" onClick={() => removeAssignment(assignment)}>Remove</button>}</article>)}
-            {!assignments.length && <p className="empty-inline">No custom role assignments yet.</p>}
+        </section>
+        <section className="custom-role-column">
+          <div className="custom-role-section-heading">
+            <span className="custom-role-step">2</span>
+            <div><h3>Assign roles</h3><p>Give an account additional access, with an optional expiry date.</p></div>
           </div>
-          {!readOnly && <form className="role-form" onSubmit={assignRole}>
-            <h4>Assign a role</h4>
+          <div className="assignment-list">
+            {assignments.map((assignment) => <article key={`${assignment.user_id}-${assignment.role_id}`}><span className="role-color" style={{ backgroundColor: assignment.color }} /><div className="role-list-copy"><strong>{assignment.user_name}</strong><small>{assignment.email}</small><span>{assignment.role_name} · {assignment.expires_at ? `expires ${new Date(assignment.expires_at).toLocaleDateString("en-MY")}` : "ongoing access"}</span></div>{!readOnly && <button className="danger-link" onClick={() => removeAssignment(assignment)}>Remove</button>}</article>)}
+            {!assignments.length && <div className="custom-role-empty"><span>↗</span><strong>No assignments yet</strong><p>Assign a role after creating one.</p></div>}
+          </div>
+          {!readOnly && <form className="role-form assignment-form" onSubmit={assignRole}>
+            <div className="role-form-heading"><div><p className="eyebrow">NEW ASSIGNMENT</p><h3>Grant additional access</h3></div></div>
             <label>Account<select name="userId" required defaultValue=""><option value="" disabled>Select an account</option>{users.map((user) => <option value={user.id} key={user.id}>{user.name} · {user.email}</option>)}</select></label>
             <label>Custom role<select name="roleId" required defaultValue=""><option value="" disabled>Select a role</option>{roles.map((role) => <option value={role.id} key={role.id}>{role.name}</option>)}</select></label>
-            <label>Expires on (optional)<input name="expiresOn" type="date" /><small>Leave blank for ongoing access.</small></label>
+            <label>Expiry date <span className="optional-label">Optional</span><input name="expiresOn" type="date" /><small>Leave blank to keep this access active until it is removed.</small></label>
             <button className="primary" disabled={busy || !roles.length}>{busy ? "Assigning…" : "Assign role"}</button>
           </form>}
-        </div>
+        </section>
       </div>
     </section>
   );
