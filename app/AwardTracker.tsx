@@ -188,6 +188,7 @@ export default function AwardTracker({
   );
   const [showAdd, setShowAdd] = useState(false);
   const [editingMember, setEditingMember] = useState<Member | null>(null);
+  const [viewingMemberId, setViewingMemberId] = useState<number | null>(null);
   const [overrideMemberDetails, setOverrideMemberDetails] = useState(false);
   const [joinedAtDraft, setJoinedAtDraft] = useState(
     String(currentSubscriptionYear),
@@ -296,6 +297,12 @@ export default function AwardTracker({
     [filteredMembers, isNco, isSquadLeader, user?.squad],
   );
 
+  const viewingMember =
+    data?.members.find((member) => member.id === viewingMemberId) ?? null;
+  const viewingMemberIndex = viewingMember
+    ? filteredMembers.findIndex((member) => member.id === viewingMember.id)
+    : -1;
+
   const visibleAwards = useMemo(
     () =>
       (data?.awards ?? []).filter(
@@ -325,6 +332,27 @@ export default function AwardTracker({
       ["in_progress", "submitted", "verified"].includes(item.status),
     ).length;
     return { awarded, active };
+  }
+
+  function memberAttendance(member: Member) {
+    const records = (data?.attendance ?? []).filter(
+      (item) => item.member_id === member.id,
+    );
+    const present = records.filter((item) => item.status === "present").length;
+    const absent = records.filter((item) => item.status === "absent").length;
+    const excused = records.filter((item) => item.status === "excused").length;
+    const unmarked =
+      records.filter((item) => item.status === "unmarked").length +
+      Math.max(0, (data?.attendanceSessions.length ?? 0) - records.length);
+    const total = data?.attendanceSessions.length ?? 0;
+    return {
+      present,
+      absent,
+      excused,
+      unmarked,
+      total,
+      percentage: total ? Math.round((present / total) * 100) : 0,
+    };
   }
 
   function presidentReadiness(member: Member) {
@@ -1542,6 +1570,13 @@ export default function AwardTracker({
                           Submissions
                         </button>
                       )}
+                      <button
+                        className="edit-member"
+                        aria-label={`View ${member.name}'s profile`}
+                        onClick={() => setViewingMemberId(member.id)}
+                      >
+                        View profile
+                      </button>
                       {canEditMembers && (
                         <button
                           className="edit-member"
@@ -1566,49 +1601,6 @@ export default function AwardTracker({
                   <p>
                     {member.rank} · Joined {joinedYear(member.joined_at)}
                   </p>
-                  {(isNco || isSquadLeader) && (
-                    <div className="member-detail-summary">
-                      <span>
-                        <small>Squad</small>
-                        <strong>{member.squad}</strong>
-                      </span>
-                      <span>
-                        <small>School</small>
-                        <strong>{member.school || "Not recorded"}</strong>
-                      </span>
-                      <span>
-                        <small>Contact</small>
-                        <strong>
-                          {member.contact_number || "Not recorded"}
-                        </strong>
-                      </span>
-                      <span>
-                        <small>Emergency contact</small>
-                        <strong>
-                          {member.emergency_contact_number || "Not recorded"}
-                        </strong>
-                      </span>
-                      <span>
-                        <small>Email</small>
-                        <strong>{member.email || "Not recorded"}</strong>
-                      </span>
-                      <span>
-                        <small>Parents</small>
-                        <strong>{member.parents_name || "Not recorded"}</strong>
-                      </span>
-                      <span>
-                        <small>Service duration</small>
-                        <strong>
-                          {member.service_years} year
-                          {member.service_years === 1 ? "" : "s"}
-                        </strong>
-                      </span>
-                      <span>
-                        <small>Service awards</small>
-                        <strong>{member.service_award_count}</strong>
-                      </span>
-                    </div>
-                  )}
                   <div className="member-numbers">
                     <div>
                       <strong>{stats.awarded}</strong>
@@ -1902,6 +1894,242 @@ export default function AwardTracker({
           </section>
         )}
       </main>
+
+      {viewingMember &&
+        (() => {
+          const stats = memberStats(viewingMember);
+          const attendance = memberAttendance(viewingMember);
+          const awardRows = data.progress.filter(
+            (item) =>
+              item.member_id === viewingMember.id &&
+              item.status !== "not_started",
+          );
+          return (
+            <div
+              className="modal-backdrop"
+              role="presentation"
+              onMouseDown={() => setViewingMemberId(null)}
+            >
+              <section
+                className="modal member-profile-modal"
+                role="dialog"
+                aria-modal="true"
+                aria-labelledby="member-profile-title"
+                onMouseDown={(event) => event.stopPropagation()}
+              >
+                <div className="modal-heading member-profile-heading">
+                  <div className="member-profile-identity">
+                    <div className="avatar large">
+                      {initials(viewingMember.name)}
+                    </div>
+                    <div>
+                      <p className="eyebrow">MEMBER PROFILE</p>
+                      <h2 id="member-profile-title">{viewingMember.name}</h2>
+                      <small>
+                        {viewingMember.rank} · {viewingMember.squad} Squad
+                      </small>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => setViewingMemberId(null)}
+                    aria-label="Close member profile"
+                  >
+                    ×
+                  </button>
+                </div>
+
+                <div className="member-profile-body">
+                  <div className="member-profile-stats">
+                    <span>
+                      <strong>{attendance.percentage}%</strong>
+                      <small>Attendance</small>
+                    </span>
+                    <span>
+                      <strong>{stats.awarded}</strong>
+                      <small>Awards</small>
+                    </span>
+                    <span>
+                      <strong>{stats.active}</strong>
+                      <small>In progress</small>
+                    </span>
+                    <span>
+                      <strong>{viewingMember.service_years}</strong>
+                      <small>Service years</small>
+                    </span>
+                  </div>
+
+                  <section className="member-profile-section">
+                    <div className="member-profile-section-heading">
+                      <div>
+                        <p className="eyebrow">PERSONAL DETAILS</p>
+                        <h3>Member information</h3>
+                      </div>
+                      {canEditMembers && (
+                        <button
+                          className="edit-member"
+                          onClick={() => {
+                            setViewingMemberId(null);
+                            openEditMember(viewingMember);
+                          }}
+                        >
+                          Edit details
+                        </button>
+                      )}
+                    </div>
+                    <dl className="member-profile-details">
+                      <div>
+                        <dt>School</dt>
+                        <dd>{viewingMember.school || "Not recorded"}</dd>
+                      </div>
+                      <div>
+                        <dt>Joined year</dt>
+                        <dd>{joinedYear(viewingMember.joined_at)}</dd>
+                      </div>
+                      <div>
+                        <dt>Contact number</dt>
+                        <dd>{viewingMember.contact_number || "Not recorded"}</dd>
+                      </div>
+                      <div>
+                        <dt>Emergency contact</dt>
+                        <dd>
+                          {viewingMember.emergency_contact_number ||
+                            "Not recorded"}
+                        </dd>
+                      </div>
+                      <div>
+                        <dt>Email</dt>
+                        <dd>{viewingMember.email || "Not recorded"}</dd>
+                      </div>
+                      <div>
+                        <dt>Parent or guardian</dt>
+                        <dd>{viewingMember.parents_name || "Not recorded"}</dd>
+                      </div>
+                      <div>
+                        <dt>Service awards</dt>
+                        <dd>{viewingMember.service_award_count}</dd>
+                      </div>
+                      <div>
+                        <dt>{subscriptionYear} subscription</dt>
+                        <dd>
+                          {subscriptionMap.get(
+                            `${viewingMember.id}:${subscriptionYear}`,
+                          )
+                            ? "Paid"
+                            : "Not paid"}
+                        </dd>
+                      </div>
+                    </dl>
+                  </section>
+
+                  <section className="member-profile-section">
+                    <div className="member-profile-section-heading">
+                      <div>
+                        <p className="eyebrow">ATTENDANCE</p>
+                        <h3>
+                          {attendance.present} of {attendance.total} meetings
+                        </h3>
+                      </div>
+                    </div>
+                    <div className="member-profile-attendance">
+                      <span className="present">
+                        <strong>{attendance.present}</strong> Present
+                      </span>
+                      <span className="absent">
+                        <strong>{attendance.absent}</strong> Absent
+                      </span>
+                      <span className="excused">
+                        <strong>{attendance.excused}</strong> Excused
+                      </span>
+                      <span>
+                        <strong>{attendance.unmarked}</strong> Unmarked
+                      </span>
+                    </div>
+                  </section>
+
+                  <section className="member-profile-section">
+                    <div className="member-profile-section-heading">
+                      <div>
+                        <p className="eyebrow">AWARD RECORD</p>
+                        <h3>Awards with recorded progress</h3>
+                      </div>
+                    </div>
+                    {awardRows.length || viewingMember.service_award_count ? (
+                      <div className="member-profile-awards">
+                        {viewingMember.service_award_count > 0 && (
+                          <div>
+                            <span>One-Year Service Award</span>
+                            <strong className="progress-status awarded">
+                              {viewingMember.service_award_count} awarded
+                            </strong>
+                          </div>
+                        )}
+                        {awardRows.map((item) => {
+                          const award = data.awards.find(
+                            (entry) => entry.code === item.award_code,
+                          );
+                          return (
+                            <div
+                              key={`${item.award_code}:${item.level}`}
+                            >
+                              <span>
+                                {award?.name ?? item.award_code}
+                                <small>
+                                  {item.level === "advanced"
+                                    ? "Advanced"
+                                    : "Basic"}
+                                </small>
+                              </span>
+                              <strong
+                                className={`progress-status ${item.status}`}
+                              >
+                                {statusLabel[item.status]}
+                              </strong>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    ) : (
+                      <p className="member-profile-empty">
+                        No award progress has been recorded yet.
+                      </p>
+                    )}
+                  </section>
+                </div>
+
+                <footer className="member-profile-footer">
+                  <button
+                    type="button"
+                    disabled={viewingMemberIndex <= 0}
+                    onClick={() =>
+                      setViewingMemberId(
+                        filteredMembers[viewingMemberIndex - 1]?.id ?? null,
+                      )
+                    }
+                  >
+                    ← Previous
+                  </button>
+                  <span>
+                    {viewingMemberIndex + 1} of {filteredMembers.length}
+                  </span>
+                  <button
+                    type="button"
+                    disabled={
+                      viewingMemberIndex < 0 ||
+                      viewingMemberIndex >= filteredMembers.length - 1
+                    }
+                    onClick={() =>
+                      setViewingMemberId(
+                        filteredMembers[viewingMemberIndex + 1]?.id ?? null,
+                      )
+                    }
+                  >
+                    Next →
+                  </button>
+                </footer>
+              </section>
+            </div>
+          );
+        })()}
 
       {submissionMember && user && (
         <div

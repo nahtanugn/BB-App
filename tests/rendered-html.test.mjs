@@ -57,7 +57,13 @@ test("defines the 11KCHBB App application shell and sharing metadata", async () 
   assert.match(tracker, /submissionPendingTotal/);
   assert.match(tracker, /className="nav-badge"/);
   assert.match(tracker, /member-new-marker/);
-  assert.match(tracker, /member-detail-summary/);
+  assert.match(tracker, /View profile/);
+  assert.match(tracker, /MEMBER PROFILE/);
+  assert.match(tracker, /member-profile-details/);
+  assert.match(tracker, /memberAttendance\(viewingMember\)/);
+  assert.match(tracker, /AWARD RECORD/);
+  assert.match(tracker, /← Previous/);
+  assert.match(tracker, /Next →/);
   assert.match(tracker, /Edit details/);
   assert.match(standalone, /Company portal/);
   assert.match(standalone, /Create your administrator account/);
