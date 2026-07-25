@@ -11,6 +11,7 @@ type User = {
     | "officer"
     | "nco"
     | "squad_leader"
+    | "viewer"
     | "member";
   temporary_access_role: string;
   access_expires_at: string | null;
@@ -31,12 +32,14 @@ export default function SubmissionsPage({
     initialSection,
   );
   const hasTemporaryAdminAccess = Boolean(
-    user.temporary_access_role === "temporary_admin" &&
+    user.role !== "viewer" &&
+      user.temporary_access_role === "temporary_admin" &&
       user.access_expires_at &&
       user.access_expires_at > new Date().toISOString(),
   );
   const canReviewAll =
-    ["admin", "officer"].includes(user.role) || hasTemporaryAdminAccess;
+    ["admin", "officer", "viewer"].includes(user.role) ||
+    hasTemporaryAdminAccess;
   return (
     <main className="resources-shell submissions-page">
       <header className="resources-topbar">

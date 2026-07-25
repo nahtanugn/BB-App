@@ -17,6 +17,7 @@ export async function GET(request: Request) {
     await ensureStockSchema(runtime.DB);
     const permissions = await getStockPermissions(runtime.DB, user);
     const canManage = permissions.includes("stock.manage_uniform_requests");
+    const canViewAll = canManage || user.role === "viewer";
     const member = await memberForUser(user.email);
     const ownRequests = member
       ? await runtime.DB.prepare(`SELECT r.*, i.name AS item_name, i.variant, i.section AS item_section,
@@ -38,7 +39,7 @@ export async function GET(request: Request) {
         ORDER BY i.section, i.category, i.name, i.variant`)
           .bind(member.section === "junior" ? "junior" : "senior").all()
       : { results: [] };
-    const reviewRequests = canManage
+    const reviewRequests = canViewAll
       ? await runtime.DB.prepare(`SELECT r.*, i.name AS item_name, i.variant, i.section AS item_section,
           i.category, i.condition, m.name AS member_name, m.section AS member_section, m.squad,
           COALESCE((SELECT SUM(t.quantity_delta) FROM stock_transactions t WHERE t.item_id = i.id), 0) AS stock_quantity
@@ -53,6 +54,8 @@ export async function GET(request: Request) {
     return Response.json({
       member: member ?? null,
       canManage,
+      canViewAll,
+      canRequest: user.role !== "viewer",
       items: items.results,
       ownRequests: ownRequests.results,
       reviewRequests: reviewRequests.results,
@@ -66,6 +69,8 @@ export async function POST(request: Request) {
   try {
     const user = await getCurrentUser(request);
     if (!user) return Response.json({ error: "Sign in required" }, { status: 401 });
+    if (user.role === "viewer")
+      return Response.json({ error: "Viewer accounts have read-only access" }, { status: 403 });
     await ensureStockSchema(runtime.DB);
     const body = (await request.json()) as Record<string, unknown>;
     const action = String(body.action ?? "");

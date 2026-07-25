@@ -14,6 +14,7 @@ const allowedRoles = [
   "officer",
   "nco",
   "squad_leader",
+  "viewer",
   "member",
 ];
 const allowedSquads = ["Alpha", "Bravo", "Charlie", "Delta"];
@@ -86,9 +87,9 @@ export async function GET(request: Request) {
     ).first<{ total: number }>();
     const url = new URL(request.url);
     if (url.searchParams.get("users") === "1") {
-      if (user?.role !== "admin")
+      if (!user || !["admin", "viewer"].includes(user.role))
         return Response.json(
-          { error: "Administrator access required" },
+          { error: "Administrator or Viewer access required" },
           { status: 403 },
         );
       const users = await runtime.DB.prepare(
@@ -283,6 +284,9 @@ export async function POST(request: Request) {
         ? requestedRole
         : "officer";
       const temporaryAccessRole =
+        role === "viewer"
+          ? ""
+          :
         String(body.temporaryAccessRole ?? "") === "temporary_admin"
           ? "temporary_admin"
           : "";
@@ -414,6 +418,9 @@ export async function POST(request: Request) {
           : "senior";
       const requestedSquad = String(body.squad ?? "");
       const temporaryAccessRole =
+        requestedRole === "viewer"
+          ? ""
+          :
         String(body.temporaryAccessRole ?? "") === "temporary_admin"
           ? "temporary_admin"
           : "";

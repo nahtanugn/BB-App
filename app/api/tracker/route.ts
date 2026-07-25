@@ -777,6 +777,11 @@ export async function POST(request: Request) {
     const user = await getCurrentUser(request);
     if (!user)
       return Response.json({ error: "Sign in required" }, { status: 401 });
+    if (user.role === "viewer")
+      return Response.json(
+        { error: "Viewer accounts have read-only access" },
+        { status: 403 },
+      );
     const hasTemporaryAccess = hasTemporaryAdminAccess(user);
     if (user.role === "member" && !hasTemporaryAccess)
       return Response.json(

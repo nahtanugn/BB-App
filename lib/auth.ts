@@ -9,6 +9,7 @@ export type AppUser = {
     | "officer"
     | "nco"
     | "squad_leader"
+    | "viewer"
     | "member";
   squad: string;
   member_section: string;
@@ -98,7 +99,8 @@ export function getRuntimeEnv() {
 
 export function hasTemporaryAdminAccess(user: AppUser | null | undefined) {
   return Boolean(
-    user?.temporary_access_role === "temporary_admin" &&
+    user?.role !== "viewer" &&
+      user?.temporary_access_role === "temporary_admin" &&
       user.access_expires_at &&
       user.access_expires_at > new Date().toISOString(),
   );

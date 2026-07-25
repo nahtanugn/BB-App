@@ -9,6 +9,7 @@ type User = {
     | "officer"
     | "nco"
     | "squad_leader"
+    | "viewer"
     | "member";
   temporary_access_role: string;
   access_expires_at: string | null;
@@ -60,7 +61,8 @@ export default function AwardSubmissions({
   const [statusFilter, setStatusFilter] = useState("all");
   const [reviewNotes, setReviewNotes] = useState<Record<number, string>>({});
   const hasTemporaryAdminAccess = Boolean(
-    user.temporary_access_role === "temporary_admin" &&
+    user.role !== "viewer" &&
+      user.temporary_access_role === "temporary_admin" &&
       user.access_expires_at &&
       user.access_expires_at > new Date().toISOString(),
   );
@@ -71,12 +73,14 @@ export default function AwardSubmissions({
     ["member", "nco", "squad_leader"].includes(user.role) &&
     !hasTemporaryAdminAccess;
   const isOfficerPortal = hasOperationalAdminAccess && !memberId;
+  const isReadOnlyPortal = user.role === "viewer" && !memberId;
   const canArchive = user.role === "admin" || hasTemporaryAdminAccess;
-  const showArchived = canArchive && statusFilter === "archived";
+  const canViewArchived = canArchive || isReadOnlyPortal;
+  const showArchived = canViewArchived && statusFilter === "archived";
   const endpoint =
     isPersonalApplicant
       ? "/api/submissions"
-      : isOfficerPortal
+      : isOfficerPortal || isReadOnlyPortal
         ? `/api/submissions?all=1&section=${section}${showArchived ? "&archived=1" : ""}`
         : `/api/submissions?memberId=${memberId ?? ""}`;
 
@@ -261,8 +265,10 @@ export default function AwardSubmissions({
           <h2>
             {isPersonalApplicant
               ? "Apply for an award"
-              : isOfficerPortal
-                ? "Officer Submission Portal"
+              : isOfficerPortal || isReadOnlyPortal
+                ? isReadOnlyPortal
+                  ? "Submission Portal · Read only"
+                  : "Officer Submission Portal"
               : user.role === "squad_leader"
                 ? "Member applications"
                 : "Review member applications"}
@@ -270,8 +276,10 @@ export default function AwardSubmissions({
           <p>
             {isPersonalApplicant
               ? "Send your completed work to an officer for review."
-              : isOfficerPortal
-                ? "Approve or reject applications and revise decisions when needed. Results update the Award Matrix automatically."
+              : isOfficerPortal || isReadOnlyPortal
+                ? isReadOnlyPortal
+                  ? "View all member applications and officer decisions without changing them."
+                  : "Approve or reject applications and revise decisions when needed. Results update the Award Matrix automatically."
               : user.role === "squad_leader"
                 ? "View submitted applications and their review status."
                 : "Verify or reject award applications submitted by members."}
@@ -362,7 +370,7 @@ export default function AwardSubmissions({
       {message && !isPersonalApplicant && (
         <p className="form-success submission-message">{message}</p>
       )}
-      {isOfficerPortal && (
+      {(isOfficerPortal || isReadOnlyPortal) && (
         <div className="submission-portal-toolbar panel">
           <label>
             Search submissions
@@ -383,7 +391,7 @@ export default function AwardSubmissions({
               <option value="pending">Pending review</option>
               <option value="approved">Verified submissions</option>
               <option value="rejected">Rejected</option>
-              {canArchive && (
+              {canViewArchived && (
                 <option value="archived">Archived</option>
               )}
             </select>

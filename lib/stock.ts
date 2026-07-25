@@ -249,6 +249,14 @@ export async function ensureStockSchema(db: D1Database) {
 }
 
 export async function getStockPermissions(db: D1Database, user: AppUser) {
+  if (user.role === "viewer") {
+    return [
+      "stock.view_uniform",
+      "stock.view_awards",
+      "stock.view_history",
+      "stock.export",
+    ];
+  }
   if (user.role === "admin" || (user.temporary_access_role === "temporary_admin" && user.access_expires_at && user.access_expires_at > new Date().toISOString())) {
     return [...STOCK_PERMISSIONS];
   }

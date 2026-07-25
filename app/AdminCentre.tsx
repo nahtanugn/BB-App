@@ -3,7 +3,7 @@
 import { FormEvent, useEffect, useMemo, useState } from "react";
 import CustomRoleManager from "./CustomRoleManager";
 
-type Role = "admin" | "officer" | "nco" | "squad_leader" | "member";
+type Role = "admin" | "officer" | "nco" | "squad_leader" | "viewer" | "member";
 type ManagedUser = {
   id: number;
   email: string;
@@ -30,10 +30,11 @@ export default function AdminCentre({
   onBack,
   onLogout,
 }: {
-  currentUser: { id: number; name: string; email: string };
+  currentUser: { id: number; name: string; email: string; role: Role };
   onBack: () => void;
   onLogout: () => void;
 }) {
+  const readOnly = currentUser.role === "viewer";
   const [users, setUsers] = useState<ManagedUser[]>([]);
   const [pendingMembers, setPendingMembers] = useState<PendingMember[]>([]);
   const [editingUser, setEditingUser] = useState<ManagedUser | null>(null);
@@ -174,11 +175,11 @@ export default function AdminCentre({
       {notice && <div className="action-toast" role="status"><span>✓</span>{notice}<button onClick={() => setNotice("")} aria-label="Dismiss confirmation">×</button></div>}
       <header className="stock-topbar">
         <div className="resource-brand"><div className="brand-mark app-photo" role="img" aria-label="11th Kuching Company" /><div><strong>11KCHBB App</strong><span>Admin Centre</span></div></div>
-        <div className="stock-user"><span><strong>{currentUser.name}</strong><small>Administrator</small></span><button onClick={onBack}>Back to app</button><button onClick={onLogout}>Sign out</button></div>
+        <div className="stock-user"><span><strong>{currentUser.name}</strong><small>{readOnly ? "Viewer · read only" : "Administrator"}</small></span><button onClick={onBack}>Back to app</button><button onClick={onLogout}>Sign out</button></div>
       </header>
       <section className="admin-centre-page">
         <div className="admin-centre-hero">
-          <div><p className="eyebrow">ADMINISTRATION</p><h1>Roles & accounts</h1><p>Manage membership logins, access levels and custom operational roles in one place.</p></div>
+          <div><p className="eyebrow">ADMINISTRATION</p><h1>Roles & accounts</h1><p>{readOnly ? "View membership logins, access levels and custom operational roles." : "Manage membership logins, access levels and custom operational roles in one place."}</p></div>
           <label className="admin-search"><span>⌕</span><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search accounts" /></label>
         </div>
         {error && <p className="form-error">{error}</p>}
@@ -202,28 +203,30 @@ export default function AdminCentre({
                   <article className={!user.active ? "disabled" : ""} key={user.id}>
                     <div className="admin-user-avatar">{user.name.split(/\s+/).map((part) => part[0]).join("").slice(0, 2).toUpperCase()}</div>
                     <div><strong>{user.name}</strong><small>{user.email}</small><span>{user.role.replaceAll("_", " ")}{user.squad ? ` · ${user.squad}` : ""}{!user.active ? " · Disabled" : ""}</span></div>
-                    <div className="admin-account-actions">
+                    {!readOnly && <div className="admin-account-actions">
                       <button className="text-button" onClick={() => setEditingUser(user)}>Edit</button>
                       <button disabled={busy || user.id === currentUser.id} className={user.active ? "danger-link" : "text-button"} onClick={() => setUserActive(user)}>{user.active ? "Disable" : "Enable"}</button>
                       <button disabled={busy || user.id === currentUser.id} className="danger-link" onClick={() => deleteUser(user)}>Delete</button>
-                    </div>
+                    </div>}
                   </article>
                 ))}
               </div>
               {pendingMembers.length > 0 && (
                 <div className="pending-login-panel">
                   <h3>Members without login accounts</h3>
-                  {pendingMembers.map((member) => <article key={member.id}><div><strong>{member.name}</strong><small>{member.email} · {member.section} · {member.squad}</small></div><button className="text-button" onClick={() => { setPendingAccountMember(member); setNewRole("member"); setNewTemporaryAccess(""); }}>Create login</button></article>)}
+                  {pendingMembers.map((member) => <article key={member.id}><div><strong>{member.name}</strong><small>{member.email} · {member.section} · {member.squad}</small></div>{!readOnly && <button className="text-button" onClick={() => { setPendingAccountMember(member); setNewRole("member"); setNewTemporaryAccess(""); }}>Create login</button>}</article>)}
                 </div>
               )}
             </section>
             <section className="admin-account-editor">
-              {editingUser ? (
+              {readOnly ? (
+                <div className="read-only-panel"><p className="eyebrow">READ ONLY</p><h2>Account details are protected</h2><p>Viewer accounts can inspect every account but cannot create, edit, disable, or delete accounts.</p></div>
+              ) : editingUser ? (
                 <form key={editingUser.id} onSubmit={updateUser}>
                   <div className="account-section-heading"><div><p className="eyebrow">EDIT ACCOUNT</p><h2>{editingUser.name}</h2></div><button type="button" className="text-button" onClick={() => setEditingUser(null)}>Cancel</button></div>
                   <label>Name<input name="name" required defaultValue={editingUser.name} /></label>
                   <label>Email<input name="email" type="email" required defaultValue={editingUser.email} /></label>
-                  <label>Normal role<select name="role" value={editingUser.role} disabled={editingUser.id === currentUser.id} onChange={(event) => setEditingUser({ ...editingUser, role: event.target.value as Role })}><option value="admin">Administrator</option><option value="officer">Officer</option><option value="nco">NCO</option><option value="squad_leader">Squad Leader</option><option value="member">Member</option></select></label>
+                  <label>Normal role<select name="role" value={editingUser.role} disabled={editingUser.id === currentUser.id} onChange={(event) => setEditingUser({ ...editingUser, role: event.target.value as Role })}><option value="admin">Administrator</option><option value="officer">Officer</option><option value="nco">NCO</option><option value="squad_leader">Squad Leader</option><option value="viewer">Viewer · full read-only access</option><option value="member">Member</option></select></label>
                   {["nco", "squad_leader", "member"].includes(editingUser.role) && <label>Assigned squad<select name="squad" defaultValue={editingUser.squad || "Alpha"}><option>Alpha</option><option>Bravo</option><option>Charlie</option><option>Delta</option></select></label>}
                   {editingUser.role === "member" && <label>Member section<select name="memberSection" defaultValue={editingUser.member_section ?? "senior"}><option value="senior">Senior</option><option value="junior">Junior</option></select></label>}
                   <label>Temporary access<select name="temporaryAccessRole" value={editingUser.temporary_access_role} disabled={editingUser.id === currentUser.id} onChange={(event) => setEditingUser({ ...editingUser, temporary_access_role: event.target.value, access_expires_at: event.target.value ? editingUser.access_expires_at : null })}><option value="">None</option><option value="temporary_admin">Temporary Admin</option></select></label>
@@ -236,7 +239,7 @@ export default function AdminCentre({
                   <label>Name<input name="name" required readOnly={Boolean(pendingAccountMember)} defaultValue={pendingAccountMember?.name ?? ""} /></label>
                   <label>Email<input name="email" type="email" required readOnly={Boolean(pendingAccountMember)} defaultValue={pendingAccountMember?.email ?? ""} /></label>
                   <label>Temporary password<input name="password" type="password" minLength={10} required /><small>At least 10 characters. The user can change it after signing in.</small></label>
-                  <label>Normal role<select name="role" value={newRole} disabled={Boolean(pendingAccountMember)} onChange={(event) => setNewRole(event.target.value as Role)}><option value="admin">Administrator</option><option value="officer">Officer</option><option value="nco">NCO</option><option value="squad_leader">Squad Leader</option><option value="member">Member</option></select>{pendingAccountMember && <input type="hidden" name="role" value="member" />}</label>
+                  <label>Normal role<select name="role" value={newRole} disabled={Boolean(pendingAccountMember)} onChange={(event) => setNewRole(event.target.value as Role)}><option value="admin">Administrator</option><option value="officer">Officer</option><option value="nco">NCO</option><option value="squad_leader">Squad Leader</option><option value="viewer">Viewer · full read-only access</option><option value="member">Member</option></select>{pendingAccountMember && <input type="hidden" name="role" value="member" />}</label>
                   {["nco", "squad_leader", "member"].includes(newRole) && <label>Assigned squad<select name="squad" defaultValue={pendingAccountMember?.squad ?? "Alpha"}><option>Alpha</option><option>Bravo</option><option>Charlie</option><option>Delta</option></select></label>}
                   {newRole === "member" && <label>Member section<select name="memberSection" defaultValue={pendingAccountMember?.section ?? "senior"}><option value="senior">Senior</option><option value="junior">Junior</option></select></label>}
                   <label>Temporary access<select name="temporaryAccessRole" value={newTemporaryAccess} onChange={(event) => setNewTemporaryAccess(event.target.value)}><option value="">None</option><option value="temporary_admin">Temporary Admin</option></select></label>
@@ -248,7 +251,7 @@ export default function AdminCentre({
           </div>
         ) : (
           <section className="admin-custom-access">
-            <CustomRoleManager users={users} />
+            <CustomRoleManager users={users} readOnly={readOnly} />
           </section>
         )}
       </section>

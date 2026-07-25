@@ -118,6 +118,8 @@ test("defines the 11KCHBB App application shell and sharing metadata", async () 
   assert.match(standalone, /onManageAccount=\{/);
   assert.match(standalone, /Delete\s*<\/button>/);
   assert.match(standalone, /value="squad_leader"/);
+  assert.match(standalone, /value="viewer"/);
+  assert.match(standalone, /Viewer · full read-only access/);
   assert.match(standalone, /Assigned squad/);
   assert.match(standalone, /Squad Leader · full view & NCO controls/);
   assert.match(standalone, /value="temporary_admin"/);
@@ -223,8 +225,9 @@ test("ships the Malaysia Senior Section catalogue, role-based portals and instal
   assert.match(authRoute, /You cannot delete your own account/);
   assert.match(
     authRoute,
-    /"admin",\s*"officer",\s*"nco",\s*"squad_leader",\s*"member"/,
+    /"admin",\s*"officer",\s*"nco",\s*"squad_leader",\s*"viewer",\s*"member"/,
   );
+  assert.match(authRoute, /\["admin", "viewer"\]\.includes\(user\.role\)/);
   assert.doesNotMatch(
     authRoute,
     /const allowedRoles = \[[\s\S]*?"temporary_admin"[\s\S]*?\];/,
@@ -261,6 +264,7 @@ test("ships the Malaysia Senior Section catalogue, role-based portals and instal
     /"create_member"[\s\S]*"create_attendance_session"[\s\S]*"update_attendance"[\s\S]*"update_member"/,
   );
   assert.match(route, /\["nco", "squad_leader"\]\.includes\(user\.role\)/);
+  assert.match(route, /user\.role === "viewer"/);
   assert.match(route, /m\.squad = \?/);
   assert.match(
     route,
@@ -280,6 +284,8 @@ test("ships the Malaysia Senior Section catalogue, role-based portals and instal
   assert.match(tracker, /\{present\}\/\{attendanceMembers\.length\}/);
   assert.match(tracker, /canEditMembers/);
   assert.match(tracker, /canAddMembers/);
+  assert.match(tracker, /const isViewer = user\?\.role === "viewer"/);
+  assert.match(tracker, /Boolean\(user\) && !isViewer/);
   assert.match(tracker, /YEARLY SUBSCRIPTION/);
   assert.match(tracker, /updateSubscription/);
   assert.match(tracker, /canManageSubscriptions/);

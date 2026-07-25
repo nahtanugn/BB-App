@@ -19,6 +19,7 @@ type User = {
     | "officer"
     | "nco"
     | "squad_leader"
+    | "viewer"
     | "member";
   squad: string;
   member_section: string;
@@ -71,7 +72,8 @@ export default function StandaloneApp() {
   const [newUserRole, setNewUserRole] = useState<User["role"]>("officer");
   const [newTemporaryAccessRole, setNewTemporaryAccessRole] = useState("");
   const hasTemporaryAdminAccess = Boolean(
-    auth?.user?.temporary_access_role === "temporary_admin" &&
+    auth?.user?.role !== "viewer" &&
+      auth?.user?.temporary_access_role === "temporary_admin" &&
       auth.user.access_expires_at &&
       auth.user.access_expires_at > new Date().toISOString(),
   );
@@ -487,7 +489,7 @@ export default function StandaloneApp() {
       />
     );
 
-  if (showAdminCentre && auth.user.role === "admin")
+  if (showAdminCentre && ["admin", "viewer"].includes(auth.user.role))
     return (
       <AdminCentre
         currentUser={auth.user}
@@ -611,7 +613,7 @@ export default function StandaloneApp() {
         onOpenAnnouncements={() => setShowAnnouncements(true)}
         announcementSummary={announcementSummary}
         onOpenAdminCentre={
-          auth.user.role === "admin"
+          ["admin", "viewer"].includes(auth.user.role)
             ? () => setShowAdminCentre(true)
             : undefined
         }
@@ -802,6 +804,9 @@ export default function StandaloneApp() {
                           <option value="squad_leader">
                             Squad Leader · full view & NCO controls
                           </option>
+                          <option value="viewer">
+                            Viewer · full read-only access
+                          </option>
                           <option value="member">
                             Member · resources only
                           </option>
@@ -974,6 +979,9 @@ export default function StandaloneApp() {
                           </option>
                           <option value="squad_leader">
                             Squad Leader · full view & NCO controls
+                          </option>
+                          <option value="viewer">
+                            Viewer · full read-only access
                           </option>
                           <option value="member">
                             Member · resources only

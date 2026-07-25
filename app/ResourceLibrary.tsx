@@ -11,6 +11,7 @@ type User = {
     | "officer"
     | "nco"
     | "squad_leader"
+    | "viewer"
     | "member";
   temporary_access_role: string;
   access_expires_at: string | null;
@@ -63,7 +64,8 @@ export default function ResourceLibrary({
   const [notice, setNotice] = useState("");
   const [busy, setBusy] = useState(false);
   const hasTemporaryAdminAccess = Boolean(
-    user.temporary_access_role === "temporary_admin" &&
+    user.role !== "viewer" &&
+      user.temporary_access_role === "temporary_admin" &&
       user.access_expires_at &&
       user.access_expires_at > new Date().toISOString(),
   );

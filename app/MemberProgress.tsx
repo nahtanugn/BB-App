@@ -9,6 +9,7 @@ type User = {
     | "officer"
     | "nco"
     | "squad_leader"
+    | "viewer"
     | "member";
   temporary_access_role: string;
   access_expires_at: string | null;

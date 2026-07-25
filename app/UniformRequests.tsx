@@ -37,6 +37,8 @@ type UniformRequest = {
 type RequestData = {
   member: { id: number; name: string; section: string; squad: string } | null;
   canManage: boolean;
+  canViewAll: boolean;
+  canRequest: boolean;
   items: UniformItem[];
   ownRequests: UniformRequest[];
   reviewRequests: UniformRequest[];
@@ -183,7 +185,7 @@ export default function UniformRequests({
         {!data && !error && <p className="request-loading">Loading uniform requests…</p>}
         {data && (
           <>
-            {data.member ? (
+            {data.member && data.canRequest ? (
               <section className="request-create-card">
                 <div><p className="eyebrow">NEW REQUEST</p><h2>Request a uniform part</h2><p>Only currently available items for your section are shown.</p></div>
                 <form onSubmit={createRequest}>
@@ -201,11 +203,11 @@ export default function UniformRequests({
                   <button className="primary" disabled={busy || !selectedItemId}>{busy ? "Submitting…" : "Submit request"}</button>
                 </form>
               </section>
-            ) : (
+            ) : !data.canViewAll ? (
               <p className="form-error">Your account is not linked to a member profile, so you cannot submit a personal request.</p>
-            )}
+            ) : null}
 
-            {data.member && (
+            {data.member && data.canRequest && (
               <section className="my-uniform-requests">
                 <div className="request-section-heading"><div><p className="eyebrow">MY REQUESTS</p><h2>Request history</h2></div><span>{data.ownRequests.length}</span></div>
                 <div className="request-card-grid">
@@ -224,7 +226,7 @@ export default function UniformRequests({
               </section>
             )}
 
-            {data.canManage && (
+            {data.canViewAll && (
               <section className="uniform-review-section">
                 <div className="request-section-heading">
                   <div><p className="eyebrow">STOREKEEPER</p><h2>Review requests</h2></div>
@@ -241,6 +243,7 @@ export default function UniformRequests({
                         <small>{request.quantity} requested · {request.reason} · {request.stock_quantity ?? 0} currently available</small>
                         {request.notes && <blockquote>{request.notes}</blockquote>}
                       </div>
+                      {data.canManage ? (
                       <form onSubmit={(event) => event.preventDefault()}>
                         <label>Review note (optional)<textarea name="reviewNotes" rows={2} defaultValue={request.review_notes} placeholder="Message shown to the member" /></label>
                         {request.status === "pending" && <div className="uniform-review-actions"><button className="approve" type="button" disabled={busy} onClick={(event) => reviewRequest(request, "approved", event.currentTarget.form!)}>Approve</button><button className="reject" type="button" disabled={busy} onClick={(event) => reviewRequest(request, "rejected", event.currentTarget.form!)}>Reject</button></div>}
@@ -248,6 +251,12 @@ export default function UniformRequests({
                         {request.status === "ready" && <div className="uniform-review-actions"><button className="issue" type="button" disabled={busy} onClick={(event) => reviewRequest(request, "issued", event.currentTarget.form!)}>Mark issued</button><button className="reject" type="button" disabled={busy} onClick={(event) => reviewRequest(request, "rejected", event.currentTarget.form!)}>Reject</button></div>}
                         {["issued", "rejected", "cancelled"].includes(request.status) && request.review_notes && <div className="request-review-note"><strong>Review note</strong><p>{request.review_notes}</p></div>}
                       </form>
+                      ) : (
+                        <div className="request-review-note">
+                          <strong>Review details</strong>
+                          <p>{request.review_notes || "No review note was added."}</p>
+                        </div>
+                      )}
                     </article>
                   ))}
                   {!reviewRequests.length && <p className="empty-inline">No requests in this view.</p>}

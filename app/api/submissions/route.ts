@@ -109,7 +109,7 @@ export async function GET(request: Request) {
       });
     }
     if (url.searchParams.get("all") === "1") {
-      if (!hasOperationalAdminAccess(user))
+      if (!hasOperationalAdminAccess(user) && user.role !== "viewer")
         return Response.json(
           { error: "Admin, Temporary Admin or Officer access required" },
           { status: 403 },
@@ -124,7 +124,8 @@ export async function GET(request: Request) {
       const section = "senior";
       if (
         showArchived &&
-        !hasAdminOrTemporaryAccess(user)
+        !hasAdminOrTemporaryAccess(user) &&
+        user.role !== "viewer"
       )
         return Response.json(
           { error: "Administrator access required" },

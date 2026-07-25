@@ -44,7 +44,7 @@ export async function GET(request: Request) {
           ? "WHERE access_level IN ('member', 'nco')"
           : "";
     const fields =
-      hasOperationalAdminAccess(user)
+      hasOperationalAdminAccess(user) || user.role === "viewer"
         ? "*"
         : "id, title, description, category, url, access_level, created_at";
     const result = await env.DB.prepare(

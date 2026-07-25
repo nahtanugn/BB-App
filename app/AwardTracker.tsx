@@ -137,6 +137,7 @@ type AwardTrackerProps = {
       | "officer"
       | "nco"
       | "squad_leader"
+      | "viewer"
       | "member";
     squad: string;
     temporary_access_role: string;
@@ -170,17 +171,19 @@ export default function AwardTracker({
   onOpenSubmissions,
 }: AwardTrackerProps) {
   const hasTemporaryAdminAccess = Boolean(
-    user?.temporary_access_role === "temporary_admin" &&
+    user?.role !== "viewer" &&
+      user?.temporary_access_role === "temporary_admin" &&
       user.access_expires_at &&
       user.access_expires_at > new Date().toISOString(),
   );
   const isNco = user?.role === "nco" && !hasTemporaryAdminAccess;
   const isSquadLeader =
     user?.role === "squad_leader" && !hasTemporaryAdminAccess;
-  const canManageAwards = !isNco && !isSquadLeader;
-  const canAddMembers = Boolean(user);
-  const canEditMembers = Boolean(user);
-  const canManageAttendance = Boolean(user);
+  const isViewer = user?.role === "viewer";
+  const canManageAwards = !isNco && !isSquadLeader && !isViewer;
+  const canAddMembers = Boolean(user) && !isViewer;
+  const canEditMembers = Boolean(user) && !isViewer;
+  const canManageAttendance = Boolean(user) && !isViewer;
   const canManageSubscriptions = canManageAwards;
   const roleCanViewSubmissions = !isNco;
   const hasOperationalAdminAccess =
@@ -188,7 +191,7 @@ export default function AwardTracker({
     hasTemporaryAdminAccess;
   const canReviewSubmissions = hasOperationalAdminAccess;
   const canSubmitPersonalAwards = isNco || isSquadLeader;
-  const canUseExportCentre = hasOperationalAdminAccess;
+  const canUseExportCentre = hasOperationalAdminAccess || isViewer;
   const canOverrideMemberDetails = hasOperationalAdminAccess;
   const [section, setSection] = useState<"senior" | "junior">("senior");
   const canViewSubmissions =
@@ -1123,13 +1126,15 @@ export default function AwardTracker({
             <span>◇</span> Subscription
           </button>
           {section === "senior" &&
-            (canReviewSubmissions || canSubmitPersonalAwards) && (
+            (canReviewSubmissions || canSubmitPersonalAwards || isViewer) && (
             <button
               className="nav-secondary"
               onClick={() => onOpenSubmissions?.(section)}
             >
               <span>◆</span>{" "}
-              {canReviewSubmissions ? "Submission portal" : "My submissions"}
+              {canReviewSubmissions || isViewer
+                ? "Submission portal"
+                : "My submissions"}
               {canReviewSubmissions && submissionPendingTotal > 0 && (
                 <b
                   className="nav-badge"
@@ -1232,7 +1237,7 @@ export default function AwardTracker({
               <b>›</b>
             </button>
             {section === "senior" &&
-              (canReviewSubmissions || canSubmitPersonalAwards) && (
+              (canReviewSubmissions || canSubmitPersonalAwards || isViewer) && (
               <button
                 onClick={() => {
                   setShowMobileMenu(false);
@@ -1242,13 +1247,15 @@ export default function AwardTracker({
                 <span>◆</span>
                 <div>
                   <strong>
-                    {canReviewSubmissions
+                    {canReviewSubmissions || isViewer
                       ? "Submission portal"
                       : "My submissions"}
                   </strong>
                   <small>
-                    {canReviewSubmissions
-                      ? "Review award applications"
+                    {canReviewSubmissions || isViewer
+                      ? isViewer
+                        ? "View award applications"
+                        : "Review award applications"
                       : "Apply for your own awards"}
                   </small>
                 </div>

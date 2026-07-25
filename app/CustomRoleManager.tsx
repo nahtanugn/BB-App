@@ -19,7 +19,13 @@ const permissionOptions = [
   ["stock.manage_uniform_requests", "Review and issue uniform requests"],
 ] as const;
 
-export default function CustomRoleManager({ users }: { users: UserOption[] }) {
+export default function CustomRoleManager({
+  users,
+  readOnly = false,
+}: {
+  users: UserOption[];
+  readOnly?: boolean;
+}) {
   const [roles, setRoles] = useState<Role[]>([]);
   const [assignments, setAssignments] = useState<Assignment[]>([]);
   const [editing, setEditing] = useState<Role | null>(null);
@@ -99,33 +105,33 @@ export default function CustomRoleManager({ users }: { users: UserOption[] }) {
               <article key={role.id}>
                 <span className="role-color" style={{ backgroundColor: role.color }} />
                 <div><strong>{role.name}</strong><small>{role.description || "No description"}</small></div>
-                <button className="text-button" onClick={() => setEditing(role)}>Edit</button>
-                <button className="danger-link" onClick={() => deleteRole(role)}>Delete</button>
+                {!readOnly && <button className="text-button" onClick={() => setEditing(role)}>Edit</button>}
+                {!readOnly && <button className="danger-link" onClick={() => deleteRole(role)}>Delete</button>}
               </article>
             ))}
             {!roles.length && <p className="empty-inline">No custom roles yet.</p>}
           </div>
-          <form key={editing?.id ?? "new-role"} className="role-form" onSubmit={saveRole}>
+          {!readOnly && <form key={editing?.id ?? "new-role"} className="role-form" onSubmit={saveRole}>
             <h4>{editing ? `Edit ${editing.name}` : "Create a role"}</h4>
             <div className="form-row"><label>Role name<input name="name" required defaultValue={editing?.name ?? ""} placeholder="e.g. Quartermaster" /></label><label>Colour<input name="color" type="color" defaultValue={editing?.color ?? "#2878d4"} /></label></div>
             <label>Description<input name="description" defaultValue={editing?.description ?? ""} placeholder="What this role is responsible for" /></label>
             <fieldset className="permission-grid"><legend>Permissions</legend>{permissionOptions.map(([value, label]) => <label key={`${editing?.id ?? "new"}-${value}`}><input type="checkbox" name="permissions" value={value} defaultChecked={editingPermissions.includes(value)} /><span>{label}</span></label>)}</fieldset>
             <div className="role-form-actions">{editing && <button type="button" className="secondary" onClick={() => setEditing(null)}>Cancel</button>}<button className="primary" disabled={busy}>{busy ? "Saving…" : editing ? "Save role" : "Create role"}</button></div>
-          </form>
+          </form>}
         </div>
         <div>
           <h4>Assignments</h4>
           <div className="assignment-list">
-            {assignments.map((assignment) => <article key={`${assignment.user_id}-${assignment.role_id}`}><span className="role-color" style={{ backgroundColor: assignment.color }} /><div><strong>{assignment.user_name}</strong><small>{assignment.role_name}{assignment.expires_at ? ` · until ${new Date(assignment.expires_at).toLocaleDateString("en-MY")}` : " · no expiry"}</small></div><button className="danger-link" onClick={() => removeAssignment(assignment)}>Remove</button></article>)}
+            {assignments.map((assignment) => <article key={`${assignment.user_id}-${assignment.role_id}`}><span className="role-color" style={{ backgroundColor: assignment.color }} /><div><strong>{assignment.user_name}</strong><small>{assignment.role_name}{assignment.expires_at ? ` · until ${new Date(assignment.expires_at).toLocaleDateString("en-MY")}` : " · no expiry"}</small></div>{!readOnly && <button className="danger-link" onClick={() => removeAssignment(assignment)}>Remove</button>}</article>)}
             {!assignments.length && <p className="empty-inline">No custom role assignments yet.</p>}
           </div>
-          <form className="role-form" onSubmit={assignRole}>
+          {!readOnly && <form className="role-form" onSubmit={assignRole}>
             <h4>Assign a role</h4>
             <label>Account<select name="userId" required defaultValue=""><option value="" disabled>Select an account</option>{users.map((user) => <option value={user.id} key={user.id}>{user.name} · {user.email}</option>)}</select></label>
             <label>Custom role<select name="roleId" required defaultValue=""><option value="" disabled>Select a role</option>{roles.map((role) => <option value={role.id} key={role.id}>{role.name}</option>)}</select></label>
             <label>Expires on (optional)<input name="expiresOn" type="date" /><small>Leave blank for ongoing access.</small></label>
             <button className="primary" disabled={busy || !roles.length}>{busy ? "Assigning…" : "Assign role"}</button>
-          </form>
+          </form>}
         </div>
       </div>
     </section>

@@ -77,7 +77,7 @@ export async function GET(request: Request) {
       transactions: transactions.results,
       members: members.results,
     };
-    if (hasAdminOrTemporaryAccess(user)) {
+    if (hasAdminOrTemporaryAccess(user) || user.role === "viewer") {
       const roles = await runtime.DB.prepare("SELECT * FROM custom_roles ORDER BY name COLLATE NOCASE").all();
       const assignments = await runtime.DB.prepare(`SELECT ur.user_id, ur.role_id, ur.expires_at,
         u.name AS user_name, u.email, r.name AS role_name, r.color
