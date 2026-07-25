@@ -138,7 +138,7 @@ type AwardTrackerProps = {
   onLogout?: () => void;
   onManageAccount?: () => void;
   onOpenResources?: () => void;
-  onOpenSubmissions?: () => void;
+  onOpenSubmissions?: (section: "senior" | "junior") => void;
 };
 
 export default function AwardTracker({
@@ -1040,7 +1040,7 @@ export default function AwardTracker({
             <span>◇</span> Subscription
           </button>
           {canReviewSubmissions && (
-            <button onClick={onOpenSubmissions}>
+            <button onClick={() => onOpenSubmissions?.(section)}>
               <span>◆</span> Submission portal
               {submissionPendingTotal > 0 && (
                 <b

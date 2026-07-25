@@ -34,10 +34,12 @@ type Submission = {
 export default function AwardSubmissions({
   user,
   memberId,
+  section = "senior",
   onChanged,
 }: {
   user: User;
   memberId?: number;
+  section?: "senior" | "junior";
   onChanged?: () => void | Promise<void>;
 }) {
   const [awards, setAwards] = useState<Award[]>([]);
@@ -57,7 +59,7 @@ export default function AwardSubmissions({
     user.role === "member"
       ? "/api/submissions"
       : isOfficerPortal
-        ? `/api/submissions?all=1${showArchived ? "&archived=1" : ""}`
+        ? `/api/submissions?all=1&section=${section}${showArchived ? "&archived=1" : ""}`
         : `/api/submissions?memberId=${memberId ?? ""}`;
 
   async function load() {

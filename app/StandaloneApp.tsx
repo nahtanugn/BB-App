@@ -35,6 +35,9 @@ export default function StandaloneApp() {
   const [showAccount, setShowAccount] = useState(false);
   const [showResources, setShowResources] = useState(false);
   const [showSubmissions, setShowSubmissions] = useState(false);
+  const [submissionSection, setSubmissionSection] = useState<
+    "senior" | "junior"
+  >("senior");
   const [users, setUsers] = useState<ManagedUser[]>([]);
   const [pendingMembers, setPendingMembers] = useState<PendingMember[]>([]);
   const [pendingAccountMember, setPendingAccountMember] =
@@ -347,6 +350,7 @@ export default function StandaloneApp() {
     return (
       <SubmissionsPage
         user={auth.user}
+        initialSection={submissionSection}
         onLogout={logout}
         onBack={() => setShowSubmissions(false)}
       />
@@ -449,7 +453,10 @@ export default function StandaloneApp() {
         onLogout={logout}
         onManageAccount={openAccount}
         onOpenResources={() => setShowResources(true)}
-        onOpenSubmissions={() => setShowSubmissions(true)}
+        onOpenSubmissions={(section) => {
+          setSubmissionSection(section);
+          setShowSubmissions(true);
+        }}
       />
       {showAccount && (
         <div

@@ -98,17 +98,22 @@ export async function GET(request: Request) {
           { status: 403 },
         );
       const showArchived = url.searchParams.get("archived") === "1";
+      const requestedSection = url.searchParams.get("section") ?? "senior";
+      const section = requestedSection === "junior" ? "junior" : "senior";
       if (showArchived && user.role !== "admin")
         return Response.json(
           { error: "Administrator access required" },
           { status: 403 },
         );
       const submissions = await env.DB.prepare(
-        `SELECT * FROM award_submissions
-        WHERE archived_at IS ${showArchived ? "NOT NULL" : "NULL"}
-        ORDER BY ${showArchived ? "archived_at" : "submitted_at"} DESC`,
-      ).all();
-      return Response.json({ submissions: submissions.results });
+        `SELECT s.* FROM award_submissions s
+        INNER JOIN members m ON m.id = s.member_id
+        WHERE m.section = ? AND s.archived_at IS ${showArchived ? "NOT NULL" : "NULL"}
+        ORDER BY s.${showArchived ? "archived_at" : "submitted_at"} DESC`,
+      )
+        .bind(section)
+        .all();
+      return Response.json({ submissions: submissions.results, section });
     }
     const memberId = Number(url.searchParams.get("memberId"));
     if (!memberId)

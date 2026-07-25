@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import AwardSubmissions from "./AwardSubmissions";
 
 type User = {
@@ -10,13 +11,20 @@ type User = {
 
 export default function SubmissionsPage({
   user,
+  initialSection = "senior",
   onBack,
   onLogout,
 }: {
   user: User;
+  initialSection?: "senior" | "junior";
   onBack: () => void;
   onLogout: () => void;
 }) {
+  const [section, setSection] = useState<"senior" | "junior">(
+    initialSection,
+  );
+  const canReviewAll =
+    user.role === "admin" || user.role === "officer";
   return (
     <main className="resources-shell submissions-page">
       <header className="resources-topbar">
@@ -44,10 +52,30 @@ export default function SubmissionsPage({
       </header>
       <section className="resources-hero submissions-hero">
         <div>
+          {canReviewAll && (
+            <div
+              className="section-switch"
+              role="group"
+              aria-label="Submission section"
+            >
+              <button
+                className={section === "senior" ? "active" : ""}
+                onClick={() => setSection("senior")}
+              >
+                Senior
+              </button>
+              <button
+                className={section === "junior" ? "active" : ""}
+                onClick={() => setSection("junior")}
+              >
+                Junior
+              </button>
+            </div>
+          )}
           <p className="eyebrow">11TH KUCHING COMPANY</p>
           <h1>
-            {user.role === "admin" || user.role === "officer"
-              ? "Officer Submission Portal"
+            {canReviewAll
+              ? `${section === "junior" ? "Junior" : "Senior"} Submission Portal`
               : "Award submissions"}
           </h1>
           <p>
@@ -59,7 +87,7 @@ export default function SubmissionsPage({
           </p>
         </div>
       </section>
-      <AwardSubmissions user={user} />
+      <AwardSubmissions user={user} section={section} />
     </main>
   );
 }

@@ -249,7 +249,13 @@ test("ships the Malaysia Senior Section catalogue, role-based portals and instal
   assert.doesNotMatch(resourceLibrary, /import AwardSubmissions/);
   assert.match(submissionsPage, /<AwardSubmissions user=\{user\}/);
   assert.match(submissionsPage, /Award submissions/);
-  assert.match(submissionsPage, /Officer Submission Portal/);
+  assert.match(
+    submissionsPage,
+    /section === "junior" \? "Junior" : "Senior"/,
+  );
+  assert.match(submissionsPage, /Submission Portal/);
+  assert.match(submissionsPage, /aria-label="Submission section"/);
+  assert.match(submissionsPage, /section=\{section\}/);
   assert.match(
     submissionsPage,
     /update the Award Matrix automatically/,
@@ -278,6 +284,11 @@ test("ships the Malaysia Senior Section catalogue, role-based portals and instal
   assert.match(submissions, /Approve/);
   assert.match(submissions, /Verified submission/);
   assert.match(submissionsRoute, /review_notes/);
+  assert.match(submissionsRoute, /m\.section = \?/);
+  assert.match(
+    submissionsRoute,
+    /url\.searchParams\.get\("section"\)/,
+  );
   assert.match(submissions, /marked Verified in the Award Matrix/);
   assert.match(submissions, /Edit review note/);
   assert.match(submissions, /\/api\/submissions\?all=1/);
