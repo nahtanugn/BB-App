@@ -3,11 +3,12 @@ import { readFile } from "node:fs/promises";
 import test from "node:test";
 
 test("defines the 11KCHBB App application shell and sharing metadata", async () => {
-  const [layout, tracker, standalone, exportCentre] = await Promise.all([
+  const [layout, tracker, standalone, exportCentre, styles] = await Promise.all([
     readFile(new URL("../app/layout.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/AwardTracker.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/StandaloneApp.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/ExportCentre.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/globals.css", import.meta.url), "utf8"),
   ]);
 
   assert.match(layout, /11KCHBB App · BB Section Tracker/);
@@ -65,6 +66,15 @@ test("defines the 11KCHBB App application shell and sharing metadata", async () 
   assert.match(tracker, /← Previous/);
   assert.match(tracker, /Next →/);
   assert.match(tracker, /Edit details/);
+  assert.match(
+    styles,
+    /\.sidebar nav \{[^}]*grid-template-columns: repeat\(7, minmax\(0, 1fr\)\)/,
+  );
+  assert.match(styles, /\.sidebar nav\.nco-nav \{[^}]*repeat\(5, 1fr\)/);
+  assert.match(
+    styles,
+    /\.sidebar nav\.squad-leader-nav \{[^}]*repeat\(6, 1fr\)/,
+  );
   assert.match(standalone, /Company portal/);
   assert.match(standalone, /Create your administrator account/);
   assert.match(standalone, /Edit account/);
