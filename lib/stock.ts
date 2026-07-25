@@ -10,6 +10,7 @@ export const STOCK_PERMISSIONS = [
   "stock.adjust",
   "stock.view_history",
   "stock.export",
+  "stock.manage_uniform_requests",
 ] as const;
 
 export type StockPermission = (typeof STOCK_PERMISSIONS)[number];
@@ -166,8 +167,30 @@ export async function ensureStockSchema(db: D1Database) {
       actor_name TEXT NOT NULL,
       created_at TEXT NOT NULL
     )`),
+    db.prepare(`CREATE TABLE IF NOT EXISTS uniform_requests (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      member_id INTEGER NOT NULL,
+      submitted_by_user_id INTEGER NOT NULL,
+      item_id INTEGER NOT NULL,
+      quantity INTEGER NOT NULL,
+      reason TEXT NOT NULL,
+      notes TEXT NOT NULL DEFAULT '',
+      status TEXT NOT NULL DEFAULT 'pending',
+      review_notes TEXT NOT NULL DEFAULT '',
+      submitted_at TEXT NOT NULL,
+      reviewed_at TEXT,
+      reviewed_by TEXT,
+      ready_at TEXT,
+      issued_at TEXT,
+      issued_by TEXT,
+      cancelled_at TEXT,
+      FOREIGN KEY (member_id) REFERENCES members(id),
+      FOREIGN KEY (item_id) REFERENCES stock_items(id)
+    )`),
     db.prepare("CREATE INDEX IF NOT EXISTS stock_transactions_item_idx ON stock_transactions(item_id)"),
     db.prepare("CREATE INDEX IF NOT EXISTS user_custom_roles_user_idx ON user_custom_roles(user_id)"),
+    db.prepare("CREATE INDEX IF NOT EXISTS uniform_requests_member_idx ON uniform_requests(member_id)"),
+    db.prepare("CREATE INDEX IF NOT EXISTS uniform_requests_status_idx ON uniform_requests(status)"),
   ]);
 
   const count = await db.prepare("SELECT COUNT(*) AS total FROM stock_items").first<{ total: number }>();

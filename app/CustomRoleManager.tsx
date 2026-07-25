@@ -16,6 +16,7 @@ const permissionOptions = [
   ["stock.adjust", "Adjust stock & add catalogue items"],
   ["stock.view_history", "View transaction history"],
   ["stock.export", "Export stock data"],
+  ["stock.manage_uniform_requests", "Review and issue uniform requests"],
 ] as const;
 
 export default function CustomRoleManager({ users }: { users: UserOption[] }) {

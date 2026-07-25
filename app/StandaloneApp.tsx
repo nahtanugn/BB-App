@@ -6,6 +6,7 @@ import CustomRoleManager from "./CustomRoleManager";
 import ResourceLibrary from "./ResourceLibrary";
 import StockCentre from "./StockCentre";
 import SubmissionsPage from "./SubmissionsPage";
+import UniformRequests from "./UniformRequests";
 
 type User = {
   id: number;
@@ -48,6 +49,7 @@ export default function StandaloneApp() {
   const [showResources, setShowResources] = useState(false);
   const [showSubmissions, setShowSubmissions] = useState(false);
   const [showStock, setShowStock] = useState(false);
+  const [showUniformRequests, setShowUniformRequests] = useState(false);
   const [stockAccess, setStockAccess] = useState(false);
   const [submissionSection, setSubmissionSection] = useState<
     "senior" | "junior"
@@ -141,6 +143,7 @@ export default function StandaloneApp() {
     setShowResources(false);
     setShowSubmissions(false);
     setShowStock(false);
+    setShowUniformRequests(false);
     setAuth((current) => (current ? { ...current, user: null } : current));
   }
 
@@ -408,6 +411,15 @@ export default function StandaloneApp() {
       />
     );
 
+  if (showUniformRequests)
+    return (
+      <UniformRequests
+        userName={auth.user.name}
+        onLogout={logout}
+        onBack={() => setShowUniformRequests(false)}
+      />
+    );
+
   if (
     (auth.user.role === "member" && !hasTemporaryAdminAccess) ||
     showResources
@@ -428,6 +440,7 @@ export default function StandaloneApp() {
           onOpenStock={
             stockAccess ? () => setShowStock(true) : undefined
           }
+          onOpenUniformRequests={() => setShowUniformRequests(true)}
           onBack={
             auth.user.role === "member"
               ? undefined
@@ -512,6 +525,7 @@ export default function StandaloneApp() {
         onManageAccount={openAccount}
         onOpenResources={() => setShowResources(true)}
         onOpenStock={stockAccess ? () => setShowStock(true) : undefined}
+        onOpenUniformRequests={() => setShowUniformRequests(true)}
         onOpenSubmissions={(section) => {
           setSubmissionSection(section);
           setShowSubmissions(true);

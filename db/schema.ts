@@ -217,3 +217,22 @@ export const stockAuditLog = sqliteTable("stock_audit_log", {
   actorName: text("actor_name").notNull(),
   createdAt: text("created_at").notNull(),
 });
+
+export const uniformRequests = sqliteTable("uniform_requests", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  memberId: integer("member_id").notNull(),
+  submittedByUserId: integer("submitted_by_user_id").notNull(),
+  itemId: integer("item_id").notNull(),
+  quantity: integer("quantity").notNull(),
+  reason: text("reason").notNull(),
+  notes: text("notes").notNull().default(""),
+  status: text("status").notNull().default("pending"),
+  reviewNotes: text("review_notes").notNull().default(""),
+  submittedAt: text("submitted_at").notNull(),
+  reviewedAt: text("reviewed_at"),
+  reviewedBy: text("reviewed_by"),
+  readyAt: text("ready_at"),
+  issuedAt: text("issued_at"),
+  issuedBy: text("issued_by"),
+  cancelledAt: text("cancelled_at"),
+});
