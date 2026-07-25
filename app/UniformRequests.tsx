@@ -68,13 +68,13 @@ export default function UniformRequests({
   const [busy, setBusy] = useState(false);
 
   async function load() {
-    const response = await fetch("/api/uniform-requests", { cache: "no-store" });
+    const response = await fetch("/api/uniform-requests/", { cache: "no-store" });
     const result = (await response.json()) as RequestData & { error?: string };
     if (!response.ok) throw new Error(result.error ?? "Unable to load uniform requests");
     setData(result);
   }
   useEffect(() => {
-    fetch("/api/uniform-requests", { cache: "no-store" })
+    fetch("/api/uniform-requests/", { cache: "no-store" })
       .then(async (response) => {
         const result = (await response.json()) as RequestData & { error?: string };
         if (!response.ok) throw new Error(result.error ?? "Unable to load uniform requests");
@@ -103,7 +103,7 @@ export default function UniformRequests({
     event.preventDefault();
     const form = new FormData(event.currentTarget);
     setBusy(true); setError(""); setNotice("");
-    const response = await fetch("/api/uniform-requests", {
+    const response = await fetch("/api/uniform-requests/", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -125,7 +125,7 @@ export default function UniformRequests({
 
   async function cancelRequest(request: UniformRequest) {
     if (!window.confirm(`Cancel your request for ${request.item_name}?`)) return;
-    const response = await fetch("/api/uniform-requests", {
+    const response = await fetch("/api/uniform-requests/", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ action: "cancel_request", requestId: request.id }),
@@ -139,7 +139,7 @@ export default function UniformRequests({
   async function reviewRequest(request: UniformRequest, status: string, formElement: HTMLFormElement) {
     const form = new FormData(formElement);
     setBusy(true); setError(""); setNotice("");
-    const response = await fetch("/api/uniform-requests", {
+    const response = await fetch("/api/uniform-requests/", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
