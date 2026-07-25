@@ -1796,6 +1796,9 @@ export default function AwardTracker({
                         item.session_id === session.id &&
                         item.status === "present",
                     ).length;
+                    const meetingDate = new Date(
+                      `${session.meeting_date}T00:00:00`,
+                    );
                     return (
                       <button
                         key={session.id}
@@ -1804,21 +1807,40 @@ export default function AwardTracker({
                         }
                         onClick={() => setActiveSessionId(session.id)}
                       >
-                        <span>
+                        <time
+                          className="session-date"
+                          dateTime={session.meeting_date}
+                        >
+                          <span>
+                            {meetingDate
+                              .toLocaleDateString("en-MY", { month: "short" })
+                              .toUpperCase()}
+                          </span>
+                          <strong>
+                            {meetingDate.toLocaleDateString("en-MY", {
+                              day: "2-digit",
+                            })}
+                          </strong>
+                          <small>
+                            {meetingDate.toLocaleDateString("en-MY", {
+                              weekday: "short",
+                            })}
+                          </small>
+                        </time>
+                        <span className="session-info">
                           <strong>{session.title}</strong>
                           <small>
-                            {new Date(
-                              `${session.meeting_date}T00:00:00`,
-                            ).toLocaleDateString("en-MY", {
-                              day: "numeric",
-                              month: "short",
+                            {meetingDate.toLocaleDateString("en-MY", {
                               year: "numeric",
                             })}
                           </small>
                         </span>
-                        <b>
-                          {present}/{attendanceMembers.length}
-                        </b>
+                        <span className="session-count">
+                          <strong>
+                            {present}/{attendanceMembers.length}
+                          </strong>
+                          <small>Present</small>
+                        </span>
                       </button>
                     );
                   })}

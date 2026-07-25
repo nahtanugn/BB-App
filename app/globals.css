@@ -225,14 +225,45 @@ h2 { color: var(--navy); }
 
 .attendance-layout { display: grid; grid-template-columns: minmax(235px, .62fr) minmax(0, 1.65fr); gap: 15px; align-items: start; }
 .session-list { overflow: hidden; }
-.session-buttons { display: grid; max-height: calc(100vh - 245px); overflow-y: auto; }
-.session-buttons button { min-height: 65px; padding: 12px 15px; border: 0; border-bottom: 1px solid #edf0f3; background: white; display: flex; align-items: center; justify-content: space-between; gap: 12px; text-align: left; }
-.session-buttons button:hover { background: #f8fafc; }
-.session-buttons button.active { background: var(--blue-soft); box-shadow: inset 3px 0 0 var(--blue); }
-.session-buttons span strong, .session-buttons span small { display: block; }
-.session-buttons span strong { color: var(--ink); font-size: 10px; }
-.session-buttons span small { margin-top: 4px; color: var(--muted); font-size: 9px; }
-.session-buttons b { color: var(--blue); font-size: 9px; white-space: nowrap; }
+.session-buttons { padding: 9px; display: grid; gap: 8px; max-height: calc(100vh - 245px); overflow-y: auto; }
+.session-buttons button {
+  min-height: 82px;
+  padding: 10px;
+  border: 1px solid #e1e8ef;
+  border-radius: 13px;
+  background: white;
+  display: grid;
+  grid-template-columns: 52px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 11px;
+  text-align: left;
+}
+.session-buttons button:hover { border-color: #bad3ec; background: #f8fbff; }
+.session-buttons button.active { border-color: #88b9eb; background: var(--blue-soft); box-shadow: 0 7px 18px rgba(18, 107, 213, .12); }
+.session-date {
+  min-height: 61px;
+  padding: 6px 4px;
+  border-radius: 11px;
+  display: grid;
+  place-items: center;
+  align-content: center;
+  background: #eef4fa;
+  color: var(--navy);
+  line-height: 1;
+}
+.session-date span { color: var(--blue); font-size: 8px; font-weight: 900; letter-spacing: .08em; }
+.session-date strong { margin: 4px 0 3px; font-family: Georgia, serif; font-size: 23px; }
+.session-date small { color: var(--muted); font-size: 8px; font-weight: 700; }
+.session-buttons button.active .session-date { background: var(--navy); color: white; }
+.session-buttons button.active .session-date span { color: var(--gold); }
+.session-buttons button.active .session-date small { color: #c5d7e8; }
+.session-info strong, .session-info small,
+.session-count strong, .session-count small { display: block; }
+.session-info strong { color: var(--ink); font-size: 11px; }
+.session-info small { margin-top: 5px; color: var(--muted); font-size: 9px; }
+.session-count { min-width: 48px; text-align: center; }
+.session-count strong { color: var(--blue); font-family: Georgia, serif; font-size: 16px; }
+.session-count small { margin-top: 3px; color: var(--muted); font-size: 7px; text-transform: uppercase; letter-spacing: .06em; }
 .attendance-register { min-height: 420px; overflow: hidden; }
 .attendance-heading small { display: block; margin-top: 5px; color: var(--muted); font-size: 9px; }
 .danger-link { border: 0; background: transparent; color: var(--danger); font-size: 9px; font-weight: 750; }
@@ -540,7 +571,21 @@ h2 { color: var(--navy); }
   .attendance-layout { display: block; }
   .attendance-register { margin-top: 14px; }
   .subscription-heading { align-items: flex-start; flex-direction: column; }
-  .session-buttons { max-height: 225px; }
+  .session-buttons {
+    max-height: none;
+    padding: 10px;
+    display: flex;
+    gap: 10px;
+    overflow-x: auto;
+    overflow-y: hidden;
+    scroll-snap-type: x mandatory;
+    scrollbar-width: thin;
+  }
+  .session-buttons button {
+    min-width: min(255px, 82vw);
+    flex: 0 0 auto;
+    scroll-snap-align: start;
+  }
   .matrix-toolbar { align-items: flex-start; flex-direction: column; }
   .category-tabs { width: 100%; }
   .matrix-help { align-items: flex-start; flex-direction: column; gap: 8px; }
