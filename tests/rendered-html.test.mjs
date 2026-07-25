@@ -67,6 +67,9 @@ test("defines the 11KCHBB App application shell and sharing metadata", async () 
   assert.match(standalone, /Login not\s*created/);
   assert.match(standalone, /Create login/);
   assert.match(standalone, /Create member login/);
+  assert.match(standalone, /Current or temporary password/);
+  assert.match(standalone, /at least 10 characters/);
+  assert.match(standalone, /onManageAccount=\{/);
   assert.match(standalone, /Delete\s*<\/button>/);
   assert.match(standalone, /value="squad_leader"/);
   assert.match(standalone, /Assigned squad/);
@@ -240,6 +243,8 @@ test("ships the Malaysia Senior Section catalogue, role-based portals and instal
   assert.match(resourceLibrary, /Resource library/);
   assert.match(resourceLibrary, /user\.role !== "member"/);
   assert.match(resourceLibrary, /user\.role !== "nco"/);
+  assert.match(resourceLibrary, /onManageAccount/);
+  assert.match(resourceLibrary, /Change password/);
   assert.match(resourceLibrary, /Resource created successfully/);
   assert.doesNotMatch(resourceLibrary, /import AwardSubmissions/);
   assert.match(submissionsPage, /<AwardSubmissions user=\{user\}/);

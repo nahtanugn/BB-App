@@ -354,20 +354,92 @@ export default function StandaloneApp() {
 
   if (auth.user.role === "member" || showResources)
     return (
-      <ResourceLibrary
-        user={auth.user}
-        onLogout={logout}
-        onOpenSubmissions={
-          auth.user.role === "member"
-            ? () => setShowSubmissions(true)
-            : undefined
-        }
-        onBack={
-          auth.user.role === "member"
-            ? undefined
-            : () => setShowResources(false)
-        }
-      />
+      <>
+        <ResourceLibrary
+          user={auth.user}
+          onLogout={logout}
+          onOpenSubmissions={
+            auth.user.role === "member"
+              ? () => setShowSubmissions(true)
+              : undefined
+          }
+          onManageAccount={
+            auth.user.role === "member" ? openAccount : undefined
+          }
+          onBack={
+            auth.user.role === "member"
+              ? undefined
+              : () => setShowResources(false)
+          }
+        />
+        {auth.user.role === "member" && showAccount && (
+          <div
+            className="modal-backdrop"
+            role="presentation"
+            onMouseDown={() => setShowAccount(false)}
+          >
+            <section
+              className="modal account-modal"
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="member-password-title"
+              onMouseDown={(event) => event.stopPropagation()}
+            >
+              <div className="modal-heading">
+                <div>
+                  <p className="eyebrow">MY ACCOUNT</p>
+                  <h2 id="member-password-title">Change password</h2>
+                  <small>{auth.user.email}</small>
+                </div>
+                <button
+                  onClick={() => setShowAccount(false)}
+                  aria-label="Close"
+                >
+                  ×
+                </button>
+              </div>
+              <div className="account-content">
+                <section>
+                  <p>
+                    Replace the temporary password with a private password of
+                    at least 10 characters.
+                  </p>
+                  <form className="inline-form" onSubmit={changePassword}>
+                    <label>
+                      Current or temporary password
+                      <input
+                        name="currentPassword"
+                        type="password"
+                        required
+                        autoComplete="current-password"
+                      />
+                    </label>
+                    <label>
+                      New password
+                      <input
+                        name="newPassword"
+                        type="password"
+                        minLength={10}
+                        required
+                        autoComplete="new-password"
+                      />
+                    </label>
+                    <button className="primary" disabled={busy}>
+                      {busy ? "Updating…" : "Update password"}
+                    </button>
+                  </form>
+                  {notice && (
+                    <p className="form-success account-notice" role="status">
+                      {notice}
+                    </p>
+                  )}
+                  {error && <p className="form-error">{error}</p>}
+                </section>
+              </div>
+            </section>
+          </div>
+        )}
+      </>
     );
 
   return (
