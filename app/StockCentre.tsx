@@ -1,6 +1,7 @@
 "use client";
 
 import { FormEvent, useEffect, useMemo, useState } from "react";
+import AppNavigation from "./AppNavigation";
 
 type StockItem = {
   id: number;
@@ -199,17 +200,13 @@ export default function StockCentre({
 
   return (
     <main className="stock-shell">
-      <header className="stock-topbar">
-        <div className="resource-brand">
-          <div className="brand-mark app-photo" role="img" aria-label="11th Kuching Company" />
-          <div><strong>11KCHBB App</strong><span>Stock Centre</span></div>
-        </div>
-        <div className="stock-user">
-          <span><strong>{userName}</strong><small>Authorised stock access</small></span>
-          <button onClick={onBack}>Back to app</button>
-          <button onClick={onLogout}>Sign out</button>
-        </div>
-      </header>
+      <AppNavigation
+        section="Stock Centre"
+        userName={userName}
+        userDescription="Authorised stock access"
+        onBack={onBack}
+        onLogout={onLogout}
+      />
       <section className="stock-page">
         <div className="stock-heading">
           <div><p className="eyebrow">COMPANY INVENTORY</p><h1>Stock Centre</h1><p>Uniform and award balances, issues and returns in one auditable place.</p></div>

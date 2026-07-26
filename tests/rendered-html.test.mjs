@@ -330,7 +330,8 @@ test("ships the Malaysia Senior Section catalogue, role-based portals and instal
   assert.match(route, /"White"/);
   assert.match(route, /WHERE section = \?/);
   assert.match(route, /attendance_sessions WHERE section = \?/);
-  assert.match(resourceLibrary, /Resource library/);
+  assert.match(resourceLibrary, /<AppNavigation/);
+  assert.match(resourceLibrary, /Resource Management/);
   assert.match(resourceLibrary, /canManageResources/);
   assert.match(resourceLibrary, /hasTemporaryAdminAccess/);
   assert.match(resourceLibrary, /onManageAccount/);

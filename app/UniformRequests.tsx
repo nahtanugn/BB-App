@@ -1,6 +1,7 @@
 "use client";
 
 import { FormEvent, useEffect, useMemo, useState } from "react";
+import AppNavigation from "./AppNavigation";
 
 type UniformItem = {
   id: number;
@@ -176,17 +177,13 @@ export default function UniformRequests({
 
   return (
     <main className="uniform-request-shell">
-      <header className="stock-topbar">
-        <div className="resource-brand">
-          <div className="brand-mark app-photo" role="img" aria-label="11th Kuching Company" />
-          <div><strong>11KCHBB App</strong><span>Uniform Requests</span></div>
-        </div>
-        <div className="stock-user">
-          <span><strong>{userName}</strong><small>Uniform request portal</small></span>
-          <button onClick={onBack}>Back to app</button>
-          <button onClick={onLogout}>Sign out</button>
-        </div>
-      </header>
+      <AppNavigation
+        section="Uniform Requests"
+        userName={userName}
+        userDescription="Uniform request portal"
+        onBack={onBack}
+        onLogout={onLogout}
+      />
       <section className="uniform-request-page">
         <div className="uniform-request-hero">
           <div><p className="eyebrow">UNIFORM STORE</p><h1>Uniform requests</h1><p>Request available uniform parts and follow every request through collection.</p></div>

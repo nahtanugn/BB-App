@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import AwardSubmissions from "./AwardSubmissions";
+import AppNavigation from "./AppNavigation";
 
 type User = {
   name: string;
@@ -48,31 +49,18 @@ export default function SubmissionsPage({
     );
   return (
     <main className="resources-shell submissions-page">
-      <header className="resources-topbar">
-        <div className="resource-brand">
-          <div
-            className="brand-mark app-photo"
-            role="img"
-            aria-label="11th Kuching Company"
-          />
-          <div>
-            <strong>11KCHBB App</strong>
-            <span>Award submissions</span>
-          </div>
-        </div>
-        <div className="resource-user">
-          <span>
-            <strong>{user.name}</strong>
-            <small>{user.role}</small>
-          </span>
-          <button onClick={onBack}>
-            {user.role === "member" && !hasTemporaryAdminAccess
-              ? "Back to resources"
-              : "Back to tracker"}
-          </button>
-          <button onClick={onLogout}>Sign out</button>
-        </div>
-      </header>
+      <AppNavigation
+        section="Award Submissions"
+        userName={user.name}
+        userDescription={user.role.replace("_", " ")}
+        onBack={onBack}
+        backLabel={
+          user.role === "member" && !hasTemporaryAdminAccess
+            ? "Back to resources"
+            : "Back to tracker"
+        }
+        onLogout={onLogout}
+      />
       <section className="resources-hero submissions-hero">
         <div>
           {canReviewAll && (

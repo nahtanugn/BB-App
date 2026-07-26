@@ -2,6 +2,7 @@
 
 import { FormEvent, useEffect, useMemo, useState } from "react";
 import CustomRoleManager from "./CustomRoleManager";
+import AppNavigation from "./AppNavigation";
 
 type Role = "admin" | "officer" | "nco" | "squad_leader" | "viewer" | "member";
 type ManagedUser = {
@@ -213,10 +214,13 @@ export default function AdminCentre({
   return (
     <main className="admin-centre-shell">
       {notice && <div className="action-toast" role="status"><span>✓</span>{notice}<button onClick={() => setNotice("")} aria-label="Dismiss confirmation">×</button></div>}
-      <header className="stock-topbar">
-        <div className="resource-brand"><div className="brand-mark app-photo" role="img" aria-label="11th Kuching Company" /><div><strong>11KCHBB App</strong><span>Admin Centre</span></div></div>
-        <div className="stock-user"><span><strong>{currentUser.name}</strong><small>{readOnly ? "Viewer · read only" : "Administrator"}</small></span><button onClick={onBack}>Back to app</button><button onClick={onLogout}>Sign out</button></div>
-      </header>
+      <AppNavigation
+        section="Admin Centre"
+        userName={currentUser.name}
+        userDescription={readOnly ? "Viewer · read only" : "Administrator"}
+        onBack={onBack}
+        onLogout={onLogout}
+      />
       <section className="admin-centre-page">
         <div className="admin-centre-hero">
           <div><p className="eyebrow">ADMINISTRATION</p><h1>Roles & accounts</h1><p>{readOnly ? "View membership logins, access levels and custom operational roles." : "Manage membership logins, access levels and custom operational roles in one place."}</p></div>

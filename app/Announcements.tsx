@@ -1,6 +1,7 @@
 "use client";
 
 import { FormEvent, useEffect, useState } from "react";
+import AppNavigation from "./AppNavigation";
 
 type Announcement = {
   id: number;
@@ -147,17 +148,13 @@ export default function Announcements({
           <button onClick={() => setNotice("")} aria-label="Dismiss confirmation">×</button>
         </div>
       )}
-      <header className="stock-topbar">
-        <div className="resource-brand">
-          <div className="brand-mark app-photo" role="img" aria-label="11th Kuching Company" />
-          <div><strong>11KCHBB App</strong><span>Announcements</span></div>
-        </div>
-        <div className="stock-user">
-          <span><strong>{userName}</strong><small>Company announcement channel</small></span>
-          <button onClick={onBack}>Back to app</button>
-          <button onClick={onLogout}>Sign out</button>
-        </div>
-      </header>
+      <AppNavigation
+        section="Announcements"
+        userName={userName}
+        userDescription="Company announcement channel"
+        onBack={onBack}
+        onLogout={onLogout}
+      />
       <section className="announcement-page">
         <div className="announcement-hero">
           <p className="eyebrow">COMPANY CHANNEL</p>

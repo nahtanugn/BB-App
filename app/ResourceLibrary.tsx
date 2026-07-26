@@ -2,6 +2,7 @@
 
 import { FormEvent, useEffect, useMemo, useState } from "react";
 import MemberProgress from "./MemberProgress";
+import AppNavigation from "./AppNavigation";
 
 type User = {
   name: string;
@@ -205,50 +206,36 @@ export default function ResourceLibrary({
 
   return (
     <main className="resources-shell">
-      <header className="resources-topbar">
-        <div className="resource-brand">
-          <div
-            className="brand-mark app-photo"
-            role="img"
-            aria-label="11th Kuching Company"
-          />
-          <div>
-            <strong>11KCHBB App</strong>
-            <span>
-              {canManageResources
-                ? "Resource management"
-                : "Resource library"}
-            </span>
-          </div>
-        </div>
-        <div className="resource-user">
-          <span>
-            <strong>{user.name}</strong>
-            <small>{user.role}</small>
-          </span>
-          {["member", "nco", "squad_leader"].includes(user.role) &&
-            onOpenSubmissions && (
-            <button onClick={onOpenSubmissions}>Award submissions</button>
-          )}
-          {user.role === "member" && onManageAccount && (
-            <button onClick={onManageAccount}>Change password</button>
-          )}
-          {onOpenStock && <button onClick={onOpenStock}>Stock Centre</button>}
-          {onOpenUniformRequests && (
-            <button onClick={onOpenUniformRequests}>Uniform requests</button>
-          )}
-          {onOpenAnnouncements && (
-            <button onClick={onOpenAnnouncements}>
-              Announcements
-              {announcementSummary && announcementSummary.unreadCount > 0
-                ? ` (${announcementSummary.unreadCount})`
-                : ""}
-            </button>
-          )}
-          {onBack && <button onClick={onBack}>Back to tracker</button>}
-          <button onClick={onLogout}>Sign out</button>
-        </div>
-      </header>
+      <AppNavigation
+        section={canManageResources ? "Resource Management" : "Resources"}
+        userName={user.name}
+        userDescription={user.role.replace("_", " ")}
+        onBack={onBack}
+        backLabel="Back to tracker"
+        onLogout={onLogout}
+        actions={[
+          ...(["member", "nco", "squad_leader"].includes(user.role) &&
+          onOpenSubmissions
+            ? [{ label: "Award submissions", onClick: onOpenSubmissions }]
+            : []),
+          ...(user.role === "member" && onManageAccount
+            ? [{ label: "Change password", onClick: onManageAccount }]
+            : []),
+          ...(onOpenStock
+            ? [{ label: "Stock Centre", onClick: onOpenStock }]
+            : []),
+          ...(onOpenUniformRequests
+            ? [{ label: "Uniform requests", onClick: onOpenUniformRequests }]
+            : []),
+          ...(onOpenAnnouncements
+            ? [{
+                label: "Announcements",
+                onClick: onOpenAnnouncements,
+                badge: announcementSummary?.unreadCount ?? 0,
+              }]
+            : []),
+        ]}
+      />
       {announcementSummary && announcementSummary.unreadCount > 0 && announcementSummary.latest && (
         <button className={`announcement-alert resource-announcement-alert ${announcementSummary.latest.priority}`} onClick={onOpenAnnouncements}>
           <span>!</span>
