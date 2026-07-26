@@ -16,7 +16,10 @@
 - CSV export for backups and spreadsheet reporting
 - Durable Cloudflare D1 data storage
 - Independent email-and-password officer accounts with administrator controls
-- Starter records that can be removed after setup
+- Separate Senior and Junior Section records
+- Role-based access for officers, NCOs, squad leaders, members and custom roles
+- Company and band subscription registers
+- Uniform and award stock management
 
 ## Status model
 
@@ -66,7 +69,11 @@ The built-in catalogue follows the BB Malaysia Senior Section award classificati
 
 ## Contributing
 
-Issues and pull requests are welcome. Useful contribution areas include:
+Issues and pull requests are welcome. Read [CONTRIBUTING.md](CONTRIBUTING.md)
+before making changes. All development must use fictional test data; live member
+records and production credentials must never be committed to GitHub.
+
+Useful contribution areas include:
 
 - Additional eligibility checkers
 - Attendance and community-service logging
