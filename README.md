@@ -51,6 +51,16 @@ pnpm run build
 
 The app is designed for the OpenAI Sites / Cloudflare Workers runtime and uses a D1 binding named `DB`. The logical binding is declared in `.openai/hosting.json`.
 
+## Desktop editions
+
+The same live app is available as a Tauri desktop application for Apple Silicon
+and Intel Macs, Windows and Linux. Desktop installations use the production
+service and database, so data stays synchronised with the web and mobile app.
+
+Desktop builds are produced automatically for version tags. See
+[Desktop installation](docs/DESKTOP_INSTALLATION.md) for downloads and the
+unsigned-app installation notice.
+
 ## Independent Cloudflare deployment
 
 The standalone build runs directly on Cloudflare Workers and does not require a ChatGPT account. Its D1 binding and administrator email are configured in `vite.config.ts`; set the `SETUP_TOKEN` Worker secret, then run:

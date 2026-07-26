@@ -1,0 +1,19 @@
+[package]
+name = "eleven-kchbb-app"
+version = "1.1.0"
+description = "Desktop edition of the 11KCHBB App"
+authors = ["11th Kuching Company"]
+license = "MIT"
+repository = "https://github.com/nahtanugn/11KCHBB-App"
+edition = "2021"
+
+[lib]
+name = "eleven_kchbb_app_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+tauri = { version = "2", features = [] }
+

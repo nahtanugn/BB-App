@@ -1,0 +1,80 @@
+name: Desktop release
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build-desktop:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: macos-latest
+            args: "--target aarch64-apple-darwin --bundles dmg"
+            rust-targets: "aarch64-apple-darwin,x86_64-apple-darwin"
+          - platform: macos-latest
+            args: "--target x86_64-apple-darwin --bundles dmg"
+            rust-targets: "aarch64-apple-darwin,x86_64-apple-darwin"
+          - platform: ubuntu-22.04
+            args: "--bundles deb,appimage"
+            rust-targets: ""
+          - platform: windows-latest
+            args: "--bundles nsis,msi"
+            rust-targets: ""
+
+    runs-on: ${{ matrix.platform }}
+
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 11
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.rust-targets }}
+
+      - name: Install Linux desktop dependencies
+        if: matrix.platform == 'ubuntu-22.04'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf xdg-utils
+
+      - name: Install project dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build and publish desktop installers
+        uses: tauri-apps/tauri-action@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tagName: v__VERSION__
+          releaseName: "11KCHBB App v__VERSION__"
+          releaseBody: |
+            Desktop edition of 11KCHBB App for macOS, Windows and Linux.
+
+            This release connects to the same live 11KCHBB service, so authorised users see the same synchronised members, attendance, awards and account data on every device.
+
+            These installers are unsigned. Your operating system may display a security warning during installation.
+          releaseDraft: false
+          prerelease: false
+          generateReleaseNotes: true
+          releaseAssetNamePattern: "11KCHBB-App-[version]-[platform]-[arch][setup].[ext]"
+          args: ${{ matrix.args }}
+

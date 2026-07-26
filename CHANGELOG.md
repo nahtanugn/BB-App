@@ -2,6 +2,23 @@
 
 All notable changes to 11KCHBB App are recorded here.
 
+## [1.1.0] - 2026-07-26
+
+### Added
+
+- Installable desktop editions for Apple Silicon and Intel Macs, Windows and
+  Linux.
+- Automated GitHub release builds for DMG, EXE, MSI, AppImage and Debian
+  packages.
+- Desktop installation guide with clear unsigned-app safety instructions.
+
+### Data and security
+
+- Desktop editions connect to the existing production service so all
+  authorised users share the same live records.
+- The desktop wrapper grants remote content no Tauri commands, plugins or
+  operating-system capabilities.
+
 ## [1.0.0] - 2026-07-26
 
 ### Highlights
