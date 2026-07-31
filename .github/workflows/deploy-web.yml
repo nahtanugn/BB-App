@@ -2,6 +2,15 @@ name: Deploy web app
 
 on:
   workflow_dispatch:
+    inputs:
+      approval:
+        description: Type of run
+        required: true
+        type: choice
+        default: validate-only
+        options:
+          - validate-only
+          - deploy-production
 
 permissions:
   contents: read
@@ -28,6 +37,7 @@ jobs:
 
   deploy:
     needs: validate
+    if: inputs.approval == 'deploy-production'
     runs-on: ubuntu-latest
     environment: production
     steps:
