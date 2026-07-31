@@ -1,8 +1,6 @@
 "use client";
 
-import { useState } from "react";
 import AwardSubmissions from "./AwardSubmissions";
-import AppNavigation from "./AppNavigation";
 
 type User = {
   name: string;
@@ -21,18 +19,13 @@ type User = {
 
 export default function SubmissionsPage({
   user,
-  initialSection = "senior",
-  onBack,
-  onLogout,
 }: {
   user: User;
   initialSection?: "senior" | "junior";
   onBack: () => void;
   onLogout: () => void;
 }) {
-  const [section, setSection] = useState<"senior" | "junior">(
-    initialSection,
-  );
+  const section = "senior" as const;
   const hasTemporaryAdminAccess = Boolean(
     user.role !== "viewer" &&
       user.temporary_access_role === "temporary_admin" &&
@@ -49,44 +42,12 @@ export default function SubmissionsPage({
     );
   return (
     <main className="resources-shell submissions-page">
-      <AppNavigation
-        section="Award Submissions"
-        userName={user.name}
-        userDescription={user.role.replace("_", " ")}
-        onBack={onBack}
-        backLabel={
-          user.role === "member" && !hasTemporaryAdminAccess
-            ? "Back to resources"
-            : "Back to tracker"
-        }
-        onLogout={onLogout}
-      />
       <section className="resources-hero submissions-hero">
         <div>
-          {canReviewAll && (
-            <div
-              className="section-switch"
-              role="group"
-              aria-label="Submission section"
-            >
-              <button
-                className={section === "senior" ? "active" : ""}
-                onClick={() => setSection("senior")}
-              >
-                Senior
-              </button>
-              <button
-                className={section === "junior" ? "active" : ""}
-                onClick={() => setSection("junior")}
-              >
-                Junior
-              </button>
-            </div>
-          )}
           <p className="eyebrow">11TH KUCHING COMPANY</p>
           <h1>
             {canReviewAll
-              ? `${section === "junior" ? "Junior" : "Senior"} Submission Portal`
+              ? "Senior Submission Portal"
               : "Award submissions"}
           </h1>
           <p>

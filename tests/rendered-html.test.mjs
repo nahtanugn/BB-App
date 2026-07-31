@@ -122,8 +122,8 @@ test("defines the 11KCHBB App application shell and sharing metadata", async () 
   assert.match(standalone, /Login not\s*created/);
   assert.match(standalone, /Create login/);
   assert.match(standalone, /Create member login/);
-  assert.match(standalone, /Current or temporary password/);
-  assert.match(standalone, /at least 10 characters/);
+  assert.match(standalone, /must_change_password/);
+  assert.match(standalone, /minLength=\{10\}/);
   assert.match(standalone, /onManageAccount=\{/);
   assert.match(standalone, /Delete\s*<\/button>/);
   assert.match(standalone, /value="squad_leader"/);
@@ -330,22 +330,18 @@ test("ships the Malaysia Senior Section catalogue, role-based portals and instal
   assert.match(route, /"White"/);
   assert.match(route, /WHERE section = \?/);
   assert.match(route, /attendance_sessions WHERE section = \?/);
-  assert.match(resourceLibrary, /<AppNavigation/);
-  assert.match(resourceLibrary, /Resource Management/);
+  assert.doesNotMatch(resourceLibrary, /<AppNavigation/);
+  assert.match(resourceLibrary, /11TH KUCHING COMPANY/);
   assert.match(resourceLibrary, /canManageResources/);
   assert.match(resourceLibrary, /hasTemporaryAdminAccess/);
   assert.match(resourceLibrary, /onManageAccount/);
-  assert.match(resourceLibrary, /Change password/);
   assert.match(resourceLibrary, /Resource created successfully/);
   assert.doesNotMatch(resourceLibrary, /import AwardSubmissions/);
   assert.match(submissionsPage, /<AwardSubmissions user=\{user\}/);
   assert.match(submissionsPage, /Award submissions/);
-  assert.match(
-    submissionsPage,
-    /section === "junior" \? "Junior" : "Senior"/,
-  );
+  assert.doesNotMatch(submissionsPage, /section === "junior"/);
   assert.match(submissionsPage, /Submission Portal/);
-  assert.match(submissionsPage, /aria-label="Submission section"/);
+  assert.doesNotMatch(submissionsPage, /aria-label="Submission section"/);
   assert.match(submissionsPage, /section=\{section\}/);
   assert.match(
     submissionsPage,

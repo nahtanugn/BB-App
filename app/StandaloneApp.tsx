@@ -1,9 +1,12 @@
 "use client";
 
-import { FormEvent, useCallback, useEffect, useState } from "react";
+import { FormEvent, type ReactNode, useCallback, useEffect, useState } from "react";
 import AwardTracker from "./AwardTracker";
+import ActionCentre from "./ActionCentre";
 import Announcements from "./Announcements";
 import AdminCentre from "./AdminCentre";
+import AppShell, { type AppRoute } from "./AppShell";
+import AutomationCentre from "./AutomationCentre";
 import CustomRoleManager from "./CustomRoleManager";
 import ResourceLibrary from "./ResourceLibrary";
 import StockCentre from "./StockCentre";
@@ -11,6 +14,7 @@ import SubmissionsPage from "./SubmissionsPage";
 import UniformRequests from "./UniformRequests";
 import OnboardingFlow from "./OnboardingFlow";
 import OnboardingCentre from "./OnboardingCentre";
+import MemberProgress from "./MemberProgress";
 
 type User = {
   id: number;
@@ -61,13 +65,7 @@ export default function StandaloneApp() {
   const [notice, setNotice] = useState("");
   const [busy, setBusy] = useState(false);
   const [showAccount, setShowAccount] = useState(false);
-  const [showResources, setShowResources] = useState(false);
-  const [showSubmissions, setShowSubmissions] = useState(false);
-  const [showStock, setShowStock] = useState(false);
-  const [showUniformRequests, setShowUniformRequests] = useState(false);
-  const [showAnnouncements, setShowAnnouncements] = useState(false);
-  const [showAdminCentre, setShowAdminCentre] = useState(false);
-  const [showOnboardingCentre, setShowOnboardingCentre] = useState(false);
+  const [route, setRoute] = useState<AppRoute>("home");
   const [requestingAccess, setRequestingAccess] = useState(false);
   const [accessRequestNotice, setAccessRequestNotice] = useState("");
   const [onboardingPendingCount, setOnboardingPendingCount] = useState(0);
@@ -76,6 +74,7 @@ export default function StandaloneApp() {
     latest: { title: string; body: string; priority: string } | null;
   }>({ unreadCount: 0, latest: null });
   const [stockAccess, setStockAccess] = useState(false);
+  const [actionCount, setActionCount] = useState(0);
   const [submissionSection, setSubmissionSection] = useState<
     "senior" | "junior"
   >("senior");
@@ -104,6 +103,43 @@ export default function StandaloneApp() {
       ].some((prefix) => permission.startsWith(prefix)),
     ),
   );
+  const isStaff = Boolean(
+    auth?.user &&
+      (["admin", "officer", "nco", "squad_leader", "viewer"].includes(auth.user.role) ||
+        hasTemporaryAdminAccess ||
+        hasCustomTrackerAccess),
+  );
+
+  const navigate = useCallback((next: AppRoute, replace = false) => {
+    if (!auth?.user) return;
+    const operational =
+      ["admin", "officer", "viewer"].includes(auth.user.role) ||
+      hasTemporaryAdminAccess;
+    const staff =
+      operational ||
+      ["nco", "squad_leader"].includes(auth.user.role) ||
+      hasCustomTrackerAccess;
+    const allowed =
+      next === "home" ||
+      ["resources", "uniforms", "announcements"].includes(next) ||
+      (next === "stock" && stockAccess) ||
+      (["company-overview", "members", "attendance", "subscriptions"].includes(next) && staff) ||
+      (next === "awards" && (staff || auth.user.role === "member")) ||
+      (next === "submissions" &&
+        auth.user.member_section !== "junior" &&
+        (["member", "nco", "squad_leader"].includes(auth.user.role) ||
+          operational ||
+          auth.user.custom_permissions.some((permission) =>
+            ["submissions.view", "submissions.review"].includes(permission),
+          ))) ||
+      (next === "onboarding" && staff) ||
+      (next === "admin" && ["admin", "viewer"].includes(auth.user.role)) ||
+      (next === "automation" && ["admin", "viewer"].includes(auth.user.role));
+    const safeRoute = allowed ? next : "home";
+    setRoute(safeRoute);
+    const url = safeRoute === "home" ? "/" : `/?open=${safeRoute}`;
+    window.history[replace ? "replaceState" : "pushState"]({ route: safeRoute }, "", url);
+  }, [auth, hasCustomTrackerAccess, hasTemporaryAdminAccess, stockAccess]);
 
   async function refreshAuth() {
     const response = await fetch("/api/auth", { cache: "no-store" });
@@ -147,30 +183,33 @@ export default function StandaloneApp() {
 
   useEffect(() => {
     if (!auth?.user || auth.user.onboarding_required) return;
-    const target = new URL(window.location.href).searchParams.get("open");
+    const target = new URL(window.location.href).searchParams.get("open") as AppRoute | null;
     if (!target) return;
     const timer = window.setTimeout(() => {
-      if (
-        target === "submissions" &&
-        auth.user?.member_section !== "junior"
-      ) {
-        setSubmissionSection("senior");
-        setShowSubmissions(true);
-      } else if (target === "uniform-requests") {
-        setShowUniformRequests(true);
-      } else if (
-        target === "onboarding" &&
-        auth.user &&
-        ["admin", "officer", "nco", "squad_leader", "viewer"].includes(
-          auth.user.role,
-        )
-      ) {
-        setShowOnboardingCentre(true);
-      }
+      const aliases: Record<string, AppRoute> = {
+        "uniform-requests": "uniforms",
+        submissions: "submissions",
+        onboarding: "onboarding",
+        attendance: "attendance",
+        members: "members",
+        stock: "stock",
+        subscriptions: "subscriptions",
+        home: "home",
+        admin: "admin",
+      };
+      navigate(aliases[target] ?? target, true);
     }, 0);
-    window.history.replaceState({}, "", window.location.pathname);
     return () => window.clearTimeout(timer);
-  }, [auth?.user]);
+  }, [auth?.user, navigate]);
+
+  useEffect(() => {
+    const onPopState = () => {
+      const target = new URL(window.location.href).searchParams.get("open") as AppRoute | null;
+      navigate(target ?? "home", true);
+    };
+    window.addEventListener("popstate", onPopState);
+    return () => window.removeEventListener("popstate", onPopState);
+  }, [navigate]);
 
   useEffect(() => {
     if (!auth?.user || !["admin", "officer", "nco", "squad_leader", "viewer"].includes(auth.user.role)) return;
@@ -295,13 +334,7 @@ export default function StandaloneApp() {
       body: JSON.stringify({ action: "logout" }),
     });
     setShowAccount(false);
-    setShowResources(false);
-    setShowSubmissions(false);
-    setShowStock(false);
-    setShowUniformRequests(false);
-    setShowAnnouncements(false);
-    setShowAdminCentre(false);
-    setShowOnboardingCentre(false);
+    setRoute("home");
     setStockAccess(false);
     setAnnouncementSummary({ unreadCount: 0, latest: null });
     setAuth((current) => (current ? { ...current, user: null } : current));
@@ -589,197 +622,81 @@ export default function StandaloneApp() {
   if (auth.user.onboarding_required)
     return <OnboardingFlow user={auth.user} onComplete={refreshAuth} onLogout={logout} />;
 
-  if (showSubmissions)
-    return (
-      <SubmissionsPage
-        user={auth.user}
-        initialSection={submissionSection}
-        onLogout={logout}
-        onBack={() => setShowSubmissions(false)}
-      />
-    );
+  const trackerViews: Partial<Record<AppRoute, "dashboard" | "matrix" | "members" | "attendance" | "subscriptions">> = {
+    "company-overview": "dashboard",
+    awards: "matrix",
+    members: "members",
+    attendance: "attendance",
+    subscriptions: "subscriptions",
+  };
+  const openTarget = (targetUrl: string) => {
+    const target = new URL(targetUrl, window.location.origin).searchParams.get("open");
+    const aliases: Record<string, AppRoute> = {
+      "uniform-requests": "uniforms",
+      submissions: "submissions",
+      onboarding: "onboarding",
+      attendance: "attendance",
+      members: "members",
+      stock: "stock",
+      subscriptions: "subscriptions",
+      admin: "admin",
+      home: "home",
+    };
+    navigate(aliases[target ?? ""] ?? "home");
+  };
 
-  if (showStock)
-    return (
-      <StockCentre
-        userName={auth.user.name}
-        onLogout={logout}
-        onBack={() => setShowStock(false)}
-      />
-    );
-
-  if (showUniformRequests)
-    return (
-      <UniformRequests
-        userName={auth.user.name}
-        onLogout={logout}
-        onBack={() => setShowUniformRequests(false)}
-      />
-    );
-
-  if (showAnnouncements)
-    return (
-      <Announcements
-        userName={auth.user.name}
-        onLogout={logout}
-        onBack={() => {
-          setShowAnnouncements(false);
-          void refreshAnnouncementSummary();
-        }}
-        onRead={handleAnnouncementsRead}
-      />
-    );
-
-  if (showAdminCentre && ["admin", "viewer"].includes(auth.user.role))
-    return (
-      <AdminCentre
-        currentUser={auth.user}
-        onLogout={logout}
-        onBack={() => {
-          setShowAdminCentre(false);
-          void refreshAuth();
-        }}
-      />
-    );
-
-  if (showOnboardingCentre && ["admin", "officer", "nco", "squad_leader", "viewer"].includes(auth.user.role))
-    return (
-      <OnboardingCentre
-        currentUser={auth.user}
-        onLogout={logout}
-        onBack={() => setShowOnboardingCentre(false)}
-      />
-    );
-
-  if (
-    (auth.user.role === "member" &&
-      !hasTemporaryAdminAccess &&
-      !hasCustomTrackerAccess) ||
-    showResources
-  )
-    return (
-      <>
-        <ResourceLibrary
-          user={auth.user}
-          onLogout={logout}
-          onOpenSubmissions={
-            ["member", "nco", "squad_leader"].includes(auth.user.role) &&
-            auth.user.member_section !== "junior"
-              ? () => setShowSubmissions(true)
-              : undefined
-          }
-          onManageAccount={
-            auth.user.role === "member" ? openAccount : undefined
-          }
-          onOpenStock={
-            stockAccess ? () => setShowStock(true) : undefined
-          }
-          onOpenUniformRequests={() => setShowUniformRequests(true)}
-          onOpenAnnouncements={() => setShowAnnouncements(true)}
-          announcementSummary={announcementSummary}
-          onBack={
-            auth.user.role === "member"
-              ? undefined
-              : () => setShowResources(false)
-          }
-        />
-        {auth.user.role === "member" && showAccount && (
-          <div
-            className="modal-backdrop"
-            role="presentation"
-            onMouseDown={() => setShowAccount(false)}
-          >
-            <section
-              className="modal account-modal"
-              role="dialog"
-              aria-modal="true"
-              aria-labelledby="member-password-title"
-              onMouseDown={(event) => event.stopPropagation()}
-            >
-              <div className="modal-heading">
-                <div>
-                  <p className="eyebrow">MY ACCOUNT</p>
-                  <h2 id="member-password-title">Change password</h2>
-                  <small>{auth.user.email}</small>
-                </div>
-                <button
-                  onClick={() => setShowAccount(false)}
-                  aria-label="Close"
-                >
-                  ×
-                </button>
-              </div>
-              <div className="account-content">
-                <section>
-                  <p>
-                    Replace the temporary password with a private password of
-                    at least 10 characters.
-                  </p>
-                  <form className="inline-form" onSubmit={changePassword}>
-                    <label>
-                      Current or temporary password
-                      <input
-                        name="currentPassword"
-                        type="password"
-                        required
-                        autoComplete="current-password"
-                      />
-                    </label>
-                    <label>
-                      New password
-                      <input
-                        name="newPassword"
-                        type="password"
-                        minLength={10}
-                        required
-                        autoComplete="new-password"
-                      />
-                    </label>
-                    <button className="primary" disabled={busy}>
-                      {busy ? "Updating…" : "Update password"}
-                    </button>
-                  </form>
-                  {notice && (
-                    <p className="form-success account-notice" role="status">
-                      {notice}
-                    </p>
-                  )}
-                  {error && <p className="form-error">{error}</p>}
-                </section>
-              </div>
-            </section>
-          </div>
-        )}
-      </>
-    );
-
-  return (
-    <>
+  let page: ReactNode;
+  if (route === "home")
+    page = <ActionCentre userName={auth.user.name} readOnly={auth.user.role === "viewer"} onOpen={openTarget} onCountChange={setActionCount} />;
+  else if (route === "submissions")
+    page = <SubmissionsPage user={auth.user} initialSection={submissionSection} onLogout={logout} onBack={() => navigate("home")} />;
+  else if (route === "stock")
+    page = <StockCentre userName={auth.user.name} onLogout={logout} onBack={() => navigate("home")} />;
+  else if (route === "uniforms")
+    page = <UniformRequests userName={auth.user.name} onLogout={logout} onBack={() => navigate("home")} />;
+  else if (route === "announcements")
+    page = <Announcements userName={auth.user.name} onLogout={logout} onBack={() => { navigate("home"); void refreshAnnouncementSummary(); }} onRead={handleAnnouncementsRead} />;
+  else if (route === "admin" && ["admin", "viewer"].includes(auth.user.role))
+    page = <AdminCentre currentUser={auth.user} onLogout={logout} onBack={() => { navigate("home"); void refreshAuth(); }} />;
+  else if (route === "onboarding" && isStaff)
+    page = <OnboardingCentre currentUser={auth.user} onLogout={logout} onBack={() => navigate("home")} />;
+  else if (route === "automation" && ["admin", "viewer"].includes(auth.user.role))
+    page = <AutomationCentre readOnly={auth.user.role === "viewer"} />;
+  else if (route === "resources")
+    page = <ResourceLibrary user={auth.user} onLogout={logout} onOpenSubmissions={auth.user.member_section !== "junior" ? () => navigate("submissions") : undefined} onManageAccount={openAccount} onOpenStock={stockAccess ? () => navigate("stock") : undefined} onOpenUniformRequests={() => navigate("uniforms")} onOpenAnnouncements={() => navigate("announcements")} announcementSummary={announcementSummary} />;
+  else if (route === "awards" && auth.user.role === "member")
+    page = <main className="member-progress-page"><MemberProgress user={auth.user} /></main>;
+  else {
+    const activeView = trackerViews[route] ?? (isStaff ? "dashboard" : "matrix");
+    page = (
       <AwardTracker
+        embedded
+        activeView={activeView}
         user={auth.user}
         onLogout={logout}
         onManageAccount={openAccount}
-        onOpenResources={() => setShowResources(true)}
-        onOpenStock={stockAccess ? () => setShowStock(true) : undefined}
-        onOpenUniformRequests={() => setShowUniformRequests(true)}
-        onOpenAnnouncements={() => setShowAnnouncements(true)}
         announcementSummary={announcementSummary}
-        onOpenAdminCentre={
-          ["admin", "viewer"].includes(auth.user.role)
-            ? () => setShowAdminCentre(true)
-            : undefined
-        }
-        onOpenOnboardingCentre={
-          ["admin", "officer", "nco", "squad_leader", "viewer"].includes(auth.user.role)
-            ? () => setShowOnboardingCentre(true)
-            : undefined
-        }
         onboardingPendingCount={onboardingPendingCount}
-        onOpenSubmissions={(section) => {
-          setSubmissionSection(section);
-          setShowSubmissions(true);
-        }}
+        onOpenSubmissions={(section) => { setSubmissionSection(section); navigate("submissions"); }}
       />
+    );
+  }
+
+  return (
+    <>
+      <AppShell
+        user={auth.user}
+        route={route}
+        onNavigate={navigate}
+        onAccount={openAccount}
+        onLogout={logout}
+        stockAccess={stockAccess}
+        announcementCount={announcementSummary.unreadCount}
+        onboardingCount={onboardingPendingCount}
+        actionCount={actionCount}
+      >
+        {page}
+      </AppShell>
       {showAccount && (
         <div
           className="modal-backdrop"

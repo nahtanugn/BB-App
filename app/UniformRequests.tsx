@@ -1,7 +1,6 @@
 "use client";
 
 import { FormEvent, useEffect, useMemo, useState } from "react";
-import AppNavigation from "./AppNavigation";
 
 type UniformItem = {
   id: number;
@@ -54,15 +53,12 @@ const statusLabels = {
   cancelled: "Cancelled",
 };
 
-export default function UniformRequests({
-  userName,
-  onBack,
-  onLogout,
-}: {
+export default function UniformRequests(props: {
   userName: string;
   onBack: () => void;
   onLogout: () => void;
 }) {
+  void props;
   const [data, setData] = useState<RequestData | null>(null);
   const [selectedItemId, setSelectedItemId] = useState("");
   const [reviewFilter, setReviewFilter] = useState("active");
@@ -177,13 +173,6 @@ export default function UniformRequests({
 
   return (
     <main className="uniform-request-shell">
-      <AppNavigation
-        section="Uniform Requests"
-        userName={userName}
-        userDescription="Uniform request portal"
-        onBack={onBack}
-        onLogout={onLogout}
-      />
       <section className="uniform-request-page">
         <div className="uniform-request-hero">
           <div><p className="eyebrow">UNIFORM STORE</p><h1>Uniform requests</h1><p>Request available uniform parts and follow every request through collection.</p></div>

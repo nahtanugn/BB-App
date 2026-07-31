@@ -148,6 +148,8 @@ function malaysiaDateKey(date = new Date()) {
 }
 
 type AwardTrackerProps = {
+  embedded?: boolean;
+  activeView?: "dashboard" | "matrix" | "members" | "attendance" | "subscriptions";
   user?: {
     name: string;
     email: string;
@@ -181,6 +183,8 @@ type AwardTrackerProps = {
 };
 
 export default function AwardTracker({
+  embedded = false,
+  activeView,
   user,
   onLogout,
   onManageAccount,
@@ -247,6 +251,11 @@ export default function AwardTracker({
   const [view, setView] = useState<
     "dashboard" | "matrix" | "members" | "attendance" | "subscriptions"
   >(isNco ? "attendance" : "dashboard");
+  useEffect(() => {
+    if (!activeView) return;
+    const timer = window.setTimeout(() => setView(activeView), 0);
+    return () => window.clearTimeout(timer);
+  }, [activeView]);
   const currentSubscriptionYear = Number(
     new Intl.DateTimeFormat("en", {
       timeZone: "Asia/Kuching",
@@ -1238,6 +1247,7 @@ export default function AwardTracker({
           <b>{announcementSummary.unreadCount} new</b>
         </button>
       )}
+      {!embedded && <>
       <aside className="sidebar">
         <div className="brand">
           <div
@@ -1557,6 +1567,7 @@ export default function AwardTracker({
         </div>
       )}
 
+      </>}
       <main className="main-content">
         <header className="topbar">
           <div>

@@ -265,6 +265,90 @@ export const notificationPreferences = sqliteTable("notification_preferences", {
   updatedAt: text("updated_at").notNull(),
 });
 
+export const automationRules = sqliteTable("automation_rules", {
+  ruleKey: text("rule_key").primaryKey(),
+  enabled: integer("enabled", { mode: "boolean" }).notNull().default(true),
+  reminderDays: text("reminder_days").notNull().default("[3,7]"),
+  recipientRoles: text("recipient_roles").notNull().default("[]"),
+  dueMonthDay: text("due_month_day").notNull().default(""),
+  updatedBy: integer("updated_by"),
+  updatedAt: text("updated_at").notNull(),
+});
+
+export const automationActionItems = sqliteTable(
+  "automation_action_items",
+  {
+    id: integer("id").primaryKey({ autoIncrement: true }),
+    dedupeKey: text("dedupe_key").notNull(),
+    ruleKey: text("rule_key").notNull(),
+    recipientUserId: integer("recipient_user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    title: text("title").notNull(),
+    description: text("description").notNull(),
+    targetUrl: text("target_url").notNull().default("/"),
+    priority: text("priority").notNull().default("normal"),
+    sourceType: text("source_type").notNull(),
+    sourceId: text("source_id").notNull(),
+    status: text("status").notNull().default("open"),
+    dueAt: text("due_at"),
+    firstSeenAt: text("first_seen_at").notNull(),
+    lastSeenAt: text("last_seen_at").notNull(),
+    lastSeenRunId: integer("last_seen_run_id"),
+    lastNotifiedAt: text("last_notified_at"),
+    snoozedUntil: text("snoozed_until"),
+    resolvedAt: text("resolved_at"),
+  },
+  (table) => [
+    uniqueIndex("automation_action_items_dedupe_unique").on(table.dedupeKey),
+    index("automation_action_items_recipient_status_idx").on(
+      table.recipientUserId,
+      table.status,
+      table.dueAt,
+    ),
+    index("automation_action_items_rule_status_idx").on(
+      table.ruleKey,
+      table.status,
+      table.lastSeenRunId,
+    ),
+  ],
+);
+
+export const automationRuns = sqliteTable(
+  "automation_runs",
+  {
+    id: integer("id").primaryKey({ autoIncrement: true }),
+    runType: text("run_type").notNull(),
+    status: text("status").notNull().default("running"),
+    startedAt: text("started_at").notNull(),
+    completedAt: text("completed_at"),
+    createdCount: integer("created_count").notNull().default(0),
+    resolvedCount: integer("resolved_count").notNull().default(0),
+    notificationCount: integer("notification_count").notNull().default(0),
+    errorMessage: text("error_message").notNull().default(""),
+  },
+  (table) => [index("automation_runs_started_idx").on(table.startedAt)],
+);
+
+export const automationLocks = sqliteTable("automation_locks", {
+  lockKey: text("lock_key").primaryKey(),
+  lockedUntil: text("locked_until").notNull(),
+  owner: text("owner").notNull(),
+});
+
+export const automationSettings = sqliteTable("automation_settings", {
+  id: integer("id").primaryKey(),
+  dailyTime: text("daily_time").notNull().default("08:00"),
+  weeklyTime: text("weekly_time").notNull().default("08:00"),
+  updatedBy: integer("updated_by"),
+  updatedAt: text("updated_at").notNull(),
+});
+
+export const automationScheduleRuns = sqliteTable("automation_schedule_runs", {
+  scheduleKey: text("schedule_key").primaryKey(),
+  ranAt: text("ran_at").notNull(),
+});
+
 export const resources = sqliteTable("resources", {
   id: integer("id").primaryKey({ autoIncrement: true }),
   title: text("title").notNull(),

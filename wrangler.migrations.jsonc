@@ -1,0 +1,14 @@
+{
+  "name": "app",
+  "main": "dist/server/index.js",
+  "compatibility_date": "2026-05-15",
+  "compatibility_flags": ["nodejs_compat"],
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "anchor-awards-db",
+      "database_id": "f01d8a1a-11ff-4c9f-a01f-1338e29f04f1",
+      "migrations_dir": "drizzle"
+    }
+  ]
+}

@@ -1,7 +1,6 @@
 "use client";
 
 import { FormEvent, useEffect, useState } from "react";
-import AppNavigation from "./AppNavigation";
 
 type ManagementData = {
   requests: Array<Record<string, string | number | null>>;
@@ -13,9 +12,6 @@ type ManagementData = {
 };
 
 export default function OnboardingCentre({
-  currentUser,
-  onBack,
-  onLogout,
   embedded = false,
 }: {
   currentUser: { name: string; role: string };
@@ -174,5 +170,5 @@ export default function OnboardingCentre({
   );
 
   if (embedded) return content;
-  return <main className="onboarding-centre-shell"><AppNavigation section="Onboarding Centre" userName={currentUser.name} userDescription={`${currentUser.role.replaceAll("_", " ")} access`} onBack={onBack} onLogout={onLogout ?? (() => undefined)} />{content}</main>;
+  return <main className="onboarding-centre-shell">{content}</main>;
 }

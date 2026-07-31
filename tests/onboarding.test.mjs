@@ -57,7 +57,7 @@ test("enforces guided onboarding, privacy choices and squad-scoped corrections",
   assert.match(centre, /Member-proposed changes/);
   assert.match(centre, /Recent onboarding activity/);
   assert.match(standalone, /Request member access/);
-  assert.match(standalone, /showOnboardingCentre/);
-  assert.match(tracker, /onOpenOnboardingCentre/);
+  assert.match(standalone, /route === "onboarding"/);
+  assert.match(standalone, /<OnboardingCentre/);
   assert.match(tracker, /onboardingPendingCount/);
 });

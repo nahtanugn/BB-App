@@ -1,0 +1,23 @@
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+      time: "00:30"
+      timezone: Asia/Kuching
+    open-pull-requests-limit: 5
+    labels:
+      - dependencies
+    versioning-strategy: increase-if-necessary
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+      time: "00:45"
+      timezone: Asia/Kuching
+    open-pull-requests-limit: 3
+    labels:
+      - dependencies

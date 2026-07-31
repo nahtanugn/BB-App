@@ -37,6 +37,10 @@ const localBindingConfig = {
   vars: {
     ADMIN_EMAIL: "nguyx04@gmail.com",
   },
+  triggers: {
+    // The database scheduler claims only the configured Malaysia-time periods.
+    crons: ["*/15 * * * *"],
+  },
 };
 
 export default defineConfig(async () => {

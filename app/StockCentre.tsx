@@ -1,7 +1,6 @@
 "use client";
 
 import { FormEvent, useEffect, useMemo, useState } from "react";
-import AppNavigation from "./AppNavigation";
 
 type StockItem = {
   id: number;
@@ -35,15 +34,12 @@ type StockData = {
   members: MemberOption[];
 };
 
-export default function StockCentre({
-  userName,
-  onBack,
-  onLogout,
-}: {
+export default function StockCentre(props: {
   userName: string;
   onBack: () => void;
   onLogout: () => void;
 }) {
+  void props;
   const [data, setData] = useState<StockData | null>(null);
   const [tab, setTab] = useState<"overview" | "uniform" | "award" | "history">("overview");
   const [query, setQuery] = useState("");
@@ -200,13 +196,6 @@ export default function StockCentre({
 
   return (
     <main className="stock-shell">
-      <AppNavigation
-        section="Stock Centre"
-        userName={userName}
-        userDescription="Authorised stock access"
-        onBack={onBack}
-        onLogout={onLogout}
-      />
       <section className="stock-page">
         <div className="stock-heading">
           <div><p className="eyebrow">COMPANY INVENTORY</p><h1>Stock Centre</h1><p>Uniform and award balances, issues and returns in one auditable place.</p></div>

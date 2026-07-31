@@ -1,0 +1,2 @@
+CREATE INDEX `automation_action_items_rule_status_idx` ON `automation_action_items` (`rule_key`,`status`,`last_seen_run_id`);--> statement-breakpoint
+CREATE INDEX `automation_runs_started_idx` ON `automation_runs` (`started_at`);

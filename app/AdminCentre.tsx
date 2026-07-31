@@ -2,7 +2,6 @@
 
 import { FormEvent, useEffect, useMemo, useState } from "react";
 import CustomRoleManager from "./CustomRoleManager";
-import AppNavigation from "./AppNavigation";
 import OnboardingCentre from "./OnboardingCentre";
 
 type Role = "admin" | "officer" | "nco" | "squad_leader" | "viewer" | "member";
@@ -29,8 +28,6 @@ type PendingMember = {
 
 export default function AdminCentre({
   currentUser,
-  onBack,
-  onLogout,
 }: {
   currentUser: { id: number; name: string; email: string; role: Role };
   onBack: () => void;
@@ -215,13 +212,6 @@ export default function AdminCentre({
   return (
     <main className="admin-centre-shell">
       {notice && <div className="action-toast" role="status"><span>✓</span>{notice}<button onClick={() => setNotice("")} aria-label="Dismiss confirmation">×</button></div>}
-      <AppNavigation
-        section="Admin Centre"
-        userName={currentUser.name}
-        userDescription={readOnly ? "Viewer · read only" : "Administrator"}
-        onBack={onBack}
-        onLogout={onLogout}
-      />
       <section className="admin-centre-page">
         <div className="admin-centre-hero">
           <div><p className="eyebrow">ADMINISTRATION</p><h1>Roles & accounts</h1><p>{readOnly ? "View membership logins, access levels and custom operational roles." : "Manage membership logins, access levels and custom operational roles in one place."}</p></div>

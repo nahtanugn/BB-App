@@ -1,8 +1,6 @@
 "use client";
 
 import { FormEvent, useEffect, useMemo, useState } from "react";
-import MemberProgress from "./MemberProgress";
-import AppNavigation from "./AppNavigation";
 
 type User = {
   name: string;
@@ -38,14 +36,8 @@ const accessLabels = {
 
 export default function ResourceLibrary({
   user,
-  onBack,
-  onOpenSubmissions,
-  onManageAccount,
-  onOpenStock,
-  onOpenUniformRequests,
   onOpenAnnouncements,
   announcementSummary,
-  onLogout,
 }: {
   user: User;
   onBack?: () => void;
@@ -206,36 +198,6 @@ export default function ResourceLibrary({
 
   return (
     <main className="resources-shell">
-      <AppNavigation
-        section={canManageResources ? "Resource Management" : "Resources"}
-        userName={user.name}
-        userDescription={user.role.replace("_", " ")}
-        onBack={onBack}
-        backLabel="Back to tracker"
-        onLogout={onLogout}
-        actions={[
-          ...(["member", "nco", "squad_leader"].includes(user.role) &&
-          onOpenSubmissions
-            ? [{ label: "Award submissions", onClick: onOpenSubmissions }]
-            : []),
-          ...(user.role === "member" && onManageAccount
-            ? [{ label: "Change password", onClick: onManageAccount }]
-            : []),
-          ...(onOpenStock
-            ? [{ label: "Stock Centre", onClick: onOpenStock }]
-            : []),
-          ...(onOpenUniformRequests
-            ? [{ label: "Uniform requests", onClick: onOpenUniformRequests }]
-            : []),
-          ...(onOpenAnnouncements
-            ? [{
-                label: "Announcements",
-                onClick: onOpenAnnouncements,
-                badge: announcementSummary?.unreadCount ?? 0,
-              }]
-            : []),
-        ]}
-      />
       {announcementSummary && announcementSummary.unreadCount > 0 && announcementSummary.latest && (
         <button className={`announcement-alert resource-announcement-alert ${announcementSummary.latest.priority}`} onClick={onOpenAnnouncements}>
           <span>!</span>
@@ -318,7 +280,6 @@ export default function ResourceLibrary({
       {error && !canManageResources && (
         <p className="form-error resource-error">{error}</p>
       )}
-      <MemberProgress user={user} />
       <section className="resource-groups">
         {grouped.length ? (
           grouped.map(([category, items]) => (
