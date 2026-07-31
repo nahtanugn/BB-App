@@ -4,6 +4,10 @@ import {
   getRuntimeEnv,
   passwordDigest,
 } from "../../../lib/auth";
+import {
+  activeUserIdsForRoles,
+  createNotifications,
+} from "../../../lib/notifications";
 
 const runtime = getRuntimeEnv();
 const squads = ["Alpha", "Bravo", "Charlie", "Delta"];
@@ -324,6 +328,14 @@ export async function POST(request: Request) {
         emergencyContactNumber, parentsName, suggested?.id ?? null, now,
       ).run();
       await audit("access_requested", { name }, userId, suggested?.id ?? null, { email, section, squad });
+      await createNotifications({
+        recipientUserIds: await activeUserIdsForRoles(["admin"]),
+        type: "admin",
+        title: "Member access request",
+        body: "A new registration is awaiting administrator approval.",
+        targetUrl: "/?open=onboarding",
+        entityKey: `registration:${userId}:submitted:${now}`,
+      });
       return Response.json({
         ok: true,
         message: existing
@@ -403,6 +415,24 @@ export async function POST(request: Request) {
           VALUES (?, ?, ?, 'pending', ?, ?)`,
         ).bind(user.id, member.id, JSON.stringify(proposed), now, now).run();
       await audit("profile_correction_submitted", user, user.id, member.id, proposed);
+      const companyReviewers = await activeUserIdsForRoles(["admin", "officer"]);
+      const squadReviewers = await runtime.DB.prepare(
+        `SELECT id FROM users WHERE active = 1 AND account_status = 'active'
+         AND role IN ('nco', 'squad_leader') AND squad = ?`,
+      )
+        .bind(member.squad)
+        .all<{ id: number }>();
+      await createNotifications({
+        recipientUserIds: [
+          ...companyReviewers,
+          ...squadReviewers.results.map((reviewer) => reviewer.id),
+        ],
+        type: "admin",
+        title: "Profile correction awaiting review",
+        body: "A member submitted updated profile details for review.",
+        targetUrl: "/?open=onboarding",
+        entityKey: `profile-correction:${pending?.id ?? `${user.id}:${member.id}`}:submitted:${now}`,
+      });
       return Response.json({ ok: true, message: "Correction request submitted for staff review." });
     }
 
@@ -475,6 +505,14 @@ export async function POST(request: Request) {
         ).bind(section, squad, member?.id ?? null, reviewNotes, user.id, now, now, targetId),
       ]);
       await audit("access_approved", user, targetId, member?.id ?? null, { section, squad, reviewNotes });
+      await createNotifications({
+        recipientUserIds: [targetId],
+        type: "admin",
+        title: "Member access approved",
+        body: "Your account is ready. Sign in to complete the onboarding steps.",
+        targetUrl: "/",
+        entityKey: `registration:${targetId}:approved:${now}`,
+      });
       return Response.json({ ok: true, message: "Member access approved and onboarding activated." });
     }
 
@@ -534,6 +572,20 @@ export async function POST(request: Request) {
           reviewNotes,
         });
       } else return Response.json({ error: "Choose approve or reject" }, { status: 400 });
+      await createNotifications({
+        recipientUserIds: [Number(correction.user_id)],
+        type: "admin",
+        title:
+          decision === "approve"
+            ? "Profile correction approved"
+            : "Profile correction reviewed",
+        body:
+          decision === "approve"
+            ? "Your official member details were updated."
+            : "Your correction was not approved. Open onboarding to review it.",
+        targetUrl: "/",
+        entityKey: `profile-correction:${correctionId}:review:${now}`,
+      });
       return Response.json({ ok: true, message: `Correction request ${decision}d.` });
     }
 

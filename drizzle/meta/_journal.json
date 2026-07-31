@@ -162,6 +162,20 @@
       "when": 1785460725218,
       "tag": "0022_third_colossus",
       "breakpoints": true
+    },
+    {
+      "idx": 23,
+      "version": "6",
+      "when": 1785472226949,
+      "tag": "0023_needy_caretaker",
+      "breakpoints": true
+    },
+    {
+      "idx": 24,
+      "version": "6",
+      "when": 1785472267195,
+      "tag": "0024_remarkable_shockwave",
+      "breakpoints": true
     }
   ]
 }

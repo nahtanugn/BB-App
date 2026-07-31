@@ -1,4 +1,4 @@
-const CACHE = "11kchbb-app-v3";
+const CACHE = "11kchbb-app-v4";
 
 self.addEventListener("install", () => {
   self.skipWaiting();
@@ -45,5 +45,38 @@ self.addEventListener("fetch", (event) => {
           { headers: { "Content-Type": "text/html; charset=utf-8" } },
         ),
     ),
+  );
+});
+
+self.addEventListener("push", (event) => {
+  let message = {};
+  try {
+    message = event.data ? JSON.parse(event.data.text()) : {};
+  } catch {
+    message = { title: "11KCHBB App", body: "You have a new notification." };
+  }
+  event.waitUntil(
+    self.registration.showNotification(message.title || "11KCHBB App", {
+      body: message.body || "Open the app to view this update.",
+      icon: "/app-photo.jpeg",
+      badge: "/app-photo.jpeg",
+      tag: message.tag || "11kchbb-update",
+      data: { url: message.url || "/" },
+    }),
+  );
+});
+
+self.addEventListener("notificationclick", (event) => {
+  event.notification.close();
+  const target = new URL(event.notification.data?.url || "/", self.location.origin).href;
+  event.waitUntil(
+    self.clients.matchAll({ type: "window", includeUncontrolled: true }).then((clients) => {
+      const existing = clients.find((client) => client.url.startsWith(self.location.origin));
+      if (existing) {
+        existing.navigate(target);
+        return existing.focus();
+      }
+      return self.clients.openWindow(target);
+    }),
   );
 });

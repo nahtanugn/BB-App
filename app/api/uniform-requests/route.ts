@@ -1,5 +1,9 @@
 import { getCurrentUser, getRuntimeEnv } from "../../../lib/auth";
 import { ensureStockSchema, getStockPermissions } from "../../../lib/stock";
+import {
+  activeUserIdsForRolesOrPermission,
+  createNotifications,
+} from "../../../lib/notifications";
 
 const runtime = getRuntimeEnv();
 const requestStatuses = ["pending", "approved", "ready", "issued", "rejected", "cancelled"];
@@ -96,10 +100,31 @@ export async function POST(request: Request) {
         WHERE member_id = ? AND item_id = ? AND status IN ('pending', 'approved', 'ready') LIMIT 1`)
         .bind(member.id, itemId).first<{ id: number }>();
       if (duplicate) return Response.json({ error: "You already have an active request for this item" }, { status: 409 });
-      await runtime.DB.prepare(`INSERT INTO uniform_requests
+      const submittedAt = new Date().toISOString();
+      const result = await runtime.DB.prepare(`INSERT INTO uniform_requests
         (member_id, submitted_by_user_id, item_id, quantity, reason, notes, status, review_notes, submitted_at)
         VALUES (?, ?, ?, ?, ?, ?, 'pending', '', ?)`)
-        .bind(member.id, user.id, itemId, quantity, reason, notes, new Date().toISOString()).run();
+        .bind(member.id, user.id, itemId, quantity, reason, notes, submittedAt).run();
+      const requestId = Number(result.meta.last_row_id);
+      await createNotifications({
+        recipientUserIds: await activeUserIdsForRolesOrPermission(
+          ["admin", "officer"],
+          "stock.manage_uniform_requests",
+        ),
+        type: "request",
+        title: "Uniform request awaiting review",
+        body: "A member submitted a uniform request.",
+        targetUrl: "/?open=uniform-requests",
+        entityKey: `uniform-request:${requestId}:created:reviewers`,
+      });
+      await createNotifications({
+        recipientUserIds: [user.id],
+        type: "request",
+        title: "Uniform request submitted",
+        body: "Your request is awaiting review.",
+        targetUrl: "/?open=uniform-requests",
+        entityKey: `uniform-request:${requestId}:created:applicant`,
+      });
       return Response.json({ ok: true });
     }
 
@@ -164,6 +189,20 @@ export async function POST(request: Request) {
           reviewed_at = ?, reviewed_by = ?, ready_at = COALESCE(?, ready_at) WHERE id = ?`)
           .bind(status, reviewNotes, now, user.name, readyAt, requestId).run();
       }
+      const requestOwner = await runtime.DB.prepare(
+        "SELECT submitted_by_user_id FROM uniform_requests WHERE id = ?",
+      )
+        .bind(requestId)
+        .first<{ submitted_by_user_id: number }>();
+      if (requestOwner)
+        await createNotifications({
+          recipientUserIds: [requestOwner.submitted_by_user_id],
+          type: "request",
+          title: "Uniform request updated",
+          body: `Your uniform request is now ${status}.`,
+          targetUrl: "/?open=uniform-requests",
+          entityKey: `uniform-request:${requestId}:status:${status}:${now}`,
+        });
       return Response.json({ ok: true });
     }
 

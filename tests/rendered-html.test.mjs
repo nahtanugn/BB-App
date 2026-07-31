@@ -403,7 +403,10 @@ test("ships the Malaysia Senior Section catalogue, role-based portals and instal
   assert.match(memberProgress, /View only/);
   assert.match(manifest, /display: "standalone"/);
   assert.match(manifest, /app-photo\.jpeg/);
-  assert.match(serviceWorker, /11kchbb-app-v3/);
+  assert.match(serviceWorker, /11kchbb-app-v4/);
+  assert.match(serviceWorker, /addEventListener\("push"/);
+  assert.match(serviceWorker, /showNotification/);
+  assert.match(serviceWorker, /addEventListener\("notificationclick"/);
   assert.match(serviceWorker, /event\.request\.mode !== "navigate"/);
   assert.match(serviceWorker, /cache: "no-store"/);
   assert.match(serviceWorker, /You’re offline/);

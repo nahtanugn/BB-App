@@ -1,8 +1,10 @@
 import {
+  index,
   integer,
   primaryKey,
   sqliteTable,
   text,
+  uniqueIndex,
 } from "drizzle-orm/sqlite-core";
 
 export const members = sqliteTable("members", {
@@ -202,6 +204,65 @@ export const authAttempts = sqliteTable("auth_attempts", {
   identity: text("identity").primaryKey(),
   attempts: integer("attempts").notNull().default(0),
   windowStartedAt: text("window_started_at").notNull(),
+});
+
+export const notifications = sqliteTable(
+  "notifications",
+  {
+    id: integer("id").primaryKey({ autoIncrement: true }),
+    recipientUserId: integer("recipient_user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    type: text("type").notNull(),
+    title: text("title").notNull(),
+    body: text("body").notNull(),
+    targetUrl: text("target_url").notNull().default("/"),
+    entityKey: text("entity_key").notNull(),
+    readAt: text("read_at"),
+    createdAt: text("created_at").notNull(),
+  },
+  (table) => [
+    uniqueIndex("notifications_recipient_entity_unique").on(
+      table.recipientUserId,
+      table.entityKey,
+    ),
+    index("notifications_user_unread_idx").on(
+      table.recipientUserId,
+      table.readAt,
+      table.createdAt,
+    ),
+  ],
+);
+
+export const pushSubscriptions = sqliteTable(
+  "push_subscriptions",
+  {
+    id: integer("id").primaryKey({ autoIncrement: true }),
+    userId: integer("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    endpoint: text("endpoint").notNull().unique(),
+    p256dh: text("p256dh").notNull(),
+    auth: text("auth").notNull(),
+    userAgent: text("user_agent").notNull().default(""),
+    active: integer("active", { mode: "boolean" }).notNull().default(true),
+    createdAt: text("created_at").notNull(),
+    updatedAt: text("updated_at").notNull(),
+  },
+  (table) => [
+    index("push_subscriptions_user_active_idx").on(table.userId, table.active),
+  ],
+);
+
+export const notificationPreferences = sqliteTable("notification_preferences", {
+  userId: integer("user_id")
+    .primaryKey()
+    .references(() => users.id, { onDelete: "cascade" }),
+  pushEnabled: integer("push_enabled", { mode: "boolean" }).notNull().default(true),
+  awardUpdates: integer("award_updates", { mode: "boolean" }).notNull().default(true),
+  adminTasks: integer("admin_tasks", { mode: "boolean" }).notNull().default(true),
+  requestUpdates: integer("request_updates", { mode: "boolean" }).notNull().default(true),
+  updatedAt: text("updated_at").notNull(),
 });
 
 export const resources = sqliteTable("resources", {

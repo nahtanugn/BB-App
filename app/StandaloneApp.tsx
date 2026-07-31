@@ -146,6 +146,33 @@ export default function StandaloneApp() {
   }, [signedInUserId]);
 
   useEffect(() => {
+    if (!auth?.user || auth.user.onboarding_required) return;
+    const target = new URL(window.location.href).searchParams.get("open");
+    if (!target) return;
+    const timer = window.setTimeout(() => {
+      if (
+        target === "submissions" &&
+        auth.user?.member_section !== "junior"
+      ) {
+        setSubmissionSection("senior");
+        setShowSubmissions(true);
+      } else if (target === "uniform-requests") {
+        setShowUniformRequests(true);
+      } else if (
+        target === "onboarding" &&
+        auth.user &&
+        ["admin", "officer", "nco", "squad_leader", "viewer"].includes(
+          auth.user.role,
+        )
+      ) {
+        setShowOnboardingCentre(true);
+      }
+    }, 0);
+    window.history.replaceState({}, "", window.location.pathname);
+    return () => window.clearTimeout(timer);
+  }, [auth?.user]);
+
+  useEffect(() => {
     if (!auth?.user || !["admin", "officer", "nco", "squad_leader", "viewer"].includes(auth.user.role)) return;
     fetch("/api/onboarding?management=1", { cache: "no-store" })
       .then(async (response) => {

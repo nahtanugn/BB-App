@@ -5,6 +5,10 @@ import {
   hasOperationalAdminAccess,
   hasTemporaryAdminAccess,
 } from "../../../lib/auth";
+import {
+  activeUserIdsForRoles,
+  createNotifications,
+} from "../../../lib/notifications";
 
 async function ensureSubmissionSchema() {
   await env.DB.prepare(
@@ -321,7 +325,25 @@ export async function POST(request: Request) {
             ELSE excluded.updated_by
           END`,
       ).bind(member.id, award.code, level, submittedAt, user.email);
-      await env.DB.batch([submissionInsert, matrixUpdate]);
+      const results = await env.DB.batch([submissionInsert, matrixUpdate]);
+      const submissionId = Number(results[0].meta.last_row_id);
+      const reviewers = await activeUserIdsForRoles(["admin", "officer"]);
+      await createNotifications({
+        recipientUserIds: reviewers,
+        type: "award",
+        title: "Award submission awaiting review",
+        body: "A new Senior Section award application is ready for review.",
+        targetUrl: "/?open=submissions",
+        entityKey: `award-submission:${submissionId}:created:reviewers`,
+      });
+      await createNotifications({
+        recipientUserIds: [user.id],
+        type: "award",
+        title: "Award application submitted",
+        body: `${award.name} (${level}) is now in progress.`,
+        targetUrl: "/?open=submissions",
+        entityKey: `award-submission:${submissionId}:created:applicant`,
+      });
       return Response.json({ ok: true, matrixStatus: "in_progress" });
     }
 
@@ -346,7 +368,7 @@ export async function POST(request: Request) {
         );
       const submission = await env.DB.prepare(
         `SELECT status, archived_at, member_id, submitted_by_email,
-        award_code, level FROM award_submissions WHERE id = ?`,
+        award_code, level, submitted_by_user_id FROM award_submissions WHERE id = ?`,
       )
         .bind(submissionId)
         .first<{
@@ -356,6 +378,7 @@ export async function POST(request: Request) {
           submitted_by_email: string;
           award_code: string;
           level: string;
+          submitted_by_user_id: number;
         }>();
       if (!submission)
         return Response.json(
@@ -431,6 +454,20 @@ export async function POST(request: Request) {
               submission.level,
             );
       await env.DB.batch([reviewUpdate, matrixUpdate]);
+      await createNotifications({
+        recipientUserIds: [submission.submitted_by_user_id],
+        type: "award",
+        title:
+          status === "approved"
+            ? "Award application approved"
+            : "Award application needs attention",
+        body:
+          status === "approved"
+            ? "Your application was verified and the award matrix was updated."
+            : "Your application was not approved. Open it to read the review.",
+        targetUrl: "/?open=submissions",
+        entityKey: `award-submission:${submissionId}:review:${reviewedAt}`,
+      });
       return Response.json({
         ok: true,
         matrixStatus: status === "approved" ? "verified" : "not_started",
