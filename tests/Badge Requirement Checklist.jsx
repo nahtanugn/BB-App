@@ -5,7 +5,6 @@ import {
   X,
   ChevronDown,
   Check,
-  Pencil,
   Trash2,
   UserPlus,
   Settings,
@@ -667,7 +666,7 @@ export default function BadgeLedger() {
                 </div>
               );
             })}
-            {filteredMembers.length === 0 && <div className="bl-no-badges">No members match "{search}".</div>}
+            {filteredMembers.length === 0 && <div className="bl-no-badges">No members match &quot;{search}&quot;.</div>}
           </div>
           <button className="bl-add-member" onClick={() => setShowAddMember(true)}>
             <Plus size={13} /> Add member
@@ -847,9 +846,9 @@ function LibraryModal({ badges, onClose, onAddBadge, onRemoveBadge, onRenameBadg
           <button className="bl-modal-close" onClick={onClose}><X size={18} /></button>
         </div>
         <p style={{ fontSize: 12.5, color: "#6b5f42", marginTop: -8, marginBottom: 16 }}>
-          Badges and checklist items below are based on the Senior Member's Handbook. Numbers like minimum distances,
+          Badges and checklist items below are based on the Senior Member&apos;s Handbook. Numbers like minimum distances,
           hours, or session counts were read visually off a design-heavy PDF, so double-check those specific figures
-          against your copy and adjust anything that doesn't match — everything here is editable.
+          against your copy and adjust anything that doesn&apos;t match — everything here is editable.
         </p>
 
         {CATEGORIES.map((cat) => {
