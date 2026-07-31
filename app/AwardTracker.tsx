@@ -175,6 +175,8 @@ type AwardTrackerProps = {
     latest: { title: string; body: string; priority: string } | null;
   };
   onOpenAdminCentre?: () => void;
+  onOpenOnboardingCentre?: () => void;
+  onboardingPendingCount?: number;
   onOpenSubmissions?: (section: "senior" | "junior") => void;
 };
 
@@ -188,6 +190,8 @@ export default function AwardTracker({
   onOpenAnnouncements,
   announcementSummary,
   onOpenAdminCentre,
+  onOpenOnboardingCentre,
+  onboardingPendingCount = 0,
   onOpenSubmissions,
 }: AwardTrackerProps) {
   const hasTemporaryAdminAccess = Boolean(
@@ -1356,6 +1360,12 @@ export default function AwardTracker({
               <span>⚙</span> Admin Centre
             </button>
           )}
+          {onOpenOnboardingCentre && (
+            <button className="nav-secondary" onClick={onOpenOnboardingCentre}>
+              <span>◎</span> Onboarding
+              {onboardingPendingCount > 0 && <b className="nav-badge">{onboardingPendingCount}</b>}
+            </button>
+          )}
           <button
             className={`mobile-more ${showMobileMenu || view === "subscriptions" ? "active" : ""}`}
             onClick={() => setShowMobileMenu((current) => !current)}
@@ -1526,6 +1536,21 @@ export default function AwardTracker({
                   <small>Roles, access and membership accounts</small>
                 </div>
                 <b>›</b>
+              </button>
+            )}
+            {onOpenOnboardingCentre && (
+              <button
+                onClick={() => {
+                  setShowMobileMenu(false);
+                  onOpenOnboardingCentre();
+                }}
+              >
+                <span>◎</span>
+                <div>
+                  <strong>Onboarding</strong>
+                  <small>Access requests and profile corrections</small>
+                </div>
+                {onboardingPendingCount > 0 ? <b className="menu-count">{onboardingPendingCount}</b> : <b>›</b>}
               </button>
             )}
           </section>

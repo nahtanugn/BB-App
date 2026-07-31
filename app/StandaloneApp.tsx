@@ -9,6 +9,8 @@ import ResourceLibrary from "./ResourceLibrary";
 import StockCentre from "./StockCentre";
 import SubmissionsPage from "./SubmissionsPage";
 import UniformRequests from "./UniformRequests";
+import OnboardingFlow from "./OnboardingFlow";
+import OnboardingCentre from "./OnboardingCentre";
 
 type User = {
   id: number;
@@ -26,6 +28,14 @@ type User = {
   temporary_access_role: string;
   access_expires_at: string | null;
   custom_permissions: string[];
+  account_status: "pending" | "active" | "rejected";
+  must_change_password: number;
+  onboarding_completed_at: string | null;
+  profile_confirmed_at: string | null;
+  tour_completed_at: string | null;
+  privacy_notice_version: number;
+  current_privacy_version: number;
+  onboarding_required: boolean;
 };
 type ManagedUser = User & {
   active: number;
@@ -57,6 +67,10 @@ export default function StandaloneApp() {
   const [showUniformRequests, setShowUniformRequests] = useState(false);
   const [showAnnouncements, setShowAnnouncements] = useState(false);
   const [showAdminCentre, setShowAdminCentre] = useState(false);
+  const [showOnboardingCentre, setShowOnboardingCentre] = useState(false);
+  const [requestingAccess, setRequestingAccess] = useState(false);
+  const [accessRequestNotice, setAccessRequestNotice] = useState("");
+  const [onboardingPendingCount, setOnboardingPendingCount] = useState(0);
   const [announcementSummary, setAnnouncementSummary] = useState<{
     unreadCount: number;
     latest: { title: string; body: string; priority: string } | null;
@@ -131,6 +145,23 @@ export default function StandaloneApp() {
       .catch(() => setStockAccess(false));
   }, [signedInUserId]);
 
+  useEffect(() => {
+    if (!auth?.user || !["admin", "officer", "nco", "squad_leader", "viewer"].includes(auth.user.role)) return;
+    fetch("/api/onboarding?management=1", { cache: "no-store" })
+      .then(async (response) => {
+        if (!response.ok) return;
+        const result = (await response.json()) as {
+          requests?: Array<{ account_status: string }>;
+          corrections?: Array<{ status: string }>;
+        };
+        setOnboardingPendingCount(
+          (result.requests ?? []).filter((item) => item.account_status === "pending").length +
+          (result.corrections ?? []).filter((item) => item.status === "pending").length,
+        );
+      })
+      .catch(() => undefined);
+  }, [signedInUserId, auth?.user]);
+
   const refreshAnnouncementSummary = useCallback(async () => {
     if (!signedInUserId) return;
     const response = await fetch("/api/announcements/?summary=1", {
@@ -190,10 +221,44 @@ export default function StandaloneApp() {
         setupToken: form.get("setupToken"),
       }),
     });
-    const result = (await response.json()) as { error?: string };
+    const result = (await response.json()) as { error?: string; status?: string };
     setBusy(false);
+    if (result.status === "pending") {
+      setAccessRequestNotice(result.error ?? "Your request is awaiting review.");
+      return;
+    }
     if (!response.ok) return setError(result.error ?? "Unable to sign in");
     await refreshAuth();
+  }
+
+  async function requestAccess(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const formElement = event.currentTarget;
+    const form = new FormData(formElement);
+    setBusy(true); setError(""); setAccessRequestNotice("");
+    const response = await fetch("/api/onboarding", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        action: "request_access",
+        name: form.get("name"),
+        email: form.get("email"),
+        password: form.get("password"),
+        section: form.get("section"),
+        squad: form.get("squad"),
+        joinedYear: form.get("joinedYear"),
+        school: form.get("school"),
+        contactNumber: form.get("contactNumber"),
+        emergencyContactNumber: form.get("emergencyContactNumber"),
+        parentsName: form.get("parentsName"),
+      }),
+    });
+    const result = (await response.json()) as { error?: string; message?: string };
+    setBusy(false);
+    if (!response.ok) return setError(result.error ?? "Unable to request access");
+    formElement.reset();
+    setRequestingAccess(false);
+    setAccessRequestNotice(result.message ?? "Access request submitted.");
   }
 
   async function logout() {
@@ -209,6 +274,7 @@ export default function StandaloneApp() {
     setShowUniformRequests(false);
     setShowAnnouncements(false);
     setShowAdminCentre(false);
+    setShowOnboardingCentre(false);
     setStockAccess(false);
     setAnnouncementSummary({ unreadCount: 0, latest: null });
     setAuth((current) => (current ? { ...current, user: null } : current));
@@ -420,7 +486,7 @@ export default function StandaloneApp() {
               ? "Use the one-time setup code supplied during deployment."
               : "Sign in to open the areas available to your account."}
           </p>
-          <form onSubmit={submitAuth}>
+          {!requestingAccess ? <form onSubmit={submitAuth}>
             {auth.setupRequired && (
               <label>
                 Your name
@@ -462,6 +528,7 @@ export default function StandaloneApp() {
               </label>
             )}
             {error && <p className="form-error">{error}</p>}
+            {accessRequestNotice && <p className="form-success" role="status">{accessRequestNotice}</p>}
             <button className="primary auth-submit" disabled={busy}>
               {busy
                 ? "Please wait…"
@@ -469,11 +536,31 @@ export default function StandaloneApp() {
                   ? "Create administrator"
                   : "Sign in"}
             </button>
-          </form>
+          </form> : (
+            <form className="access-request-form" onSubmit={requestAccess}>
+              <div className="access-request-heading"><div><p className="eyebrow">MEMBER ACCESS</p><h2>Request an account</h2></div><button type="button" className="text-button" onClick={() => { setRequestingAccess(false); setError(""); }}>Back to sign in</button></div>
+              <p className="auth-copy">Submit your details for administrator approval. This request does not grant access automatically.</p>
+              <label>Full name<input name="name" required autoComplete="name" /></label>
+              <label>Email address<input name="email" type="email" required autoComplete="email" /></label>
+              <label>Request password<input name="password" type="password" minLength={10} required autoComplete="new-password" /><small>You will replace this after approval.</small></label>
+              <div className="form-row"><label>Section<select name="section" defaultValue="senior"><option value="senior">Senior</option><option value="junior">Junior</option></select></label><label>Squad<select name="squad" defaultValue="Alpha"><option>Alpha</option><option>Bravo</option><option>Charlie</option><option>Delta</option></select></label></div>
+              <label>Joined year<input name="joinedYear" type="number" min="1950" max={new Date().getFullYear()} required /></label>
+              <label>School<input name="school" required /></label>
+              <label>Contact number<input name="contactNumber" type="tel" required /></label>
+              <label>Emergency contact number<input name="emergencyContactNumber" type="tel" required /></label>
+              <label>Parent / guardian name<input name="parentsName" required /></label>
+              {error && <p className="form-error">{error}</p>}
+              <button className="primary auth-submit" disabled={busy}>{busy ? "Submitting…" : "Submit access request"}</button>
+            </form>
+          )}
+          {!auth.setupRequired && !requestingAccess && <button className="request-access-button" onClick={() => { setRequestingAccess(true); setError(""); setAccessRequestNotice(""); }}>Request member access</button>}
           <small>Private by default · No ChatGPT account required</small>
         </section>
       </main>
     );
+
+  if (auth.user.onboarding_required)
+    return <OnboardingFlow user={auth.user} onComplete={refreshAuth} onLogout={logout} />;
 
   if (showSubmissions)
     return (
@@ -525,6 +612,15 @@ export default function StandaloneApp() {
           setShowAdminCentre(false);
           void refreshAuth();
         }}
+      />
+    );
+
+  if (showOnboardingCentre && ["admin", "officer", "nco", "squad_leader", "viewer"].includes(auth.user.role))
+    return (
+      <OnboardingCentre
+        currentUser={auth.user}
+        onLogout={logout}
+        onBack={() => setShowOnboardingCentre(false)}
       />
     );
 
@@ -646,6 +742,12 @@ export default function StandaloneApp() {
             ? () => setShowAdminCentre(true)
             : undefined
         }
+        onOpenOnboardingCentre={
+          ["admin", "officer", "nco", "squad_leader", "viewer"].includes(auth.user.role)
+            ? () => setShowOnboardingCentre(true)
+            : undefined
+        }
+        onboardingPendingCount={onboardingPendingCount}
         onOpenSubmissions={(section) => {
           setSubmissionSection(section);
           setShowSubmissions(true);

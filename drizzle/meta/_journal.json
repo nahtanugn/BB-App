@@ -148,6 +148,20 @@
       "when": 1784986406516,
       "tag": "0020_breezy_dragon_man",
       "breakpoints": true
+    },
+    {
+      "idx": 21,
+      "version": "6",
+      "when": 1785460444881,
+      "tag": "0021_stiff_callisto",
+      "breakpoints": true
+    },
+    {
+      "idx": 22,
+      "version": "6",
+      "when": 1785460725218,
+      "tag": "0022_third_colossus",
+      "breakpoints": true
     }
   ]
 }

@@ -123,6 +123,68 @@ export const users = sqliteTable("users", {
   passwordHash: text("password_hash").notNull(),
   passwordSalt: text("password_salt").notNull(),
   active: integer("active", { mode: "boolean" }).notNull().default(true),
+  accountStatus: text("account_status").notNull().default("active"),
+  mustChangePassword: integer("must_change_password", { mode: "boolean" }).notNull().default(false),
+  onboardingCompletedAt: text("onboarding_completed_at"),
+  profileConfirmedAt: text("profile_confirmed_at"),
+  tourCompletedAt: text("tour_completed_at"),
+  privacyNoticeVersion: integer("privacy_notice_version").notNull().default(0),
+  createdAt: text("created_at").notNull(),
+});
+
+export const registrationDetails = sqliteTable("registration_details", {
+  userId: integer("user_id").primaryKey().references(() => users.id, { onDelete: "cascade" }),
+  section: text("section").notNull(),
+  squad: text("squad").notNull(),
+  joinedYear: text("joined_year").notNull(),
+  school: text("school").notNull(),
+  contactNumber: text("contact_number").notNull(),
+  emergencyContactNumber: text("emergency_contact_number").notNull(),
+  parentsName: text("parents_name").notNull(),
+  suggestedMemberId: integer("suggested_member_id"),
+  reviewNotes: text("review_notes").notNull().default(""),
+  reviewedBy: integer("reviewed_by"),
+  reviewedAt: text("reviewed_at"),
+  updatedAt: text("updated_at").notNull(),
+});
+
+export const profileCorrectionRequests = sqliteTable("profile_correction_requests", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  userId: integer("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  memberId: integer("member_id").notNull().references(() => members.id, { onDelete: "cascade" }),
+  proposedValues: text("proposed_values").notNull(),
+  status: text("status").notNull().default("pending"),
+  reviewNotes: text("review_notes").notNull().default(""),
+  reviewedBy: integer("reviewed_by"),
+  reviewedAt: text("reviewed_at"),
+  createdAt: text("created_at").notNull(),
+  updatedAt: text("updated_at").notNull(),
+});
+
+export const onboardingAuditLog = sqliteTable("onboarding_audit_log", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  action: text("action").notNull(),
+  subjectUserId: integer("subject_user_id"),
+  subjectMemberId: integer("subject_member_id"),
+  actorUserId: integer("actor_user_id"),
+  actorName: text("actor_name").notNull(),
+  details: text("details").notNull().default(""),
+  createdAt: text("created_at").notNull(),
+});
+
+export const appSettings = sqliteTable("app_settings", {
+  settingKey: text("setting_key").primaryKey(),
+  settingValue: text("setting_value").notNull(),
+  version: integer("version").notNull().default(1),
+  updatedBy: integer("updated_by"),
+  updatedAt: text("updated_at").notNull(),
+});
+
+export const privacyNoticeVersions = sqliteTable("privacy_notice_versions", {
+  version: integer("version").primaryKey(),
+  noticeText: text("notice_text").notNull(),
+  requireReacknowledgement: integer("require_reacknowledgement", { mode: "boolean" }).notNull().default(false),
+  createdBy: integer("created_by"),
   createdAt: text("created_at").notNull(),
 });
 

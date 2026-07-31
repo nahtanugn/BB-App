@@ -18,6 +18,9 @@
 - Independent email-and-password officer accounts with administrator controls
 - Separate Senior and Junior Section records
 - Role-based access for officers, NCOs, squad leaders, members and custom roles
+- Controlled member self-registration with administrator approval
+- Guided first-login security, profile, privacy and role onboarding
+- Squad-scoped profile correction review with an accountable approval history
 - Company and band subscription registers
 - Uniform and award stock management
 
@@ -70,6 +73,18 @@ pnpm run deploy:standalone
 ```
 
 On first launch, the configured administrator email and one-time setup code create the initial administrator. Administrators can then create or disable officer accounts from inside the app.
+
+Members may use **Request member access** on the sign-in page. Requests remain
+pending and cannot access company data until an administrator confirms the
+member-profile match or creates a profile. Requested passwords are stored only
+as salted hashes. Approved users must replace that password, verify their
+profile, acknowledge the current privacy notice and finish the short account
+guide.
+
+Administrators manage registrations, profile corrections, incomplete setup,
+privacy-notice versions and approval history from **Admin Centre → Onboarding**.
+Officers can review profile corrections; NCOs and squad leaders can only review
+corrections for their assigned squad.
 
 ## Award syllabus
 

@@ -3,6 +3,7 @@
 import { FormEvent, useEffect, useMemo, useState } from "react";
 import CustomRoleManager from "./CustomRoleManager";
 import AppNavigation from "./AppNavigation";
+import OnboardingCentre from "./OnboardingCentre";
 
 type Role = "admin" | "officer" | "nco" | "squad_leader" | "viewer" | "member";
 type ManagedUser = {
@@ -43,7 +44,7 @@ export default function AdminCentre({
   const [pendingAccountMember, setPendingAccountMember] = useState<PendingMember | null>(null);
   const [newRole, setNewRole] = useState<Role>("officer");
   const [newTemporaryAccess, setNewTemporaryAccess] = useState("");
-  const [tab, setTab] = useState<"accounts" | "access">("accounts");
+  const [tab, setTab] = useState<"accounts" | "access" | "onboarding">("accounts");
   const [query, setQuery] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
@@ -236,6 +237,7 @@ export default function AdminCentre({
         <div className="admin-tabs" role="tablist">
           <button className={tab === "accounts" ? "active" : ""} onClick={() => setTab("accounts")}>Membership accounts</button>
           <button className={tab === "access" ? "active" : ""} onClick={() => setTab("access")}>Custom access roles</button>
+          <button className={tab === "onboarding" ? "active" : ""} onClick={() => setTab("onboarding")}>Onboarding</button>
         </div>
 
         {tab === "accounts" ? (
@@ -334,10 +336,12 @@ export default function AdminCentre({
               )}
             </section>
           </div>
-        ) : (
+        ) : tab === "access" ? (
           <section className="admin-custom-access">
             <CustomRoleManager users={users} readOnly={readOnly} />
           </section>
+        ) : (
+          <OnboardingCentre currentUser={currentUser} embedded />
         )}
       </section>
     </main>

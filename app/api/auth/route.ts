@@ -95,6 +95,7 @@ export async function GET(request: Request) {
       const users = await runtime.DB.prepare(
         `SELECT users.id, users.email, users.name, users.role, users.squad,
           users.temporary_access_role, users.access_expires_at, users.active, users.created_at,
+          users.account_status, users.must_change_password, users.onboarding_completed_at,
           (SELECT members.section FROM members
             WHERE LOWER(members.email) = LOWER(users.email) LIMIT 1) AS member_section
         FROM users ORDER BY users.name COLLATE NOCASE`,
@@ -188,7 +189,11 @@ export async function POST(request: Request) {
           { status: 429 },
         );
       const row = await runtime.DB.prepare(
-        "SELECT id, password_hash, password_salt, active FROM users WHERE email = ?",
+        `SELECT users.id, users.password_hash, users.password_salt, users.active,
+          users.account_status, registration_details.review_notes
+        FROM users
+        LEFT JOIN registration_details ON registration_details.user_id = users.id
+        WHERE users.email = ?`,
       )
         .bind(email)
         .first<{
@@ -196,9 +201,11 @@ export async function POST(request: Request) {
           password_hash: string;
           password_salt: string;
           active: number;
+          account_status: string;
+          review_notes: string | null;
         }>();
       if (
-        !row?.active ||
+        !row ||
         !(await verifyPassword(password, row.password_salt, row.password_hash))
       ) {
         await recordFailedAttempt(identity);
@@ -207,6 +214,29 @@ export async function POST(request: Request) {
           { status: 401 },
         );
       }
+      if (row.account_status === "pending")
+        return Response.json(
+          {
+            status: "pending",
+            error: "Your access request is awaiting administrator review.",
+          },
+          { status: 202 },
+        );
+      if (row.account_status === "rejected")
+        return Response.json(
+          {
+            status: "rejected",
+            error: row.review_notes
+              ? `Your request was not approved: ${row.review_notes}`
+              : "Your access request was not approved. You may update and resubmit it.",
+          },
+          { status: 403 },
+        );
+      if (!row.active)
+        return Response.json(
+          { error: "This account is currently disabled." },
+          { status: 403 },
+        );
       await runtime.DB.prepare("DELETE FROM auth_attempts WHERE identity = ?")
         .bind(identity)
         .run();
@@ -251,7 +281,7 @@ export async function POST(request: Request) {
       }
       const digest = await passwordDigest(newPassword);
       await runtime.DB.prepare(
-        "UPDATE users SET password_hash = ?, password_salt = ? WHERE id = ?",
+        "UPDATE users SET password_hash = ?, password_salt = ?, must_change_password = 0 WHERE id = ?",
       )
         .bind(digest.hash, digest.salt, user.id)
         .run();
@@ -327,8 +357,8 @@ export async function POST(request: Request) {
           { status: 400 },
         );
       const result = await runtime.DB.prepare(
-        `INSERT INTO users (email, name, role, squad, temporary_access_role, access_expires_at, password_hash, password_salt, active, created_at)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, 1, ?)`,
+        `INSERT INTO users (email, name, role, squad, temporary_access_role, access_expires_at, password_hash, password_salt, active, account_status, must_change_password, created_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, 1, 'active', 1, ?)`,
       )
         .bind(
           email,
@@ -405,7 +435,7 @@ export async function POST(request: Request) {
       const digest = await passwordDigest(temporaryPassword);
       await runtime.DB.batch([
         runtime.DB.prepare(
-          "UPDATE users SET password_hash = ?, password_salt = ? WHERE id = ?",
+          "UPDATE users SET password_hash = ?, password_salt = ?, must_change_password = 1, onboarding_completed_at = NULL WHERE id = ?",
         ).bind(digest.hash, digest.salt, targetId),
         runtime.DB.prepare("DELETE FROM sessions WHERE user_id = ?").bind(
           targetId,
