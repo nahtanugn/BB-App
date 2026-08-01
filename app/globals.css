@@ -1746,12 +1746,19 @@ h1 { font-size: clamp(30px, 3.1vw, 46px); line-height: 1; letter-spacing: -1.5px
 .category-page-header p:last-child { max-width: 620px; margin: 0; color: var(--muted); line-height: 1.55; }
 .event-form { margin-bottom: 20px; overflow: hidden; }
 .event-form .panel-heading > span, .journey-goals .panel-heading > span, .journey-events .panel-heading > span, .journey-timeline .panel-heading > span { color: var(--muted); font-size: 10px; }
-.event-form-grid { padding: 20px; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+.event-form .panel-heading .eyebrow { margin-bottom: 4px; }
+.event-form-grid { padding: 22px; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; background: linear-gradient(180deg, #fff, #f9fbfd); }
 .event-form-grid label { display: grid; gap: 7px; color: var(--navy); font-size: 10px; font-weight: 800; }
-.event-form-grid input, .event-form-grid select, .event-form-grid textarea, .journey-goals input { width: 100%; min-height: 43px; padding: 10px 12px; border: 1px solid #d7e0e9; border-radius: 10px; background: white; color: var(--ink); }
+.event-form-grid input, .event-form-grid select, .event-form-grid textarea, .journey-goals input { width: 100%; min-height: 46px; padding: 10px 12px; border: 1px solid #cfdce8; border-radius: 11px; background: white; color: var(--ink); box-shadow: inset 0 1px 2px rgba(11, 48, 80, .03); }
+.event-form-grid input:focus, .event-form-grid select:focus, .event-form-grid textarea:focus { border-color: var(--blue); outline: 0; box-shadow: 0 0 0 3px rgba(28, 111, 209, .12); }
 .event-form-grid textarea { min-height: 90px; resize: vertical; }
 .event-form-grid .event-wide { grid-column: 1 / -1; }
-.event-form-grid .event-check { display: flex; align-items: center; gap: 8px; font-weight: 700; }
+.event-form-grid label > small { color: #73869a; font-size: 9px; font-weight: 500; line-height: 1.45; }
+.event-form-grid .event-register-toggle { grid-column: 1 / -1; min-height: 70px; padding: 13px 15px; display: flex; grid-template-columns: none; align-items: center; gap: 12px; border: 1px solid #cddff2; border-radius: 12px; background: #f1f7fe; cursor: pointer; }
+.event-register-toggle input { width: 22px; min-height: 22px; margin: 0; flex: 0 0 auto; accent-color: var(--blue); }
+.event-register-toggle span { display: grid; gap: 3px; }
+.event-register-toggle strong { color: var(--navy); font-size: 11px; }
+.event-register-toggle small { color: #607a94; font-size: 9px; font-weight: 600; }
 .event-form > .primary { margin: 0 20px 20px; }
 .event-timeline { display: grid; gap: 13px; }
 .event-card { padding: 18px; display: grid; grid-template-columns: 70px minmax(0, 1fr) auto; gap: 18px; align-items: center; }
@@ -1781,7 +1788,7 @@ h1 { font-size: clamp(30px, 3.1vw, 46px); line-height: 1; letter-spacing: -1.5px
   }
   .event-centre-page, .journey-page { width: min(100% - 24px, 720px); padding: 20px 0 38px; }
   .category-page-header { align-items: start; }.category-page-header h1 { font-size: 39px; }.category-page-header .primary { min-height: 43px; white-space: nowrap; }
-  .event-form-grid { grid-template-columns: 1fr; }.event-form-grid .event-wide { grid-column: auto; }
+  .event-form-grid { grid-template-columns: 1fr; padding: 16px; }.event-form-grid .event-wide, .event-form-grid .event-register-toggle { grid-column: auto; }
   .event-card { grid-template-columns: 57px 1fr; gap: 12px; align-items: start; }.event-card time { min-height: 57px; border-radius: 12px; }.event-card time strong { font-size: 24px; }.rsvp-actions { grid-column: 1 / -1; grid-template-columns: repeat(3, 1fr); }.rsvp-actions small { text-align: left; }.rsvp-actions button { min-height: 43px; }
   .journey-stats, .journey-grid { grid-template-columns: 1fr; }.journey-stats article { min-height: 98px; }.journey-stats strong { margin-top: 7px; }.journey-goals form { grid-template-columns: 1fr; }.journey-goals form .primary { min-height: 44px; }
   .unified-mobile-nav {

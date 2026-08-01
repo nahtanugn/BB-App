@@ -19,6 +19,7 @@ type Member = {
   email: string;
   parents_name: string;
   is_demo: number;
+  account_role?: string;
 };
 
 type Award = {
@@ -48,6 +49,7 @@ type AttendanceSession = {
   meeting_date: string;
   title: string;
   created_at: string;
+  audience?: "section_members" | "nco_council";
 };
 type AttendanceRecord = {
   session_id: number;
@@ -412,12 +414,19 @@ export default function AwardTracker({
     );
   }, [data, query]);
 
+  const squadAttendanceMembers = useMemo(
+    () => filteredMembers.filter((member) => member.squad === user?.squad),
+    [filteredMembers, user?.squad],
+  );
+
   const attendanceMembers = useMemo(
-    () =>
-      isNco || isSquadLeader
-        ? filteredMembers.filter((member) => member.squad === user?.squad)
-        : filteredMembers,
-    [filteredMembers, isNco, isSquadLeader, user?.squad],
+    () => {
+      let members = isNco || isSquadLeader ? squadAttendanceMembers : filteredMembers;
+      if (activeSession?.audience === "nco_council")
+        members = members.filter((member) => ["nco", "squad_leader"].includes(member.account_role ?? ""));
+      return members;
+    },
+    [activeSession?.audience, filteredMembers, isNco, isSquadLeader, squadAttendanceMembers],
   );
 
   const viewingMember =

@@ -492,6 +492,7 @@ export const companyEvents = sqliteTable("company_events", {
   location: text("location").notNull().default(""),
   description: text("description").notNull().default(""),
   section: text("section").notNull().default("all"),
+  audience: text("audience").notNull().default("section_members"),
   attendanceSessionId: integer("attendance_session_id"),
   createdByUserId: integer("created_by_user_id").notNull(),
   createdByName: text("created_by_name").notNull(),

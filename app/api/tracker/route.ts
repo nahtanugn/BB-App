@@ -436,6 +436,7 @@ async function ensureSchema() {
       meeting_date TEXT NOT NULL,
       title TEXT NOT NULL DEFAULT 'Weekly Parade',
       section TEXT NOT NULL DEFAULT 'senior',
+      audience TEXT NOT NULL DEFAULT 'section_members',
       created_at TEXT NOT NULL
     )`),
     db.prepare(`CREATE TABLE IF NOT EXISTS attendance_records (
@@ -565,6 +566,9 @@ async function ensureSchema() {
     if (!columns.results.some((column) => column.name === "section"))
       await db.prepare(statement).run();
   }
+  const attendanceColumns = sectionColumns[2];
+  if (!attendanceColumns.results.some((column) => column.name === "audience"))
+    await db.prepare("ALTER TABLE attendance_sessions ADD COLUMN audience TEXT NOT NULL DEFAULT 'section_members'").run();
 
   await db.batch(
     awards.map((award, index) =>
@@ -715,7 +719,9 @@ export async function GET(request: Request) {
       await Promise.all([
       db
         .prepare(
-          "SELECT * FROM members WHERE section = ? ORDER BY name COLLATE NOCASE",
+          `SELECT members.*, COALESCE(users.role, '') AS account_role FROM members
+           LEFT JOIN users ON LOWER(users.email) = LOWER(members.email)
+           WHERE members.section = ? ORDER BY members.name COLLATE NOCASE`,
         )
         .bind(section)
         .all<{
@@ -1235,17 +1241,20 @@ export async function POST(request: Request) {
         );
       const validAttendanceTarget = await db
         .prepare(
-          `SELECT m.id, m.squad FROM members m
+          `SELECT m.id, m.squad, s.audience, COALESCE(users.role, '') AS account_role FROM members m
         INNER JOIN attendance_sessions s ON s.id = ?
+        LEFT JOIN users ON LOWER(users.email) = LOWER(m.email)
         WHERE m.id = ? AND m.section = ? AND s.section = ?`,
         )
         .bind(sessionId, memberId, section, section)
-        .first<{ id: number; squad: string }>();
+        .first<{ id: number; squad: string; audience: string; account_role: string }>();
       if (!validAttendanceTarget)
         return Response.json(
           { error: "Meeting and member must belong to the selected section" },
           { status: 400 },
         );
+      if (validAttendanceTarget.audience === "nco_council" && !["nco", "squad_leader"].includes(validAttendanceTarget.account_role))
+        return Response.json({ error: "Only NCOs and Squad Leaders are required for this meeting" }, { status: 403 });
       if (
         ["nco", "squad_leader"].includes(user.role) &&
         !hasTemporaryAccess &&

@@ -258,8 +258,10 @@ async function collectCandidates(db: D1Database, now: Date) {
     const rows = await db.prepare(`SELECT sessions.id, sessions.section, members.squad, COUNT(*) AS missing
       FROM attendance_sessions sessions
       JOIN members ON members.section = sessions.section
+      LEFT JOIN users ON LOWER(users.email) = LOWER(members.email)
       LEFT JOIN attendance_records records ON records.session_id = sessions.id AND records.member_id = members.id
       WHERE sessions.meeting_date <= ? AND (records.status IS NULL OR records.status = 'unmarked')
+        AND (sessions.audience != 'nco_council' OR users.role IN ('nco', 'squad_leader'))
       GROUP BY sessions.id, sessions.section, members.squad`).bind(cutoff).all<{
         id: number; section: string; squad: string; missing: number;
       }>();
@@ -284,15 +286,16 @@ async function collectCandidates(db: D1Database, now: Date) {
   if (enabled("event_reminders")) {
     const from = now.toISOString().slice(0, 10);
     const until = new Date(now.getTime() + 2 * 86400000).toISOString().slice(0, 10);
-    const rows = await db.prepare(`SELECT id, title, event_date, section FROM company_events
+    const rows = await db.prepare(`SELECT id, title, event_date, section, audience FROM company_events
       WHERE cancelled_at IS NULL AND event_date >= ? AND event_date <= ?`).bind(from, until).all<{
-        id: number; title: string; event_date: string; section: string;
+        id: number; title: string; event_date: string; section: string; audience: string;
       }>();
     for (const row of rows.results) {
       const recipients = await db.prepare(`SELECT users.id FROM users JOIN members
         ON LOWER(members.email) = LOWER(users.email)
-        WHERE users.active = 1 AND users.account_status = 'active' AND members.section IN (?, ?)`)
-        .bind(row.section === "all" ? "senior" : row.section, row.section === "all" ? "junior" : row.section)
+        WHERE users.active = 1 AND users.account_status = 'active' AND members.section IN (?, ?)
+          AND (? != 'nco_council' OR users.role IN ('nco', 'squad_leader'))`)
+        .bind(row.section === "all" ? "senior" : row.section, row.section === "all" ? "junior" : row.section, row.audience ?? "section_members")
         .all<{ id: number }>();
       candidates.push({
         ruleKey: "event_reminders", sourceType: "company_event", sourceId: String(row.id),
