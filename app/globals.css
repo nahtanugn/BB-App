@@ -2538,6 +2538,10 @@ button:disabled { opacity: .62; cursor: wait; }
 
 .notification-list {
   flex: 1;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  align-content: start;
+  gap: 8px;
   overflow-y: auto;
   overscroll-behavior: contain;
   padding: 12px 12px max(24px, env(safe-area-inset-bottom));
@@ -2545,22 +2549,23 @@ button:disabled { opacity: .62; cursor: wait; }
 
 .notification-list > button {
   width: 100%;
+  min-height: 92px;
   padding: 16px 14px;
   display: grid;
   grid-template-columns: 11px 1fr;
   gap: 13px;
   border: 0;
-  border-bottom: 1px solid #e0e6ed;
-  border-radius: 0;
-  background: transparent;
+  border: 1px solid #e0e6ed;
+  border-radius: 13px;
+  background: #fff;
   color: #1b293c;
   text-align: left;
   cursor: pointer;
 }
 
 .notification-list > button.unread {
-  border-radius: 13px;
-  background: white;
+  border-color: #cddff3;
+  background: linear-gradient(135deg, #fff, #f4f9ff);
   box-shadow: 0 5px 18px rgba(11, 47, 85, 0.07);
 }
 
