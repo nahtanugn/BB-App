@@ -189,6 +189,22 @@ export default function StandaloneApp() {
   }, [signedInUserId]);
 
   useEffect(() => {
+    if (!signedInUserId || auth?.user?.onboarding_required) return;
+    let cancelled = false;
+    const refreshActionCount = () => {
+      void fetch("/api/automation", { cache: "no-store" })
+        .then(async (response) => {
+          const result = (await response.json()) as { items?: unknown[] };
+          if (!cancelled && response.ok) setActionCount(result.items?.length ?? 0);
+        })
+        .catch(() => undefined);
+    };
+    refreshActionCount();
+    const interval = window.setInterval(refreshActionCount, 3000);
+    return () => { cancelled = true; window.clearInterval(interval); };
+  }, [auth?.user?.onboarding_required, signedInUserId]);
+
+  useEffect(() => {
     if (!auth?.user || auth.user.onboarding_required) return;
     const target = new URL(window.location.href).searchParams.get("open") as AppRoute | null;
     if (!target) return;

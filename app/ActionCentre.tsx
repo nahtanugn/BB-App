@@ -53,8 +53,10 @@ export default function ActionCentre({
   }, [onCountChange]);
 
   useEffect(() => {
-    const timer = window.setTimeout(() => load().catch((cause) => setError(cause instanceof Error ? cause.message : "Unable to load action items")), 0);
-    return () => window.clearTimeout(timer);
+    const refresh = () => load().catch((cause) => setError(cause instanceof Error ? cause.message : "Unable to load action items"));
+    const timer = window.setTimeout(refresh, 0);
+    const interval = window.setInterval(refresh, 3000);
+    return () => { window.clearTimeout(timer); window.clearInterval(interval); };
   }, [load]);
 
   const categories = useMemo(() => [...new Set(items.map((item) => item.rule_key))], [items]);
