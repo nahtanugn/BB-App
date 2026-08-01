@@ -43,7 +43,12 @@ export async function GET(request: Request) {
       WHERE recipient_user_id = ? AND status IN ('open','snoozed')
         AND (snoozed_until IS NULL OR snoozed_until <= ?)
       GROUP BY rule_key`).bind(user.id, new Date().toISOString()).all();
-    return Response.json({ items: items.results, counts: counts.results });
+    return Response.json({
+      items: items.results,
+      counts: counts.results,
+      summary: counts.results,
+      preview: items.results.slice(0, 3),
+    });
   } catch (error) {
     return Response.json(
       { error: error instanceof Error ? error.message : "Unable to load automation" },

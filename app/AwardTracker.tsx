@@ -2069,22 +2069,22 @@ export default function AwardTracker({
                       )}
                       {canViewSubmissions && (
                         <button
-                          className="edit-member"
+                          className="edit-member member-card-secondary-action"
                           onClick={() => setSubmissionMember(member)}
                         >
                           Submissions
                         </button>
                       )}
                       <button
-                        className="edit-member"
-                        aria-label={`View ${member.name}'s profile`}
+                          className="edit-member member-card-primary-action"
+                          aria-label={`View ${member.name}'s profile`}
                         onClick={() => setViewingMemberId(member.id)}
                       >
                         View profile
                       </button>
                       {canEditMembers && (
                         <button
-                          className="edit-member"
+                          className="edit-member member-card-secondary-action"
                           aria-label={`Edit ${member.name}`}
                           onClick={() => openEditMember(member)}
                         >
@@ -2093,7 +2093,7 @@ export default function AwardTracker({
                       )}
                       {canManageAwards && (
                         <button
-                          className="more"
+                          className="more member-card-secondary-action"
                           aria-label={`Remove ${member.name}`}
                           onClick={() => deleteMember(member)}
                         >

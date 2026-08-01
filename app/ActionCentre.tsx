@@ -59,6 +59,8 @@ export default function ActionCentre({
 
   const categories = useMemo(() => [...new Set(items.map((item) => item.rule_key))], [items]);
   const visible = filter === "all" ? items : items.filter((item) => item.rule_key === filter);
+  const urgent = items.filter((item) => item.priority === "urgent");
+  const mobileVisible = filter === "all" ? urgent : visible;
 
   async function update(action: "dismiss_item" | "snooze_item", itemId: number) {
     setBusy(itemId); setError(""); setNotice("");
@@ -91,9 +93,34 @@ export default function ActionCentre({
           </button>
         ))}
       </div>
-      <section className="action-list" aria-live="polite">
+      <section className="action-summary-grid" aria-label="Task category summaries">
+        {categories.map((category) => {
+          const total = items.filter((item) => item.rule_key === category).length;
+          return <button key={category} className={filter === category ? "active" : ""} onClick={() => setFilter(category)}>
+            <span>{ruleLabels[category] ?? category.replaceAll("_", " ")}</span><strong>{total}</strong><small>{total === 1 ? "task" : "tasks"}</small>
+          </button>;
+        })}
+      </section>
+      {filter === "all" && urgent.length > 0 && <p className="mobile-action-caption">Urgent tasks</p>}
+      <section className="action-list desktop-action-list" aria-live="polite">
         {visible.map((item) => (
-          <article className={item.priority} key={item.id}>
+          <ActionCard key={item.id} item={item} busy={busy} readOnly={readOnly} onOpen={onOpen} onUpdate={update} />
+        ))}
+        {!visible.length && <div className="action-empty"><span>✓</span><h2>You’re all caught up</h2><p>No open work matches this view.</p></div>}
+      </section>
+      <section className="action-list mobile-action-list" aria-live="polite">
+        {mobileVisible.map((item) => (
+          <ActionCard key={item.id} item={item} busy={busy} readOnly={readOnly} onOpen={onOpen} onUpdate={update} />
+        ))}
+        {!mobileVisible.length && <div className="action-empty"><span>✓</span><h2>{filter === "all" ? "No urgent tasks" : "You’re all caught up"}</h2><p>{filter === "all" ? "Choose a category above to review normal tasks." : "No open work matches this view."}</p></div>}
+      </section>
+    </main>
+  );
+}
+
+function ActionCard({ item, busy, readOnly, onOpen, onUpdate }: { item: ActionItem; busy: number | null; readOnly: boolean; onOpen: (targetUrl: string) => void; onUpdate: (action: "dismiss_item" | "snooze_item", itemId: number) => Promise<void> }) {
+  return (
+          <article className={item.priority}>
             <div className="action-priority" aria-hidden="true" />
             <div>
               <p>{ruleLabels[item.rule_key] ?? item.rule_key.replaceAll("_", " ")}</p>
@@ -103,13 +130,9 @@ export default function ActionCentre({
             </div>
             <div className="action-item-buttons">
               <button className="primary" onClick={() => onOpen(item.target_url)}>Open</button>
-              {!readOnly && <button disabled={busy === item.id} onClick={() => update("snooze_item", item.id)}>Tomorrow</button>}
-              {!readOnly && <button disabled={busy === item.id} onClick={() => update("dismiss_item", item.id)}>Dismiss</button>}
+              {!readOnly && <button disabled={busy === item.id} onClick={() => onUpdate("snooze_item", item.id)}>Tomorrow</button>}
+              {!readOnly && <button disabled={busy === item.id} onClick={() => onUpdate("dismiss_item", item.id)}>Dismiss</button>}
             </div>
           </article>
-        ))}
-        {!visible.length && <div className="action-empty"><span>✓</span><h2>You’re all caught up</h2><p>No open work matches this view.</p></div>}
-      </section>
-    </main>
   );
 }

@@ -685,6 +685,7 @@ h2 { color: var(--navy); }
 .action-filter button.active { border-color: var(--navy); background: var(--navy); color: white; }
 .action-filter span { min-width: 20px; height: 20px; display: grid; place-items: center; border-radius: 999px; background: rgba(39,120,212,.12); font-size: 8px; }
 .action-list { display: grid; gap: 11px; }
+.action-summary-grid, .mobile-action-list, .mobile-action-caption { display: none; }
 .action-list article {
   padding: 18px;
   display: grid;
@@ -785,6 +786,15 @@ h2 { color: var(--navy); }
   .action-total span { margin-top: 1px; font-size: 8px; line-height: 1.25; }
   .action-filter { margin: 16px -12px 13px; padding: 0 12px 5px; gap: 8px; scroll-snap-type: x proximity; }
   .action-filter button { min-height: 42px; padding-inline: 15px; scroll-snap-align: start; }
+  .action-summary-grid { margin: 0 0 15px; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 9px; }
+  .action-summary-grid button { min-height: 96px; padding: 13px; display: grid; align-content: space-between; justify-items: start; border: 1px solid #dbe5ee; border-radius: 15px; background: white; color: var(--navy); text-align: left; box-shadow: 0 7px 18px rgba(8,47,86,.04); }
+  .action-summary-grid button.active { border-color: var(--blue); background: #eef6ff; box-shadow: 0 0 0 2px rgba(28,111,209,.1); }
+  .action-summary-grid span { color: #5f7690; font-size: 9px; font-weight: 850; letter-spacing: .06em; text-transform: uppercase; }
+  .action-summary-grid strong { color: var(--navy); font: 700 28px/1 Georgia, serif; }
+  .action-summary-grid small { color: #8292a3; font-size: 9px; }
+  .mobile-action-caption { margin: 2px 0 9px; display: block; color: #6d8197; font-size: 9px; font-weight: 850; letter-spacing: .1em; text-transform: uppercase; }
+  .desktop-action-list { display: none; }
+  .mobile-action-list { display: grid; }
   .action-list article { grid-template-columns: 5px minmax(0, 1fr); }
   .action-list article { padding: 16px; gap: 13px; border-radius: 18px; align-items: start; }
   .action-list article h2 { font-size: 18px; line-height: 1.22; }
@@ -1769,6 +1779,7 @@ h1 { font-size: clamp(30px, 3.1vw, 46px); line-height: 1; letter-spacing: -1.5px
 .event-register-toggle strong { color: var(--navy); font-size: 11px; }
 .event-register-toggle small { color: #607a94; font-size: 9px; font-weight: 600; }
 .event-form > .primary { margin: 0 20px 20px; }
+.event-form-close { display: none; }
 .event-timeline { display: grid; gap: 13px; }
 .event-card { padding: 18px; display: grid; grid-template-columns: 70px minmax(0, 1fr) auto; gap: 18px; align-items: center; }
 .event-card time { min-height: 70px; display: grid; place-content: center; border-radius: 15px; background: var(--navy); color: white; text-align: center; }
@@ -1797,7 +1808,53 @@ h1 { font-size: clamp(30px, 3.1vw, 46px); line-height: 1; letter-spacing: -1.5px
   }
   .event-centre-page, .journey-page { width: min(100% - 24px, 720px); padding: 20px 0 38px; }
   .category-page-header { align-items: start; }.category-page-header h1 { font-size: 39px; }.category-page-header .primary { min-height: 43px; white-space: nowrap; }
+  /* The planner becomes a true mobile sheet: its own scroll area, a fixed header,
+     and an always-reachable primary action above the app navigation. */
+  .event-form {
+    position: fixed;
+    z-index: 95;
+    inset: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    border: 0;
+    border-radius: 0;
+    background: #f4f7fa;
+  }
+  .event-form .panel-heading {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    min-height: 76px;
+    padding: 15px 18px;
+    align-items: center;
+    background: rgba(255,255,255,.96);
+    backdrop-filter: blur(12px);
+  }
+  .event-form .panel-heading > span { display: none; }
+  .event-form-close {
+    width: 42px;
+    height: 42px;
+    display: grid;
+    place-items: center;
+    border: 0;
+    border-radius: 13px;
+    background: #eef2f6;
+    color: #607086;
+    font-size: 26px;
+  }
   .event-form-grid { grid-template-columns: 1fr; padding: 16px; }.event-form-grid .event-wide, .event-form-grid .event-register-toggle { grid-column: auto; }
+  .event-form > .primary {
+    position: sticky;
+    bottom: 0;
+    z-index: 2;
+    width: calc(100% - 32px);
+    min-height: 52px;
+    margin: 0 16px max(16px, env(safe-area-inset-bottom));
+    box-shadow: 0 -9px 25px rgba(9,45,80,.14);
+  }
   .event-card { grid-template-columns: 57px 1fr; gap: 12px; align-items: start; }.event-card time { min-height: 57px; border-radius: 12px; }.event-card time strong { font-size: 24px; }.rsvp-actions { grid-column: 1 / -1; grid-template-columns: repeat(3, 1fr); }.rsvp-actions small { text-align: left; }.rsvp-actions button { min-height: 43px; }
   .journey-stats, .journey-grid { grid-template-columns: 1fr; }.journey-stats article { min-height: 98px; }.journey-stats strong { margin-top: 7px; }.journey-goals form { grid-template-columns: 1fr; }.journey-goals form .primary { min-height: 44px; }
   .unified-mobile-nav {
@@ -1906,6 +1963,13 @@ h1 { font-size: clamp(30px, 3.1vw, 46px); line-height: 1; letter-spacing: -1.5px
   .unified-more-list strong { font-size: 13px; }
   .unified-more-list small { margin-top: 3px; color: var(--muted); font-size: 9px; }
   .unified-more-list > button > b { font-size: 19px; }
+  .member-card .card-actions { display: block; }
+  .member-card .member-card-secondary-action { display: none; }
+  .member-card .member-card-primary-action { width: 100%; min-height: 44px; }
+  .member-card .member-new-marker { display: inline-flex; margin-bottom: 8px; }
+  .submission-form .form-row, .request-create-card .form-row, .admin-account-editor .form-row { grid-template-columns: 1fr; }
+  .stock-tabs, .action-filter { scrollbar-width: none; }
+  .stock-tabs::-webkit-scrollbar, .action-filter::-webkit-scrollbar { display: none; }
 }
 .stock-page { width: min(1320px, calc(100% - 36px)); margin: 0 auto; padding: 38px 0 60px; }
 .stock-heading { display: flex; align-items: flex-end; justify-content: space-between; gap: 20px; }
@@ -2678,4 +2742,67 @@ button:disabled { opacity: .62; cursor: wait; }
   .notification-actions button {
     flex: 1;
   }
+}
+
+/* Focused phone experience: one task at a time, generous tap targets, and no
+   duplicate account controls competing with the shared navigation. */
+@media (max-width: 760px) {
+  .unified-app-content { min-width: 0; overflow-x: clip; }
+  .unified-mobile-nav { padding-inline: 10px; gap: 5px; }
+  .unified-mobile-nav button { min-height: 54px; border-radius: 14px; }
+  .unified-mobile-nav button > span { font-size: 18px; }
+  .unified-mobile-nav button small { font-size: 9px; font-weight: 800; }
+
+  /* The shell owns account and sign-out, so feature pages keep one clear action. */
+  .top-actions .account-chip, .top-actions .sign-out { display: none; }
+  .top-actions { grid-template-columns: minmax(0, 1fr); }
+  .top-actions .search, .top-actions .primary { grid-column: auto; }
+  .top-actions .primary { min-height: 48px; }
+
+  /* Long member records and forms are true phone pages rather than cramped cards. */
+  .modal-backdrop { align-items: stretch; }
+  .modal:not(.compact) {
+    width: 100%;
+    max-width: none;
+    max-height: none;
+    height: 100dvh;
+    border: 0;
+    border-radius: 0;
+    background: #f4f7fa;
+  }
+  .modal:not(.compact) .modal-heading {
+    min-height: 74px;
+    padding: max(14px, env(safe-area-inset-top)) 18px 14px;
+    background: rgba(255,255,255,.97);
+    backdrop-filter: blur(12px);
+  }
+  .modal:not(.compact) .modal-heading h2 { font-size: 24px; }
+  .modal:not(.compact) .modal-heading > button { width: 44px; height: 44px; }
+  .member-profile-body { padding: 14px 12px calc(92px + env(safe-area-inset-bottom)); gap: 12px; }
+  .member-profile-section { padding: 16px; border-radius: 16px; }
+  .member-profile-section-heading { align-items: flex-start; }
+  .member-profile-section-heading h3 { font-size: 18px; }
+  .member-profile-footer {
+    position: sticky;
+    bottom: 0;
+    padding: 12px 14px max(12px, env(safe-area-inset-bottom));
+    grid-template-columns: 1fr 1fr;
+    background: rgba(255,255,255,.97);
+    box-shadow: 0 -8px 22px rgba(7,41,73,.1);
+  }
+  .member-profile-footer span { display: none; }
+  .member-profile-footer button { min-height: 46px; }
+
+  /* Compact, deliberate list rows: actions are read first and expanded only when needed. */
+  .submission-card, .uniform-request-card, .resource-card, .stock-card { border-radius: 18px; }
+  .submission-card, .uniform-request-card { min-height: 0; }
+  .submission-card .primary, .uniform-request-card > button { min-height: 44px; }
+  .uniform-review-list > article, .role-list article, .assignment-list article { border-radius: 16px; }
+  .announcement-compose, .request-create-card, .role-form, .admin-account-editor { border-radius: 18px; }
+
+  /* Prevent narrow filters and tabs from squeezing labels into unreadable columns. */
+  .stock-tabs, .category-tabs, .action-filter { -webkit-overflow-scrolling: touch; }
+  .stock-tabs button, .category-tabs button, .action-filter button { flex: 0 0 auto; }
+  .stock-filters, .stock-filters-categorised { grid-template-columns: 1fr; }
+  .stock-search { grid-column: auto; }
 }

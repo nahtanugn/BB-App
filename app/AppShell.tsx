@@ -107,7 +107,6 @@ export default function AppShell({
       );
     } else {
       values.push(
-        { route: "journey", category: "People & Progress", label: "My journey", description: "Goals, events and next steps", icon: "◎" },
         { route: "awards", category: "People & Progress", label: "My progress", description: "My attendance and awards", icon: "▦" },
         { route: "resources", category: "Requests & Operations", label: "Resources", description: "Member resources", icon: "↗" },
         { route: "uniforms", category: "Requests & Operations", label: "Requests", description: "Uniform and award requests", icon: "▤" },
@@ -161,12 +160,13 @@ export default function AppShell({
   const categoryOrder = ["Home", "People & Progress", "Programme & Events", "Requests & Operations", "Communication", "Administration"] as const;
   const groupedItems = categoryOrder.map((category) => ({ category, items: items.filter((item) => item.category === category) })).filter((group) => group.items.length);
   const operationsRoute: AppRoute = items.some((item) => item.route === "submissions") ? "submissions" : "uniforms";
-  const mobileRoutes: AppRoute[] = ["home", staff ? "members" : "journey", "events", operationsRoute];
+  const mobileRoutes: AppRoute[] = ["home", staff ? "members" : "awards", "events", operationsRoute];
   const primary = mobileRoutes.map((route) => items.find((item) => item.route === route)).filter((item): item is NavItem => Boolean(item));
   const secondary = items.filter((item) => !primary.some((primaryItem) => primaryItem.route === item.route));
   const mobileLabel: Partial<Record<AppRoute, string>> = {
     home: "Home",
     members: "People",
+    awards: "Progress",
     journey: "Journey",
     events: "Events",
     submissions: "Requests",
