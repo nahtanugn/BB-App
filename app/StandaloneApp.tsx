@@ -17,6 +17,7 @@ import OnboardingCentre from "./OnboardingCentre";
 import MemberProgress from "./MemberProgress";
 import EventCentre from "./EventCentre";
 import MemberJourney from "./MemberJourney";
+import OperationsHome from "./OperationsHome";
 
 type User = {
   id: number;
@@ -123,6 +124,7 @@ export default function StandaloneApp() {
       hasCustomTrackerAccess;
     const allowed =
       next === "home" ||
+      (next === "operations" && ["admin", "officer"].includes(auth.user.role)) ||
       ["resources", "uniforms", "announcements"].includes(next) ||
       next === "events" ||
       (next === "journey" &&
@@ -203,6 +205,7 @@ export default function StandaloneApp() {
         subscriptions: "subscriptions",
         home: "home",
         admin: "admin",
+        operations: "operations",
       };
       navigate(aliases[target] ?? target, true);
     }, 0);
@@ -657,6 +660,8 @@ export default function StandaloneApp() {
   let page: ReactNode;
   if (route === "home")
     page = <ActionCentre userName={auth.user.name} readOnly={auth.user.role === "viewer"} onOpen={openTarget} onCountChange={setActionCount} />;
+  else if (route === "operations" && ["admin", "officer"].includes(auth.user.role))
+    page = <OperationsHome onOpen={openTarget} />;
   else if (route === "submissions")
     page = <SubmissionsPage user={auth.user} initialSection={submissionSection} onLogout={logout} onBack={() => navigate("home")} />;
   else if (route === "stock")

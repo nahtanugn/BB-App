@@ -48,6 +48,11 @@ export async function GET(request: Request) {
       counts: counts.results,
       summary: counts.results,
       preview: items.results.slice(0, 3),
+      operational: {
+        total: items.results.length,
+        groups: counts.results,
+        preview: items.results.slice(0, 8),
+      },
     });
   } catch (error) {
     return Response.json(

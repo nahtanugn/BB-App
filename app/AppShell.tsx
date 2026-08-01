@@ -4,6 +4,7 @@ import { type ReactNode, useEffect, useMemo, useRef, useState } from "react";
 
 export type AppRoute =
   | "home"
+  | "operations"
   | "company-overview"
   | "awards"
   | "members"
@@ -112,6 +113,8 @@ export default function AppShell({
         { route: "uniforms", category: "Requests & Operations", label: "Requests", description: "Uniform and award requests", icon: "▤" },
       );
     }
+    if (["admin", "officer"].includes(user.role))
+      values.push({ route: "operations", category: "Home", label: "Operations", description: "Review queue and priorities", icon: "✓", badge: actionCount });
     values.push({ route: "events", category: "Programme & Events", label: "Meetings & events", description: "Programme, RSVP and registers", icon: "◫" });
     if (["member", "nco", "squad_leader"].includes(user.role))
       values.push({ route: "journey", category: "People & Progress", label: "My journey", description: "Your goals and progress", icon: "◎" });
