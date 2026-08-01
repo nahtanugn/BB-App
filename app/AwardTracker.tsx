@@ -459,23 +459,36 @@ export default function AwardTracker({
   }
 
   function memberAttendance(member: Member) {
+    const joined = /^\d{4}/.exec(member.joined_at)?.[0];
+    const eligibleSessions = (data?.attendanceSessions ?? []).filter(
+      (session) =>
+        session.meeting_date <= malaysiaDateKey() &&
+        (!joined || session.meeting_date >= `${joined}-01-01`),
+    );
+    const eligibleSessionIds = new Set(eligibleSessions.map((session) => session.id));
+    // Only completed, past registers affect the average. This means future
+    // meetings and records not yet taken never reduce a member’s percentage.
     const records = (data?.attendance ?? []).filter(
-      (item) => item.member_id === member.id,
+      (item) =>
+        item.member_id === member.id &&
+        eligibleSessionIds.has(item.session_id) &&
+        item.status !== "unmarked",
     );
     const present = records.filter((item) => item.status === "present").length;
     const absent = records.filter((item) => item.status === "absent").length;
     const excused = records.filter((item) => item.status === "excused").length;
-    const unmarked =
-      records.filter((item) => item.status === "unmarked").length +
-      Math.max(0, (data?.attendanceSessions.length ?? 0) - records.length);
-    const total = data?.attendanceSessions.length ?? 0;
+    const recorded = present + absent + excused;
+    const unmarked = Math.max(0, eligibleSessions.length - recorded);
+    const total = eligibleSessions.length;
+    const assessed = present + absent;
     return {
       present,
       absent,
       excused,
       unmarked,
+      recorded,
       total,
-      percentage: total ? Math.round((present / total) * 100) : 0,
+      percentage: assessed ? Math.round((present / assessed) * 100) : 0,
     };
   }
 
@@ -2032,6 +2045,7 @@ export default function AwardTracker({
           <section className="member-grid">
             {filteredMembers.map((member) => {
               const stats = memberStats(member);
+              const attendance = memberAttendance(member);
               const readiness = presidentReadiness(member);
               const notification = submissionByMember.get(member.id);
               return (
@@ -2083,7 +2097,7 @@ export default function AwardTracker({
                   <p>
                     {member.rank} · Joined {joinedYear(member.joined_at)}
                   </p>
-                  <div className="member-numbers">
+                  <div className="member-numbers member-numbers-four">
                     <div>
                       <strong>{stats.awarded}</strong>
                       <span>Awards</span>
@@ -2095,6 +2109,10 @@ export default function AwardTracker({
                     <div>
                       <strong>{member.service_years}</strong>
                       <span>Years</span>
+                    </div>
+                    <div>
+                      <strong>{attendance.percentage}%</strong>
+                      <span>Attendance</span>
                     </div>
                   </div>
                   <div className="readiness">
@@ -2629,7 +2647,7 @@ export default function AwardTracker({
                       <div>
                         <p className="eyebrow">ATTENDANCE</p>
                         <h3>
-                          {attendance.present} of {attendance.total} meetings
+                          {attendance.percentage}% average
                         </h3>
                       </div>
                     </div>
@@ -2647,6 +2665,9 @@ export default function AwardTracker({
                         <strong>{attendance.unmarked}</strong> Unmarked
                       </span>
                     </div>
+                    <p className="attendance-average-note">
+                      Based on {attendance.recorded} completed attendance {attendance.recorded === 1 ? "entry" : "entries"}. Future meetings and unmarked registers are excluded; excused entries do not lower the average.
+                    </p>
                   </section>
 
                   <section className="member-profile-section">

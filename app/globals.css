@@ -177,6 +177,7 @@ h2 { color: var(--navy); }
 .member-card h2 { margin: 15px 0 4px; font-family: Georgia, serif; font-size: 18px; }
 .member-card > p { margin-bottom: 17px; color: var(--muted); font-size: 10px; }
 .member-numbers { padding: 12px 0; border-top: 1px solid #edf0f3; border-bottom: 1px solid #edf0f3; display: grid; grid-template-columns: repeat(3, 1fr); }
+.member-numbers.member-numbers-four { grid-template-columns: repeat(4, 1fr); }
 .member-numbers > div { text-align: center; border-right: 1px solid #edf0f3; }
 .member-numbers > div:last-child { border-right: 0; }
 .member-numbers strong, .member-numbers span { display: block; }
@@ -1056,6 +1057,7 @@ h1 { font-size: clamp(30px, 3.1vw, 46px); line-height: 1; letter-spacing: -1.5px
 .member-card h2 { margin-top: 18px; font-size: 22px; }
 .member-card > p, .member-numbers span, .readiness > div:first-child { font-size: 11px; }
 .member-numbers { margin-inline: -22px; padding: 15px 22px; background: #f6f9fc; }
+.attendance-average-note { margin: 12px 0 0; color: var(--muted); font-size: 10px; line-height: 1.5; }
 
 .attendance-heading small,
 .subscription-heading p:not(.eyebrow),
