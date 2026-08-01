@@ -18,15 +18,19 @@ export async function GET(request: Request) {
     if (!user)
       return Response.json({ error: "Sign in required" }, { status: 401 });
     await ensureNotificationSchema();
+    // Older attendance reminders were created before attendance follow-up was
+    // kept solely in the Action Centre. Keep them out of the feed and badge.
+    const visibleNotification = "target_url != '/?open=attendance' AND title != 'Attendance is incomplete'";
     const notifications = await env.DB.prepare(
       `SELECT id, type, title, body, target_url, read_at, created_at
-       FROM notifications WHERE recipient_user_id = ?
+       FROM notifications WHERE recipient_user_id = ? AND ${visibleNotification}
        ORDER BY created_at DESC LIMIT 100`,
     )
       .bind(user.id)
       .all();
     const unread = await env.DB.prepare(
-      "SELECT COUNT(*) AS total FROM notifications WHERE recipient_user_id = ? AND read_at IS NULL",
+      `SELECT COUNT(*) AS total FROM notifications
+       WHERE recipient_user_id = ? AND read_at IS NULL AND ${visibleNotification}`,
     )
       .bind(user.id)
       .first<{ total: number }>();

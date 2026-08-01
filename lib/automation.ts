@@ -559,7 +559,10 @@ export async function runAutomation(
           !item?.last_notified_at ||
           (candidate.reminderDays ?? [3, 7]).includes(ageDays) ||
           expiryReminder;
-        if (notifyNow && item) {
+        // Attendance follow-up remains in the Action Centre, but it is deliberately
+        // not sent to the Notification Centre or as a device alert. A single meeting
+        // can create several squad follow-ups, which makes the notification feed noisy.
+        if (notifyNow && item && candidate.ruleKey !== "attendance_unmarked") {
           await createNotifications({
             recipientUserIds: [recipientUserId],
             type: candidate.ruleKey.includes("subscription") || candidate.ruleKey === "uniform_requests" ? "request" : candidate.ruleKey === "award_reviews" ? "award" : "admin",
