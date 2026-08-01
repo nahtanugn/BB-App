@@ -164,6 +164,14 @@ export default function AppShell({
   const mobileRoutes: AppRoute[] = ["home", staff ? "members" : "journey", "events", operationsRoute];
   const primary = mobileRoutes.map((route) => items.find((item) => item.route === route)).filter((item): item is NavItem => Boolean(item));
   const secondary = items.filter((item) => !primary.some((primaryItem) => primaryItem.route === item.route));
+  const mobileLabel: Partial<Record<AppRoute, string>> = {
+    home: "Home",
+    members: "People",
+    journey: "Journey",
+    events: "Events",
+    submissions: "Requests",
+    uniforms: "Requests",
+  };
 
   useEffect(() => {
     if (!moreOpen) return;
@@ -214,7 +222,7 @@ export default function AppShell({
             key={item.route}
           >
             <span aria-hidden="true">{item.icon}</span>
-            <small>{item.label}</small>
+            <small>{mobileLabel[item.route] ?? item.label}</small>
             {Boolean(item.badge) && <b>{item.badge! > 99 ? "99+" : item.badge}</b>}
           </button>
         ))}

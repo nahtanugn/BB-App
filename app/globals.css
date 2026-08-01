@@ -775,14 +775,23 @@ h2 { color: var(--navy); }
 .automation-history article > b { color: #6a788a; font-size: 9px; }
 
 @media (max-width: 760px) {
-  .action-centre-page, .automation-page, .member-progress-page { width: min(100% - 24px, 700px); padding: 18px 0 36px; }
+  .action-centre-page, .automation-page, .member-progress-page { width: min(100% - 24px, 700px); padding: 16px 0 30px; }
   .action-centre-hero, .automation-hero { padding: 23px 20px; display: grid; align-items: start; }
-  .action-centre-hero h1, .automation-hero h1 { font-size: 37px; }
-  .action-total { width: 100%; min-width: 0; display: flex; align-items: center; justify-content: center; gap: 9px; }
-  .action-total strong { font-size: 31px; }
+  .action-centre-hero { position: relative; min-height: 214px; padding-right: 112px; border-radius: 20px; }
+  .action-centre-hero h1, .automation-hero h1 { font-size: 34px; line-height: 1.06; }
+  .action-centre-hero p:last-child { font-size: 12px; line-height: 1.55; }
+  .action-total { position: absolute; top: 18px; right: 16px; width: 82px; min-width: 82px; min-height: 82px; padding: 13px 7px; display: grid; place-content: center; border-radius: 18px; gap: 2px; }
+  .action-total strong { font-size: 32px; }
+  .action-total span { margin-top: 1px; font-size: 8px; line-height: 1.25; }
+  .action-filter { margin: 16px -12px 13px; padding: 0 12px 5px; gap: 8px; scroll-snap-type: x proximity; }
+  .action-filter button { min-height: 42px; padding-inline: 15px; scroll-snap-align: start; }
   .action-list article { grid-template-columns: 5px minmax(0, 1fr); }
-  .action-item-buttons { grid-column: 2; display: grid; grid-template-columns: 1fr 1fr 1fr; }
-  .action-item-buttons button { min-height: 44px; }
+  .action-list article { padding: 16px; gap: 13px; border-radius: 18px; align-items: start; }
+  .action-list article h2 { font-size: 18px; line-height: 1.22; }
+  .action-list article span { font-size: 12px; line-height: 1.45; }
+  .action-item-buttons { grid-column: 2; display: grid; grid-template-columns: minmax(0, 1fr) auto auto; gap: 7px; }
+  .action-item-buttons button { min-height: 42px; padding-inline: 11px; font-size: 11px; }
+  .action-item-buttons .primary { min-width: 0; }
   .automation-rule-grid { grid-template-columns: 1fr; }
   .automation-schedule { grid-template-columns: 1fr; }
   .automation-rule-grid form { grid-template-columns: 1fr; }
