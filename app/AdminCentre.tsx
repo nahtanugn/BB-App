@@ -311,16 +311,27 @@ export default function AdminCentre({
                   <button className="primary" disabled={busy}>{busy ? "Saving…" : "Save account changes"}</button>
                 </form>
               ) : (
-                <form key={pendingAccountMember?.id ?? "new-admin-account"} onSubmit={createUser}>
+                <form className="account-create-form" key={pendingAccountMember?.id ?? "new-admin-account"} onSubmit={createUser}>
                   <div className="account-section-heading"><div><p className="eyebrow">NEW LOGIN</p><h2>{pendingAccountMember ? `Create login for ${pendingAccountMember.name}` : "Add an account"}</h2></div>{pendingAccountMember && <button type="button" className="text-button" onClick={() => { setPendingAccountMember(null); setNewRole("officer"); }}>Cancel</button>}</div>
-                  <label>Name<input name="name" required readOnly={Boolean(pendingAccountMember)} defaultValue={pendingAccountMember?.name ?? ""} /></label>
-                  <label>Email<input name="email" type="email" required readOnly={Boolean(pendingAccountMember)} defaultValue={pendingAccountMember?.email ?? ""} /></label>
-                  <label>Temporary password<input name="password" type="password" minLength={10} required /><small>At least 10 characters. The user can change it after signing in.</small></label>
-                  <label>Normal role<select name="role" value={newRole} disabled={Boolean(pendingAccountMember)} onChange={(event) => setNewRole(event.target.value as Role)}><option value="admin">Administrator</option><option value="officer">Officer</option><option value="nco">NCO</option><option value="squad_leader">Squad Leader</option><option value="viewer">Viewer · full read-only access</option><option value="member">Member</option></select>{pendingAccountMember && <input type="hidden" name="role" value="member" />}</label>
-                  {["nco", "squad_leader", "member"].includes(newRole) && <label>Assigned squad<select name="squad" defaultValue={pendingAccountMember?.squad ?? "Alpha"}><option>Alpha</option><option>Bravo</option><option>Charlie</option><option>Delta</option></select></label>}
-                  {newRole === "member" && <label>Member section<select name="memberSection" defaultValue={pendingAccountMember?.section ?? "senior"}><option value="senior">Senior</option><option value="junior">Junior</option></select></label>}
-                  <label>Temporary access<select name="temporaryAccessRole" value={newTemporaryAccess} onChange={(event) => setNewTemporaryAccess(event.target.value)}><option value="">None</option><option value="temporary_admin">Temporary Admin</option></select></label>
-                  {newTemporaryAccess === "temporary_admin" && <label>Access expires on<input name="accessExpiresOn" type="date" required /></label>}
+                  <p className="account-editor-note">Create a secure login, choose the person’s normal app role, then add temporary access only when it is needed.</p>
+                  <div className="account-form-group">
+                    <p>Login details</p>
+                    <div className="account-field-grid">
+                      <label>Name<input name="name" required readOnly={Boolean(pendingAccountMember)} defaultValue={pendingAccountMember?.name ?? ""} placeholder="Full name" /></label>
+                      <label>Email<input name="email" type="email" required readOnly={Boolean(pendingAccountMember)} defaultValue={pendingAccountMember?.email ?? ""} placeholder="name@example.com" /></label>
+                    </div>
+                    <label>Temporary password<input name="password" type="password" minLength={10} required autoComplete="new-password" placeholder="At least 10 characters" /><small>The person will be asked to change this after their first sign-in.</small></label>
+                  </div>
+                  <div className="account-form-group">
+                    <p>Access</p>
+                    <div className="account-field-grid">
+                      <label>Normal role<select name="role" value={newRole} disabled={Boolean(pendingAccountMember)} onChange={(event) => setNewRole(event.target.value as Role)}><option value="admin">Administrator</option><option value="officer">Officer</option><option value="nco">NCO</option><option value="squad_leader">Squad Leader</option><option value="viewer">Viewer · full read-only access</option><option value="member">Member</option></select>{pendingAccountMember && <input type="hidden" name="role" value="member" />}</label>
+                      <label>Temporary access<select name="temporaryAccessRole" value={newTemporaryAccess} onChange={(event) => setNewTemporaryAccess(event.target.value)}><option value="">None</option><option value="temporary_admin">Temporary Admin</option></select><small>Optional extra access; the normal role stays unchanged.</small></label>
+                    </div>
+                    {["nco", "squad_leader", "member"].includes(newRole) && <label>Assigned squad<select name="squad" defaultValue={pendingAccountMember?.squad ?? "Alpha"}><option>Alpha</option><option>Bravo</option><option>Charlie</option><option>Delta</option></select></label>}
+                    {newRole === "member" && <label>Member section<select name="memberSection" defaultValue={pendingAccountMember?.section ?? "senior"}><option value="senior">Senior</option><option value="junior">Junior</option></select></label>}
+                    {newTemporaryAccess === "temporary_admin" && <label>Access expires on<input name="accessExpiresOn" type="date" required /></label>}
+                  </div>
                   <button className="primary" disabled={busy}>{busy ? "Creating…" : "Create account"}</button>
                 </form>
               )}

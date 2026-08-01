@@ -2217,6 +2217,19 @@ button:disabled { opacity: .62; cursor: wait; }
 .admin-account-editor { position: sticky; top: 14px; }
 .admin-account-editor form { display: grid; gap: 12px; }
 .admin-account-editor label { display: grid; gap: 6px; color: var(--navy); font-size: 9px; font-weight: 750; }
+.admin-account-editor input, .admin-account-editor select {
+  width: 100%; min-height: 46px; padding: 0 12px; border: 1px solid #cddae7;
+  border-radius: 10px; background: #fff; color: var(--ink); font: inherit; font-size: 11px;
+  box-shadow: inset 0 1px 2px rgba(17, 53, 84, .03);
+}
+.admin-account-editor input:focus, .admin-account-editor select:focus { border-color: var(--blue); outline: 0; box-shadow: 0 0 0 3px rgba(28, 111, 209, .12); }
+.admin-account-editor input[readonly] { background: #f2f6fa; color: #4a6177; }
+.account-create-form { gap: 15px !important; }
+.account-editor-note { margin: -2px 0 1px; color: #60778f; font-size: 10px; line-height: 1.55; }
+.account-form-group { padding: 14px; display: grid; gap: 12px; border: 1px solid #dce6ef; border-radius: 12px; background: #f8fbfe; }
+.account-form-group > p { margin: 0; color: #4a6988; font-size: 8px; font-weight: 850; letter-spacing: .12em; text-transform: uppercase; }
+.account-field-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.admin-account-editor label > small { color: #718499; font-size: 8px; font-weight: 500; line-height: 1.4; }
 .pending-login-panel { margin-top: 17px; padding-top: 15px; border-top: 1px solid var(--line); }
 .pending-login-panel h3 { color: var(--navy); font-family: Georgia, serif; font-size: 16px; }
 .pending-login-panel article { min-height: 54px; padding: 9px 0; display: flex; align-items: center; justify-content: space-between; gap: 10px; border-bottom: 1px solid var(--line); }
@@ -2238,6 +2251,7 @@ button:disabled { opacity: .62; cursor: wait; }
   .admin-tabs { width: 100%; }
   .admin-tabs button { flex: 1; }
   .admin-account-list-panel, .admin-account-editor, .admin-custom-access { padding: 14px; }
+  .account-field-grid { grid-template-columns: 1fr; }
   .admin-account-list > article { grid-template-columns: 36px 1fr; }
   .admin-account-actions { grid-column: 2; flex-wrap: wrap; }
 }
