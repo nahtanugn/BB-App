@@ -37,12 +37,8 @@ type StockData = {
     lowStock: StockItem[];
     defective: StockItem[];
     recent: StockTransaction[];
-    stocktakes: Array<{ id: number; status: string; scope: string; started_at: string; line_count: number; uncounted: number; differences: number }>;
   };
-  stocktake?: { session: StocktakeSession | null; lines: StocktakeLine[] };
 };
-type StocktakeSession = { id: number; status: "counting" | "submitted" | "confirmed"; scope: string; started_by_name: string; started_at: string; submitted_at: string | null; confirmed_at: string | null };
-type StocktakeLine = { id: number; expected_quantity: number; counted_quantity: number | null; difference_reason: string; name: string; stock_type: string; section: string; category: string; variant: string; condition: string; current_quantity: number };
 
 export default function StockCentre(props: {
   userName: string;
@@ -51,7 +47,7 @@ export default function StockCentre(props: {
 }) {
   void props;
   const [data, setData] = useState<StockData | null>(null);
-  const [tab, setTab] = useState<"dashboard" | "overview" | "uniform" | "award" | "history" | "stocktake">("dashboard");
+  const [tab, setTab] = useState<"dashboard" | "overview" | "uniform" | "award" | "history">("dashboard");
   const [query, setQuery] = useState("");
   const [section, setSection] = useState("all");
   const [condition, setCondition] = useState("all");
@@ -61,17 +57,16 @@ export default function StockCentre(props: {
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
   const [busy, setBusy] = useState(false);
-  const [stocktakeScope, setStocktakeScope] = useState("all");
 
   async function load() {
-    const response = await fetch("/api/stock?dashboard=1&stocktake=1", { cache: "no-store" });
+    const response = await fetch("/api/stock?dashboard=1", { cache: "no-store" });
     const result = (await response.json()) as StockData & { error?: string };
     if (!response.ok) throw new Error(result.error ?? "Unable to load stock");
     setData(result);
   }
 
   useEffect(() => {
-    fetch("/api/stock?dashboard=1&stocktake=1", { cache: "no-store" })
+    fetch("/api/stock?dashboard=1", { cache: "no-store" })
       .then(async (response) => {
         const result = (await response.json()) as StockData & { error?: string };
         if (!response.ok) throw new Error(result.error ?? "Unable to load stock");
@@ -171,21 +166,6 @@ export default function StockCentre(props: {
     setBusy(false);
   }
 
-  async function stocktakeAction(action: string, extra: Record<string, unknown> = {}) {
-    setBusy(true); setError(""); setNotice("");
-    const response = await fetch("/api/stock", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action, ...extra }) });
-    const result = (await response.json()) as { error?: string; adjustments?: number };
-    if (!response.ok) { setBusy(false); setError(result.error ?? "Unable to update stocktake"); return; }
-    await load();
-    setNotice(action === "start_stocktake" ? "Stocktake started. Enter the physical count for each item." : action === "submit_stocktake" ? "Stocktake submitted for confirmation." : action === "confirm_stocktake" ? `Stocktake confirmed. ${result.adjustments ?? 0} stock balance${result.adjustments === 1 ? "" : "s"} adjusted.` : "Physical count saved.");
-    setBusy(false);
-  }
-
-  async function saveCount(line: StocktakeLine, form: HTMLFormElement) {
-    const formData = new FormData(form);
-    await stocktakeAction("count_stocktake_line", { lineId: line.id, countedQuantity: formData.get("countedQuantity"), reason: formData.get("reason") });
-  }
-
   function exportReorderList() {
     const rows = data?.dashboard?.lowStock ?? [];
     const csv = [
@@ -256,12 +236,10 @@ export default function StockCentre(props: {
               {canViewUniform && <button className={tab === "uniform" ? "active" : ""} onClick={() => { setTab("uniform"); setCategory("all"); }}>Uniforms</button>}
               {canViewAwards && <button className={tab === "award" ? "active" : ""} onClick={() => { setTab("award"); setCategory("all"); }}>Awards</button>}
               {data.permissions.includes("stock.view_history") && <button className={tab === "history" ? "active" : ""} onClick={() => { setTab("history"); setCategory("all"); }}>History</button>}
-              {data.permissions.includes("stock.stocktake") && <button className={tab === "stocktake" ? "active" : ""} onClick={() => { setTab("stocktake"); setCategory("all"); }}>Stocktake</button>}
             </div>
             {tab === "dashboard" ? (
               <section className="quartermaster-workspace">
-                <div className="quartermaster-intro"><div><p className="eyebrow">QUARTERMASTER WORKSPACE</p><h2>Today’s store work</h2><p>Handle requests, stock alerts and handovers from one place.</p></div><div className="quartermaster-actions"><button className="primary" onClick={() => { const item = data.items.find((entry) => entry.condition !== "defective"); if (item) setSelected(item); }}>Issue or return item</button>{data.permissions.includes("stock.export") && <button className="secondary" onClick={exportReorderList}>Export reorder list</button>}{data.permissions.includes("stock.stocktake") && !data.stocktake?.session && <button className="secondary" onClick={() => stocktakeAction("start_stocktake", { scope: stocktakeScope })} disabled={busy}>Start stocktake</button>}</div></div>
-                {data.permissions.includes("stock.stocktake") && !data.stocktake?.session && <label className="stocktake-scope">Stocktake scope<select value={stocktakeScope} onChange={(event) => setStocktakeScope(event.target.value)}><option value="all">Uniforms and awards</option><option value="uniform">Uniforms only</option><option value="award">Awards only</option></select></label>}
+                <div className="quartermaster-intro"><div><p className="eyebrow">QUARTERMASTER WORKSPACE</p><h2>Today’s store work</h2><p>Handle requests, stock alerts and handovers from one place.</p></div><div className="quartermaster-actions"><button className="primary" onClick={() => { const item = data.items.find((entry) => entry.condition !== "defective"); if (item) setSelected(item); }}>Issue or return item</button>{data.permissions.includes("stock.export") && <button className="secondary" onClick={exportReorderList}>Export reorder list</button>}</div></div>
                 <div className="quartermaster-grid">
                   <article><span>Awaiting review</span><strong>{data.dashboard?.requests.filter((request) => request.status === "pending").length ?? 0}</strong><small>uniform requests</small></article>
                   <article><span>Ready to collect</span><strong>{data.dashboard?.requests.filter((request) => request.status === "ready").length ?? 0}</strong><small>member handovers</small></article>
@@ -270,12 +248,6 @@ export default function StockCentre(props: {
                   <article><span>Defective</span><strong>{data.dashboard?.defective.length ?? 0}</strong><small>items not issuable</small></article>
                 </div>
                 <div className="quartermaster-columns"><section><div className="quartermaster-section-heading"><h3>Request queue</h3><span>{data.dashboard?.requests.length ?? 0}</span></div>{data.dashboard?.requests.slice(0, 8).map((request) => <article className="quartermaster-row" key={request.id}><div><strong>{request.member_name}</strong><p>{request.item_name}{request.variant ? ` · ${request.variant}` : ""} · {request.quantity}</p></div><span className={`request-status ${request.status}`}>{request.status === "ready" ? "Ready" : request.status === "pending" ? "Review" : "Approved"}</span></article>)}{!data.dashboard?.requests.length && <p className="empty-inline">No active uniform requests.</p>}</section><section><div className="quartermaster-section-heading"><h3>Needs attention</h3><span>{(data.dashboard?.lowStock.length ?? 0) + (data.dashboard?.defective.length ?? 0)}</span></div>{[...(data.dashboard?.lowStock ?? []), ...(data.dashboard?.defective ?? [])].slice(0, 8).map((item) => <article className="quartermaster-row" key={`${item.id}-${item.condition}`}><div><strong>{item.name}{item.variant ? ` · ${item.variant}` : ""}</strong><p>{item.condition === "defective" ? "Defective · not issuable" : `${item.quantity} on hand · reorder at ${item.reorder_level}`}</p></div><button onClick={() => setSelected(item)}>Open</button></article>)}{!(data.dashboard?.lowStock.length || data.dashboard?.defective.length) && <p className="empty-inline">No stock alerts.</p>}</section><section><div className="quartermaster-section-heading"><h3>Recent movement</h3><span>{data.dashboard?.recent.length ?? 0}</span></div>{data.dashboard?.recent.slice(0, 8).map((transaction) => <article className="quartermaster-row" key={transaction.id}><div><strong>{transaction.item_name}{transaction.variant ? ` · ${transaction.variant}` : ""}</strong><p>{transaction.transaction_type.replaceAll("_", " ")}{transaction.member_name ? ` · ${transaction.member_name}` : ""}</p></div><span className={`stock-delta ${transaction.quantity_delta < 0 ? "negative" : ""}`}>{transaction.quantity_delta > 0 ? "+" : ""}{transaction.quantity_delta}</span></article>)}{!data.dashboard?.recent.length && <p className="empty-inline">No recent stock movement.</p>}</section></div>
-              </section>
-            ) : tab === "stocktake" ? (
-              <section className="stocktake-workspace">
-                <div className="quartermaster-intro"><div><p className="eyebrow">GUIDED STOCKTAKE</p><h2>{data.stocktake?.session ? `Stocktake #${data.stocktake.session.id}` : "No active stocktake"}</h2><p>{data.stocktake?.session ? "Record the physical quantity. A reason is required for every difference." : "Start a stocktake from the Quartermaster tab."}</p></div>{data.stocktake?.session?.status === "counting" && <button className="primary" onClick={() => stocktakeAction("submit_stocktake", { stocktakeId: data.stocktake?.session?.id })} disabled={busy}>Submit for confirmation</button>}{data.stocktake?.session?.status === "submitted" && <button className="primary" onClick={() => stocktakeAction("confirm_stocktake", { stocktakeId: data.stocktake?.session?.id })} disabled={busy}>Confirm adjustments</button>}</div>
-                {data.stocktake?.session && <div className="stocktake-progress"><span>{data.stocktake.lines.filter((line) => line.counted_quantity !== null).length} of {data.stocktake.lines.length} counted</span><strong>{data.stocktake.session.status === "counting" ? "Counting in progress" : data.stocktake.session.status === "submitted" ? "Awaiting confirmation" : "Confirmed"}</strong></div>}
-                <div className="stocktake-lines">{data.stocktake?.lines.map((line) => <form key={line.id} onSubmit={(event) => { event.preventDefault(); void saveCount(line, event.currentTarget); }}><div><strong>{line.name}{line.variant ? ` · ${line.variant}` : ""}</strong><small>{line.stock_type} · {line.section} · expected {line.expected_quantity}</small></div><label>Count<input name="countedQuantity" type="number" min="0" defaultValue={line.counted_quantity ?? ""} disabled={data.stocktake?.session?.status !== "counting"} required /></label><label>Reason{line.counted_quantity !== null && line.counted_quantity !== line.expected_quantity ? " for difference" : " (if different)"}<input name="reason" defaultValue={line.difference_reason} disabled={data.stocktake?.session?.status !== "counting"} /></label>{data.stocktake?.session?.status === "counting" && <button disabled={busy}>Save count</button>}</form>)}</div>
               </section>
             ) : tab === "history" ? (
               <div className="stock-history">

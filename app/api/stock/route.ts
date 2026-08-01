@@ -78,7 +78,7 @@ export async function GET(request: Request) {
       members: members.results,
     };
     if (url.searchParams.get("dashboard") === "1") {
-      const [requests, recent, stocktakes] = await Promise.all([
+      const [requests, recent] = await Promise.all([
         permissions.includes("stock.manage_uniform_requests")
           ? runtime.DB.prepare(`SELECT r.id, r.status, r.quantity, r.submitted_at, r.ready_at,
               m.name AS member_name, i.name AS item_name, i.variant,
@@ -92,13 +92,6 @@ export async function GET(request: Request) {
             FROM stock_transactions t JOIN stock_items i ON i.id = t.item_id LEFT JOIN members m ON m.id = t.member_id
             WHERE i.stock_type IN (${placeholders}) ORDER BY t.created_at DESC LIMIT 8`).bind(...allowedTypes).all()
           : Promise.resolve({ results: [] }),
-        permissions.includes("stock.stocktake")
-          ? runtime.DB.prepare(`SELECT s.*, COUNT(l.id) AS line_count,
-              SUM(CASE WHEN l.counted_quantity IS NULL THEN 1 ELSE 0 END) AS uncounted,
-              SUM(CASE WHEN l.counted_quantity IS NOT NULL AND l.counted_quantity != l.expected_quantity THEN 1 ELSE 0 END) AS differences
-            FROM stocktakes s LEFT JOIN stocktake_lines l ON l.stocktake_id = s.id
-            GROUP BY s.id ORDER BY s.started_at DESC LIMIT 8`).all()
-          : Promise.resolve({ results: [] }),
       ]);
       response.dashboard = {
         requests: requests.results,
@@ -111,22 +104,7 @@ export async function GET(request: Request) {
           return stock.condition === "defective" && Number(stock.quantity) > 0;
         }),
         recent: recent.results,
-        stocktakes: stocktakes.results,
       };
-    }
-    if (url.searchParams.get("stocktake") === "1") {
-      if (!permissions.includes("stock.stocktake")) return Response.json({ error: "Stocktake permission required" }, { status: 403 });
-      const stocktakeId = Number(url.searchParams.get("stocktakeId"));
-      const session = stocktakeId
-        ? await runtime.DB.prepare("SELECT * FROM stocktakes WHERE id = ?").bind(stocktakeId).first()
-        : await runtime.DB.prepare("SELECT * FROM stocktakes WHERE status IN ('counting', 'submitted') ORDER BY started_at DESC LIMIT 1").first();
-      const lines = session
-        ? await runtime.DB.prepare(`SELECT l.*, i.name, i.stock_type, i.section, i.category, i.variant, i.condition,
-            COALESCE((SELECT SUM(t.quantity_delta) FROM stock_transactions t WHERE t.item_id = i.id), 0) AS current_quantity
-          FROM stocktake_lines l JOIN stock_items i ON i.id = l.item_id WHERE l.stocktake_id = ?
-          ORDER BY i.stock_type, i.section, i.category, i.name, i.variant`).bind((session as { id: number }).id).all()
-        : { results: [] };
-      response.stocktake = { session: session ?? null, lines: lines.results };
     }
     if (hasAdminOrTemporaryAccess(user) || user.role === "viewer") {
       const roles = await runtime.DB.prepare("SELECT * FROM custom_roles ORDER BY name COLLATE NOCASE").all();
@@ -308,70 +286,6 @@ export async function POST(request: Request) {
         .bind(itemId, transactionType, delta, memberId, String(body.notes ?? ""), user.id, user.name, new Date().toISOString()).run();
       await audit(user, `stock_${transactionType}`, `${item.name}${item.variant ? ` · ${item.variant}` : ""}; ${delta > 0 ? "+" : ""}${delta}`);
       return Response.json({ ok: true });
-    }
-
-    if (action === "start_stocktake") {
-      if (!permissions.includes("stock.stocktake")) return Response.json({ error: "Stocktake permission required" }, { status: 403 });
-      const active = await runtime.DB.prepare("SELECT id FROM stocktakes WHERE status IN ('counting', 'submitted') LIMIT 1").first<{ id: number }>();
-      if (active) return Response.json({ error: "Finish or confirm the current stocktake before starting another" }, { status: 409 });
-      const scope = ["all", "uniform", "award"].includes(String(body.scope)) ? String(body.scope) : "all";
-      const scopeTypes = scope === "all" ? allowedTypes : allowedTypes.filter((type) => type === scope);
-      if (!scopeTypes.length) return Response.json({ error: "This stock type is not available to your account" }, { status: 403 });
-      const marks = scopeTypes.map(() => "?").join(",");
-      const snapshot = await runtime.DB.prepare(`SELECT i.id, COALESCE(SUM(t.quantity_delta), 0) AS quantity
-        FROM stock_items i LEFT JOIN stock_transactions t ON t.item_id = i.id
-        WHERE i.active = 1 AND i.stock_type IN (${marks}) GROUP BY i.id`).bind(...scopeTypes).all<{ id: number; quantity: number }>();
-      const now = new Date().toISOString();
-      const created = await runtime.DB.prepare(`INSERT INTO stocktakes (status, scope, started_by, started_by_name, started_at)
-        VALUES ('counting', ?, ?, ?, ?)`).bind(scope, user.id, user.name, now).run();
-      const stocktakeId = Number(created.meta.last_row_id);
-      await runtime.DB.batch(snapshot.results.map((item) => runtime.DB.prepare(`INSERT INTO stocktake_lines
-        (stocktake_id, item_id, expected_quantity) VALUES (?, ?, ?)`).bind(stocktakeId, item.id, Number(item.quantity))));
-      await audit(user, "stocktake_started", `Stocktake #${stocktakeId} (${scope})`);
-      return Response.json({ ok: true, stocktakeId });
-    }
-
-    if (action === "count_stocktake_line") {
-      if (!permissions.includes("stock.stocktake")) return Response.json({ error: "Stocktake permission required" }, { status: 403 });
-      const lineId = Number(body.lineId);
-      const count = Number(body.countedQuantity);
-      const reason = String(body.reason ?? "").trim();
-      if (!lineId || !Number.isInteger(count) || count < 0) return Response.json({ error: "Enter a whole physical count" }, { status: 400 });
-      const line = await runtime.DB.prepare(`SELECT l.*, s.status FROM stocktake_lines l JOIN stocktakes s ON s.id = l.stocktake_id WHERE l.id = ?`).bind(lineId).first<{ expected_quantity: number; status: string }>();
-      if (!line || line.status !== "counting") return Response.json({ error: "This stocktake can no longer be edited" }, { status: 409 });
-      if (count !== Number(line.expected_quantity) && !reason) return Response.json({ error: "Explain every stock difference before saving" }, { status: 400 });
-      await runtime.DB.prepare("UPDATE stocktake_lines SET counted_quantity = ?, difference_reason = ? WHERE id = ?").bind(count, reason, lineId).run();
-      return Response.json({ ok: true });
-    }
-
-    if (action === "submit_stocktake") {
-      if (!permissions.includes("stock.stocktake")) return Response.json({ error: "Stocktake permission required" }, { status: 403 });
-      const stocktakeId = Number(body.stocktakeId);
-      const incomplete = await runtime.DB.prepare("SELECT COUNT(*) AS total FROM stocktake_lines WHERE stocktake_id = ? AND counted_quantity IS NULL").bind(stocktakeId).first<{ total: number }>();
-      if (Number(incomplete?.total ?? 0)) return Response.json({ error: "Count every item before submitting the stocktake" }, { status: 409 });
-      await runtime.DB.prepare("UPDATE stocktakes SET status = 'submitted', submitted_at = ? WHERE id = ? AND status = 'counting'").bind(new Date().toISOString(), stocktakeId).run();
-      await audit(user, "stocktake_submitted", `Stocktake #${stocktakeId}`);
-      return Response.json({ ok: true });
-    }
-
-    if (action === "confirm_stocktake") {
-      if (!permissions.includes("stock.stocktake")) return Response.json({ error: "Stocktake permission required" }, { status: 403 });
-      const stocktakeId = Number(body.stocktakeId);
-      const session = await runtime.DB.prepare("SELECT status FROM stocktakes WHERE id = ?").bind(stocktakeId).first<{ status: string }>();
-      if (!session || session.status !== "submitted") return Response.json({ error: "Only a submitted stocktake can be confirmed" }, { status: 409 });
-      const lines = await runtime.DB.prepare(`SELECT l.*, i.name, COALESCE((SELECT SUM(t.quantity_delta) FROM stock_transactions t WHERE t.item_id = l.item_id), 0) AS current_quantity
-        FROM stocktake_lines l JOIN stock_items i ON i.id = l.item_id WHERE l.stocktake_id = ? AND l.counted_quantity != l.expected_quantity`).bind(stocktakeId).all<{ item_id: number; counted_quantity: number; current_quantity: number; difference_reason: string; name: string }>();
-      const now = new Date().toISOString();
-      await runtime.DB.batch([
-        ...lines.results.map((line) => runtime.DB.prepare(`INSERT INTO stock_transactions
-          (item_id, transaction_type, quantity_delta, notes, created_by, created_by_name, created_at)
-          VALUES (?, 'stocktake_adjustment', ?, ?, ?, ?, ?)`)
-          .bind(line.item_id, Number(line.counted_quantity) - Number(line.current_quantity), `Stocktake #${stocktakeId}: ${line.difference_reason}`, user.id, user.name, now)),
-        runtime.DB.prepare(`UPDATE stocktakes SET status = 'confirmed', confirmed_by = ?, confirmed_by_name = ?, confirmed_at = ? WHERE id = ?`)
-          .bind(user.id, user.name, now, stocktakeId),
-      ]);
-      await audit(user, "stocktake_confirmed", `Stocktake #${stocktakeId}; ${lines.results.length} differences confirmed`);
-      return Response.json({ ok: true, adjustments: lines.results.length });
     }
 
     return Response.json({ error: "Unknown stock action" }, { status: 400 });

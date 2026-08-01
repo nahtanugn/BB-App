@@ -11,7 +11,6 @@ export const STOCK_PERMISSIONS = [
   "stock.view_history",
   "stock.export",
   "stock.manage_uniform_requests",
-  "stock.stocktake",
 ] as const;
 
 export type StockPermission = (typeof STOCK_PERMISSIONS)[number];
@@ -213,34 +212,10 @@ export async function ensureStockSchema(db: D1Database) {
       FOREIGN KEY (member_id) REFERENCES members(id),
       FOREIGN KEY (item_id) REFERENCES stock_items(id)
     )`),
-    db.prepare(`CREATE TABLE IF NOT EXISTS stocktakes (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      status TEXT NOT NULL DEFAULT 'counting',
-      scope TEXT NOT NULL DEFAULT 'all',
-      started_by INTEGER NOT NULL,
-      started_by_name TEXT NOT NULL,
-      started_at TEXT NOT NULL,
-      submitted_at TEXT,
-      confirmed_by INTEGER,
-      confirmed_by_name TEXT,
-      confirmed_at TEXT
-    )`),
-    db.prepare(`CREATE TABLE IF NOT EXISTS stocktake_lines (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      stocktake_id INTEGER NOT NULL,
-      item_id INTEGER NOT NULL,
-      expected_quantity INTEGER NOT NULL,
-      counted_quantity INTEGER,
-      difference_reason TEXT NOT NULL DEFAULT '',
-      FOREIGN KEY (stocktake_id) REFERENCES stocktakes(id) ON DELETE CASCADE,
-      FOREIGN KEY (item_id) REFERENCES stock_items(id),
-      UNIQUE(stocktake_id, item_id)
-    )`),
     db.prepare("CREATE INDEX IF NOT EXISTS stock_transactions_item_idx ON stock_transactions(item_id)"),
     db.prepare("CREATE INDEX IF NOT EXISTS user_custom_roles_user_idx ON user_custom_roles(user_id)"),
     db.prepare("CREATE INDEX IF NOT EXISTS uniform_requests_member_idx ON uniform_requests(member_id)"),
     db.prepare("CREATE INDEX IF NOT EXISTS uniform_requests_status_idx ON uniform_requests(status)"),
-    db.prepare("CREATE INDEX IF NOT EXISTS stocktake_lines_stocktake_idx ON stocktake_lines(stocktake_id)"),
   ]);
 
   const count = await db.prepare("SELECT COUNT(*) AS total FROM stock_items").first<{ total: number }>();
