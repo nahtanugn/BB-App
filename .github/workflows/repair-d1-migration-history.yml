@@ -1,0 +1,67 @@
+name: Repair D1 migration history
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirmation:
+        description: This only baselines an already-populated production database
+        required: true
+        type: choice
+        default: inspect-only
+        options:
+          - inspect-only
+          - record-existing-history
+
+permissions:
+  contents: read
+
+concurrency:
+  group: production-web
+  cancel-in-progress: false
+
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Verify this is the existing application database
+        id: schema
+        run: |
+          schema="$(pnpm exec wrangler d1 execute anchor-awards-db --remote --config wrangler.migrations.jsonc --command \"SELECT name FROM sqlite_master WHERE type = 'table' AND name IN ('award_definitions', 'members', 'users') ORDER BY name\" --json)"
+          echo "$schema"
+          echo "$schema" | grep -q 'award_definitions'
+          echo "$schema" | grep -q 'members'
+          echo "$schema" | grep -q 'users'
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+      - name: Record only the already-present migration history
+        if: inputs.confirmation == 'record-existing-history'
+        run: |
+          pnpm exec wrangler d1 execute anchor-awards-db --remote --config wrangler.migrations.jsonc --command "CREATE TABLE IF NOT EXISTS d1_migrations (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT UNIQUE, applied_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL)"
+          history="$(pnpm exec wrangler d1 execute anchor-awards-db --remote --config wrangler.migrations.jsonc --command \"SELECT COUNT(*) AS count FROM d1_migrations\" --json)"
+          echo "$history"
+          if ! echo "$history" | grep -Eq '"count"[[:space:]]*:[[:space:]]*0([^0-9]|$)'; then
+            echo "Migration history is already present; refusing to change it."
+            exit 1
+          fi
+          for migration in $(find drizzle -maxdepth 1 -type f -name '00*.sql' -print | sort); do
+            name="$(basename "$migration")"
+            case "$name" in
+              0025_*|0026_*) break ;;
+            esac
+            pnpm exec wrangler d1 execute anchor-awards-db --remote --config wrangler.migrations.jsonc --command "INSERT INTO d1_migrations (name) VALUES ('$name')"
+          done
+          pnpm exec wrangler d1 execute anchor-awards-db --remote --config wrangler.migrations.jsonc --command "SELECT name FROM d1_migrations ORDER BY id"
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
