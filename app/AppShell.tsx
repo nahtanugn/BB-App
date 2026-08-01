@@ -1,7 +1,6 @@
 "use client";
 
 import { type ReactNode, useEffect, useMemo, useRef, useState } from "react";
-import NotificationCentre from "./NotificationCentre";
 
 export type AppRoute =
   | "home"
@@ -195,7 +194,6 @@ export default function AppShell({
             </button>))}</section>)}
         </nav>
         <div className="unified-user">
-          <div className="unified-notification-access"><NotificationCentre /></div>
           <button type="button" onClick={onAccount}>
             <span>{user.name.split(/\s+/).map((part) => part[0]).join("").slice(0, 2).toUpperCase()}</span>
             <div><strong>{user.name}</strong><small>{user.email}</small></div>
