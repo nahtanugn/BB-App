@@ -36,7 +36,7 @@ jobs:
       - name: Verify this is the existing application database
         id: schema
         run: |
-          schema="$(pnpm exec wrangler d1 execute anchor-awards-db --remote --config wrangler.migrations.jsonc --command \"SELECT name FROM sqlite_master WHERE type = 'table' AND name IN ('award_definitions', 'members', 'users') ORDER BY name\" --json)"
+          schema=$(pnpm exec wrangler d1 execute anchor-awards-db --remote --config wrangler.migrations.jsonc --command "SELECT name FROM sqlite_master WHERE type = 'table' AND name IN ('award_definitions', 'members', 'users') ORDER BY name" --json)
           echo "$schema"
           echo "$schema" | grep -q 'award_definitions'
           echo "$schema" | grep -q 'members'
@@ -48,7 +48,7 @@ jobs:
         if: inputs.confirmation == 'record-existing-history'
         run: |
           pnpm exec wrangler d1 execute anchor-awards-db --remote --config wrangler.migrations.jsonc --command "CREATE TABLE IF NOT EXISTS d1_migrations (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT UNIQUE, applied_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL)"
-          history="$(pnpm exec wrangler d1 execute anchor-awards-db --remote --config wrangler.migrations.jsonc --command \"SELECT COUNT(*) AS count FROM d1_migrations\" --json)"
+          history=$(pnpm exec wrangler d1 execute anchor-awards-db --remote --config wrangler.migrations.jsonc --command "SELECT COUNT(*) AS count FROM d1_migrations" --json)
           echo "$history"
           if ! echo "$history" | grep -Eq '"count"[[:space:]]*:[[:space:]]*0([^0-9]|$)'; then
             echo "Migration history is already present; refusing to change it."
