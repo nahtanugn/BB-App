@@ -34,12 +34,14 @@ type UniformRequest = {
   issued_at: string | null;
   issued_by: string | null;
 };
+type IssuedItem = { item_id: number; name: string; variant: string; stock_type: "uniform" | "award"; section: string; category: string; quantity: number; last_updated: string };
 type RequestData = {
   member: { id: number; name: string; section: string; squad: string } | null;
   canManage: boolean;
   canViewAll: boolean;
   canRequest: boolean;
   items: UniformItem[];
+  issuedItems: IssuedItem[];
   ownRequests: UniformRequest[];
   reviewRequests: UniformRequest[];
 };
@@ -220,6 +222,16 @@ export default function UniformRequests(props: {
                     </article>
                   ))}
                   {!data.ownRequests.length && <p className="empty-inline">You have not submitted any uniform requests.</p>}
+                </div>
+              </section>
+            )}
+
+            {data.member && (
+              <section className="my-issued-items">
+                <div className="request-section-heading"><div><p className="eyebrow">MY COMPANY ITEMS</p><h2>Issued to me</h2><p>Items issued from now on are recorded here. Contact the Quartermaster when returning an item.</p></div><span>{data.issuedItems.length}</span></div>
+                <div className="request-card-grid">
+                  {data.issuedItems.map((item) => <article className="uniform-request-card issued-item-card" key={item.item_id}><div className="request-card-top"><span className="request-status issued">{item.stock_type}</span><time>{new Date(item.last_updated).toLocaleDateString("en-MY")}</time></div><h3>{item.name}{item.variant ? ` · ${item.variant}` : ""}</h3><p>{item.quantity} currently recorded · {item.category}</p><small>Read-only personal issue record</small></article>)}
+                  {!data.issuedItems.length && <p className="empty-inline">No company-issued items are recorded against you yet.</p>}
                 </div>
               </section>
             )}

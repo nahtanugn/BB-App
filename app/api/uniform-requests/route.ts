@@ -8,6 +8,12 @@ import {
 const runtime = getRuntimeEnv();
 const requestStatuses = ["pending", "approved", "ready", "issued", "rejected", "cancelled"];
 
+async function audit(user: NonNullable<Awaited<ReturnType<typeof getCurrentUser>>>, action: string, details: string) {
+  await runtime.DB.prepare(`INSERT INTO stock_audit_log
+    (action, details, actor_user_id, actor_name, created_at) VALUES (?, ?, ?, ?, ?)`)
+    .bind(action, details, user.id, user.name, new Date().toISOString()).run();
+}
+
 async function memberForUser(email: string) {
   return runtime.DB.prepare(
     "SELECT id, name, section, squad FROM members WHERE LOWER(email) = LOWER(?) LIMIT 1",
@@ -43,6 +49,14 @@ export async function GET(request: Request) {
         ORDER BY i.section, i.category, i.name, i.variant`)
           .bind(member.section === "junior" ? "junior" : "senior").all()
       : { results: [] };
+    const issuedItems = member
+      ? await runtime.DB.prepare(`SELECT i.id AS item_id, i.name, i.variant, i.stock_type, i.section, i.category,
+          SUM(CASE WHEN t.transaction_type = 'issued' THEN -t.quantity_delta WHEN t.transaction_type = 'returned' THEN -t.quantity_delta ELSE 0 END) AS quantity,
+          MAX(t.created_at) AS last_updated
+        FROM stock_transactions t JOIN stock_items i ON i.id = t.item_id
+        WHERE t.member_id = ? AND t.transaction_type IN ('issued', 'returned')
+        GROUP BY i.id HAVING quantity > 0 ORDER BY i.stock_type, i.name, i.variant`).bind(member.id).all()
+      : { results: [] };
     const reviewRequests = canViewAll
       ? await runtime.DB.prepare(`SELECT r.*, i.name AS item_name, i.variant, i.section AS item_section,
           i.category, i.condition, m.name AS member_name, m.section AS member_section, m.squad,
@@ -61,6 +75,7 @@ export async function GET(request: Request) {
       canViewAll,
       canRequest: user.role !== "viewer",
       items: items.results,
+      issuedItems: issuedItems.results,
       ownRequests: ownRequests.results,
       reviewRequests: reviewRequests.results,
     });
@@ -183,11 +198,13 @@ export async function POST(request: Request) {
             issued_at = ?, issued_by = ? WHERE id = ?`)
             .bind(reviewNotes, now, user.name, now, user.name, requestId),
         ]);
+        await audit(user, "uniform_request_issued", `Uniform request #${requestId}; ${row.item_name}; ${row.quantity}`);
       } else {
         const readyAt = status === "ready" ? now : null;
         await runtime.DB.prepare(`UPDATE uniform_requests SET status = ?, review_notes = ?,
           reviewed_at = ?, reviewed_by = ?, ready_at = COALESCE(?, ready_at) WHERE id = ?`)
           .bind(status, reviewNotes, now, user.name, readyAt, requestId).run();
+        await audit(user, `uniform_request_${status}`, `Uniform request #${requestId}; ${row.item_name}`);
       }
       const requestOwner = await runtime.DB.prepare(
         "SELECT submitted_by_user_id FROM uniform_requests WHERE id = ?",

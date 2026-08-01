@@ -82,6 +82,7 @@ const permissionGroups = [
       ["stock.adjust", "Adjust stock and add catalogue items"],
       ["stock.view_history", "View transaction history"],
       ["stock.export", "Export stock data"],
+      ["stock.stocktake", "Run and confirm stocktakes"],
     ],
   },
 ] as const;

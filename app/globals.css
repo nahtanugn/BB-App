@@ -2017,6 +2017,40 @@ h1 { font-size: clamp(30px, 3.1vw, 46px); line-height: 1; letter-spacing: -1.5px
 .stock-delta.negative { background: #fdeaea; color: #ad3e3e; }
 .stock-modal form { display: grid; gap: 13px; }
 .stock-modal textarea { resize: vertical; }
+.quartermaster-workspace, .stocktake-workspace { margin-top: 18px; display: grid; gap: 16px; }
+.quartermaster-intro { padding: 22px; display: flex; align-items: center; justify-content: space-between; gap: 18px; border: 1px solid var(--line); border-radius: 16px; background: linear-gradient(110deg, #fff 0%, #f7fbff 70%, #fff7dc 100%); }
+.quartermaster-intro h2 { margin: 4px 0 6px; color: var(--navy); }
+.quartermaster-intro p:last-child { margin: 0; color: var(--muted); }
+.quartermaster-actions { display: flex; flex-wrap: wrap; gap: 9px; }
+.quartermaster-actions .secondary, .quartermaster-row button, .stocktake-lines button { min-height: 40px; padding: 0 13px; border: 1px solid var(--line); border-radius: 10px; background: white; color: var(--blue); font-weight: 800; }
+.stocktake-scope { display: flex; align-items: center; justify-content: flex-end; gap: 10px; color: var(--muted); font-size: 11px; font-weight: 750; }
+.stocktake-scope select { min-height: 40px; padding: 0 12px; border: 1px solid var(--line); border-radius: 10px; background: white; color: var(--ink); }
+.quartermaster-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(145px, 1fr)); gap: 12px; }
+.quartermaster-grid article { padding: 17px; border: 1px solid var(--line); border-radius: 14px; background: white; }
+.quartermaster-grid span, .quartermaster-grid small { display: block; color: var(--muted); font-size: 10px; }
+.quartermaster-grid strong { display: block; margin: 7px 0 3px; color: var(--navy); font-family: Georgia, serif; font-size: 30px; }
+.quartermaster-columns { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.quartermaster-columns > section { overflow: hidden; border: 1px solid var(--line); border-radius: 15px; background: white; }
+.quartermaster-section-heading { padding: 15px 17px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--line); }
+.quartermaster-section-heading h3 { margin: 0; color: var(--navy); }
+.quartermaster-section-heading > span { min-width: 24px; height: 24px; display: grid; place-items: center; border-radius: 50%; background: #edf5ff; color: var(--blue); font-size: 10px; font-weight: 850; }
+.quartermaster-row { min-height: 62px; padding: 11px 17px; display: flex; align-items: center; justify-content: space-between; gap: 10px; border-bottom: 1px solid var(--line); }
+.quartermaster-row:last-child { border-bottom: 0; }
+.quartermaster-row strong { color: var(--ink); font-size: 12px; }
+.quartermaster-row p { margin: 3px 0 0; color: var(--muted); font-size: 10px; }
+.stocktake-progress { display: flex; align-items: center; justify-content: space-between; padding: 13px 16px; border: 1px solid #d7e7f8; border-radius: 12px; background: #f5faff; color: var(--muted); font-size: 11px; }
+.stocktake-progress strong { color: var(--navy); }
+.stocktake-lines { overflow: hidden; border: 1px solid var(--line); border-radius: 15px; background: white; }
+.stocktake-lines form { min-height: 72px; padding: 11px 15px; display: grid; grid-template-columns: minmax(170px, 1.2fr) 110px minmax(170px, 1fr) auto; align-items: end; gap: 10px; border-bottom: 1px solid var(--line); }
+.stocktake-lines form:last-child { border-bottom: 0; }
+.stocktake-lines form > div { align-self: center; }
+.stocktake-lines strong, .stocktake-lines small { display: block; }
+.stocktake-lines strong { color: var(--ink); font-size: 12px; }
+.stocktake-lines small { margin-top: 3px; color: var(--muted); font-size: 9px; }
+.stocktake-lines label { display: grid; gap: 4px; color: var(--muted); font-size: 9px; font-weight: 750; }
+.stocktake-lines input { min-height: 38px; padding: 0 9px; border: 1px solid var(--line); border-radius: 8px; color: var(--ink); }
+.my-issued-items { margin-top: 28px; }
+.issued-item-card { border-color: #cfe1f8; background: linear-gradient(140deg, #fff, #f7fbff); }
 .custom-role-manager { margin-top: 26px; padding-top: 25px; border-top: 1px solid var(--line); }
 .read-only-panel {
   padding: 24px;
@@ -2159,6 +2193,15 @@ h1 { font-size: clamp(30px, 3.1vw, 46px); line-height: 1; letter-spacing: -1.5px
 
 @media (max-width: 430px) {
   .stock-grid { grid-template-columns: 1fr; }
+  .quartermaster-intro { align-items: stretch; flex-direction: column; }
+  .quartermaster-actions { display: grid; grid-template-columns: 1fr; }
+  .quartermaster-actions button { width: 100%; }
+  .stocktake-scope { align-items: stretch; flex-direction: column; }
+  .quartermaster-grid { grid-template-columns: 1fr 1fr; }
+  .quartermaster-columns { grid-template-columns: 1fr; }
+  .stocktake-lines form { grid-template-columns: 1fr 1fr; align-items: end; }
+  .stocktake-lines form > div { grid-column: 1 / -1; }
+  .stocktake-lines form > button { grid-column: 1 / -1; width: 100%; }
 }
 
 /* Uniform request portal */
