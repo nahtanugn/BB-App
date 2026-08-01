@@ -114,7 +114,7 @@ export default function AppShell({
       );
     }
     values.push({ route: "events", category: "Programme & Events", label: "Meetings & events", description: "Programme, RSVP and registers", icon: "◫" });
-    if (staff)
+    if (["member", "nco", "squad_leader"].includes(user.role))
       values.push({ route: "journey", category: "People & Progress", label: "My journey", description: "Your goals and progress", icon: "◎" });
     if ((seniorApplicant || mayReviewSubmissions) && user.member_section !== "junior")
       values.push({ route: "submissions", category: "Requests & Operations", label: mayReviewSubmissions ? "Submission portal" : "My submissions", description: "Award applications and decisions", icon: "◆" });

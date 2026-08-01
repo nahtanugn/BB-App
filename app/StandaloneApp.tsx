@@ -125,7 +125,8 @@ export default function StandaloneApp() {
       next === "home" ||
       ["resources", "uniforms", "announcements"].includes(next) ||
       next === "events" ||
-      next === "journey" ||
+      (next === "journey" &&
+        ["member", "nco", "squad_leader"].includes(auth.user.role)) ||
       (next === "stock" && stockAccess) ||
       (["company-overview", "members", "attendance", "subscriptions"].includes(next) && staff) ||
       (next === "awards" && (staff || auth.user.role === "member")) ||
@@ -676,7 +677,7 @@ export default function StandaloneApp() {
     page = <main className="member-progress-page"><MemberProgress user={auth.user} /></main>;
   else if (route === "events")
     page = <EventCentre />;
-  else if (route === "journey")
+  else if (route === "journey" && ["member", "nco", "squad_leader"].includes(auth.user.role))
     page = <MemberJourney />;
   else {
     const activeView = trackerViews[route] ?? (isStaff ? "dashboard" : "matrix");
