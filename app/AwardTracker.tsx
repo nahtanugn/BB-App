@@ -273,6 +273,7 @@ export default function AwardTracker({
   const [showAdd, setShowAdd] = useState(false);
   const [editingMember, setEditingMember] = useState<Member | null>(null);
   const [viewingMemberId, setViewingMemberId] = useState<number | null>(null);
+  const [memberProfileTab, setMemberProfileTab] = useState<"overview" | "attendance" | "awards">("overview");
   const [overrideMemberDetails, setOverrideMemberDetails] = useState(false);
   const [joinedAtDraft, setJoinedAtDraft] = useState(
     String(currentSubscriptionYear),
@@ -2588,7 +2589,13 @@ export default function AwardTracker({
                     </span>
                   </div>
 
-                  <section className="member-profile-section">
+                  <nav className="member-profile-tabs" aria-label="Member profile sections">
+                    <button type="button" className={memberProfileTab === "overview" ? "active" : ""} onClick={() => setMemberProfileTab("overview")}>Overview</button>
+                    <button type="button" className={memberProfileTab === "attendance" ? "active" : ""} onClick={() => setMemberProfileTab("attendance")}>Attendance</button>
+                    <button type="button" className={memberProfileTab === "awards" ? "active" : ""} onClick={() => setMemberProfileTab("awards")}>Awards</button>
+                  </nav>
+
+                  {memberProfileTab === "overview" && <section className="member-profile-section">
                     <div className="member-profile-section-heading">
                       <div>
                         <p className="eyebrow">PERSONAL DETAILS</p>
@@ -2649,9 +2656,9 @@ export default function AwardTracker({
                         </dd>
                       </div>
                     </dl>
-                  </section>
+                  </section>}
 
-                  <section className="member-profile-section">
+                  {memberProfileTab === "attendance" && <section className="member-profile-section">
                     <div className="member-profile-section-heading">
                       <div>
                         <p className="eyebrow">ATTENDANCE</p>
@@ -2677,9 +2684,9 @@ export default function AwardTracker({
                     <p className="attendance-average-note">
                       Based on {attendance.recorded} completed attendance {attendance.recorded === 1 ? "entry" : "entries"}. Future meetings and unmarked registers are excluded; excused entries do not lower the average.
                     </p>
-                  </section>
+                  </section>}
 
-                  <section className="member-profile-section">
+                  {memberProfileTab === "awards" && <section className="member-profile-section">
                     <div className="member-profile-section-heading">
                       <div>
                         <p className="eyebrow">AWARD RECORD</p>
@@ -2726,7 +2733,7 @@ export default function AwardTracker({
                         No award progress has been recorded yet.
                       </p>
                     )}
-                  </section>
+                  </section>}
                 </div>
 
                 <footer className="member-profile-footer">

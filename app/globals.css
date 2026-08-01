@@ -200,6 +200,9 @@ h2 { color: var(--navy); }
 .member-profile-stats strong, .member-profile-stats small { display: block; }
 .member-profile-stats strong { color: var(--navy); font-family: Georgia, serif; font-size: 22px; }
 .member-profile-stats small { margin-top: 3px; color: var(--muted); font-size: 8px; }
+.member-profile-tabs { display: flex; gap: 6px; padding: 4px; border: 1px solid var(--line); border-radius: 12px; background: #edf3f8; }
+.member-profile-tabs button { min-height: 38px; flex: 1; border: 0; border-radius: 9px; background: transparent; color: #63778d; font-size: 10px; font-weight: 800; }
+.member-profile-tabs button.active { background: white; color: var(--navy); box-shadow: 0 2px 8px rgba(11,47,85,.12); }
 .member-profile-section { padding: 17px; border: 1px solid var(--line); border-radius: 12px; }
 .member-profile-section-heading { margin-bottom: 13px; display: flex; align-items: center; justify-content: space-between; gap: 12px; }
 .member-profile-section-heading h3 { margin-top: 3px; color: var(--navy); font-family: Georgia, serif; font-size: 16px; }
@@ -2780,6 +2783,8 @@ button:disabled { opacity: .62; cursor: wait; }
   .modal:not(.compact) .modal-heading > button { width: 44px; height: 44px; }
   .member-profile-body { padding: 14px 12px calc(92px + env(safe-area-inset-bottom)); gap: 12px; }
   .member-profile-section { padding: 16px; border-radius: 16px; }
+  .member-profile-tabs { position: sticky; top: 0; z-index: 1; border-radius: 14px; }
+  .member-profile-tabs button { min-height: 44px; font-size: 11px; }
   .member-profile-section-heading { align-items: flex-start; }
   .member-profile-section-heading h3 { font-size: 18px; }
   .member-profile-footer {
