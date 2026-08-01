@@ -1,6 +1,7 @@
 "use client";
 
 import { type ReactNode, useEffect, useMemo, useRef, useState } from "react";
+import NotificationCentre from "./NotificationCentre";
 
 export type AppRoute =
   | "home"
@@ -16,7 +17,9 @@ export type AppRoute =
   | "announcements"
   | "admin"
   | "onboarding"
-  | "automation";
+  | "automation"
+  | "events"
+  | "journey";
 
 export type ShellUser = {
   name: string;
@@ -31,6 +34,7 @@ export type ShellUser = {
 
 type NavItem = {
   route: AppRoute;
+  category: "Home" | "People & Progress" | "Programme & Events" | "Requests & Operations" | "Communication" | "Administration";
   label: string;
   description: string;
   icon: string;
@@ -87,6 +91,7 @@ export default function AppShell({
     const values: NavItem[] = [
       {
         route: "home",
+        category: "Home",
         label: ["member", "nco", "squad_leader"].includes(user.role) ? "Home" : "Overview",
         description: "Tasks and company priorities",
         icon: "⌂",
@@ -95,48 +100,52 @@ export default function AppShell({
     ];
     if (staff) {
       values.push(
-        { route: "awards", label: "Awards", description: "Award matrix and progress", icon: "▦" },
-        { route: "members", label: "Members", description: "Member profiles and details", icon: "♙" },
-        { route: "attendance", label: "Attendance", description: "Parade registers", icon: "✓" },
+        { route: "company-overview", category: "Home", label: "Company overview", description: "Company dashboard", icon: "◫" },
+        { route: "awards", category: "People & Progress", label: "Awards", description: "Award matrix and progress", icon: "▦" },
+        { route: "members", category: "People & Progress", label: "Members", description: "Member profiles and details", icon: "♙" },
+        { route: "attendance", category: "People & Progress", label: "Attendance", description: "Parade registers", icon: "✓" },
+        { route: "subscriptions", category: "People & Progress", label: "Subscriptions", description: "Yearly payment status", icon: "◇" },
       );
     } else {
       values.push(
-        { route: "awards", label: "My progress", description: "My attendance and awards", icon: "▦" },
-        { route: "resources", label: "Resources", description: "Member resources", icon: "↗" },
-        { route: "uniforms", label: "Requests", description: "Uniform and award requests", icon: "▤" },
+        { route: "journey", category: "People & Progress", label: "My journey", description: "Goals, events and next steps", icon: "◎" },
+        { route: "awards", category: "People & Progress", label: "My progress", description: "My attendance and awards", icon: "▦" },
+        { route: "resources", category: "Requests & Operations", label: "Resources", description: "Member resources", icon: "↗" },
+        { route: "uniforms", category: "Requests & Operations", label: "Requests", description: "Uniform and award requests", icon: "▤" },
       );
     }
+    values.push({ route: "events", category: "Programme & Events", label: "Meetings & events", description: "Programme, RSVP and registers", icon: "◫" });
     if (staff)
-      values.push({ route: "subscriptions", label: "Subscriptions", description: "Yearly payment status", icon: "◇" });
-    if (staff)
-      values.push({ route: "company-overview", label: "Company overview", description: "Company dashboard", icon: "◫" });
+      values.push({ route: "journey", category: "People & Progress", label: "My journey", description: "Your goals and progress", icon: "◎" });
     if ((seniorApplicant || mayReviewSubmissions) && user.member_section !== "junior")
-      values.push({ route: "submissions", label: mayReviewSubmissions ? "Submission portal" : "My submissions", description: "Award applications and decisions", icon: "◆" });
+      values.push({ route: "submissions", category: "Requests & Operations", label: mayReviewSubmissions ? "Submission portal" : "My submissions", description: "Award applications and decisions", icon: "◆" });
     if (staff)
-      values.push({ route: "resources", label: "Resources", description: "Company materials", icon: "↗" });
+      values.push({ route: "resources", category: "Requests & Operations", label: "Resources", description: "Company materials", icon: "↗" });
     if (!values.some((item) => item.route === "uniforms"))
-      values.push({ route: "uniforms", label: "Uniform requests", description: "Request and issue uniform parts", icon: "▤" });
+      values.push({ route: "uniforms", category: "Requests & Operations", label: "Uniform requests", description: "Request and issue uniform parts", icon: "▤" });
     if (stockAccess)
-      values.push({ route: "stock", label: "Stock Centre", description: "Uniform and award inventory", icon: "▣" });
+      values.push({ route: "stock", category: "Requests & Operations", label: "Stock Centre", description: "Uniform and award inventory", icon: "▣" });
     values.push({
       route: "announcements",
+      category: "Communication",
       label: "Announcements",
       description: "Company-wide notices",
       icon: "◉",
       badge: announcementCount,
     });
     if (["admin", "viewer"].includes(user.role))
-      values.push({ route: "admin", label: "Admin Centre", description: "Accounts, roles and access", icon: "⚙" });
+      values.push({ route: "admin", category: "Administration", label: "Admin Centre", description: "Accounts, roles and access", icon: "⚙" });
     if (staff)
       values.push({
         route: "onboarding",
+        category: "Administration",
         label: "Onboarding",
         description: "Registrations and corrections",
         icon: "◎",
         badge: onboardingCount,
       });
     if (["admin", "viewer"].includes(user.role))
-      values.push({ route: "automation", label: "Automation", description: "Rules, runs and reminders", icon: "↻" });
+      values.push({ route: "automation", category: "Administration", label: "Automation", description: "Rules, runs and reminders", icon: "↻" });
     return values;
   }, [
     actionCount,
@@ -150,10 +159,12 @@ export default function AppShell({
     user.role,
   ]);
 
-  const primary = items.slice(0, 4);
-  const secondary = items.filter(
-    (item) => !primary.some((primaryItem) => primaryItem.route === item.route),
-  );
+  const categoryOrder = ["Home", "People & Progress", "Programme & Events", "Requests & Operations", "Communication", "Administration"] as const;
+  const groupedItems = categoryOrder.map((category) => ({ category, items: items.filter((item) => item.category === category) })).filter((group) => group.items.length);
+  const operationsRoute: AppRoute = items.some((item) => item.route === "submissions") ? "submissions" : "uniforms";
+  const mobileRoutes: AppRoute[] = ["home", staff ? "members" : "journey", "events", operationsRoute];
+  const primary = mobileRoutes.map((route) => items.find((item) => item.route === route)).filter((item): item is NavItem => Boolean(item));
+  const secondary = items.filter((item) => !primary.some((primaryItem) => primaryItem.route === item.route));
 
   useEffect(() => {
     if (!moreOpen) return;
@@ -178,21 +189,13 @@ export default function AppShell({
           <div><strong>11KCHBB App</strong><span>{user.role.replaceAll("_", " ")} access</span></div>
         </div>
         <nav aria-label="Application navigation">
-          {items.map((item) => (
-            <button
-              type="button"
-              className={route === item.route ? "active" : ""}
-              aria-current={route === item.route ? "page" : undefined}
-              onClick={() => navigate(item.route)}
-              key={item.route}
-            >
-              <span aria-hidden="true">{item.icon}</span>
-              <div><strong>{item.label}</strong><small>{item.description}</small></div>
-              {Boolean(item.badge) && <b>{item.badge! > 99 ? "99+" : item.badge}</b>}
-            </button>
-          ))}
+          {groupedItems.map((group) => <section className="unified-nav-group" key={group.category}><p>{group.category}</p>{group.items.map((item) => (
+            <button type="button" className={route === item.route ? "active" : ""} aria-current={route === item.route ? "page" : undefined} onClick={() => navigate(item.route)} key={item.route}>
+              <span aria-hidden="true">{item.icon}</span><div><strong>{item.label}</strong><small>{item.description}</small></div>{Boolean(item.badge) && <b>{item.badge! > 99 ? "99+" : item.badge}</b>}
+            </button>))}</section>)}
         </nav>
         <div className="unified-user">
+          <div className="unified-notification-access"><NotificationCentre /></div>
           <button type="button" onClick={onAccount}>
             <span>{user.name.split(/\s+/).map((part) => part[0]).join("").slice(0, 2).toUpperCase()}</span>
             <div><strong>{user.name}</strong><small>{user.email}</small></div>

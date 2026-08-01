@@ -483,3 +483,42 @@ export const announcementReads = sqliteTable(
     primaryKey({ columns: [table.announcementId, table.userId] }),
   ],
 );
+
+export const companyEvents = sqliteTable("company_events", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  title: text("title").notNull(),
+  eventDate: text("event_date").notNull(),
+  endDate: text("end_date"),
+  location: text("location").notNull().default(""),
+  description: text("description").notNull().default(""),
+  section: text("section").notNull().default("all"),
+  attendanceSessionId: integer("attendance_session_id"),
+  createdByUserId: integer("created_by_user_id").notNull(),
+  createdByName: text("created_by_name").notNull(),
+  createdAt: text("created_at").notNull(),
+  updatedAt: text("updated_at").notNull(),
+  cancelledAt: text("cancelled_at"),
+});
+
+export const eventRsvps = sqliteTable(
+  "event_rsvps",
+  {
+    eventId: integer("event_id").notNull().references(() => companyEvents.id, { onDelete: "cascade" }),
+    memberId: integer("member_id").notNull().references(() => members.id, { onDelete: "cascade" }),
+    status: text("status").notNull().default("going"),
+    note: text("note").notNull().default(""),
+    updatedAt: text("updated_at").notNull(),
+  },
+  (table) => [primaryKey({ columns: [table.eventId, table.memberId] })],
+);
+
+export const memberGoals = sqliteTable("member_goals", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  memberId: integer("member_id").notNull().references(() => members.id, { onDelete: "cascade" }),
+  title: text("title").notNull(),
+  category: text("category").notNull().default("Personal"),
+  status: text("status").notNull().default("open"),
+  createdByUserId: integer("created_by_user_id").notNull(),
+  createdAt: text("created_at").notNull(),
+  completedAt: text("completed_at"),
+});

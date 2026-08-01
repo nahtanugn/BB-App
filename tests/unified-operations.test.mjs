@@ -7,7 +7,7 @@ async function source(path) {
 }
 
 test("every portal uses one URL-aware, role-aware application shell", async () => {
-  const [shell, standalone, submissions, resources, stock, uniforms, admin, onboarding] =
+  const [shell, standalone, submissions, resources, stock, uniforms, admin, onboarding, events, journey] =
     await Promise.all([
       source("../app/AppShell.tsx"),
       source("../app/StandaloneApp.tsx"),
@@ -17,6 +17,8 @@ test("every portal uses one URL-aware, role-aware application shell", async () =
       source("../app/UniformRequests.tsx"),
       source("../app/AdminCentre.tsx"),
       source("../app/OnboardingCentre.tsx"),
+      source("../app/EventCentre.tsx"),
+      source("../app/MemberJourney.tsx"),
     ]);
 
   assert.match(shell, /className="unified-sidebar"/);
@@ -24,6 +26,11 @@ test("every portal uses one URL-aware, role-aware application shell", async () =
   assert.match(shell, /className="unified-more-menu"/);
   assert.match(shell, /aria-current=/);
   assert.match(shell, /aria-label="Mobile application navigation"/);
+  assert.match(shell, /People & Progress/);
+  assert.match(shell, /Programme & Events/);
+  assert.match(shell, /Requests & Operations/);
+  assert.match(shell, /"events"/);
+  assert.match(shell, /"journey"/);
   assert.match(shell, /user\.member_section !== "junior"/);
   assert.match(standalone, /<AppShell/);
   assert.match(standalone, /window\.history\[replace \? "replaceState" : "pushState"\]/);
@@ -33,6 +40,27 @@ test("every portal uses one URL-aware, role-aware application shell", async () =
     assert.doesNotMatch(page, /AppNavigation/);
   assert.doesNotMatch(resources, /MemberProgress/);
   assert.doesNotMatch(submissions, /SeniorJuniorToggle/);
+  assert.match(events, /Create an attendance register/);
+  assert.match(events, /Your RSVP/);
+  assert.match(journey, /My goals/);
+  assert.match(journey, /Recent progress/);
+});
+
+test("events and journeys are durable, linked and permission-safe", async () => {
+  const [schema, eventsApi, journeyApi, eventMigration, eventLibrary] = await Promise.all([
+    source("../db/schema.ts"), source("../app/api/events/route.ts"), source("../app/api/member-journey/route.ts"),
+    source("../drizzle/0027_company_events_and_member_journey.sql"), source("../lib/events.ts"),
+  ]);
+  assert.match(schema, /companyEvents/);
+  assert.match(schema, /eventRsvps/);
+  assert.match(schema, /memberGoals/);
+  assert.match(eventMigration, /CREATE TABLE `company_events`/);
+  assert.match(eventsApi, /canManageEvents/);
+  assert.match(eventsApi, /attendance_sessions/);
+  assert.match(eventsApi, /event_rsvps/);
+  assert.match(journeyApi, /member_goals/);
+  assert.match(journeyApi, /linkedMember/);
+  assert.match(eventLibrary, /CREATE INDEX IF NOT EXISTS idx_company_events_section_date/);
 });
 
 test("automation is durable, deduplicated, permission-aware and decision-safe", async () => {

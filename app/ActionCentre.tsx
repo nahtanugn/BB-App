@@ -19,6 +19,7 @@ const ruleLabels: Record<string, string> = {
   incomplete_onboarding: "Onboarding",
   uniform_requests: "Uniforms",
   attendance_unmarked: "Attendance",
+  event_reminders: "Events",
   low_stock: "Stock",
   access_expiry: "Access expiry",
   data_quality: "Data quality",

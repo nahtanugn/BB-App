@@ -11,6 +11,7 @@ export const AUTOMATION_RULES = [
   ["incomplete_onboarding", "Incomplete onboarding", ["admin"]],
   ["uniform_requests", "Uniform requests", ["admin", "officer"]],
   ["attendance_unmarked", "Unmarked attendance", ["admin", "officer"]],
+  ["event_reminders", "Upcoming meetings and events", ["member", "nco", "squad_leader"]],
   ["low_stock", "Low stock", ["admin", "officer"]],
   ["access_expiry", "Expiring temporary access", ["admin"]],
   ["data_quality", "Member data quality", ["admin", "officer"]],
@@ -276,6 +277,28 @@ async function collectCandidates(db: D1Database, now: Date) {
         title: "Attendance is incomplete",
         description: `${row.missing} attendance record${row.missing === 1 ? "" : "s"} remain unmarked for ${row.squad} Squad.`,
         targetUrl: "/?open=attendance", priority: "important",
+      });
+    }
+  }
+
+  if (enabled("event_reminders")) {
+    const from = now.toISOString().slice(0, 10);
+    const until = new Date(now.getTime() + 2 * 86400000).toISOString().slice(0, 10);
+    const rows = await db.prepare(`SELECT id, title, event_date, section FROM company_events
+      WHERE cancelled_at IS NULL AND event_date >= ? AND event_date <= ?`).bind(from, until).all<{
+        id: number; title: string; event_date: string; section: string;
+      }>();
+    for (const row of rows.results) {
+      const recipients = await db.prepare(`SELECT users.id FROM users JOIN members
+        ON LOWER(members.email) = LOWER(users.email)
+        WHERE users.active = 1 AND users.account_status = 'active' AND members.section IN (?, ?)`)
+        .bind(row.section === "all" ? "senior" : row.section, row.section === "all" ? "junior" : row.section)
+        .all<{ id: number }>();
+      candidates.push({
+        ruleKey: "event_reminders", sourceType: "company_event", sourceId: String(row.id),
+        recipientUserIds: recipients.results.map((recipient) => recipient.id),
+        title: "Upcoming company event", description: `${row.title} is coming up soon.`,
+        targetUrl: "/?open=events", priority: "normal",
       });
     }
   }

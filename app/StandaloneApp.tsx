@@ -15,6 +15,8 @@ import UniformRequests from "./UniformRequests";
 import OnboardingFlow from "./OnboardingFlow";
 import OnboardingCentre from "./OnboardingCentre";
 import MemberProgress from "./MemberProgress";
+import EventCentre from "./EventCentre";
+import MemberJourney from "./MemberJourney";
 
 type User = {
   id: number;
@@ -122,6 +124,8 @@ export default function StandaloneApp() {
     const allowed =
       next === "home" ||
       ["resources", "uniforms", "announcements"].includes(next) ||
+      next === "events" ||
+      next === "journey" ||
       (next === "stock" && stockAccess) ||
       (["company-overview", "members", "attendance", "subscriptions"].includes(next) && staff) ||
       (next === "awards" && (staff || auth.user.role === "member")) ||
@@ -193,6 +197,8 @@ export default function StandaloneApp() {
         attendance: "attendance",
         members: "members",
         stock: "stock",
+        events: "events",
+        journey: "journey",
         subscriptions: "subscriptions",
         home: "home",
         admin: "admin",
@@ -638,6 +644,8 @@ export default function StandaloneApp() {
       attendance: "attendance",
       members: "members",
       stock: "stock",
+      events: "events",
+      journey: "journey",
       subscriptions: "subscriptions",
       admin: "admin",
       home: "home",
@@ -666,6 +674,10 @@ export default function StandaloneApp() {
     page = <ResourceLibrary user={auth.user} onLogout={logout} onOpenSubmissions={auth.user.member_section !== "junior" ? () => navigate("submissions") : undefined} onManageAccount={openAccount} onOpenStock={stockAccess ? () => navigate("stock") : undefined} onOpenUniformRequests={() => navigate("uniforms")} onOpenAnnouncements={() => navigate("announcements")} announcementSummary={announcementSummary} />;
   else if (route === "awards" && auth.user.role === "member")
     page = <main className="member-progress-page"><MemberProgress user={auth.user} /></main>;
+  else if (route === "events")
+    page = <EventCentre />;
+  else if (route === "journey")
+    page = <MemberJourney />;
   else {
     const activeView = trackerViews[route] ?? (isStaff ? "dashboard" : "matrix");
     page = (
