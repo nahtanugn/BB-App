@@ -19,22 +19,14 @@ export async function GET(request: Request) {
     const visibleSections = member ? ["all", member.section] : (canManageEvents(user) || user.role === "viewer" ? sections : ["all"]);
     const placeholders = visibleSections.map(() => "?").join(",");
     const events = await runtime.DB.prepare(`SELECT events.*, COUNT(rsvps.member_id) AS rsvp_total,
-      SUM(CASE WHEN rsvps.status = 'going' THEN 1 ELSE 0 END) AS going_total,
-      COALESCE((SELECT COUNT(*) FROM members m
-        LEFT JOIN users attendance_users ON LOWER(attendance_users.email) = LOWER(m.email)
-        INNER JOIN attendance_sessions attendance_session ON attendance_session.id = events.attendance_session_id
-        WHERE m.section = attendance_session.section
-          AND (attendance_session.audience != 'nco_council' OR attendance_users.role IN ('nco', 'squad_leader'))), 0) AS attendance_required,
-      COALESCE((SELECT COUNT(*) FROM attendance_records attendance_record
-        WHERE attendance_record.session_id = events.attendance_session_id
-          AND attendance_record.status != 'unmarked'), 0) AS attendance_marked
+      SUM(CASE WHEN rsvps.status = 'going' THEN 1 ELSE 0 END) AS going_total
       FROM company_events events LEFT JOIN event_rsvps rsvps ON rsvps.event_id = events.id
       WHERE events.cancelled_at IS NULL AND events.section IN (${placeholders})
         AND (events.audience != 'nco_council' OR ? = 1)
       GROUP BY events.id ORDER BY events.event_date ASC, events.id ASC`).bind(...visibleSections, canSeeAudience(user, "nco_council") ? 1 : 0).all();
     const rsvps = member ? await runtime.DB.prepare("SELECT event_id, status, note FROM event_rsvps WHERE member_id = ?")
       .bind(member.id).all() : { results: [] };
-    return Response.json({ events: events.results, rsvps: rsvps.results, member, now: new Date().toISOString(), canManage: canManageEvents(user), readOnly: user.role === "viewer" });
+    return Response.json({ events: events.results, rsvps: rsvps.results, member, canManage: canManageEvents(user), readOnly: user.role === "viewer" });
   } catch (error) {
     return Response.json({ error: error instanceof Error ? error.message : "Unable to load events" }, { status: 500 });
   }

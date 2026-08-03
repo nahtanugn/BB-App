@@ -429,6 +429,19 @@ export default function AwardTracker({
     },
     [activeSession?.audience, filteredMembers, isNco, isSquadLeader, squadAttendanceMembers],
   );
+  const activeAttendanceUnmarked = activeSession
+    ? attendanceMembers.filter(
+        (member) =>
+          (attendanceMap.get(`${activeSession.id}:${member.id}`)?.status ??
+            "unmarked") === "unmarked",
+      ).length
+    : 0;
+  const activeAttendanceComplete = Boolean(
+    activeSession && attendanceMembers.length && !activeAttendanceUnmarked,
+  );
+  const activeAttendanceState = activeAttendanceComplete
+    ? "complete"
+    : "incomplete";
 
   const viewingMember =
     data?.members.find((member) => member.id === viewingMemberId) ?? null;
@@ -2193,7 +2206,7 @@ export default function AwardTracker({
                       Earliest to latest · closest meeting selected automatically
                     </small>
                   </label>
-                  <div className="selected-session-card">
+                  <div className={`selected-session-card attendance-${activeAttendanceState}`}>
                     {(() => {
                       const meetingDate = new Date(
                         `${activeSession.meeting_date}T00:00:00`,
@@ -2259,7 +2272,7 @@ export default function AwardTracker({
                 </div>
               )}
             </aside>
-            <article className="panel attendance-register">
+            <article className={`panel attendance-register attendance-register-${activeAttendanceState}`}>
               {activeSession ? (
                 <>
                   <div className="panel-heading attendance-heading">
@@ -2276,6 +2289,11 @@ export default function AwardTracker({
                           year: "numeric",
                         })}
                       </small>
+                      <span className={`attendance-register-status ${activeAttendanceState}`}>
+                        {activeAttendanceComplete
+                          ? "Completed attendance"
+                          : `${activeAttendanceUnmarked} missing detail${activeAttendanceUnmarked === 1 ? "" : "s"}`}
+                      </span>
                     </div>
                     {canManageAwards && (
                       <button
