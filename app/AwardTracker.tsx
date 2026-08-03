@@ -149,6 +149,15 @@ function malaysiaDateKey(date = new Date()) {
   return `${value("year")}-${value("month")}-${value("day")}`;
 }
 
+function attendanceMonthGrid(monthKey: string) {
+  const [year, month] = monthKey.split("-").map(Number);
+  const firstDay = new Date(Date.UTC(year, month - 1, 1)).getUTCDay();
+  const daysInMonth = new Date(Date.UTC(year, month, 0)).getUTCDate();
+  return Array.from({ length: firstDay + daysInMonth }, (_, index) =>
+    index < firstDay ? null : index - firstDay + 1,
+  );
+}
+
 type AwardTrackerProps = {
   embedded?: boolean;
   activeView?: "dashboard" | "matrix" | "members" | "attendance" | "subscriptions";
@@ -442,6 +451,14 @@ export default function AwardTracker({
   const activeAttendanceState = activeAttendanceComplete
     ? "complete"
     : "incomplete";
+  const attendanceCalendarDays = useMemo(
+    () => (activeSession ? attendanceMonthGrid(activeSession.meeting_date.slice(0, 7)) : []),
+    [activeSession],
+  );
+  const attendanceSessionsByDate = useMemo(
+    () => new Map(orderedAttendanceSessions.map((session) => [session.meeting_date, session])),
+    [orderedAttendanceSessions],
+  );
 
   const viewingMember =
     data?.members.find((member) => member.id === viewingMemberId) ?? null;
@@ -2256,6 +2273,24 @@ export default function AwardTracker({
                       );
                     })()}
                   </div>
+                  <section className="attendance-mini-calendar" aria-label="Meeting calendar">
+                    <div className="attendance-mini-calendar-heading">
+                      <strong>{new Date(`${activeSession.meeting_date}T00:00:00`).toLocaleDateString("en-MY", { month: "long", year: "numeric" })}</strong>
+                      <small>Tap a marked date to open its register</small>
+                    </div>
+                    <div className="attendance-mini-weekdays" aria-hidden="true">
+                      {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((day, index) => <span key={`${day}-${index}`}>{day}</span>)}
+                    </div>
+                    <div className="attendance-mini-days">
+                      {attendanceCalendarDays.map((day, index) => {
+                        if (!day) return <span className="attendance-mini-blank" key={`blank-${index}`} />;
+                        const dateKey = `${activeSession.meeting_date.slice(0, 8)}${String(day).padStart(2, "0")}`;
+                        const session = attendanceSessionsByDate.get(dateKey);
+                        const selected = session?.id === activeSession.id;
+                        return <button type="button" key={dateKey} disabled={!session} className={`${session ? "has-meeting" : ""} ${selected ? "selected" : ""}`} onClick={() => session && setActiveSessionId(session.id)} aria-label={session ? `${dateKey}: ${session.title}` : dateKey}>{day}</button>;
+                      })}
+                    </div>
+                  </section>
                 </div>
               ) : (
                 <div className="empty-state">
