@@ -369,7 +369,7 @@ const juniorAwards: AwardSeed[] = [
 const allowedSquads = ["Alpha", "Bravo", "Charlie", "Delta"];
 const allowedSections = ["senior", "junior"];
 const seniorRanks = ["Private", "Lance Corporal", "Corporal", "Sergeant", "Staff Sergeant"];
-const juniorRanks = ["Pre-Junior", "Assistant Leading Boy", "Leading Boy", "Chief Leading Boy"];
+const juniorRanks = ["Pre-Junior", "Junior", "Assistant Leading Boy", "Leading Boy", "Chief Leading Boy"];
 
 function validRank(section: string, rank: string) {
   return (section === "junior" ? juniorRanks : seniorRanks).includes(rank);

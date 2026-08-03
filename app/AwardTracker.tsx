@@ -2867,6 +2867,7 @@ export default function AwardTracker({
                       <>
                         {editingMember?.rank === "Private" && <option value="Private" disabled>Private — choose Junior rank</option>}
                         <option>Pre-Junior</option>
+                        <option>Junior</option>
                         <option>Assistant Leading Boy</option>
                         <option>Leading Boy</option>
                         <option>Chief Leading Boy</option>
