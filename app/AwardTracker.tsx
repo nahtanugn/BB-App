@@ -2861,16 +2861,19 @@ export default function AwardTracker({
                   Rank
                   <select
                     name="rank"
-                    defaultValue={editingMember?.rank ?? "Private"}
+                    defaultValue={editingMember?.rank ?? (section === "junior" ? "Pre-Junior" : "Private")}
                   >
-                    <option>Private</option>
                     {section === "junior" ? (
                       <>
+                        {editingMember?.rank === "Private" && <option value="Private" disabled>Private — choose Junior rank</option>}
+                        <option>Pre-Junior</option>
                         <option>Assistant Leading Boy</option>
                         <option>Leading Boy</option>
+                        <option>Chief Leading Boy</option>
                       </>
                     ) : (
                       <>
+                        <option>Private</option>
                         <option>Lance Corporal</option>
                         <option>Corporal</option>
                         <option>Sergeant</option>

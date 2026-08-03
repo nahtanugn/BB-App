@@ -25,6 +25,7 @@ type PendingMember = {
   section: "senior" | "junior";
   created_at: string;
 };
+type JuniorRankReview = { id: number; name: string; rank: string; squad: string; joined_at: string; email: string };
 
 export default function AdminCentre({
   currentUser,
@@ -33,7 +34,8 @@ export default function AdminCentre({
   onBack: () => void;
   onLogout: () => void;
 }) {
-  const readOnly = currentUser.role === "viewer";
+  const readOnly = currentUser.role !== "admin";
+  const canReviewJuniorRanks = ["admin", "officer"].includes(currentUser.role);
   const [users, setUsers] = useState<ManagedUser[]>([]);
   const [pendingMembers, setPendingMembers] = useState<PendingMember[]>([]);
   const [editingUser, setEditingUser] = useState<ManagedUser | null>(null);
@@ -41,36 +43,41 @@ export default function AdminCentre({
   const [pendingAccountMember, setPendingAccountMember] = useState<PendingMember | null>(null);
   const [newRole, setNewRole] = useState<Role>("officer");
   const [newTemporaryAccess, setNewTemporaryAccess] = useState("");
-  const [tab, setTab] = useState<"accounts" | "access" | "onboarding">("accounts");
+  const [tab, setTab] = useState<"accounts" | "access" | "onboarding" | "junior-ranks">(currentUser.role === "officer" ? "junior-ranks" : "accounts");
+  const [juniorRankReviews, setJuniorRankReviews] = useState<JuniorRankReview[]>([]);
   const [query, setQuery] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
 
   async function load() {
-    const response = await fetch("/api/auth?users=1", { cache: "no-store" });
-    const result = (await response.json()) as {
-      users?: ManagedUser[];
-      pendingMembers?: PendingMember[];
-      error?: string;
-    };
-    if (!response.ok) throw new Error(result.error ?? "Unable to load accounts");
-    setUsers(result.users ?? []);
-    setPendingMembers(result.pendingMembers ?? []);
+    const [response, rankResponse] = await Promise.all([
+      currentUser.role === "officer" ? Promise.resolve(null) : fetch("/api/auth?users=1", { cache: "no-store" }),
+      canReviewJuniorRanks ? fetch("/api/tracker?juniorRankReview=1", { cache: "no-store" }) : Promise.resolve(null),
+    ]);
+    if (response) {
+      const result = (await response.json()) as {
+        users?: ManagedUser[];
+        pendingMembers?: PendingMember[];
+        error?: string;
+      };
+      if (!response.ok) throw new Error(result.error ?? "Unable to load accounts");
+      setUsers(result.users ?? []);
+      setPendingMembers(result.pendingMembers ?? []);
+    }
+    if (rankResponse) {
+      const rankResult = (await rankResponse.json()) as { members?: JuniorRankReview[]; error?: string };
+      if (!rankResponse.ok) throw new Error(rankResult.error ?? "Unable to load Junior rank review");
+      setJuniorRankReviews(rankResult.members ?? []);
+    }
   }
   useEffect(() => {
-    fetch("/api/auth?users=1", { cache: "no-store" })
-      .then(async (response) => {
-        const result = (await response.json()) as {
-          users?: ManagedUser[];
-          pendingMembers?: PendingMember[];
-          error?: string;
-        };
-        if (!response.ok) throw new Error(result.error ?? "Unable to load accounts");
-        setUsers(result.users ?? []);
-        setPendingMembers(result.pendingMembers ?? []);
-      })
-      .catch((cause: unknown) => setError(cause instanceof Error ? cause.message : "Unable to load accounts"));
+    const timer = window.setTimeout(() => {
+      void load().catch((cause: unknown) => setError(cause instanceof Error ? cause.message : "Unable to load accounts"));
+    }, 0);
+    return () => window.clearTimeout(timer);
+    // load is intentionally initial-only; role does not change while this centre is open.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const visibleUsers = useMemo(() => {
@@ -209,6 +216,14 @@ export default function AdminCentre({
     setBusy(false);
   }
 
+  async function reviewJuniorRank(member: JuniorRankReview, rank: string) {
+    setBusy(true); setError(""); setNotice("");
+    const response = await fetch("/api/tracker", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "review_junior_rank", memberId: member.id, rank }) });
+    const result = (await response.json()) as { error?: string };
+    if (!response.ok) { setBusy(false); return setError(result.error ?? "Unable to update Junior rank"); }
+    await load(); setNotice(`${member.name}'s Junior rank was updated.`); setBusy(false);
+  }
+
   return (
     <main className="admin-centre-shell">
       {notice && <div className="action-toast" role="status"><span>✓</span>{notice}<button onClick={() => setNotice("")} aria-label="Dismiss confirmation">×</button></div>}
@@ -218,19 +233,20 @@ export default function AdminCentre({
           <label className="admin-search"><span>⌕</span><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search accounts" /></label>
         </div>
         {error && <p className="form-error">{error}</p>}
-        <div className="admin-summary">
+        {currentUser.role === "admin" && <div className="admin-summary">
           <article><span>Active accounts</span><strong>{counts.active}</strong></article>
           <article><span>Disabled</span><strong>{counts.disabled}</strong></article>
           <article><span>Member logins</span><strong>{counts.members}</strong></article>
           <article><span>Staff accounts</span><strong>{counts.staff}</strong></article>
-        </div>
+        </div>}
         <div className="admin-tabs" role="tablist">
-          <button className={tab === "accounts" ? "active" : ""} onClick={() => setTab("accounts")}>Membership accounts</button>
-          <button className={tab === "access" ? "active" : ""} onClick={() => setTab("access")}>Custom access roles</button>
-          <button className={tab === "onboarding" ? "active" : ""} onClick={() => setTab("onboarding")}>Onboarding</button>
+          {currentUser.role === "admin" && <><button className={tab === "accounts" ? "active" : ""} onClick={() => setTab("accounts")}>Membership accounts</button><button className={tab === "access" ? "active" : ""} onClick={() => setTab("access")}>Custom access roles</button><button className={tab === "onboarding" ? "active" : ""} onClick={() => setTab("onboarding")}>Onboarding</button></>}
+          {canReviewJuniorRanks && <button className={tab === "junior-ranks" ? "active" : ""} onClick={() => setTab("junior-ranks")}>Junior rank review {juniorRankReviews.length ? `(${juniorRankReviews.length})` : ""}</button>}
         </div>
 
-        {tab === "accounts" ? (
+        {tab === "junior-ranks" ? (
+          <section className="junior-rank-review panel"><div className="panel-heading"><div><p className="eyebrow">MANUAL REVIEW</p><h2>Junior members needing a rank</h2><p>These members remain unchanged until you choose their correct Junior rank.</p></div><span>{juniorRankReviews.length}</span></div>{juniorRankReviews.map((member) => <article key={member.id}><div><strong>{member.name}</strong><small>{member.squad} · joined {member.joined_at} · {member.email}</small></div><select defaultValue="Pre-Junior" aria-label={`Choose rank for ${member.name}`}><option>Pre-Junior</option><option>Assistant Leading Boy</option><option>Leading Boy</option><option>Chief Leading Boy</option></select><button className="primary" disabled={busy} onClick={(event) => reviewJuniorRank(member, (event.currentTarget.previousElementSibling as HTMLSelectElement).value)}>Save rank</button></article>)}{!juniorRankReviews.length && <div className="operations-empty"><span>✓</span><h2>All Junior ranks are reviewed</h2><p>No Junior member remains recorded as Private.</p></div>}</section>
+        ) : tab === "accounts" ? (
           <div className="admin-account-layout">
             <section className="admin-account-list-panel">
               <div className="request-section-heading"><div><p className="eyebrow">ACCOUNTS</p><h2>Existing users</h2></div><span>{visibleUsers.length}</span></div>

@@ -232,7 +232,7 @@ test("ships the Malaysia Senior Section catalogue, role-based portals and instal
   assert.match(authRoute, /createOrLinkMemberProfile/);
   assert.match(authRoute, /pendingMembers/);
   assert.match(authRoute, /LEFT JOIN users u ON LOWER\(u\.email\)/);
-  assert.match(authRoute, /VALUES \(\?, 'Private', \?, \?, \?/);
+  assert.match(authRoute, /section === "junior" \? "Pre-Junior" : "Private"/);
   assert.match(authRoute, /role === "member"/);
   assert.match(authRoute, /action === "delete_user"/);
   assert.match(authRoute, /You cannot delete your own account/);

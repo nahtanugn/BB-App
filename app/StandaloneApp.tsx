@@ -140,7 +140,7 @@ export default function StandaloneApp() {
             ["submissions.view", "submissions.review"].includes(permission),
           ))) ||
       (next === "onboarding" && staff) ||
-      (next === "admin" && ["admin", "viewer"].includes(auth.user.role)) ||
+      (next === "admin" && ["admin", "officer", "viewer"].includes(auth.user.role)) ||
       (next === "automation" && ["admin", "viewer"].includes(auth.user.role));
     const safeRoute = allowed ? next : "home";
     setRoute(safeRoute);
@@ -686,7 +686,7 @@ export default function StandaloneApp() {
     page = <UniformRequests userName={auth.user.name} onLogout={logout} onBack={() => navigate("home")} />;
   else if (route === "announcements")
     page = <Announcements userName={auth.user.name} onLogout={logout} onBack={() => { navigate("home"); void refreshAnnouncementSummary(); }} onRead={handleAnnouncementsRead} />;
-  else if (route === "admin" && ["admin", "viewer"].includes(auth.user.role))
+  else if (route === "admin" && ["admin", "officer", "viewer"].includes(auth.user.role))
     page = <AdminCentre currentUser={auth.user} onLogout={logout} onBack={() => { navigate("home"); void refreshAuth(); }} />;
   else if (route === "onboarding" && isStaff)
     page = <OnboardingCentre currentUser={auth.user} onLogout={logout} onBack={() => navigate("home")} />;

@@ -2332,6 +2332,11 @@ button:disabled { opacity: .62; cursor: wait; }
 .admin-tabs { margin-top: 20px; padding: 5px; display: flex; gap: 5px; width: fit-content; border: 1px solid var(--line); border-radius: 11px; background: white; }
 .admin-tabs button { min-height: 37px; padding: 0 15px; border: 0; border-radius: 8px; background: transparent; color: var(--muted); font-weight: 750; }
 .admin-tabs button.active { background: var(--navy); color: white; }
+.junior-rank-review { margin-top: 22px; overflow: hidden; }
+.junior-rank-review > article { min-height: 74px; padding: 13px 18px; display: grid; grid-template-columns: minmax(0, 1fr) 220px auto; align-items: center; gap: 12px; border-top: 1px solid var(--line); }
+.junior-rank-review > article strong, .junior-rank-review > article small { display: block; }
+.junior-rank-review > article small { margin-top: 4px; color: var(--muted); font-size: 10px; }
+.junior-rank-review select { min-height: 42px; padding: 0 10px; border: 1px solid var(--line); border-radius: 9px; background: white; color: var(--ink); }
 .admin-account-layout { margin-top: 14px; display: grid; grid-template-columns: minmax(0, 1.35fr) minmax(300px, .65fr); gap: 14px; align-items: start; }
 .admin-account-list-panel, .admin-account-editor, .admin-custom-access { padding: 19px; border: 1px solid var(--line); border-radius: 14px; background: white; }
 .admin-account-list { overflow: hidden; border: 1px solid var(--line); border-radius: 11px; }
@@ -2382,6 +2387,8 @@ button:disabled { opacity: .62; cursor: wait; }
   .admin-summary { grid-template-columns: 1fr 1fr; }
   .admin-tabs { width: 100%; }
   .admin-tabs button { flex: 1; }
+  .junior-rank-review > article { grid-template-columns: 1fr; align-items: stretch; }
+  .junior-rank-review > article .primary { width: 100%; }
   .admin-account-list-panel, .admin-account-editor, .admin-custom-access { padding: 14px; }
   .account-field-grid { grid-template-columns: 1fr; }
   .admin-account-list > article { grid-template-columns: 36px 1fr; }

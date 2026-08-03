@@ -65,10 +65,11 @@ async function createOrLinkMemberProfile(
   await runtime.DB.prepare(
     `INSERT INTO members
     (name, rank, squad, section, joined_at, service_years, school, contact_number, emergency_contact_number, email, parents_name, is_demo, created_at)
-    VALUES (?, 'Private', ?, ?, ?, 0, '', '', '', ?, '', 0, ?)`,
+    VALUES (?, ?, ?, ?, ?, 0, '', '', '', ?, '', 0, ?)`,
   )
     .bind(
       name,
+      section === "junior" ? "Pre-Junior" : "Private",
       memberSquad,
       section === "junior" ? "junior" : "senior",
       String(new Date().getUTCFullYear()),

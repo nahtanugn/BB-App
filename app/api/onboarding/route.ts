@@ -481,9 +481,9 @@ export async function POST(request: Request) {
             (name, rank, squad, section, joined_at, service_years, school,
              contact_number, emergency_contact_number, email, parents_name,
              is_demo, created_at)
-          VALUES (?, 'Private', ?, ?, ?, 0, ?, ?, ?, ?, ?, 0, ?)`,
+          VALUES (?, ?, ?, ?, ?, 0, ?, ?, ?, ?, ?, 0, ?)`,
         ).bind(
-          registration.name, squad, section, registration.joined_year,
+          registration.name, section === "junior" ? "Pre-Junior" : "Private", squad, section, registration.joined_year,
           registration.school, registration.contact_number,
           registration.emergency_contact_number, registration.email,
           registration.parents_name, now,

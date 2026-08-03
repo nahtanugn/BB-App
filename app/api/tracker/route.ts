@@ -368,6 +368,12 @@ const juniorAwards: AwardSeed[] = [
 }));
 const allowedSquads = ["Alpha", "Bravo", "Charlie", "Delta"];
 const allowedSections = ["senior", "junior"];
+const seniorRanks = ["Private", "Lance Corporal", "Corporal", "Sergeant", "Staff Sergeant"];
+const juniorRanks = ["Pre-Junior", "Assistant Leading Boy", "Leading Boy", "Chief Leading Boy"];
+
+function validRank(section: string, rank: string) {
+  return (section === "junior" ? juniorRanks : seniorRanks).includes(rank);
+}
 
 function calculateServiceYears(joinedAt: string, today = new Date()) {
   const match = /^(\d{4})/.exec(joinedAt);
@@ -710,6 +716,13 @@ export async function GET(request: Request) {
       );
     await ensureSchema();
     const db = env.DB;
+    if (new URL(request.url).searchParams.get("juniorRankReview") === "1") {
+      if (!(["admin", "officer"].includes(user.role) || hasTemporaryAccess))
+        return Response.json({ error: "Administrator or Officer access required" }, { status: 403 });
+      const members = await db.prepare(`SELECT id, name, rank, squad, joined_at, email
+        FROM members WHERE section = 'junior' AND rank = 'Private' ORDER BY name COLLATE NOCASE`).all();
+      return Response.json({ members: members.results });
+    }
     const requestedSection =
       new URL(request.url).searchParams.get("section") ?? "senior";
     const section = allowedSections.includes(requestedSection)
@@ -894,9 +907,15 @@ export async function POST(request: Request) {
         .toLowerCase();
       const parentsName = String(body.parentsName ?? "").trim();
       const bandMember = body.bandMember === true;
+      const rank = String(body.rank ?? (section === "junior" ? "Pre-Junior" : "Private"));
       if (!name)
         return Response.json(
           { error: "Member name is required" },
+          { status: 400 },
+        );
+      if (!validRank(section, rank))
+        return Response.json(
+          { error: `Choose a valid ${section === "junior" ? "Junior" : "Senior"} Section rank` },
           { status: 400 },
         );
       if (!allowedSquads.includes(squad))
@@ -931,7 +950,7 @@ export async function POST(request: Request) {
         )
         .bind(
           name,
-          String(body.rank ?? "Private"),
+          rank,
           squad,
           section,
           joinedAt,
@@ -962,9 +981,15 @@ export async function POST(request: Request) {
         .toLowerCase();
       const parentsName = String(body.parentsName ?? "").trim();
       const bandMember = body.bandMember === true;
+      const rank = String(body.rank ?? (section === "junior" ? "Pre-Junior" : "Private"));
       if (!memberId || !name)
         return Response.json(
           { error: "Valid member details are required" },
+          { status: 400 },
+        );
+      if (!validRank(section, rank))
+        return Response.json(
+          { error: `Choose a valid ${section === "junior" ? "Junior" : "Senior"} Section rank` },
           { status: 400 },
         );
       if (!allowedSquads.includes(squad))
@@ -997,7 +1022,7 @@ export async function POST(request: Request) {
         )
         .bind(
           name,
-          String(body.rank ?? "Private"),
+          rank,
           squad,
           joinedAt,
           calculateServiceYears(joinedAt),
@@ -1011,6 +1036,17 @@ export async function POST(request: Request) {
           section,
         )
         .run();
+    } else if (action === "review_junior_rank") {
+      if (!(["admin", "officer"].includes(user.role) || hasTemporaryAccess))
+        return Response.json({ error: "Administrator or Officer access required" }, { status: 403 });
+      const memberId = Number(body.memberId);
+      const rank = String(body.rank ?? "");
+      if (!memberId || !juniorRanks.includes(rank))
+        return Response.json({ error: "Choose a valid Junior Section rank" }, { status: 400 });
+      const result = await db.prepare("UPDATE members SET rank = ? WHERE id = ? AND section = 'junior' AND rank = 'Private'")
+        .bind(rank, memberId).run();
+      if (!result.meta.changes)
+        return Response.json({ error: "This Junior rank review item is no longer available" }, { status: 409 });
     } else if (action === "update_service_award_count") {
       const memberId = Number(body.memberId);
       const count = Number(body.count);

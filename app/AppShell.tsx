@@ -134,8 +134,8 @@ export default function AppShell({
       icon: "◉",
       badge: announcementCount,
     });
-    if (["admin", "viewer"].includes(user.role))
-      values.push({ route: "admin", category: "Administration", label: "Admin Centre", description: "Accounts, roles and access", icon: "⚙" });
+    if (["admin", "officer", "viewer"].includes(user.role))
+      values.push({ route: "admin", category: "Administration", label: user.role === "officer" ? "Junior rank review" : "Admin Centre", description: user.role === "officer" ? "Review Junior member ranks" : "Accounts, roles and access", icon: "⚙" });
     if (staff)
       values.push({
         route: "onboarding",
