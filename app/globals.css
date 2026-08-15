@@ -494,6 +494,18 @@ h2 { color: var(--navy); }
 .modal label { min-width: 0; display: grid; gap: 7px; color: var(--navy); font-size: 10px; font-weight: 750; }
 .modal input, .modal select { box-sizing: border-box; min-width: 0; max-width: 100%; width: 100%; height: 42px; padding: 0 11px; border: 1px solid var(--line); border-radius: 8px; background: white; color: var(--ink); font-size: 11px; }
 .modal select { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.school-dropdown { min-width: 0; display: grid; gap: 7px; }
+.school-dropdown-trigger { box-sizing: border-box; min-width: 0; width: 100%; min-height: 48px; padding: 0 12px; display: flex; align-items: center; justify-content: space-between; gap: 10px; border: 1px solid var(--line); border-radius: 11px; background: white; color: var(--ink); font-size: 13px; font-weight: 650; text-align: left; }
+.school-dropdown-trigger span:first-child { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.school-dropdown-trigger[aria-expanded="true"] { border-color: var(--blue); box-shadow: 0 0 0 3px rgba(28,111,209,.12); }
+.school-dropdown-menu { min-width: 0; padding: 9px; display: grid; gap: 8px; border: 1px solid #cbd9e7; border-radius: 11px; background: #f8fbfe; box-shadow: 0 10px 24px rgba(11,47,85,.12); }
+.school-dropdown-menu > input { min-height: 42px; }
+.school-dropdown-menu [role="listbox"] { max-height: 220px; overflow-y: auto; overscroll-behavior: contain; display: grid; gap: 3px; }
+.school-dropdown-menu [role="option"], .school-dropdown-menu .legacy { min-width: 0; width: 100%; padding: 9px 10px; border: 0; border-radius: 8px; background: transparent; color: var(--ink); font-size: 10px; font-weight: 700; line-height: 1.35; text-align: left; overflow-wrap: anywhere; }
+.school-dropdown-menu [role="option"]:hover, .school-dropdown-menu [role="option"].selected, .school-dropdown-menu .legacy:hover { background: var(--blue-soft); color: var(--navy); }
+.school-dropdown-menu .legacy small { display: block; color: var(--muted); font-weight: 500; }
+.school-dropdown-menu p { margin: 0; padding: 12px 8px; color: var(--muted); font-size: 10px; text-align: center; }
+.school-dropdown-required { color: var(--danger) !important; }
 .modal input[readonly] { background: #f3f6f9; color: var(--navy); font-weight: 800; }
 .modal label > small { color: var(--muted); font-size: 8px; font-weight: 500; }
 .modal .override-details { display: flex; align-items: center; gap: 10px; padding: 11px 12px; border: 1px solid var(--line); border-radius: 8px; background: #f8fafc; }

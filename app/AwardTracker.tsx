@@ -143,6 +143,30 @@ function memberCompleteness(member: Member) {
   return { percent: Math.round(((fields.length - missing.length) / fields.length) * 100), missing };
 }
 
+function SchoolDropdown({ options, defaultValue, required }: { options: string[]; defaultValue: string; required: boolean }) {
+  const canonicalDefault = options.find((school) => school.toLowerCase() === defaultValue.toLowerCase()) ?? defaultValue;
+  const [value, setValue] = useState(canonicalDefault);
+  const [open, setOpen] = useState(false);
+  const [search, setSearch] = useState("");
+  const visible = options.filter((school) => school.toLowerCase().includes(search.trim().toLowerCase()));
+  const legacy = value && !options.some((school) => school.toLowerCase() === value.toLowerCase());
+  return <div className="school-dropdown">
+    <input type="hidden" name="school" value={value} />
+    <button type="button" className="school-dropdown-trigger" aria-expanded={open} onClick={() => setOpen((current) => !current)}>
+      <span>{value || "Select a school"}</span><span aria-hidden="true">⌄</span>
+    </button>
+    {required && !value && <small className="school-dropdown-required">Choose a school before saving.</small>}
+    {open && <div className="school-dropdown-menu">
+      <input aria-label="Search schools" value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search schools" autoFocus />
+      <div role="listbox" aria-label="Approved schools">
+        {legacy && <button type="button" className="legacy" onClick={() => setOpen(false)}>{value} <small>Legacy value</small></button>}
+        {visible.map((school) => <button type="button" role="option" aria-selected={school === value} className={school === value ? "selected" : ""} key={school} onClick={() => { setValue(school); setOpen(false); setSearch(""); }}>{school}</button>)}
+        {!visible.length && <p>No schools match your search.</p>}
+      </div>
+    </div>}
+  </div>;
+}
+
 function malaysiaDateKey(date = new Date()) {
   const parts = new Intl.DateTimeFormat("en", {
     timeZone: "Asia/Kuching",
@@ -3020,15 +3044,7 @@ export default function AwardTracker({
               <div className="form-row">
                 <label>
                   School
-                  <select
-                    name="school"
-                    required={!overrideMemberDetails}
-                    defaultValue={schoolOptions.find((school) => school.toLowerCase() === (editingMember?.school ?? "").toLowerCase()) ?? editingMember?.school ?? ""}
-                  >
-                    <option value="">Select a school</option>
-                    {editingMember?.school && !schoolOptions.some((school) => school.toLowerCase() === editingMember.school.toLowerCase()) && <option value={editingMember.school}>{editingMember.school} (legacy value)</option>}
-                    {schoolOptions.map((school) => <option key={school} value={school}>{school}</option>)}
-                  </select>
+                  <SchoolDropdown options={schoolOptions} defaultValue={editingMember?.school ?? ""} required={!overrideMemberDetails} />
                 </label>
                 <label>
                   Email
