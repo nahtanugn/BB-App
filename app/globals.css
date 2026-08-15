@@ -2349,6 +2349,19 @@ button:disabled { opacity: .62; cursor: wait; }
 .admin-tabs { margin-top: 20px; padding: 5px; display: flex; gap: 5px; width: fit-content; border: 1px solid var(--line); border-radius: 11px; background: white; }
 .admin-tabs button { min-height: 37px; padding: 0 15px; border: 0; border-radius: 8px; background: transparent; color: var(--muted); font-weight: 750; }
 .admin-tabs button.active { background: var(--navy); color: white; }
+.admin-mobile-tabs { display: none; }
+.school-directory { margin-top: 14px; }
+.school-directory .panel-heading > div { min-width: 0; }
+.school-directory .panel-heading p:last-child { margin: 6px 0 0; color: var(--muted); font-size: 10px; line-height: 1.5; }
+.school-directory .panel-heading > span { flex: 0 0 auto; padding: 6px 9px; border-radius: 999px; background: var(--blue-soft); color: var(--blue); font-size: 10px; font-weight: 850; }
+.school-directory .inline-form { padding: 18px 22px; grid-template-columns: minmax(0, 1fr) auto; align-items: stretch; border-bottom: 1px solid var(--line); }
+.school-directory .inline-form input { min-width: 0; }
+.school-directory .inline-form .primary { min-height: 48px; white-space: nowrap; }
+.school-list { display: grid; }
+.school-list > article { min-width: 0; min-height: 56px; padding: 12px 22px; display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 12px; border-bottom: 1px solid var(--line); }
+.school-list > article:last-child { border-bottom: 0; }
+.school-list strong { min-width: 0; color: var(--ink); font-size: 11px; line-height: 1.4; overflow-wrap: anywhere; }
+.school-list .danger-link { min-height: 38px; padding-inline: 8px; }
 .junior-rank-review { margin-top: 22px; overflow: hidden; }
 .junior-rank-review > article { min-height: 74px; padding: 13px 18px; display: grid; grid-template-columns: minmax(0, 1fr) 220px auto; align-items: center; gap: 12px; border-top: 1px solid var(--line); }
 .junior-rank-review > article strong, .junior-rank-review > article small { display: block; }
@@ -2402,8 +2415,16 @@ button:disabled { opacity: .62; cursor: wait; }
   .admin-centre-hero { align-items: stretch; flex-direction: column; }
   .admin-search { width: 100%; }
   .admin-summary { grid-template-columns: 1fr 1fr; }
-  .admin-tabs { width: 100%; }
-  .admin-tabs button { flex: 1; }
+  .admin-tabs { display: none; }
+  .admin-mobile-tabs { margin-top: 20px; padding: 13px; display: grid; gap: 7px; border: 1px solid var(--line); border-radius: 13px; background: white; color: var(--navy); font-size: 10px; font-weight: 800; }
+  .admin-mobile-tabs select { box-sizing: border-box; width: 100%; min-width: 0; min-height: 48px; padding: 0 12px; border: 1px solid #cddae7; border-radius: 10px; background: #f8fbfe; color: var(--navy); font: inherit; font-size: 13px; }
+  .school-directory { margin-top: 14px; overflow: hidden; }
+  .school-directory .panel-heading { align-items: flex-start; }
+  .school-directory .panel-heading p:last-child { font-size: 11px; }
+  .school-directory .inline-form { padding: 15px; grid-template-columns: minmax(0, 1fr); }
+  .school-directory .inline-form .primary { width: 100%; }
+  .school-list > article { padding: 12px 15px; }
+  .school-list strong { font-size: 10px; }
   .junior-rank-review > article { grid-template-columns: 1fr; align-items: stretch; }
   .junior-rank-review > article .primary { width: 100%; }
   .admin-account-list-panel, .admin-account-editor, .admin-custom-access { padding: 14px; }

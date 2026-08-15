@@ -27,6 +27,7 @@ type PendingMember = {
   created_at: string;
 };
 type JuniorRankReview = { id: number; name: string; rank: string; squad: string; joined_at: string; email: string };
+type AdminTab = "accounts" | "access" | "onboarding" | "audit" | "schools" | "junior-ranks";
 
 export default function AdminCentre({
   currentUser,
@@ -44,7 +45,7 @@ export default function AdminCentre({
   const [pendingAccountMember, setPendingAccountMember] = useState<PendingMember | null>(null);
   const [newRole, setNewRole] = useState<Role>("officer");
   const [newTemporaryAccess, setNewTemporaryAccess] = useState("");
-  const [tab, setTab] = useState<"accounts" | "access" | "onboarding" | "audit" | "schools" | "junior-ranks">(currentUser.role === "officer" ? "junior-ranks" : "accounts");
+  const [tab, setTab] = useState<AdminTab>(currentUser.role === "officer" ? "junior-ranks" : "accounts");
   const [schools, setSchools] = useState<Array<{ id: number; name: string }>>([]);
   const [newSchool, setNewSchool] = useState("");
   const [juniorRankReviews, setJuniorRankReviews] = useState<JuniorRankReview[]>([]);
@@ -95,6 +96,16 @@ export default function AdminCentre({
     members: users.filter((user) => user.role === "member").length,
     staff: users.filter((user) => user.role !== "member").length,
   }), [users]);
+  const adminTabOptions: Array<{ value: AdminTab; label: string }> = [
+    ...(currentUser.role === "admin" ? [
+      { value: "accounts" as const, label: "Membership accounts" },
+      { value: "access" as const, label: "Custom access roles" },
+      { value: "onboarding" as const, label: "Onboarding" },
+      { value: "schools" as const, label: "School directory" },
+      { value: "audit" as const, label: "Audit history" },
+    ] : []),
+    ...(canReviewJuniorRanks ? [{ value: "junior-ranks" as const, label: `Junior rank review${juniorRankReviews.length ? ` (${juniorRankReviews.length})` : ""}` }] : []),
+  ];
 
   async function createUser(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -257,10 +268,15 @@ export default function AdminCentre({
           <article><span>Member logins</span><strong>{counts.members}</strong></article>
           <article><span>Staff accounts</span><strong>{counts.staff}</strong></article>
         </div>}
-        <div className="admin-tabs" role="tablist">
-          {currentUser.role === "admin" && <><button className={tab === "accounts" ? "active" : ""} onClick={() => setTab("accounts")}>Membership accounts</button><button className={tab === "access" ? "active" : ""} onClick={() => setTab("access")}>Custom access roles</button><button className={tab === "onboarding" ? "active" : ""} onClick={() => setTab("onboarding")}>Onboarding</button><button className={tab === "schools" ? "active" : ""} onClick={() => setTab("schools")}>Schools</button><button className={tab === "audit" ? "active" : ""} onClick={() => setTab("audit")}>Audit history</button></>}
-          {canReviewJuniorRanks && <button className={tab === "junior-ranks" ? "active" : ""} onClick={() => setTab("junior-ranks")}>Junior rank review {juniorRankReviews.length ? `(${juniorRankReviews.length})` : ""}</button>}
+        <div className="admin-tabs" role="tablist" aria-label="Administration sections">
+          {adminTabOptions.map((option) => <button type="button" role="tab" aria-selected={tab === option.value} className={tab === option.value ? "active" : ""} onClick={() => setTab(option.value)} key={option.value}>{option.label}</button>)}
         </div>
+        <label className="admin-mobile-tabs">
+          <span>Administration section</span>
+          <select value={tab} onChange={(event) => setTab(event.target.value as AdminTab)}>
+            {adminTabOptions.map((option) => <option value={option.value} key={option.value}>{option.label}</option>)}
+          </select>
+        </label>
 
         {tab === "audit" ? <AuditHistory /> : tab === "schools" ? <section className="panel school-directory"><div className="panel-heading"><div><p className="eyebrow">DATA QUALITY</p><h2>School directory</h2><p>Approved names appear as suggestions in member forms. Existing free-text values are preserved.</p></div><span>{schools.length}</span></div><form onSubmit={addSchool} className="inline-form"><input value={newSchool} onChange={(event) => setNewSchool(event.target.value)} placeholder="e.g. SMK Tinggi Kuching" required /><button className="primary" disabled={busy}>{busy ? "Adding…" : "Add school"}</button></form><div className="school-list">{schools.map((school) => <article key={school.id}><strong>{school.name}</strong><button className="danger-link" onClick={() => archiveSchool(school.id)}>Archive</button></article>)}</div></section> : tab === "junior-ranks" ? (
           <section className="junior-rank-review panel"><div className="panel-heading"><div><p className="eyebrow">MANUAL REVIEW</p><h2>Junior members needing a rank</h2><p>These members remain unchanged until you choose their correct Junior rank.</p></div><span>{juniorRankReviews.length}</span></div>{juniorRankReviews.map((member) => <article key={member.id}><div><strong>{member.name}</strong><small>{member.squad} · joined {member.joined_at} · {member.email}</small></div><select defaultValue="Pre-Junior" aria-label={`Choose rank for ${member.name}`}><option>Pre-Junior</option><option>Junior</option><option>Assistant Leading Boy</option><option>Leading Boy</option><option>Chief Leading Boy</option></select><button className="primary" disabled={busy} onClick={(event) => reviewJuniorRank(member, (event.currentTarget.previousElementSibling as HTMLSelectElement).value)}>Save rank</button></article>)}{!juniorRankReviews.length && <div className="operations-empty"><span>✓</span><h2>All Junior ranks are reviewed</h2><p>No Junior member remains recorded as Private.</p></div>}</section>
