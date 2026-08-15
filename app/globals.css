@@ -3181,6 +3181,69 @@ button:disabled { opacity: .62; cursor: wait; }
   font-weight: 750;
 }
 
+/* Compact, consistent search controls.  The shared form rule above is useful
+   for long forms, but search fields are short toolbar controls and should not
+   inherit the full form height or a second nested border. */
+.unified-app-content :is(.search, .resource-search, .stock-search, .admin-search) {
+  min-height: 42px;
+  height: 42px;
+  box-sizing: border-box;
+}
+
+.unified-app-content :is(.search, .resource-search, .stock-search, .admin-search) input {
+  min-height: 0;
+  height: auto;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+/* Attendance has a label around the input rather than the reusable .search
+   component. Keep its search, filter and bulk action aligned as one toolbar. */
+.unified-app-content .attendance-controls {
+  display: grid;
+  grid-template-columns: minmax(190px, 1.25fr) minmax(140px, .75fr) auto;
+  align-items: end;
+  gap: 10px;
+  padding: 14px 20px 10px;
+  border-bottom: 1px solid #edf0f3;
+  background: white;
+}
+
+.unified-app-content .attendance-controls label {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+  color: var(--navy);
+  font-size: 10px;
+  font-weight: 800;
+}
+
+.unified-app-content .attendance-controls input,
+.unified-app-content .attendance-controls select {
+  width: 100%;
+  min-height: 42px;
+  height: 42px;
+  box-sizing: border-box;
+  padding: 0 11px;
+  border: 1px solid #ccd9e5;
+  border-radius: 10px;
+  font-size: 11px;
+}
+
+.unified-app-content .attendance-controls .primary {
+  min-height: 42px;
+  height: 42px;
+  white-space: nowrap;
+}
+
+.unified-app-content .submission-portal-toolbar :is(input, select) {
+  min-height: 42px;
+  height: 42px;
+}
+
 @media (max-width: 760px) {
   :root { --ui-card-radius: 16px; --ui-control-height: 48px; }
 
@@ -3220,6 +3283,29 @@ button:disabled { opacity: .62; cursor: wait; }
   .unified-app-content form > :is(.primary, .secondary),
   .unified-app-content :is(.form-actions, .role-form-actions, .onboarding-actions) > :is(.primary, .secondary) { width: 100%; }
   .unified-app-content .form-row { grid-template-columns: 1fr; }
+
+  .unified-app-content :is(.search, .resource-search, .stock-search, .admin-search) {
+    min-height: 46px;
+    height: 46px;
+  }
+
+  .unified-app-content .attendance-controls {
+    grid-template-columns: 1fr;
+    gap: 10px;
+    padding: 14px 16px 12px;
+  }
+
+  .unified-app-content .attendance-controls input,
+  .unified-app-content .attendance-controls select,
+  .unified-app-content .attendance-controls .primary {
+    min-height: 46px;
+    height: 46px;
+  }
+
+  .unified-app-content .submission-portal-toolbar :is(input, select) {
+    min-height: 46px;
+    height: 46px;
+  }
 }
 
 @media (max-width: 760px) {
