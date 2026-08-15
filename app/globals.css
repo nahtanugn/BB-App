@@ -2496,6 +2496,51 @@ button:disabled { opacity: .62; cursor: wait; }
 .manage-tool-list b { color: #91a0b2; font-size: 20px; }
 .export-page-shell .export-centre { width: 100%; max-height: none; }
 .export-page-shell .export-page { overflow: hidden; }
+.export-centre form {
+  padding: 21px 24px 24px;
+  display: grid;
+  gap: 15px;
+}
+.export-centre form > label,
+.export-centre .export-filter-grid > label {
+  min-width: 0;
+  display: grid;
+  gap: 7px;
+  color: var(--navy);
+  font-size: 10px;
+  font-weight: 750;
+}
+.export-centre :where(
+  input:not([type="checkbox"]):not([type="radio"]),
+  select
+) {
+  box-sizing: border-box;
+  min-width: 0;
+  width: 100%;
+  height: 42px;
+  min-height: 42px;
+  padding: 0 11px;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  background: white;
+  color: var(--ink);
+  font-size: 11px;
+}
+.export-centre select { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.export-centre .export-datasets label,
+.export-centre .export-formats > label { display: flex; }
+.export-centre .school-report-note {
+  margin: 0;
+  padding: 12px 14px;
+  border: 1px solid #d7e5f2;
+  border-radius: 10px;
+  background: #f5f9fd;
+  color: var(--muted);
+  font-size: 10px;
+  line-height: 1.5;
+}
+.export-centre .export-actions .primary,
+.export-centre .export-actions .secondary { min-height: 42px; }
 .member-card .card-actions { display: flex; width: auto; margin: 0; align-items: center; justify-content: flex-end; }
 .member-card .member-card-primary-action { width: auto; min-width: 72px; min-height: 40px; }
 .member-numbers.member-numbers-simple { grid-template-columns: repeat(2, minmax(0, 1fr)); }
@@ -2540,6 +2585,13 @@ button:disabled { opacity: .62; cursor: wait; }
   .unified-context-select select { box-sizing: border-box; width: 100%; min-width: 0; min-height: 46px; padding: 0 11px; border: 1px solid #cddae7; border-radius: 10px; background: #f8fbfe; color: var(--navy); font: inherit; font-size: 12px; }
   .unified-manage-return { margin: 12px 12px 0; }
   .manage-hub-page, .export-page-shell { width: calc(100% - 24px); padding: 18px 0 34px; }
+  .export-centre form { padding: 18px 16px 30px; gap: 14px; }
+  .export-centre :where(
+    input:not([type="checkbox"]):not([type="radio"]),
+    select
+  ) { min-height: 46px; height: 46px; }
+  .export-centre .export-actions .primary,
+  .export-centre .export-actions .secondary { min-height: 48px; }
   .manage-group-grid { grid-template-columns: 1fr; gap: 12px; }
   .manage-hub-page .category-page-header { margin-bottom: 15px; }
   .manage-tool-list > button { min-height: 70px; }
