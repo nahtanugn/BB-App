@@ -67,7 +67,7 @@ test("defines the 11KCHBB App application shell and sharing metadata", async () 
   assert.match(tracker, /submissionPendingTotal/);
   assert.match(tracker, /className="nav-badge"/);
   assert.match(tracker, /member-new-marker/);
-  assert.match(tracker, /View profile/);
+  assert.match(tracker, />\s*View\s*<\/button>/);
   assert.match(tracker, /MEMBER PROFILE/);
   assert.match(tracker, /member-profile-details/);
   assert.match(tracker, /memberAttendance\(viewingMember\)/);
@@ -334,7 +334,7 @@ test("ships the Malaysia Senior Section catalogue, role-based portals and instal
   assert.match(resourceLibrary, /11TH KUCHING COMPANY/);
   assert.match(resourceLibrary, /canManageResources/);
   assert.match(resourceLibrary, /hasTemporaryAdminAccess/);
-  assert.match(resourceLibrary, /onManageAccount/);
+  assert.doesNotMatch(resourceLibrary, /onManageAccount/);
   assert.match(resourceLibrary, /Resource created successfully/);
   assert.doesNotMatch(resourceLibrary, /import AwardSubmissions/);
   assert.match(submissionsPage, /<AwardSubmissions user=\{user\}/);

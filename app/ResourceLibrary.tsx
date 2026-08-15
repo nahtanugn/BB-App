@@ -36,21 +36,8 @@ const accessLabels = {
 
 export default function ResourceLibrary({
   user,
-  onOpenAnnouncements,
-  announcementSummary,
 }: {
   user: User;
-  onBack?: () => void;
-  onOpenSubmissions?: () => void;
-  onManageAccount?: () => void;
-  onOpenStock?: () => void;
-  onOpenUniformRequests?: () => void;
-  onOpenAnnouncements?: () => void;
-  announcementSummary?: {
-    unreadCount: number;
-    latest: { title: string; body: string; priority: string } | null;
-  };
-  onLogout: () => void;
 }) {
   const [resources, setResources] = useState<Resource[]>([]);
   const [query, setQuery] = useState("");
@@ -198,13 +185,6 @@ export default function ResourceLibrary({
 
   return (
     <main className="resources-shell">
-      {announcementSummary && announcementSummary.unreadCount > 0 && announcementSummary.latest && (
-        <button className={`announcement-alert resource-announcement-alert ${announcementSummary.latest.priority}`} onClick={onOpenAnnouncements}>
-          <span>!</span>
-          <div><strong>{announcementSummary.latest.title}</strong><small>{announcementSummary.latest.body}</small></div>
-          <b>{announcementSummary.unreadCount} new</b>
-        </button>
-      )}
       <section className="resources-hero">
         <div>
           <p className="eyebrow">11TH KUCHING COMPANY</p>

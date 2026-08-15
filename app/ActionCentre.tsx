@@ -12,6 +12,16 @@ type ActionItem = {
   due_at: string | null;
   first_seen_at: string;
 };
+type TrackerSummary = {
+  mode: "company" | "personal";
+  memberCount?: number;
+  meetingsThisYear?: number;
+  completedRegisters?: number;
+  pendingSubmissions?: number;
+  attendancePercent?: number;
+  awardsEarned?: number;
+  upcomingEvents?: number;
+};
 
 const ruleLabels: Record<string, string> = {
   award_reviews: "Awards",
@@ -29,16 +39,23 @@ const ruleLabels: Record<string, string> = {
 
 export default function ActionCentre({
   userName,
+  userRole,
   readOnly,
   onOpen,
   onCountChange,
+  announcementSummary,
+  onAnnouncements,
 }: {
   userName: string;
+  userRole: string;
   readOnly: boolean;
   onOpen: (targetUrl: string) => void;
   onCountChange?: (count: number) => void;
+  announcementSummary?: { unreadCount: number; latest: { title: string; body: string; priority: string } | null };
+  onAnnouncements?: () => void;
 }) {
   const [items, setItems] = useState<ActionItem[]>([]);
+  const [summary, setSummary] = useState<TrackerSummary | null>(null);
   const [filter, setFilter] = useState("all");
   const [busy, setBusy] = useState<number | null>(null);
   const [error, setError] = useState("");
@@ -52,6 +69,14 @@ export default function ActionCentre({
     onCountChange?.(result.items?.length ?? 0);
   }, [onCountChange]);
 
+  const loadSummary = useCallback(async () => {
+    const summaryResponse = await fetch("/api/tracker?summary=1", { cache: "no-store" });
+    if (summaryResponse.ok) {
+      const summaryResult = await summaryResponse.json() as { summary?: TrackerSummary };
+      setSummary(summaryResult.summary ?? null);
+    }
+  }, []);
+
   useEffect(() => {
     const refresh = () => load().catch((cause) => setError(cause instanceof Error ? cause.message : "Unable to load action items"));
     const timer = window.setTimeout(refresh, 0);
@@ -59,10 +84,34 @@ export default function ActionCentre({
     return () => { window.clearTimeout(timer); window.clearInterval(interval); };
   }, [load]);
 
+  useEffect(() => {
+    const refresh = () => loadSummary().catch(() => undefined);
+    const timer = window.setTimeout(refresh, 0);
+    const interval = window.setInterval(refresh, 60_000);
+    window.addEventListener("focus", refresh);
+    return () => { window.clearTimeout(timer); window.clearInterval(interval); window.removeEventListener("focus", refresh); };
+  }, [loadSummary]);
+
   const categories = useMemo(() => [...new Set(items.map((item) => item.rule_key))], [items]);
-  const visible = filter === "all" ? items : items.filter((item) => item.rule_key === filter);
-  const urgent = items.filter((item) => item.priority === "urgent");
-  const mobileVisible = filter === "all" ? urgent : visible;
+  const visible = filter === "all" ? items.filter((item) => item.priority === "urgent").slice(0, 3) : items.filter((item) => item.rule_key === filter);
+  const snapshot = summary?.mode === "personal" ? [
+    { label: "Attendance", value: `${summary.attendancePercent ?? 0}%`, note: "completed meetings" },
+    { label: "Awards", value: summary.awardsEarned ?? 0, note: "earned" },
+    { label: "Coming up", value: summary.upcomingEvents ?? 0, note: "events" },
+  ] : [
+    { label: "Members", value: summary?.memberCount ?? "—", note: "Senior and Junior" },
+    { label: "Attendance", value: `${summary?.completedRegisters ?? 0}/${summary?.meetingsThisYear ?? 0}`, note: "registers complete" },
+    { label: "Award reviews", value: summary?.pendingSubmissions ?? 0, note: "awaiting review" },
+  ];
+  const quickActions = ["member", "nco", "squad_leader"].includes(userRole) ? [
+    { label: "View my progress", target: "/?open=awards" },
+    { label: "View programme", target: "/?open=events" },
+    { label: "Make a request", target: "/?open=manage" },
+  ] : [
+    { label: "Find a member", target: "/?open=members" },
+    { label: "Take attendance", target: "/?open=attendance" },
+    { label: "Open Manage", target: "/?open=manage" },
+  ];
 
   async function update(action: "dismiss_item" | "snooze_item", itemId: number) {
     setBusy(itemId); setError(""); setNotice("");
@@ -80,21 +129,16 @@ export default function ActionCentre({
 
   return (
     <main className="action-centre-page">
-      <header className="action-centre-hero">
-        <div><p className="eyebrow">PERSONAL ACTION CENTRE</p><h1>Shalom, {userName.split(" ")[0]}.</h1><p>Your live priorities are gathered here automatically. Official decisions always remain with an authorised person.</p></div>
+      <header className="action-centre-hero simplified-home-hero">
+        <div><p className="eyebrow">HOME</p><h1>Shalom, {userName.split(" ")[0]}.</h1><p>Your priorities, progress and common tools are gathered in one place.</p></div>
         <div className="action-total"><strong>{items.length}</strong><span>Open task{items.length === 1 ? "" : "s"}</span></div>
       </header>
       {notice && <p className="form-success" role="status">{notice}</p>}
       {error && <p className="form-error">{error}</p>}
-      <div className="action-filter" role="tablist" aria-label="Action categories">
-        <button className={filter === "all" ? "active" : ""} onClick={() => setFilter("all")}>All <span>{items.length}</span></button>
-        {categories.map((category) => (
-          <button className={filter === category ? "active" : ""} onClick={() => setFilter(category)} key={category}>
-            {ruleLabels[category] ?? category.replaceAll("_", " ")}
-            <span>{items.filter((item) => item.rule_key === category).length}</span>
-          </button>
-        ))}
-      </div>
+      <section className="home-snapshot" aria-label={summary?.mode === "personal" ? "My snapshot" : "Company snapshot"}>{snapshot.map((item) => <article className="panel" key={item.label}><span>{item.label}</span><strong>{item.value}</strong><small>{item.note}</small></article>)}</section>
+      <section className="home-quick-actions panel"><div><p className="eyebrow">QUICK ACTIONS</p><h2>What would you like to do?</h2></div><div>{quickActions.map((action) => <button type="button" onClick={() => onOpen(action.target)} key={action.target}>{action.label}<span>›</span></button>)}</div></section>
+      {announcementSummary?.latest && <button type="button" className={`home-announcement panel ${announcementSummary.latest.priority}`} onClick={onAnnouncements}><span>◉</span><div><strong>{announcementSummary.latest.title}</strong><small>{announcementSummary.latest.body}</small></div>{announcementSummary.unreadCount > 0 && <b>{announcementSummary.unreadCount} new</b>}</button>}
+      <div className="home-section-heading"><div><p className="eyebrow">ACTION CENTRE</p><h2>{filter === "all" ? "Urgent work" : ruleLabels[filter] ?? filter.replaceAll("_", " ")}</h2></div>{filter !== "all" && <button type="button" onClick={() => setFilter("all")}>Back to urgent</button>}</div>
       <section className="action-summary-grid" aria-label="Task category summaries">
         {categories.map((category) => {
           const total = items.filter((item) => item.rule_key === category).length;
@@ -103,18 +147,11 @@ export default function ActionCentre({
           </button>;
         })}
       </section>
-      {filter === "all" && urgent.length > 0 && <p className="mobile-action-caption">Urgent tasks</p>}
-      <section className="action-list desktop-action-list" aria-live="polite">
+      <section className="action-list simplified-action-list" aria-live="polite">
         {visible.map((item) => (
           <ActionCard key={item.id} item={item} busy={busy} readOnly={readOnly} onOpen={onOpen} onUpdate={update} />
         ))}
-        {!visible.length && <div className="action-empty"><span>✓</span><h2>You’re all caught up</h2><p>No open work matches this view.</p></div>}
-      </section>
-      <section className="action-list mobile-action-list" aria-live="polite">
-        {mobileVisible.map((item) => (
-          <ActionCard key={item.id} item={item} busy={busy} readOnly={readOnly} onOpen={onOpen} onUpdate={update} />
-        ))}
-        {!mobileVisible.length && <div className="action-empty"><span>✓</span><h2>{filter === "all" ? "No urgent tasks" : "You’re all caught up"}</h2><p>{filter === "all" ? "Choose a category above to review normal tasks." : "No open work matches this view."}</p></div>}
+        {!visible.length && <div className="action-empty"><span>✓</span><h2>{filter === "all" ? "No urgent tasks" : "You’re all caught up"}</h2><p>{filter === "all" ? "Choose a category above to review normal work." : "No open work matches this view."}</p></div>}
       </section>
     </main>
   );

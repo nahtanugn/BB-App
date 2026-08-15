@@ -1343,7 +1343,7 @@ export default function AwardTracker({
           </button>
         </div>
       )}
-      {announcementSummary && announcementSummary.unreadCount > 0 && announcementSummary.latest && (
+      {!embedded && announcementSummary && announcementSummary.unreadCount > 0 && announcementSummary.latest && (
         <button className={`announcement-alert ${announcementSummary.latest.priority}`} onClick={onOpenAnnouncements}>
           <span>!</span>
           <div>
@@ -1715,7 +1715,7 @@ export default function AwardTracker({
             </h1>
           </div>
           <div className="top-actions">
-            <label className="search">
+            {view !== "attendance" && <label className="search">
               <span>⌕</span>
               <input
                 aria-label="Search members"
@@ -1723,8 +1723,8 @@ export default function AwardTracker({
                 value={query}
                 onChange={(event) => setQuery(event.target.value)}
               />
-            </label>
-            {user && (
+            </label>}
+            {!embedded && user && (
               <button
                 className="account-chip"
                 onClick={onManageAccount}
@@ -1734,7 +1734,7 @@ export default function AwardTracker({
                 <span>{user.name.split(" ")[0]}</span>
               </button>
             )}
-            {onLogout && (
+            {!embedded && onLogout && (
               <button className="sign-out" onClick={onLogout}>
                 Sign out
               </button>
@@ -1743,7 +1743,7 @@ export default function AwardTracker({
               <button className="primary" onClick={() => setShowSession(true)}>
                 ＋ New meeting
               </button>
-            ) : view !== "subscriptions" && canAddMembers ? (
+            ) : view === "members" && canAddMembers ? (
               <button className="primary" onClick={openAddMember}>
                 ＋ Add member
               </button>
@@ -2152,58 +2152,24 @@ export default function AwardTracker({
                           New · {notification.pending_count}
                         </span>
                       )}
-                      {canViewSubmissions && (
-                        <button
-                          className="edit-member member-card-secondary-action"
-                          onClick={() => setSubmissionMember(member)}
-                        >
-                          Submissions
-                        </button>
-                      )}
                       <button
                           className="edit-member member-card-primary-action"
                           aria-label={`View ${member.name}'s profile`}
                         onClick={() => setViewingMemberId(member.id)}
                       >
-                        View profile
+                        View
                       </button>
-                      {canEditMembers && (
-                        <button
-                          className="edit-member member-card-secondary-action"
-                          aria-label={`Edit ${member.name}`}
-                          onClick={() => openEditMember(member)}
-                        >
-                          Edit details
-                        </button>
-                      )}
-                      {canManageAwards && (
-                        <button
-                          className="more member-card-secondary-action"
-                          aria-label={`Remove ${member.name}`}
-                          onClick={() => deleteMember(member)}
-                        >
-                          ×
-                        </button>
-                      )}
                     </div>
                   </div>
                   <h2>{member.name}</h2>
                   <p>
-                    {member.rank} · Joined {joinedYear(member.joined_at)}
+                    {member.rank} · {member.squad} Squad · Joined {joinedYear(member.joined_at)}
                   </p>
                   <p className={`profile-completeness ${completeness.missing.length ? "incomplete" : "complete"}`}><strong>{completeness.percent}% profile complete</strong>{completeness.missing.length ? ` · Missing: ${completeness.missing.join(", ")}` : ""}</p>
-                  <div className="member-numbers member-numbers-four">
+                  <div className="member-numbers member-numbers-simple">
                     <div>
                       <strong>{stats.awarded}</strong>
                       <span>Awards</span>
-                    </div>
-                    <div>
-                      <strong>{stats.active}</strong>
-                      <span>Active</span>
-                    </div>
-                    <div>
-                      <strong>{member.service_years}</strong>
-                      <span>Years</span>
                     </div>
                     <div>
                       <strong>{attendance.percentage}%</strong>
@@ -2721,17 +2687,11 @@ export default function AwardTracker({
                         <p className="eyebrow">PERSONAL DETAILS</p>
                         <h3>Member information</h3>
                       </div>
-                      {canEditMembers && (
-                        <button
-                          className="edit-member"
-                          onClick={() => {
-                            setViewingMemberId(null);
-                            openEditMember(viewingMember);
-                          }}
-                        >
-                          Edit details
-                        </button>
-                      )}
+                      <div className="member-profile-actions">
+                        {canViewSubmissions && <button className="edit-member" onClick={() => setSubmissionMember(viewingMember)}>Submissions</button>}
+                        {canEditMembers && <button className="edit-member" onClick={() => { setViewingMemberId(null); openEditMember(viewingMember); }}>Edit details</button>}
+                        {canManageAwards && <button className="danger-link" onClick={() => deleteMember(viewingMember)}>Delete member</button>}
+                      </div>
                     </div>
                     <dl className="member-profile-details">
                       <div>

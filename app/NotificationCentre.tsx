@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { type ReactNode, useCallback, useEffect, useState } from "react";
 
 type NotificationItem = {
   id: number;
@@ -47,7 +47,9 @@ function relativeTime(value: string) {
   return formatter.format(Math.round(hours / 24), "day");
 }
 
-export default function NotificationCentre() {
+type NotificationControls = { open: () => void; unreadCount: number };
+
+export default function NotificationCentre({ children }: { children?: (controls: NotificationControls) => ReactNode } = {}) {
   const [data, setData] = useState<NotificationResponse | null>(null);
   const [open, setOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
@@ -178,25 +180,27 @@ export default function NotificationCentre() {
     }
   }
 
-  if (!data) return null;
+  const openCentre = () => {
+    setOpen(true);
+    setNotice("");
+    setError("");
+  };
+
+  if (!data) return children ? <>{children({ open: () => undefined, unreadCount: 0 })}</> : null;
 
   return (
     <>
-      <button
+      {children ? children({ open: openCentre, unreadCount: data.unreadCount }) : <button
         className="notification-bell"
         type="button"
-        onClick={() => {
-          setOpen(true);
-          setNotice("");
-          setError("");
-        }}
+        onClick={openCentre}
         aria-label={`Notifications${data.unreadCount ? `, ${data.unreadCount} unread` : ""}`}
       >
         <span aria-hidden="true">♢</span>
         {data.unreadCount > 0 && (
           <strong>{data.unreadCount > 99 ? "99+" : data.unreadCount}</strong>
         )}
-      </button>
+      </button>}
       {open && (
         <div
           className="notification-backdrop"

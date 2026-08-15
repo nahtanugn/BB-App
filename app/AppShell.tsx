@@ -4,6 +4,8 @@ import { type ReactNode, useEffect, useMemo, useRef, useState } from "react";
 
 export type AppRoute =
   | "home"
+  | "manage"
+  | "exports"
   | "operations"
   | "company-overview"
   | "awards"
@@ -41,6 +43,34 @@ type NavItem = {
   badge?: number;
 };
 
+export type AppHub = "home" | "people" | "programme" | "manage";
+
+const routeHub: Record<AppRoute, AppHub> = {
+  home: "home",
+  operations: "home",
+  "company-overview": "home",
+  awards: "people",
+  members: "people",
+  attendance: "people",
+  subscriptions: "people",
+  journey: "people",
+  events: "programme",
+  resources: "programme",
+  announcements: "programme",
+  manage: "manage",
+  submissions: "manage",
+  uniforms: "manage",
+  stock: "manage",
+  admin: "manage",
+  onboarding: "manage",
+  automation: "manage",
+  exports: "manage",
+};
+
+export function hubForRoute(route: AppRoute): AppHub {
+  return routeHub[route];
+}
+
 export default function AppShell({
   user,
   route,
@@ -51,6 +81,8 @@ export default function AppShell({
   announcementCount = 0,
   onboardingCount = 0,
   actionCount = 0,
+  notificationCount = 0,
+  onNotifications,
   children,
 }: {
   user: ShellUser;
@@ -62,6 +94,8 @@ export default function AppShell({
   announcementCount?: number;
   onboardingCount?: number;
   actionCount?: number;
+  notificationCount?: number;
+  onNotifications: () => void;
   children: ReactNode;
 }) {
   const [moreOpen, setMoreOpen] = useState(false);
@@ -100,7 +134,6 @@ export default function AppShell({
     ];
     if (staff) {
       values.push(
-        { route: "company-overview", category: "Home", label: "Company overview", description: "Company dashboard", icon: "◫" },
         { route: "awards", category: "People & Progress", label: "Awards", description: "Award matrix and progress", icon: "▦" },
         { route: "members", category: "People & Progress", label: "Members", description: "Member profiles and details", icon: "♙" },
         { route: "attendance", category: "People & Progress", label: "Attendance", description: "Parade registers", icon: "✓" },
@@ -109,26 +142,24 @@ export default function AppShell({
     } else {
       values.push(
         { route: "awards", category: "People & Progress", label: "My progress", description: "My attendance and awards", icon: "▦" },
-        { route: "resources", category: "Requests & Operations", label: "Resources", description: "Member resources", icon: "↗" },
+        { route: "resources", category: "Programme & Events", label: "Resources", description: "Member resources", icon: "↗" },
         { route: "uniforms", category: "Requests & Operations", label: "Requests", description: "Uniform and award requests", icon: "▤" },
       );
     }
-    if (["admin", "officer"].includes(user.role))
-      values.push({ route: "operations", category: "Home", label: "Operations", description: "Review queue and priorities", icon: "✓", badge: actionCount });
     values.push({ route: "events", category: "Programme & Events", label: "Meetings & events", description: "Programme, RSVP and registers", icon: "◫" });
     if (["member", "nco", "squad_leader"].includes(user.role))
       values.push({ route: "journey", category: "People & Progress", label: "My journey", description: "Your goals and progress", icon: "◎" });
     if ((seniorApplicant || mayReviewSubmissions) && user.member_section !== "junior")
       values.push({ route: "submissions", category: "Requests & Operations", label: mayReviewSubmissions ? "Submission portal" : "My submissions", description: "Award applications and decisions", icon: "◆" });
     if (staff)
-      values.push({ route: "resources", category: "Requests & Operations", label: "Resources", description: "Company materials", icon: "↗" });
+      values.push({ route: "resources", category: "Programme & Events", label: "Resources", description: "Company materials", icon: "↗" });
     if (!values.some((item) => item.route === "uniforms"))
       values.push({ route: "uniforms", category: "Requests & Operations", label: "Uniform requests", description: "Request and issue uniform parts", icon: "▤" });
     if (stockAccess)
       values.push({ route: "stock", category: "Requests & Operations", label: "Stock Centre", description: "Uniform and award inventory", icon: "▣" });
     values.push({
       route: "announcements",
-      category: "Communication",
+      category: "Programme & Events",
       label: "Announcements",
       description: "Company-wide notices",
       icon: "◉",
@@ -147,6 +178,8 @@ export default function AppShell({
       });
     if (["admin", "viewer"].includes(user.role))
       values.push({ route: "automation", category: "Administration", label: "Automation", description: "Rules, runs and reminders", icon: "↻" });
+    if (operational || user.custom_permissions.includes("exports.full"))
+      values.push({ route: "exports", category: "Administration", label: "Export Centre", description: "Reports and secure backups", icon: "↓" });
     return values;
   }, [
     actionCount,
@@ -156,25 +189,27 @@ export default function AppShell({
     seniorApplicant,
     staff,
     stockAccess,
+    operational,
+    user.custom_permissions,
     user.member_section,
     user.role,
   ]);
 
-  const categoryOrder = ["Home", "People & Progress", "Programme & Events", "Requests & Operations", "Communication", "Administration"] as const;
-  const groupedItems = categoryOrder.map((category) => ({ category, items: items.filter((item) => item.category === category) })).filter((group) => group.items.length);
-  const operationsRoute: AppRoute = items.some((item) => item.route === "submissions") ? "submissions" : "uniforms";
-  const mobileRoutes: AppRoute[] = ["home", staff ? "members" : "awards", "events", operationsRoute];
-  const primary = mobileRoutes.map((route) => items.find((item) => item.route === route)).filter((item): item is NavItem => Boolean(item));
-  const secondary = items.filter((item) => !primary.some((primaryItem) => primaryItem.route === item.route));
-  const mobileLabel: Partial<Record<AppRoute, string>> = {
-    home: "Home",
-    members: "People",
-    awards: "Progress",
-    journey: "Journey",
-    events: "Events",
-    submissions: "Requests",
-    uniforms: "Requests",
-  };
+  const activeHub = hubForRoute(route);
+  const orderedItems = (routes: AppRoute[]) => routes.map((itemRoute) => items.find((item) => item.route === itemRoute)).filter((item): item is NavItem => Boolean(item));
+  const hubItems = {
+    home: items.filter((item) => hubForRoute(item.route) === "home"),
+    people: orderedItems(["members", "awards", "attendance", "subscriptions", "journey"]),
+    programme: orderedItems(["events", "resources", "announcements"]),
+    manage: items.filter((item) => hubForRoute(item.route) === "manage"),
+  } satisfies Record<AppHub, NavItem[]>;
+  const hubDefinitions: Array<{ hub: AppHub; label: string; memberLabel?: string; description: string; icon: string; route: AppRoute; badge?: number }> = [
+    { hub: "home", label: "Home", description: "Priorities and overview", icon: "⌂", route: "home", badge: actionCount },
+    { hub: "people", label: "People", memberLabel: "Progress", description: staff ? "Members and progress" : "My progress", icon: "♙", route: staff ? "members" : "awards" },
+    { hub: "programme", label: "Programme", description: "Events and resources", icon: "◫", route: "events" },
+    { hub: "manage", label: staff ? "Manage" : "Requests", description: staff ? "Requests and administration" : "My requests", icon: "◆", route: "manage" },
+  ];
+  const contextItems = activeHub === "people" || activeHub === "programme" ? hubItems[activeHub] : [];
 
   useEffect(() => {
     if (!moreOpen) return;
@@ -199,12 +234,17 @@ export default function AppShell({
           <div><strong>11KCHBB App</strong><span>{user.role.replaceAll("_", " ")} access</span></div>
         </div>
         <nav aria-label="Application navigation">
-          {groupedItems.map((group) => <section className="unified-nav-group" key={group.category}><p>{group.category}</p>{group.items.map((item) => (
-            <button type="button" className={route === item.route ? "active" : ""} aria-current={route === item.route ? "page" : undefined} onClick={() => navigate(item.route)} key={item.route}>
-              <span aria-hidden="true">{item.icon}</span><div><strong>{item.label}</strong><small>{item.description}</small></div>{Boolean(item.badge) && <b>{item.badge! > 99 ? "99+" : item.badge}</b>}
-            </button>))}</section>)}
+          <p className="unified-hub-caption">WORK HUBS</p>
+          {hubDefinitions.map((item) => (
+            <button type="button" className={activeHub === item.hub ? "active" : ""} aria-current={activeHub === item.hub ? "page" : undefined} onClick={() => navigate(item.route)} key={item.hub}>
+              <span aria-hidden="true">{item.icon}</span><div><strong>{item.memberLabel && !staff ? item.memberLabel : item.label}</strong><small>{item.description}</small></div>{Boolean(item.badge) && <b>{item.badge! > 99 ? "99+" : item.badge}</b>}
+            </button>
+          ))}
         </nav>
         <div className="unified-user">
+          <button type="button" className="unified-notifications" onClick={onNotifications}>
+            <span aria-hidden="true">♢</span><div><strong>Notifications</strong><small>{notificationCount ? `${notificationCount} unread` : "No unread updates"}</small></div>{notificationCount > 0 && <b>{notificationCount > 99 ? "99+" : notificationCount}</b>}
+          </button>
           <button type="button" onClick={onAccount}>
             <span>{user.name.split(/\s+/).map((part) => part[0]).join("").slice(0, 2).toUpperCase()}</span>
             <div><strong>{user.name}</strong><small>{user.email}</small></div>
@@ -213,25 +253,34 @@ export default function AppShell({
         </div>
       </aside>
 
-      <div className="unified-app-content">{children}</div>
+      <div className="unified-app-content">
+        {contextItems.length > 1 && <div className="unified-context-nav">
+          <div className="unified-context-tabs" role="tablist" aria-label={`${activeHub} sections`}>
+            {contextItems.map((item) => <button type="button" role="tab" aria-selected={route === item.route} className={route === item.route ? "active" : ""} onClick={() => navigate(item.route)} key={item.route}>{item.label}</button>)}
+          </div>
+          <label className="unified-context-select"><span>{activeHub === "people" ? "People section" : "Programme section"}</span><select value={route} onChange={(event) => navigate(event.target.value as AppRoute)}>{contextItems.map((item) => <option value={item.route} key={item.route}>{item.label}</option>)}</select></label>
+        </div>}
+        {activeHub === "manage" && route !== "manage" && <button type="button" className="unified-manage-return" onClick={() => navigate("manage")}>← Back to Manage</button>}
+        {children}
+      </div>
 
       <nav className="unified-mobile-nav" aria-label="Mobile application navigation">
-        {primary.map((item) => (
+        {hubDefinitions.map((item) => (
           <button
             type="button"
-            className={route === item.route ? "active" : ""}
-            aria-current={route === item.route ? "page" : undefined}
+            className={activeHub === item.hub ? "active" : ""}
+            aria-current={activeHub === item.hub ? "page" : undefined}
             onClick={() => navigate(item.route)}
-            key={item.route}
+            key={item.hub}
           >
             <span aria-hidden="true">{item.icon}</span>
-            <small>{mobileLabel[item.route] ?? item.label}</small>
+            <small>{item.memberLabel && !staff ? item.memberLabel : item.label}</small>
             {Boolean(item.badge) && <b>{item.badge! > 99 ? "99+" : item.badge}</b>}
           </button>
         ))}
         <button
           type="button"
-          className={moreOpen || secondary.some((item) => item.route === route) ? "active" : ""}
+          className={moreOpen ? "active" : ""}
           onClick={() => setMoreOpen(true)}
           aria-expanded={moreOpen}
           aria-controls="unified-more-menu"
@@ -255,13 +304,9 @@ export default function AppShell({
               <button ref={closeButton} type="button" onClick={() => setMoreOpen(false)} aria-label="Close navigation">×</button>
             </header>
             <div className="unified-more-list">
-              {secondary.map((item) => (
-                <button type="button" className={route === item.route ? "active" : ""} onClick={() => navigate(item.route)} key={item.route}>
-                  <span aria-hidden="true">{item.icon}</span>
-                  <div><strong>{item.label}</strong><small>{item.description}</small></div>
-                  {Boolean(item.badge) ? <b>{item.badge}</b> : <b>›</b>}
-                </button>
-              ))}
+              <button type="button" onClick={() => { setMoreOpen(false); onNotifications(); }}>
+                <span aria-hidden="true">♢</span><div><strong>Notifications</strong><small>{notificationCount ? `${notificationCount} unread updates` : "You’re all caught up"}</small></div>{notificationCount ? <b>{notificationCount}</b> : <b>›</b>}
+              </button>
               <button type="button" onClick={() => { setMoreOpen(false); onAccount(); }}>
                 <span aria-hidden="true">♙</span><div><strong>My account</strong><small>Password and account details</small></div><b>›</b>
               </button>

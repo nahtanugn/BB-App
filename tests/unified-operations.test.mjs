@@ -7,10 +7,11 @@ async function source(path) {
 }
 
 test("every portal uses one URL-aware, role-aware application shell", async () => {
-  const [shell, standalone, submissions, resources, stock, uniforms, admin, onboarding, events, journey] =
+  const [shell, standalone, manage, submissions, resources, stock, uniforms, admin, onboarding, events, journey] =
     await Promise.all([
       source("../app/AppShell.tsx"),
       source("../app/StandaloneApp.tsx"),
+      source("../app/ManageHub.tsx"),
       source("../app/SubmissionsPage.tsx"),
       source("../app/ResourceLibrary.tsx"),
       source("../app/StockCentre.tsx"),
@@ -26,6 +27,15 @@ test("every portal uses one URL-aware, role-aware application shell", async () =
   assert.match(shell, /className="unified-more-menu"/);
   assert.match(shell, /aria-current=/);
   assert.match(shell, /aria-label="Mobile application navigation"/);
+  assert.match(shell, /type AppHub = "home" \| "people" \| "programme" \| "manage"/);
+  assert.match(shell, /hubForRoute/);
+  assert.match(shell, /unified-context-nav/);
+  assert.match(shell, /unified-context-select/);
+  assert.match(shell, /Notifications/);
+  assert.match(manage, /Requests/);
+  assert.match(manage, /Stock/);
+  assert.match(manage, /Administration/);
+  assert.match(manage, /Export Centre/);
   assert.match(shell, /People & Progress/);
   assert.match(shell, /Programme & Events/);
   assert.match(shell, /Requests & Operations/);
@@ -33,6 +43,8 @@ test("every portal uses one URL-aware, role-aware application shell", async () =
   assert.match(shell, /"journey"/);
   assert.match(shell, /user\.member_section !== "junior"/);
   assert.match(standalone, /<AppShell/);
+  assert.match(standalone, /\["operations", "company-overview"\]\.includes\(next\) \? "home" : next/);
+  assert.match(standalone, /<NotificationCentre>/);
   assert.match(standalone, /window\.history\[replace \? "replaceState" : "pushState"\]/);
   assert.match(standalone, /popstate/);
   assert.match(standalone, /new URL\(window\.location\.href\)\.searchParams/);
@@ -44,6 +56,20 @@ test("every portal uses one URL-aware, role-aware application shell", async () =
   assert.match(events, /Your RSVP/);
   assert.match(journey, /My goals/);
   assert.match(journey, /Recent progress/);
+});
+
+test("the simplified Home uses a lightweight summary and progressive task disclosure", async () => {
+  const [home, trackerApi] = await Promise.all([
+    source("../app/ActionCentre.tsx"),
+    source("../app/api/tracker/route.ts"),
+  ]);
+  assert.match(home, /\/api\/tracker\?summary=1/);
+  assert.match(home, /slice\(0, 3\)/);
+  assert.match(home, /home-snapshot/);
+  assert.match(home, /home-quick-actions/);
+  assert.match(trackerApi, /searchParams\.get\("summary"\) === "1"/);
+  assert.match(trackerApi, /completedRegisters/);
+  assert.match(trackerApi, /attendancePercent/);
 });
 
 test("events and journeys are durable, linked and permission-safe", async () => {

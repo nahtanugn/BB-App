@@ -17,7 +17,9 @@ import OnboardingCentre from "./OnboardingCentre";
 import MemberProgress from "./MemberProgress";
 import EventCentre from "./EventCentre";
 import MemberJourney from "./MemberJourney";
-import OperationsHome from "./OperationsHome";
+import ManageHub from "./ManageHub";
+import NotificationCentre from "./NotificationCentre";
+import ExportCentre from "./ExportCentre";
 
 type User = {
   id: number;
@@ -115,6 +117,7 @@ export default function StandaloneApp() {
 
   const navigate = useCallback((next: AppRoute, replace = false) => {
     if (!auth?.user) return;
+    const requested: AppRoute = ["operations", "company-overview"].includes(next) ? "home" : next;
     const operational =
       ["admin", "officer", "viewer"].includes(auth.user.role) ||
       hasTemporaryAdminAccess;
@@ -123,26 +126,26 @@ export default function StandaloneApp() {
       ["nco", "squad_leader"].includes(auth.user.role) ||
       hasCustomTrackerAccess;
     const allowed =
-      next === "home" ||
-      (next === "operations" && ["admin", "officer"].includes(auth.user.role)) ||
-      ["resources", "uniforms", "announcements"].includes(next) ||
-      next === "events" ||
-      (next === "journey" &&
+      ["home", "manage"].includes(requested) ||
+      ["resources", "uniforms", "announcements"].includes(requested) ||
+      requested === "events" ||
+      (requested === "journey" &&
         ["member", "nco", "squad_leader"].includes(auth.user.role)) ||
-      (next === "stock" && stockAccess) ||
-      (["company-overview", "members", "attendance", "subscriptions"].includes(next) && staff) ||
-      (next === "awards" && (staff || auth.user.role === "member")) ||
-      (next === "submissions" &&
+      (requested === "stock" && stockAccess) ||
+      (["members", "attendance", "subscriptions"].includes(requested) && staff) ||
+      (requested === "awards" && (staff || auth.user.role === "member")) ||
+      (requested === "submissions" &&
         auth.user.member_section !== "junior" &&
         (["member", "nco", "squad_leader"].includes(auth.user.role) ||
           operational ||
           auth.user.custom_permissions.some((permission) =>
             ["submissions.view", "submissions.review"].includes(permission),
           ))) ||
-      (next === "onboarding" && staff) ||
-      (next === "admin" && ["admin", "officer", "viewer"].includes(auth.user.role)) ||
-      (next === "automation" && ["admin", "viewer"].includes(auth.user.role));
-    const safeRoute = allowed ? next : "home";
+      (requested === "onboarding" && staff) ||
+      (requested === "admin" && ["admin", "officer", "viewer"].includes(auth.user.role)) ||
+      (requested === "automation" && ["admin", "viewer"].includes(auth.user.role)) ||
+      (requested === "exports" && (operational || auth.user.custom_permissions.includes("exports.full")));
+    const safeRoute = allowed ? requested : "home";
     setRoute(safeRoute);
     const url = safeRoute === "home" ? "/" : `/?open=${safeRoute}`;
     window.history[replace ? "replaceState" : "pushState"]({ route: safeRoute }, "", url);
@@ -221,7 +224,10 @@ export default function StandaloneApp() {
         subscriptions: "subscriptions",
         home: "home",
         admin: "admin",
-        operations: "operations",
+        operations: "home",
+        "company-overview": "home",
+        manage: "manage",
+        exports: "exports",
       };
       navigate(aliases[target] ?? target, true);
     }, 0);
@@ -647,9 +653,9 @@ export default function StandaloneApp() {
 
   if (auth.user.onboarding_required)
     return <OnboardingFlow user={auth.user} onComplete={refreshAuth} onLogout={logout} />;
+  const currentUser = auth.user;
 
-  const trackerViews: Partial<Record<AppRoute, "dashboard" | "matrix" | "members" | "attendance" | "subscriptions">> = {
-    "company-overview": "dashboard",
+  const trackerViews: Partial<Record<AppRoute, "matrix" | "members" | "attendance" | "subscriptions">> = {
     awards: "matrix",
     members: "members",
     attendance: "attendance",
@@ -668,6 +674,8 @@ export default function StandaloneApp() {
       journey: "journey",
       subscriptions: "subscriptions",
       admin: "admin",
+      exports: "exports",
+      manage: "manage",
       home: "home",
     };
     navigate(aliases[target ?? ""] ?? "home");
@@ -675,38 +683,40 @@ export default function StandaloneApp() {
 
   let page: ReactNode;
   if (route === "home")
-    page = <ActionCentre userName={auth.user.name} readOnly={auth.user.role === "viewer"} onOpen={openTarget} onCountChange={setActionCount} />;
-  else if (route === "operations" && ["admin", "officer"].includes(auth.user.role))
-    page = <OperationsHome onOpen={openTarget} />;
+    page = <ActionCentre userName={currentUser.name} userRole={currentUser.role} readOnly={currentUser.role === "viewer"} onOpen={openTarget} onCountChange={setActionCount} announcementSummary={announcementSummary} onAnnouncements={() => navigate("announcements")} />;
+  else if (route === "manage")
+    page = <ManageHub user={currentUser} stockAccess={stockAccess} onOpen={navigate} />;
+  else if (route === "exports")
+    page = <ExportCentre currentYear={new Date().getFullYear()} presentation="page" onComplete={setNotice} />;
   else if (route === "submissions")
-    page = <SubmissionsPage user={auth.user} initialSection={submissionSection} onLogout={logout} onBack={() => navigate("home")} />;
+    page = <SubmissionsPage user={currentUser} initialSection={submissionSection} onLogout={logout} onBack={() => navigate("home")} />;
   else if (route === "stock")
-    page = <StockCentre userName={auth.user.name} onLogout={logout} onBack={() => navigate("home")} />;
+    page = <StockCentre userName={currentUser.name} onLogout={logout} onBack={() => navigate("home")} />;
   else if (route === "uniforms")
-    page = <UniformRequests userName={auth.user.name} onLogout={logout} onBack={() => navigate("home")} />;
+    page = <UniformRequests userName={currentUser.name} onLogout={logout} onBack={() => navigate("home")} />;
   else if (route === "announcements")
-    page = <Announcements userName={auth.user.name} onLogout={logout} onBack={() => { navigate("home"); void refreshAnnouncementSummary(); }} onRead={handleAnnouncementsRead} />;
-  else if (route === "admin" && ["admin", "officer", "viewer"].includes(auth.user.role))
-    page = <AdminCentre currentUser={auth.user} onLogout={logout} onBack={() => { navigate("home"); void refreshAuth(); }} />;
+    page = <Announcements userName={currentUser.name} onLogout={logout} onBack={() => { navigate("home"); void refreshAnnouncementSummary(); }} onRead={handleAnnouncementsRead} />;
+  else if (route === "admin" && ["admin", "officer", "viewer"].includes(currentUser.role))
+    page = <AdminCentre currentUser={currentUser} onLogout={logout} onBack={() => { navigate("home"); void refreshAuth(); }} />;
   else if (route === "onboarding" && isStaff)
-    page = <OnboardingCentre currentUser={auth.user} onLogout={logout} onBack={() => navigate("home")} />;
-  else if (route === "automation" && ["admin", "viewer"].includes(auth.user.role))
-    page = <AutomationCentre readOnly={auth.user.role === "viewer"} />;
+    page = <OnboardingCentre currentUser={currentUser} onLogout={logout} onBack={() => navigate("home")} />;
+  else if (route === "automation" && ["admin", "viewer"].includes(currentUser.role))
+    page = <AutomationCentre readOnly={currentUser.role === "viewer"} />;
   else if (route === "resources")
-    page = <ResourceLibrary user={auth.user} onLogout={logout} onOpenSubmissions={auth.user.member_section !== "junior" ? () => navigate("submissions") : undefined} onManageAccount={openAccount} onOpenStock={stockAccess ? () => navigate("stock") : undefined} onOpenUniformRequests={() => navigate("uniforms")} onOpenAnnouncements={() => navigate("announcements")} announcementSummary={announcementSummary} />;
-  else if (route === "awards" && auth.user.role === "member")
-    page = <main className="member-progress-page"><MemberProgress user={auth.user} /></main>;
+    page = <ResourceLibrary user={currentUser} />;
+  else if (route === "awards" && currentUser.role === "member")
+    page = <main className="member-progress-page"><MemberProgress user={currentUser} /></main>;
   else if (route === "events")
     page = <EventCentre />;
-  else if (route === "journey" && ["member", "nco", "squad_leader"].includes(auth.user.role))
+  else if (route === "journey" && ["member", "nco", "squad_leader"].includes(currentUser.role))
     page = <MemberJourney />;
   else {
-    const activeView = trackerViews[route] ?? (isStaff ? "dashboard" : "matrix");
+    const activeView = trackerViews[route] ?? (isStaff ? "members" : "matrix");
     page = (
       <AwardTracker
         embedded
         activeView={activeView}
-        user={auth.user}
+        user={currentUser}
         onLogout={logout}
         onManageAccount={openAccount}
         announcementSummary={announcementSummary}
@@ -716,10 +726,11 @@ export default function StandaloneApp() {
     );
   }
 
-  return (
+  return <NotificationCentre>{({ open: openNotifications, unreadCount: notificationCount }) => (
     <>
+      {!showAccount && notice && <div className="action-toast" role="status"><span>✓</span>{notice}<button type="button" onClick={() => setNotice("")} aria-label="Dismiss confirmation">×</button></div>}
       <AppShell
-        user={auth.user}
+        user={currentUser}
         route={route}
         onNavigate={navigate}
         onAccount={openAccount}
@@ -728,6 +739,8 @@ export default function StandaloneApp() {
         announcementCount={announcementSummary.unreadCount}
         onboardingCount={onboardingPendingCount}
         actionCount={actionCount}
+        notificationCount={notificationCount}
+        onNotifications={openNotifications}
       >
         {page}
       </AppShell>
@@ -747,9 +760,9 @@ export default function StandaloneApp() {
             <div className="modal-heading">
               <div>
                 <p className="eyebrow">SIGNED IN</p>
-                <h2 id="account-title">{auth.user.name}</h2>
+                <h2 id="account-title">{currentUser.name}</h2>
                 <small>
-                  {auth.user.email} · {auth.user.role}
+                  {currentUser.email} · {currentUser.role}
                 </small>
               </div>
               <button onClick={() => setShowAccount(false)} aria-label="Close">
@@ -778,7 +791,7 @@ export default function StandaloneApp() {
                   </button>
                 </form>
               </section>
-              {auth.user.role === "admin" && (
+              {currentUser.role === "admin" && (
                 <section>
                   <div className="account-section-heading">
                     <div>
@@ -1192,5 +1205,5 @@ export default function StandaloneApp() {
         </div>
       )}
     </>
-  );
+  )}</NotificationCentre>;
 }

@@ -712,6 +712,53 @@ export async function GET(request: Request) {
         (prefix) => permission.startsWith(prefix),
       ),
     );
+    await ensureSchema();
+    const url = new URL(request.url);
+    if (url.searchParams.get("summary") === "1") {
+      const db = env.DB;
+      if (user.role === "member" && !hasTemporaryAccess && !trackerPermissions.length) {
+        const member = await db.prepare("SELECT id, section, service_award_count FROM members WHERE LOWER(email) = LOWER(?) LIMIT 1").bind(user.email).first<{ id: number; section: string; service_award_count: number }>();
+        if (!member) return Response.json({ summary: { mode: "personal", attendancePercent: 0, awardsEarned: 0, upcomingEvents: 0 } });
+        const [attendance, awards, events] = await Promise.all([
+          db.prepare(`SELECT
+            SUM(CASE WHEN ar.status = 'present' THEN 1 ELSE 0 END) AS present,
+            SUM(CASE WHEN ar.status IN ('present', 'absent') THEN 1 ELSE 0 END) AS counted
+            FROM attendance_sessions s
+            LEFT JOIN attendance_records ar ON ar.session_id = s.id AND ar.member_id = ?
+            WHERE s.section = ? AND s.meeting_date <= date('now')`).bind(member.id, member.section).first<{ present: number | null; counted: number | null }>(),
+          db.prepare("SELECT COUNT(*) AS total FROM member_awards WHERE member_id = ? AND status = 'awarded'").bind(member.id).first<{ total: number }>(),
+          db.prepare("SELECT COUNT(*) AS total FROM company_events WHERE event_date >= datetime('now') AND cancelled_at IS NULL AND section IN ('all', ?)").bind(member.section).first<{ total: number }>(),
+        ]);
+        const counted = Number(attendance?.counted ?? 0);
+        return Response.json({ summary: {
+          mode: "personal",
+          attendancePercent: counted ? Math.round((Number(attendance?.present ?? 0) / counted) * 100) : 0,
+          awardsEarned: Number(awards?.total ?? 0) + Number(member.service_award_count ?? 0),
+          upcomingEvents: Number(events?.total ?? 0),
+        } });
+      }
+      const [members, meetings, completeRegisters, submissions] = await Promise.all([
+        db.prepare("SELECT COUNT(*) AS total FROM members").first<{ total: number }>(),
+        db.prepare("SELECT COUNT(*) AS total FROM attendance_sessions WHERE meeting_date <= date('now') AND substr(meeting_date, 1, 4) = strftime('%Y', 'now')").first<{ total: number }>(),
+        db.prepare(`SELECT COUNT(*) AS total FROM attendance_sessions s
+          WHERE s.meeting_date <= date('now') AND substr(s.meeting_date, 1, 4) = strftime('%Y', 'now')
+          AND NOT EXISTS (
+            SELECT 1 FROM members m
+            LEFT JOIN users u ON LOWER(u.email) = LOWER(m.email)
+            WHERE m.section = s.section
+            AND (s.audience != 'nco_council' OR u.role IN ('nco', 'squad_leader'))
+            AND NOT EXISTS (SELECT 1 FROM attendance_records ar WHERE ar.session_id = s.id AND ar.member_id = m.id AND ar.status != 'unmarked')
+          )`).first<{ total: number }>(),
+        db.prepare("SELECT COUNT(*) AS total FROM award_submissions WHERE status = 'pending' AND archived_at IS NULL").first<{ total: number }>(),
+      ]);
+      return Response.json({ summary: {
+        mode: "company",
+        memberCount: Number(members?.total ?? 0),
+        meetingsThisYear: Number(meetings?.total ?? 0),
+        completedRegisters: Number(completeRegisters?.total ?? 0),
+        pendingSubmissions: Number(submissions?.total ?? 0),
+      } });
+    }
     if (
       user.role === "member" &&
       !hasTemporaryAccess &&
@@ -721,9 +768,8 @@ export async function GET(request: Request) {
         { error: "Member accounts can access resources only" },
         { status: 403 },
       );
-    await ensureSchema();
     const db = env.DB;
-    if (new URL(request.url).searchParams.get("juniorRankReview") === "1") {
+    if (url.searchParams.get("juniorRankReview") === "1") {
       if (!(["admin", "officer"].includes(user.role) || hasTemporaryAccess))
         return Response.json({ error: "Administrator or Officer access required" }, { status: 403 });
       const members = await db.prepare(`SELECT id, name, rank, squad, joined_at, email
@@ -731,7 +777,7 @@ export async function GET(request: Request) {
       return Response.json({ members: members.results });
     }
     const requestedSection =
-      new URL(request.url).searchParams.get("section") ?? "senior";
+      url.searchParams.get("section") ?? "senior";
     const section = allowedSections.includes(requestedSection)
       ? requestedSection
       : "senior";

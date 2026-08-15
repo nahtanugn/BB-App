@@ -191,11 +191,13 @@ export default function ExportCentre({
   onClose,
   onComplete,
   onLegacyCsv,
+  presentation = "modal",
 }: {
   currentYear: number;
-  onClose: () => void;
+  onClose?: () => void;
   onComplete: (message: string) => void;
-  onLegacyCsv: () => Promise<void>;
+  onLegacyCsv?: () => Promise<void>;
+  presentation?: "modal" | "page";
 }) {
   const [datasets, setDatasets] = useState<TrackerData[]>([]);
   const [submissions, setSubmissions] = useState<Submission[]>([]);
@@ -793,7 +795,7 @@ export default function ExportCentre({
           ? "Excel workbook exported successfully."
           : "Print-ready report created. Choose Save as PDF in the print window.",
       );
-      onClose();
+      onClose?.();
     } catch (error) {
       printWindow?.close();
       window.alert(error instanceof Error ? error.message : "Unable to export records");
@@ -803,11 +805,11 @@ export default function ExportCentre({
   }
 
   return (
-    <div className="modal-backdrop export-backdrop" role="presentation">
+    <div className={presentation === "page" ? "export-page-shell" : "modal-backdrop export-backdrop"} role={presentation === "page" ? undefined : "presentation"}>
       <section
-        className="modal export-centre"
-        role="dialog"
-        aria-modal="true"
+        className={`${presentation === "page" ? "panel export-page" : "modal"} export-centre`}
+        role={presentation === "page" ? "region" : "dialog"}
+        aria-modal={presentation === "page" ? undefined : true}
         aria-labelledby="export-centre-title"
       >
         <div className="modal-heading">
@@ -816,7 +818,7 @@ export default function ExportCentre({
             <h2 id="export-centre-title">Export Centre</h2>
             <small>Create a neat filtered workbook or print-ready report.</small>
           </div>
-          <button onClick={onClose} aria-label="Close Export Centre">×</button>
+          {onClose && <button onClick={onClose} aria-label="Close Export Centre">×</button>}
         </div>
         {loading ? (
           <div className="export-loading">Preparing export options…</div>
@@ -936,16 +938,16 @@ export default function ExportCentre({
             </fieldset>
 
             <div className="export-actions">
-              <button
+              {onLegacyCsv && <button
                 type="button"
                 className="secondary"
                 onClick={async () => {
                   await onLegacyCsv();
-                  onClose();
+                  onClose?.();
                 }}
               >
                 Quick CSV backup
-              </button>
+              </button>}
               <button className="primary" disabled={saving}>
                 {saving ? "Preparing export…" : "Create export"}
               </button>
