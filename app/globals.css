@@ -3393,3 +3393,23 @@ button:disabled { opacity: .62; cursor: wait; }
   .unified-mobile-header > strong { display: none; }
   .unified-mobile-section-control { min-width: 0; }
 }
+
+/* Keep Export Centre fields aligned with its action row after the shell's
+   global control-height rule is applied. */
+.unified-app-content .export-centre :where(
+  input:not([type="checkbox"]):not([type="radio"]),
+  select
+) {
+  min-height: 42px;
+  height: 42px;
+}
+
+@media (max-width: 760px) {
+  .unified-app-content .export-centre :where(
+    input:not([type="checkbox"]):not([type="radio"]),
+    select
+  ) {
+    min-height: 46px;
+    height: 46px;
+  }
+}
