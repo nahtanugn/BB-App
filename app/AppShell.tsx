@@ -83,6 +83,8 @@ export default function AppShell({
   actionCount = 0,
   notificationCount = 0,
   onNotifications,
+  activeSection,
+  onSectionChange,
   children,
 }: {
   user: ShellUser;
@@ -96,6 +98,8 @@ export default function AppShell({
   actionCount?: number;
   notificationCount?: number;
   onNotifications: () => void;
+  activeSection?: "senior" | "junior";
+  onSectionChange?: (section: "senior" | "junior") => void;
   children: ReactNode;
 }) {
   const [moreOpen, setMoreOpen] = useState(false);
@@ -149,7 +153,7 @@ export default function AppShell({
     values.push({ route: "events", category: "Programme & Events", label: "Meetings & events", description: "Programme, RSVP and registers", icon: "◫" });
     if (["member", "nco", "squad_leader"].includes(user.role))
       values.push({ route: "journey", category: "People & Progress", label: "My journey", description: "Your goals and progress", icon: "◎" });
-    if ((seniorApplicant || mayReviewSubmissions) && user.member_section !== "junior")
+    if ((seniorApplicant || mayReviewSubmissions) && (activeSection ?? user.member_section) !== "junior")
       values.push({ route: "submissions", category: "Requests & Operations", label: mayReviewSubmissions ? "Submission portal" : "My submissions", description: "Award applications and decisions", icon: "◆" });
     if (staff)
       values.push({ route: "resources", category: "Programme & Events", label: "Resources", description: "Company materials", icon: "↗" });
@@ -183,6 +187,7 @@ export default function AppShell({
     return values;
   }, [
     actionCount,
+    activeSection,
     announcementCount,
     mayReviewSubmissions,
     onboardingCount,
@@ -233,6 +238,13 @@ export default function AppShell({
           <div className="brand-mark app-photo" role="img" aria-label="11th Kuching Company" />
           <div><strong>11KCHBB App</strong><span>{user.role.replaceAll("_", " ")} access</span></div>
         </div>
+        {activeSection && onSectionChange && <div className="unified-section-control" role="group" aria-label="Working section">
+          <span>WORKING SECTION</span>
+          <div>
+            <button type="button" className={activeSection === "senior" ? "active" : ""} aria-pressed={activeSection === "senior"} onClick={() => onSectionChange("senior")}>Senior</button>
+            <button type="button" className={activeSection === "junior" ? "active" : ""} aria-pressed={activeSection === "junior"} onClick={() => onSectionChange("junior")}>Junior</button>
+          </div>
+        </div>}
         <nav aria-label="Application navigation">
           <p className="unified-hub-caption">WORK HUBS</p>
           {hubDefinitions.map((item) => (
@@ -254,6 +266,14 @@ export default function AppShell({
       </aside>
 
       <div className="unified-app-content">
+        {activeSection && onSectionChange && <header className="unified-mobile-header">
+          <strong>11KCHBB App</strong>
+          <div className="unified-mobile-section-control" role="group" aria-label="Working section">
+            <button type="button" className={activeSection === "senior" ? "active" : ""} aria-pressed={activeSection === "senior"} onClick={() => onSectionChange("senior")}>Senior</button>
+            <button type="button" className={activeSection === "junior" ? "active" : ""} aria-pressed={activeSection === "junior"} onClick={() => onSectionChange("junior")}>Junior</button>
+          </div>
+          <button type="button" className="unified-mobile-notifications" onClick={onNotifications} aria-label={`Notifications${notificationCount ? `, ${notificationCount} unread` : ""}`}>♢{notificationCount > 0 && <b>{notificationCount > 99 ? "99+" : notificationCount}</b>}</button>
+        </header>}
         {contextItems.length > 1 && <div className="unified-context-nav">
           <div className="unified-context-tabs" role="tablist" aria-label={`${activeHub} sections`}>
             {contextItems.map((item) => <button type="button" role="tab" aria-selected={route === item.route} className={route === item.route ? "active" : ""} onClick={() => navigate(item.route)} key={item.route}>{item.label}</button>)}

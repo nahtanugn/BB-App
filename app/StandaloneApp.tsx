@@ -83,6 +83,12 @@ export default function StandaloneApp() {
   const [submissionSection, setSubmissionSection] = useState<
     "senior" | "junior"
   >("senior");
+  const [activeSection, setActiveSection] = useState<"senior" | "junior">(() => {
+    if (typeof window === "undefined") return "senior";
+    const requested = new URL(window.location.href).searchParams.get("section");
+    if (requested === "junior" || requested === "senior") return requested;
+    return window.localStorage.getItem("11kchbb-active-section") === "junior" ? "junior" : "senior";
+  });
   const [users, setUsers] = useState<ManagedUser[]>([]);
   const [pendingMembers, setPendingMembers] = useState<PendingMember[]>([]);
   const [pendingAccountMember, setPendingAccountMember] =
@@ -135,7 +141,7 @@ export default function StandaloneApp() {
       (["members", "attendance", "subscriptions"].includes(requested) && staff) ||
       (requested === "awards" && (staff || auth.user.role === "member")) ||
       (requested === "submissions" &&
-        auth.user.member_section !== "junior" &&
+        activeSection !== "junior" &&
         (["member", "nco", "squad_leader"].includes(auth.user.role) ||
           operational ||
           auth.user.custom_permissions.some((permission) =>
@@ -147,9 +153,21 @@ export default function StandaloneApp() {
       (requested === "exports" && (operational || auth.user.custom_permissions.includes("exports.full")));
     const safeRoute = allowed ? requested : "home";
     setRoute(safeRoute);
-    const url = safeRoute === "home" ? "/" : `/?open=${safeRoute}`;
+    const params = new URLSearchParams();
+    if (safeRoute !== "home") params.set("open", safeRoute);
+    params.set("section", activeSection);
+    const url = `/?${params.toString()}`;
     window.history[replace ? "replaceState" : "pushState"]({ route: safeRoute }, "", url);
-  }, [auth, hasCustomTrackerAccess, hasTemporaryAdminAccess, stockAccess]);
+  }, [activeSection, auth, hasCustomTrackerAccess, hasTemporaryAdminAccess, stockAccess]);
+
+  const switchActiveSection = useCallback((next: "senior" | "junior") => {
+    setActiveSection(next);
+    setSubmissionSection(next);
+    window.localStorage.setItem("11kchbb-active-section", next);
+    const url = new URL(window.location.href);
+    url.searchParams.set("section", next);
+    window.history.replaceState({ route }, "", `${url.pathname}${url.search}`);
+  }, [route]);
 
   async function refreshAuth() {
     const response = await fetch("/api/auth", { cache: "no-store" });
@@ -685,7 +703,7 @@ export default function StandaloneApp() {
   if (route === "home")
     page = <ActionCentre userName={currentUser.name} userRole={currentUser.role} readOnly={currentUser.role === "viewer"} onOpen={openTarget} onCountChange={setActionCount} announcementSummary={announcementSummary} onAnnouncements={() => navigate("announcements")} />;
   else if (route === "manage")
-    page = <ManageHub user={currentUser} stockAccess={stockAccess} onOpen={navigate} />;
+    page = <ManageHub user={currentUser} stockAccess={stockAccess} activeSection={activeSection} onOpen={navigate} />;
   else if (route === "exports")
     page = <ExportCentre currentYear={new Date().getFullYear()} presentation="page" onComplete={setNotice} />;
   else if (route === "submissions")
@@ -714,6 +732,7 @@ export default function StandaloneApp() {
     const activeView = trackerViews[route] ?? (isStaff ? "members" : "matrix");
     page = (
       <AwardTracker
+        key={activeSection}
         embedded
         activeView={activeView}
         user={currentUser}
@@ -722,6 +741,8 @@ export default function StandaloneApp() {
         announcementSummary={announcementSummary}
         onboardingPendingCount={onboardingPendingCount}
         onOpenSubmissions={(section) => { setSubmissionSection(section); navigate("submissions"); }}
+        selectedSection={activeSection}
+        onSectionChange={switchActiveSection}
       />
     );
   }
@@ -741,6 +762,8 @@ export default function StandaloneApp() {
         actionCount={actionCount}
         notificationCount={notificationCount}
         onNotifications={openNotifications}
+        activeSection={isStaff ? activeSection : undefined}
+        onSectionChange={isStaff ? switchActiveSection : undefined}
       >
         {page}
       </AppShell>

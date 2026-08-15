@@ -31,6 +31,9 @@ test("every portal uses one URL-aware, role-aware application shell", async () =
   assert.match(shell, /hubForRoute/);
   assert.match(shell, /unified-context-nav/);
   assert.match(shell, /unified-context-select/);
+  assert.match(shell, /unified-section-control/);
+  assert.match(shell, /unified-mobile-section-control/);
+  assert.match(shell, /aria-label="Working section"/);
   assert.match(shell, /Notifications/);
   assert.match(manage, /Requests/);
   assert.match(manage, /Stock/);
@@ -47,6 +50,9 @@ test("every portal uses one URL-aware, role-aware application shell", async () =
   assert.match(standalone, /<NotificationCentre>/);
   assert.match(standalone, /window\.history\[replace \? "replaceState" : "pushState"\]/);
   assert.match(standalone, /popstate/);
+  assert.match(standalone, /11kchbb-active-section/);
+  assert.match(standalone, /selectedSection=\{activeSection\}/);
+  assert.match(manage, /activeSection !== "junior"/);
   assert.match(standalone, /new URL\(window\.location\.href\)\.searchParams/);
   for (const page of [submissions, resources, stock, uniforms, admin, onboarding])
     assert.doesNotMatch(page, /AppNavigation/);

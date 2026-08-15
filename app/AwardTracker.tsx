@@ -221,6 +221,8 @@ type AwardTrackerProps = {
   onOpenOnboardingCentre?: () => void;
   onboardingPendingCount?: number;
   onOpenSubmissions?: (section: "senior" | "junior") => void;
+  selectedSection?: "senior" | "junior";
+  onSectionChange?: (section: "senior" | "junior") => void;
 };
 
 export default function AwardTracker({
@@ -238,6 +240,8 @@ export default function AwardTracker({
   onOpenOnboardingCentre,
   onboardingPendingCount = 0,
   onOpenSubmissions,
+  selectedSection,
+  onSectionChange,
 }: AwardTrackerProps) {
   const hasTemporaryAdminAccess = Boolean(
     user?.role !== "viewer" &&
@@ -279,7 +283,8 @@ export default function AwardTracker({
   const canUseExportCentre =
     hasOperationalAdminAccess || isViewer || hasPermission("exports.full");
   const canOverrideMemberDetails = hasOperationalAdminAccess;
-  const [section, setSection] = useState<"senior" | "junior">("senior");
+  const [internalSection, setInternalSection] = useState<"senior" | "junior">("senior");
+  const section = selectedSection ?? internalSection;
   const canViewSubmissions =
     section === "senior" && roleCanViewSubmissions;
   const [data, setData] = useState<TrackerData | null>(null);
@@ -289,7 +294,7 @@ export default function AwardTracker({
   const [query, setQuery] = useState("");
   const [attendanceQuery, setAttendanceQuery] = useState("");
   const [attendanceSquad, setAttendanceSquad] = useState("all");
-  const [category, setCategory] = useState("Compulsory");
+  const [category, setCategory] = useState(selectedSection === "junior" ? "Junior Awards" : "Compulsory");
   const [level, setLevel] = useState<"basic" | "advanced">("basic");
   const [view, setView] = useState<
     "dashboard" | "matrix" | "members" | "attendance" | "subscriptions"
@@ -368,12 +373,13 @@ export default function AwardTracker({
 
   function switchSection(next: "senior" | "junior") {
     setData(null);
-    setSection(next);
+    setInternalSection(next);
+    onSectionChange?.(next);
     setCategory(next === "junior" ? "Junior Awards" : "Compulsory");
     setLevel("basic");
     setQuery("");
     setActiveSessionId(null);
-    setView("dashboard");
+    if (!embedded) setView("dashboard");
   }
 
   const progressMap = useMemo(() => {
@@ -1677,7 +1683,7 @@ export default function AwardTracker({
       <main className="main-content">
         <header className="topbar">
           <div>
-            <div className="section-switch" role="group" aria-label="Section">
+            {!embedded && <div className="section-switch" role="group" aria-label="Section">
               <button
                 className={section === "senior" ? "active" : ""}
                 onClick={() => switchSection("senior")}
@@ -1690,7 +1696,7 @@ export default function AwardTracker({
               >
                 Junior
               </button>
-            </div>
+            </div>}
             <p className="eyebrow">
               {view === "dashboard"
                 ? "COMPANY OVERVIEW"

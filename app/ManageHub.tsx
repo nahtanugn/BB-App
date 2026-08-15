@@ -7,10 +7,12 @@ type Tool = { route: AppRoute; label: string; description: string; icon: string 
 export default function ManageHub({
   user,
   stockAccess,
+  activeSection,
   onOpen,
 }: {
   user: ShellUser;
   stockAccess: boolean;
+  activeSection: "senior" | "junior";
   onOpen: (route: AppRoute) => void;
 }) {
   const temporaryAdmin = Boolean(
@@ -24,7 +26,7 @@ export default function ManageHub({
     ["members.", "attendance.", "awards.", "subscriptions.", "exports."].some((prefix) => permission.startsWith(prefix)),
   );
   const mayReviewSubmissions = operational || user.custom_permissions.some((permission) => ["submissions.view", "submissions.review"].includes(permission));
-  const maySubmit = user.member_section !== "junior" && (["member", "nco", "squad_leader"].includes(user.role) || mayReviewSubmissions);
+  const maySubmit = activeSection !== "junior" && (["member", "nco", "squad_leader"].includes(user.role) || mayReviewSubmissions);
   const mayExport = operational || user.custom_permissions.includes("exports.full");
 
   const requestTools: Tool[] = [

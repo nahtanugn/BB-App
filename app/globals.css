@@ -1698,6 +1698,11 @@ h1 { font-size: clamp(30px, 3.1vw, 46px); line-height: 1; letter-spacing: -1.5px
 .unified-brand strong, .unified-brand span { display: block; }
 .unified-brand strong { font-size: 15px; }
 .unified-brand span { margin-top: 3px; color: #afc3d7; font-size: 10px; text-transform: capitalize; }
+.unified-section-control { margin: 0 7px 18px; }
+.unified-section-control > span { display: block; margin: 0 3px 7px; color: #8fa9c2; font-size: 8px; font-weight: 850; letter-spacing: .13em; }
+.unified-section-control > div { padding: 4px; display: grid; grid-template-columns: 1fr 1fr; gap: 3px; border: 1px solid rgba(255,255,255,.12); border-radius: 12px; background: rgba(255,255,255,.06); }
+.unified-section-control button { min-height: 36px; border: 0; border-radius: 9px; background: transparent; color: #abc0d3; font-size: 10px; font-weight: 800; cursor: pointer; }
+.unified-section-control button.active { background: white; color: var(--navy); box-shadow: 0 3px 10px rgba(0,0,0,.16); }
 .unified-sidebar nav { display: grid; gap: 5px; }
 .unified-nav-group { display: grid; gap: 3px; padding: 0 0 12px; }
 .unified-nav-group > p { margin: 9px 10px 2px; color: #8fa9c2; font-size: 8px; font-weight: 850; letter-spacing: .13em; text-transform: uppercase; }
@@ -1776,7 +1781,7 @@ h1 { font-size: clamp(30px, 3.1vw, 46px); line-height: 1; letter-spacing: -1.5px
 .unified-app-content > .app-shell { min-height: 100dvh; display: block; }
 .unified-app-content .main-content { min-height: 100dvh; }
 .unified-app-content .app-navigation { display: none; }
-.unified-mobile-nav, .unified-more-backdrop { display: none; }
+.unified-mobile-nav, .unified-more-backdrop, .unified-mobile-header { display: none; }
 
 /* Event Centre and Member Journey */
 .event-centre-page, .journey-page { width: min(1260px, calc(100% - 44px)); margin: 0 auto; padding: 42px 0 80px; }
@@ -1816,6 +1821,27 @@ h1 { font-size: clamp(30px, 3.1vw, 46px); line-height: 1; letter-spacing: -1.5px
 @media (max-width: 760px) {
   .unified-app-shell { display: block; padding-bottom: calc(72px + env(safe-area-inset-bottom)); }
   .unified-sidebar { display: none; }
+  .unified-mobile-header {
+    position: sticky;
+    z-index: 60;
+    top: 0;
+    min-height: calc(58px + env(safe-area-inset-top));
+    padding: max(8px, env(safe-area-inset-top)) 12px 8px;
+    display: grid;
+    grid-template-columns: minmax(88px, 1fr) minmax(180px, 1.5fr) minmax(44px, 1fr);
+    align-items: center;
+    gap: 8px;
+    border-bottom: 1px solid #dce5ed;
+    background: rgba(255,255,255,.96);
+    box-shadow: 0 5px 20px rgba(10,45,78,.08);
+    backdrop-filter: blur(14px);
+  }
+  .unified-mobile-header > strong { color: var(--navy); font-size: 12px; white-space: nowrap; }
+  .unified-mobile-section-control { padding: 3px; display: grid; grid-template-columns: 1fr 1fr; gap: 2px; border-radius: 11px; background: #eaf0f6; }
+  .unified-mobile-section-control button { min-height: 36px; border: 0; border-radius: 8px; background: transparent; color: #63768a; font-size: 10px; font-weight: 850; }
+  .unified-mobile-section-control button.active { background: var(--navy); color: white; box-shadow: 0 2px 8px rgba(8,48,84,.2); }
+  .unified-mobile-notifications { position: relative; width: 40px; height: 40px; justify-self: end; border: 0; border-radius: 12px; background: var(--navy); color: white; font-size: 20px; }
+  .unified-mobile-notifications b { position: absolute; top: -5px; right: -5px; min-width: 18px; height: 18px; padding: 0 4px; display: grid; place-items: center; border-radius: 999px; background: #d84b53; color: white; font-size: 7px; }
   .unified-app-content { min-height: calc(100dvh - 72px); }
   .unified-app-content .main-content,
   .unified-app-content .resources-shell,
