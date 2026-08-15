@@ -36,8 +36,6 @@ jobs:
 
       - name: Set up pnpm
         uses: pnpm/action-setup@v6
-        with:
-          version: 11
 
       - name: Set up Node.js
         uses: actions/setup-node@v7
@@ -77,4 +75,3 @@ jobs:
           generateReleaseNotes: true
           releaseAssetNamePattern: "11KCHBB-App-[version]-[platform]-[arch][setup].[ext]"
           args: ${{ matrix.args }}
-
