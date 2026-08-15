@@ -3020,8 +3020,15 @@ export default function AwardTracker({
               <div className="form-row">
                 <label>
                   School
-                  <input name="school" list="approved-schools" required={!overrideMemberDetails} defaultValue={editingMember?.school ?? ""} placeholder="Choose an approved school or keep legacy text" />
-                  <datalist id="approved-schools">{schoolOptions.map((school) => <option key={school} value={school} />)}</datalist>
+                  <select
+                    name="school"
+                    required={!overrideMemberDetails}
+                    defaultValue={schoolOptions.find((school) => school.toLowerCase() === (editingMember?.school ?? "").toLowerCase()) ?? editingMember?.school ?? ""}
+                  >
+                    <option value="">Select a school</option>
+                    {editingMember?.school && !schoolOptions.some((school) => school.toLowerCase() === editingMember.school.toLowerCase()) && <option value={editingMember.school}>{editingMember.school} (legacy value)</option>}
+                    {schoolOptions.map((school) => <option key={school} value={school}>{school}</option>)}
+                  </select>
                 </label>
                 <label>
                   Email
