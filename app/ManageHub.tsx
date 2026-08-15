@@ -37,7 +37,7 @@ export default function ManageHub({
     { route: "stock", label: "Stock Centre", description: "Uniform and award inventory", icon: "▣" },
   ] : [];
   const adminTools: Tool[] = [
-    ...(["admin", "officer", "viewer"].includes(user.role) ? [{ route: "admin" as const, label: user.role === "officer" ? "Junior rank review" : "Accounts & roles", description: user.role === "officer" ? "Review Junior member ranks" : "Accounts, access and school directory", icon: "⚙" }] : []),
+    ...(["admin", "officer", "viewer"].includes(user.role) ? [{ route: "admin" as const, label: user.role === "officer" ? "Junior rank review" : "Accounts and roles", description: user.role === "officer" ? "Review Junior member ranks" : "Accounts, access and school directory", icon: "⚙" }] : []),
     ...(staff ? [{ route: "onboarding" as const, label: "Onboarding", description: "Registrations and profile corrections", icon: "◎" }] : []),
     ...(["admin", "viewer"].includes(user.role) ? [{ route: "automation" as const, label: "Automation", description: "Rules, reminders and run history", icon: "↻" }] : []),
     ...(mayExport ? [{ route: "exports" as const, label: "Export Centre", description: "School reports and secure backups", icon: "↓" }] : []),

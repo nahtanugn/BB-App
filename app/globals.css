@@ -3217,6 +3217,41 @@ button:disabled { opacity: .62; cursor: wait; }
     align-items: flex-start;
   }
 
-  .primary, .secondary { width: 100%; }
+  .unified-app-content form > :is(.primary, .secondary),
+  .unified-app-content :is(.form-actions, .role-form-actions, .onboarding-actions) > :is(.primary, .secondary) { width: 100%; }
   .unified-app-content .form-row { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 760px) {
+  .simplified-home-hero.action-centre-hero {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 16px;
+    padding: 20px;
+  }
+
+  .simplified-home-hero .action-total {
+    position: static;
+    width: 100%;
+    min-width: 0;
+    min-height: 64px;
+    padding: 10px 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 9px;
+  }
+
+  .simplified-home-hero .action-total strong { font-size: 30px; }
+  .simplified-home-hero .action-total span { margin: 0; font-size: 9px; }
+  .category-page-header > .primary { width: auto; align-self: flex-start; }
+}
+
+@media (max-width: 360px) {
+  .unified-mobile-header {
+    grid-template-columns: minmax(0, 1fr) 42px;
+  }
+
+  .unified-mobile-header > strong { display: none; }
+  .unified-mobile-section-control { min-width: 0; }
 }
