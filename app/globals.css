@@ -3412,4 +3412,12 @@ button:disabled { opacity: .62; cursor: wait; }
     min-height: 46px;
     height: 46px;
   }
+
+  /* The global form rule intentionally makes ordinary actions full width. The
+     event sheet has side gutters, so preserve those gutters and keep its
+     sticky action inside the viewport. */
+  .unified-app-content .event-form > .primary {
+    width: calc(100% - 32px);
+    margin-inline: 16px;
+  }
 }
