@@ -31,11 +31,11 @@ export default function ManageHub({
 
   const requestTools: Tool[] = [
     ...(maySubmit ? [{ route: "submissions" as const, label: mayReviewSubmissions ? "Award submissions" : "My award submissions", description: mayReviewSubmissions ? "Review applications and decisions" : "Submit and track award applications", icon: "◆" }] : []),
-    { route: "uniforms", label: user.role === "member" ? "My uniform requests" : "Uniform requests", description: user.role === "member" ? "Request and track uniform parts" : "Review, prepare and issue requests", icon: "▤" },
   ];
-  const stockTools: Tool[] = stockAccess ? [
-    { route: "stock", label: "Stock Centre", description: "Uniform and award inventory", icon: "▣" },
-  ] : [];
+  const stockTools: Tool[] = [
+    { route: "uniforms", label: user.role === "member" ? "My uniform requests" : "Uniform requests", description: user.role === "member" ? "Request and track uniform parts" : "Review, prepare and issue requests", icon: "▤" },
+    ...(stockAccess ? [{ route: "stock" as const, label: "Stock Centre", description: "Uniform and award inventory", icon: "▣" }] : []),
+  ];
   const adminTools: Tool[] = [
     ...(["admin", "officer", "viewer"].includes(user.role) ? [{ route: "admin" as const, label: user.role === "officer" ? "Junior rank review" : "Accounts and roles", description: user.role === "officer" ? "Review Junior member ranks" : "Accounts, access and school directory", icon: "⚙" }] : []),
     ...(staff ? [{ route: "onboarding" as const, label: "Onboarding", description: "Registrations and profile corrections", icon: "◎" }] : []),
@@ -44,7 +44,7 @@ export default function ManageHub({
   ];
   const groups = [
     { title: "Requests", description: "Applications and items waiting for action", tools: requestTools },
-    { title: "Stock", description: "Inventory and issued items", tools: stockTools },
+    { title: "Stock", description: "Uniform requests, inventory and issued items", tools: stockTools },
     { title: "Administration", description: "Accounts, data and company controls", tools: adminTools },
   ].filter((group) => group.tools.length);
 
