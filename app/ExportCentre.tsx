@@ -203,8 +203,10 @@ export default function ExportCentre({
   const [saving, setSaving] = useState(false);
   const [section, setSection] = useState("both");
   const [squad, setSquad] = useState("all");
+  const [school, setSchool] = useState("all");
   const [member, setMember] = useState("all");
   const [reportYear, setReportYear] = useState(String(currentYear));
+  const [reportType, setReportType] = useState<"full" | "school">("full");
   const [format, setFormat] = useState<"xlsx" | "print">("xlsx");
   const [included, setIncluded] = useState({
     members: true,
@@ -263,12 +265,18 @@ export default function ExportCentre({
         dataset.members
           .filter(() => section === "both" || dataset.section === section)
           .filter((item) => squad === "all" || item.squad === squad)
+          .filter((item) => school === "all" || item.school === school)
           .map((item) => ({
             key: `${dataset.section}:${item.id}`,
             label: `${item.name} · ${sectionLabel(dataset.section)} · ${item.squad}`,
           })),
       ),
-    [datasets, section, squad],
+    [datasets, section, squad, school],
+  );
+
+  const schools = useMemo(
+    () => [...new Set(datasets.flatMap((dataset) => dataset.members.map((item) => item.school.trim()).filter(Boolean)))].sort((a, b) => a.localeCompare(b)),
+    [datasets],
   );
 
   const years = useMemo(
@@ -309,6 +317,7 @@ export default function ExportCentre({
       );
       return dataset.members
         .filter((item) => squad === "all" || item.squad === squad)
+        .filter((item) => school === "all" || item.school === school)
         .filter(
           (item) => member === "all" || member === `${dataset.section}:${item.id}`,
         )
@@ -318,6 +327,31 @@ export default function ExportCentre({
     const yearMatches = (value: string | number) =>
       reportYear === "all" || String(value).slice(0, 4) === reportYear;
     const sheets: SheetData[] = [];
+
+    // School reports intentionally contain only progress information.  They never
+    // include contact details, family information, subscriptions, evidence links,
+    // or other sensitive operational data.
+    if (reportType === "school") {
+      const today = new Date().toISOString().slice(0, 10);
+      sheets.push({
+        name: "School Report",
+        headers: ["Member Name", "Section", "Rank", "Squad", "Joining Year", "Meetings Held", "Present", "Absent", "Excused", "Missing Details", "Attendance %", "Awards Earned", "Awards In Progress / Review"],
+        rows: selected.map(({ dataset, member: item, progressMap, attendanceMap }) => {
+          const sessions = dataset.attendanceSessions.filter((session) => session.meeting_date <= today && yearMatches(session.meeting_date));
+          const statuses = sessions.map((session) => attendanceMap.get(`${session.id}:${item.id}`) ?? "unmarked");
+          const count = (status: AttendanceStatus) => statuses.filter((value) => value === status).length;
+          const present = count("present");
+          const absent = count("absent");
+          const excused = count("excused");
+          const marked = present + absent + excused;
+          const earned = dataset.awards.flatMap((award) => (["basic", "advanced"] as const).filter((level) => progressMap.get(`${item.id}:${award.code}:${level}`) === "awarded").map((level) => `${award.name} (${level})`));
+          const active = [...progressMap.entries()].filter(([key, status]) => key.startsWith(`${item.id}:`) && ["in_progress", "submitted", "verified"].includes(status)).length;
+          return [item.name, sectionLabel(dataset.section), item.rank, item.squad, joinedYear(item.joined_at), sessions.length, present, absent, excused, count("unmarked"), marked ? Math.round((present / marked) * 100) : "Not yet available", `${earned.length + item.service_award_count} (${item.service_award_count} service)`, active];
+        }),
+      });
+      sheets.unshift({ name: "Export Overview", headers: ["Export Information", "Value"], rows: [["Company", "11th Kuching Company, The Boys' Brigade in Malaysia"], ["Report Type", "School progress report"], ["School", school === "all" ? "All schools" : school], ["Sections", section === "both" ? "Senior & Junior" : sectionLabel(section)], ["Squad", squad === "all" ? "All squads" : squad], ["Reporting Year", reportYear === "all" ? "All years" : reportYear], ["Member Count", selected.length], ["Privacy", "Progress only; sensitive fields excluded"]] });
+      return { sheets, memberCount: selected.length };
+    }
 
     if (included.members) {
       sheets.push({
@@ -647,6 +681,8 @@ export default function ExportCentre({
           ["Company", "11th Kuching Company, The Boys' Brigade in Malaysia"],
           ["Prepared At", new Date().toLocaleString("en-MY")],
           ["Sections", section === "both" ? "Senior & Junior" : sectionLabel(section)],
+          ["Report Type", "Full operational export"],
+          ["School", school === "all" ? "All schools" : school],
           ["Squad", squad === "all" ? "All squads" : squad],
           ["Members", member === "all" ? "All matching members" : "Selected member"],
           ["Reporting Year", reportYear === "all" ? "All years" : reportYear],
@@ -667,6 +703,7 @@ export default function ExportCentre({
     }
     setSaving(true);
     try {
+      if (reportType === "school" && school === "all") throw new Error("Choose a school for a School Report.");
       const { sheets, memberCount } = makeSheets();
       if (sheets.length <= 1)
         throw new Error("Select at least one dataset to export.");
@@ -750,6 +787,7 @@ export default function ExportCentre({
         printWindow.document.write(`<!doctype html><html><head><title>11KCHBB Export ${date}</title><style>@page{size:landscape;margin:10mm}body{font-family:Arial,sans-serif;color:#14253b}h1{color:#0b3158;margin-bottom:4px}p{color:#607086;margin-top:0}section{break-before:page}section:first-of-type{break-before:auto}h2{color:#1269c7}table{width:100%;border-collapse:collapse;font-size:8px}th{background:#0b3158;color:white}th,td{padding:5px;border:1px solid #ccd5df;text-align:left;vertical-align:top}tr:nth-child(even){background:#f4f7fa}</style></head><body><h1>11KCHBB App · Export Report</h1><p>Prepared ${date} · ${memberCount} member${memberCount === 1 ? "" : "s"} · ${reportYear === "all" ? "All years" : reportYear}</p>${tables}<script>window.onload=()=>window.print()</script></body></html>`);
         printWindow.document.close();
       }
+      void fetch("/api/audit", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "export_created", entityType: reportType === "school" ? "school_report" : "full_export", metadata: { format, section, squad, school, reportYear, memberCount, datasets: reportType === "school" ? ["progress"] : Object.entries(included).filter(([, value]) => value).map(([key]) => key) } }) }).catch(() => undefined);
       onComplete(
         format === "xlsx"
           ? "Excel workbook exported successfully."
@@ -786,6 +824,13 @@ export default function ExportCentre({
           <form onSubmit={submitExport}>
             <div className="export-filter-grid">
               <label>
+                Report type
+                <select value={reportType} onChange={(event) => { const next = event.target.value as "full" | "school"; setReportType(next); if (next === "school") setIncluded((current) => ({ ...current, members: true, awards: true, attendance: true })); }}>
+                  <option value="full">Full operational export</option>
+                  <option value="school">School progress report</option>
+                </select>
+              </label>
+              <label>
                 Section
                 <select
                   value={section}
@@ -816,6 +861,13 @@ export default function ExportCentre({
                 </select>
               </label>
               <label>
+                School
+                <select value={school} onChange={(event) => { setSchool(event.target.value); setMember("all"); }}>
+                  <option value="all">{reportType === "school" ? "Choose a school" : "All schools"}</option>
+                  {schools.map((item) => <option key={item}>{item}</option>)}
+                </select>
+              </label>
+              <label>
                 Members
                 <select value={member} onChange={(event) => setMember(event.target.value)}>
                   <option value="all">All matching members</option>
@@ -833,7 +885,7 @@ export default function ExportCentre({
               </label>
             </div>
 
-            <fieldset className="export-datasets">
+            {reportType === "full" ? <fieldset className="export-datasets">
               <legend>Include in export</legend>
               {[
                 ["members", "Member profiles"],
@@ -857,7 +909,7 @@ export default function ExportCentre({
                   {label}
                 </label>
               ))}
-            </fieldset>
+            </fieldset> : <p className="school-report-note">School reports are privacy-safe progress summaries. Contact, family, subscription and evidence fields are excluded.</p>}
 
             <fieldset className="export-formats">
               <legend>Export format</legend>

@@ -4,6 +4,7 @@ import {
   hasOperationalAdminAccess,
   hasTemporaryAdminAccess,
 } from "../../../lib/auth";
+import { writeAuditEvent } from "../../../lib/audit";
 
 type AwardSeed = {
   code: string;
@@ -385,6 +386,12 @@ function calculateServiceYears(joinedAt: string, today = new Date()) {
     }).format(today),
   );
   return Math.max(0, currentYear - Number(match[1]));
+}
+
+function validJoiningYear(value: string) {
+  const year = Number(value);
+  const current = Number(new Intl.DateTimeFormat("en", { timeZone: "Asia/Kuching", year: "numeric" }).format(new Date()));
+  return /^\d{4}$/.test(value) && year >= 1900 && year <= current;
 }
 
 let initialized = false;
@@ -923,11 +930,15 @@ export async function POST(request: Request) {
           { error: "Select Alpha, Bravo, Charlie, or Delta squad" },
           { status: 400 },
         );
-      if (!/^\d{4}$/.test(joinedAt))
+      if (!validJoiningYear(joinedAt))
         return Response.json(
-          { error: "Select a valid joining year" },
+          { error: "Select a valid joining year (1900 to the current year)" },
           { status: 400 },
         );
+      if (email) {
+        const duplicate = await db.prepare("SELECT id FROM members WHERE lower(email) = ? LIMIT 1").bind(email).first<{ id: number }>();
+        if (duplicate) return Response.json({ error: "A member with this email already exists" }, { status: 409 });
+      }
       const missingDetails = [
         ["School", school],
         ["Contact Number", contactNumber],
@@ -964,6 +975,7 @@ export async function POST(request: Request) {
           new Date().toISOString(),
         )
         .run();
+      await writeAuditEvent({ actor: user, action: "member_created", entityType: "member", after: { name, rank, squad, section, joinedAt, school, email } });
     } else if (action === "update_member") {
       const memberId = Number(body.memberId);
       const name = String(body.name ?? "").trim();
@@ -997,11 +1009,15 @@ export async function POST(request: Request) {
           { error: "Select Alpha, Bravo, Charlie, or Delta squad" },
           { status: 400 },
         );
-      if (!/^\d{4}$/.test(joinedAt))
+      if (!validJoiningYear(joinedAt))
         return Response.json(
-          { error: "Select a valid joining year" },
+          { error: "Select a valid joining year (1900 to the current year)" },
           { status: 400 },
         );
+      if (email) {
+        const duplicate = await db.prepare("SELECT id FROM members WHERE lower(email) = ? AND id != ? LIMIT 1").bind(email, memberId).first<{ id: number }>();
+        if (duplicate) return Response.json({ error: "A member with this email already exists" }, { status: 409 });
+      }
       const missingDetails = [
         ["School", school],
         ["Contact Number", contactNumber],
@@ -1036,6 +1052,7 @@ export async function POST(request: Request) {
           section,
         )
         .run();
+      await writeAuditEvent({ actor: user, action: "member_updated", entityType: "member", entityId: memberId, after: { name, rank, squad, section, joinedAt, school, email } });
     } else if (action === "review_junior_rank") {
       if (!(["admin", "officer"].includes(user.role) || hasTemporaryAccess))
         return Response.json({ error: "Administrator or Officer access required" }, { status: 403 });
@@ -1205,6 +1222,7 @@ export async function POST(request: Request) {
           user.email,
         )
         .run();
+      await writeAuditEvent({ actor: user, action: "award_updated", entityType: "member_award", entityId: `${memberId}:${awardCode}:${level}`, after: { status } });
     } else if (action === "delete_member") {
       const memberId = Number(body.memberId);
       if (!memberId)
@@ -1309,6 +1327,7 @@ export async function POST(request: Request) {
         )
         .bind(sessionId, memberId, status, now, user.email)
         .run();
+      await writeAuditEvent({ actor: user, action: "attendance_updated", entityType: "attendance", entityId: `${sessionId}:${memberId}`, after: { status } });
     } else if (action === "delete_attendance_session") {
       const sessionId = Number(body.sessionId);
       if (!sessionId)

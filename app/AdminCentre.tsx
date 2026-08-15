@@ -3,6 +3,7 @@
 import { FormEvent, useEffect, useMemo, useState } from "react";
 import CustomRoleManager from "./CustomRoleManager";
 import OnboardingCentre from "./OnboardingCentre";
+import AuditHistory from "./AuditHistory";
 
 type Role = "admin" | "officer" | "nco" | "squad_leader" | "viewer" | "member";
 type ManagedUser = {
@@ -43,7 +44,9 @@ export default function AdminCentre({
   const [pendingAccountMember, setPendingAccountMember] = useState<PendingMember | null>(null);
   const [newRole, setNewRole] = useState<Role>("officer");
   const [newTemporaryAccess, setNewTemporaryAccess] = useState("");
-  const [tab, setTab] = useState<"accounts" | "access" | "onboarding" | "junior-ranks">(currentUser.role === "officer" ? "junior-ranks" : "accounts");
+  const [tab, setTab] = useState<"accounts" | "access" | "onboarding" | "audit" | "schools" | "junior-ranks">(currentUser.role === "officer" ? "junior-ranks" : "accounts");
+  const [schools, setSchools] = useState<Array<{ id: number; name: string }>>([]);
+  const [newSchool, setNewSchool] = useState("");
   const [juniorRankReviews, setJuniorRankReviews] = useState<JuniorRankReview[]>([]);
   const [query, setQuery] = useState("");
   const [busy, setBusy] = useState(false);
@@ -51,9 +54,10 @@ export default function AdminCentre({
   const [notice, setNotice] = useState("");
 
   async function load() {
-    const [response, rankResponse] = await Promise.all([
+    const [response, rankResponse, schoolResponse] = await Promise.all([
       currentUser.role === "officer" ? Promise.resolve(null) : fetch("/api/auth?users=1", { cache: "no-store" }),
       canReviewJuniorRanks ? fetch("/api/tracker?juniorRankReview=1", { cache: "no-store" }) : Promise.resolve(null),
+      currentUser.role === "admin" ? fetch("/api/schools", { cache: "no-store" }) : Promise.resolve(null),
     ]);
     if (response) {
       const result = (await response.json()) as {
@@ -70,6 +74,7 @@ export default function AdminCentre({
       if (!rankResponse.ok) throw new Error(rankResult.error ?? "Unable to load Junior rank review");
       setJuniorRankReviews(rankResult.members ?? []);
     }
+    if (schoolResponse) { const result = await schoolResponse.json() as { schools?: Array<{ id: number; name: string }> }; if (schoolResponse.ok) setSchools(result.schools ?? []); }
   }
   useEffect(() => {
     const timer = window.setTimeout(() => {
@@ -224,6 +229,19 @@ export default function AdminCentre({
     await load(); setNotice(`${member.name}'s Junior rank was updated.`); setBusy(false);
   }
 
+  async function addSchool(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault(); setBusy(true); setError("");
+    const response = await fetch("/api/schools", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "create", name: newSchool }) });
+    const result = await response.json() as { error?: string };
+    if (!response.ok) { setError(result.error ?? "Unable to add school"); setBusy(false); return; }
+    setNewSchool(""); await load(); setNotice("School added successfully."); setBusy(false);
+  }
+
+  async function archiveSchool(id: number) {
+    if (!window.confirm("Archive this school from future member forms? Existing records remain unchanged.")) return;
+    await fetch("/api/schools", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "archive", id }) }); await load(); setNotice("School archived.");
+  }
+
   return (
     <main className="admin-centre-shell">
       {notice && <div className="action-toast" role="status"><span>✓</span>{notice}<button onClick={() => setNotice("")} aria-label="Dismiss confirmation">×</button></div>}
@@ -240,11 +258,11 @@ export default function AdminCentre({
           <article><span>Staff accounts</span><strong>{counts.staff}</strong></article>
         </div>}
         <div className="admin-tabs" role="tablist">
-          {currentUser.role === "admin" && <><button className={tab === "accounts" ? "active" : ""} onClick={() => setTab("accounts")}>Membership accounts</button><button className={tab === "access" ? "active" : ""} onClick={() => setTab("access")}>Custom access roles</button><button className={tab === "onboarding" ? "active" : ""} onClick={() => setTab("onboarding")}>Onboarding</button></>}
+          {currentUser.role === "admin" && <><button className={tab === "accounts" ? "active" : ""} onClick={() => setTab("accounts")}>Membership accounts</button><button className={tab === "access" ? "active" : ""} onClick={() => setTab("access")}>Custom access roles</button><button className={tab === "onboarding" ? "active" : ""} onClick={() => setTab("onboarding")}>Onboarding</button><button className={tab === "schools" ? "active" : ""} onClick={() => setTab("schools")}>Schools</button><button className={tab === "audit" ? "active" : ""} onClick={() => setTab("audit")}>Audit history</button></>}
           {canReviewJuniorRanks && <button className={tab === "junior-ranks" ? "active" : ""} onClick={() => setTab("junior-ranks")}>Junior rank review {juniorRankReviews.length ? `(${juniorRankReviews.length})` : ""}</button>}
         </div>
 
-        {tab === "junior-ranks" ? (
+        {tab === "audit" ? <AuditHistory /> : tab === "schools" ? <section className="panel school-directory"><div className="panel-heading"><div><p className="eyebrow">DATA QUALITY</p><h2>School directory</h2><p>Approved names appear as suggestions in member forms. Existing free-text values are preserved.</p></div><span>{schools.length}</span></div><form onSubmit={addSchool} className="inline-form"><input value={newSchool} onChange={(event) => setNewSchool(event.target.value)} placeholder="e.g. SMK Tinggi Kuching" required /><button className="primary" disabled={busy}>{busy ? "Adding…" : "Add school"}</button></form><div className="school-list">{schools.map((school) => <article key={school.id}><strong>{school.name}</strong><button className="danger-link" onClick={() => archiveSchool(school.id)}>Archive</button></article>)}</div></section> : tab === "junior-ranks" ? (
           <section className="junior-rank-review panel"><div className="panel-heading"><div><p className="eyebrow">MANUAL REVIEW</p><h2>Junior members needing a rank</h2><p>These members remain unchanged until you choose their correct Junior rank.</p></div><span>{juniorRankReviews.length}</span></div>{juniorRankReviews.map((member) => <article key={member.id}><div><strong>{member.name}</strong><small>{member.squad} · joined {member.joined_at} · {member.email}</small></div><select defaultValue="Pre-Junior" aria-label={`Choose rank for ${member.name}`}><option>Pre-Junior</option><option>Junior</option><option>Assistant Leading Boy</option><option>Leading Boy</option><option>Chief Leading Boy</option></select><button className="primary" disabled={busy} onClick={(event) => reviewJuniorRank(member, (event.currentTarget.previousElementSibling as HTMLSelectElement).value)}>Save rank</button></article>)}{!juniorRankReviews.length && <div className="operations-empty"><span>✓</span><h2>All Junior ranks are reviewed</h2><p>No Junior member remains recorded as Private.</p></div>}</section>
         ) : tab === "accounts" ? (
           <div className="admin-account-layout">

@@ -137,6 +137,12 @@ function serviceYearsFromJoined(value: string) {
   return Math.max(0, currentYear - Number(match[1]));
 }
 
+function memberCompleteness(member: Member) {
+  const fields: Array<[string, string]> = [["School", member.school], ["Contact number", member.contact_number], ["Emergency contact", member.emergency_contact_number], ["Email", member.email], ["Parents' name", member.parents_name]];
+  const missing = fields.filter(([, value]) => !value.trim()).map(([label]) => label);
+  return { percent: Math.round(((fields.length - missing.length) / fields.length) * 100), missing };
+}
+
 function malaysiaDateKey(date = new Date()) {
   const parts = new Intl.DateTimeFormat("en", {
     timeZone: "Asia/Kuching",
@@ -257,6 +263,8 @@ export default function AwardTracker({
   const [actionError, setActionError] = useState("");
   const [notice, setNotice] = useState("");
   const [query, setQuery] = useState("");
+  const [attendanceQuery, setAttendanceQuery] = useState("");
+  const [attendanceSquad, setAttendanceSquad] = useState("all");
   const [category, setCategory] = useState("Compulsory");
   const [level, setLevel] = useState<"basic" | "advanced">("basic");
   const [view, setView] = useState<
@@ -293,6 +301,7 @@ export default function AwardTracker({
   const [activeSessionId, setActiveSessionId] = useState<number | null>(null);
   const [saving, setSaving] = useState("");
   const [showMobileMenu, setShowMobileMenu] = useState(false);
+  const [schoolOptions, setSchoolOptions] = useState<string[]>([]);
 
   async function load() {
     try {
@@ -314,6 +323,7 @@ export default function AwardTracker({
   }
 
   useEffect(() => {
+    fetch("/api/schools", { cache: "no-store" }).then(async (response) => { if (!response.ok) return; const result = await response.json() as { schools?: Array<{ name: string }> }; setSchoolOptions((result.schools ?? []).map((school) => school.name)); }).catch(() => undefined);
     fetch(`/api/tracker?section=${section}`, { cache: "no-store" })
       .then(async (response) => {
         const result = (await response.json()) as TrackerData & {
@@ -432,11 +442,16 @@ export default function AwardTracker({
   const attendanceMembers = useMemo(
     () => {
       let members = isNco || isSquadLeader ? squadAttendanceMembers : filteredMembers;
+      const term = attendanceQuery.trim().toLowerCase();
+      if (!(isNco || isSquadLeader) && attendanceSquad !== "all")
+        members = members.filter((member) => member.squad === attendanceSquad);
+      if (term)
+        members = members.filter((member) => `${member.name} ${member.rank} ${member.squad}`.toLowerCase().includes(term));
       if (activeSession?.audience === "nco_council")
         members = members.filter((member) => ["nco", "squad_leader"].includes(member.account_role ?? ""));
       return members;
     },
-    [activeSession?.audience, filteredMembers, isNco, isSquadLeader, squadAttendanceMembers],
+    [activeSession?.audience, attendanceQuery, attendanceSquad, filteredMembers, isNco, isSquadLeader, squadAttendanceMembers],
   );
   const activeAttendanceUnmarked = activeSession
     ? attendanceMembers.filter(
@@ -829,6 +844,20 @@ export default function AwardTracker({
       setActionError(result.error ?? "Unable to update attendance");
     }
     setSaving("");
+  }
+
+  async function markAllPresent() {
+    if (!activeSession || !canManageAttendance || !attendanceMembers.length) return;
+    setSaving("attendance-all");
+    setActionError("");
+    await Promise.all(attendanceMembers.map((member) => updateAttendance(activeSession.id, member.id, "present")));
+    setSaving("");
+    setNotice(`Marked ${attendanceMembers.length} member${attendanceMembers.length === 1 ? "" : "s"} present.`);
+  }
+
+  function selectAttendanceSession(nextId: number) {
+    if (activeSession && activeSession.id !== nextId && activeAttendanceUnmarked > 0 && !window.confirm(`${activeAttendanceUnmarked} attendance detail${activeAttendanceUnmarked === 1 ? " is" : "s are"} still missing. Open another meeting?`)) return;
+    setActiveSessionId(nextId);
   }
 
   async function updateSubscription(memberId: number, paid: boolean) {
@@ -2087,6 +2116,7 @@ export default function AwardTracker({
               const stats = memberStats(member);
               const attendance = memberAttendance(member);
               const readiness = presidentReadiness(member);
+              const completeness = memberCompleteness(member);
               const notification = submissionByMember.get(member.id);
               return (
                 <article className="member-card" key={member.id}>
@@ -2137,6 +2167,7 @@ export default function AwardTracker({
                   <p>
                     {member.rank} · Joined {joinedYear(member.joined_at)}
                   </p>
+                  <p className={`profile-completeness ${completeness.missing.length ? "incomplete" : "complete"}`}><strong>{completeness.percent}% profile complete</strong>{completeness.missing.length ? ` · Missing: ${completeness.missing.join(", ")}` : ""}</p>
                   <div className="member-numbers member-numbers-four">
                     <div>
                       <strong>{stats.awarded}</strong>
@@ -2199,9 +2230,7 @@ export default function AwardTracker({
                     <select
                       aria-label="Attendance meeting date"
                       value={String(activeSession.id)}
-                      onChange={(event) =>
-                        setActiveSessionId(Number(event.target.value))
-                      }
+                      onChange={(event) => selectAttendanceSession(Number(event.target.value))}
                     >
                       {orderedAttendanceSessions.map((session) => {
                         const meetingDate = new Date(
@@ -2287,7 +2316,7 @@ export default function AwardTracker({
                         const dateKey = `${activeSession.meeting_date.slice(0, 8)}${String(day).padStart(2, "0")}`;
                         const session = attendanceSessionsByDate.get(dateKey);
                         const selected = session?.id === activeSession.id;
-                        return <button type="button" key={dateKey} disabled={!session} className={`${session ? "has-meeting" : ""} ${selected ? "selected" : ""}`} onClick={() => session && setActiveSessionId(session.id)} aria-label={session ? `${dateKey}: ${session.title}` : dateKey}>{day}</button>;
+                        return <button type="button" key={dateKey} disabled={!session} className={`${session ? "has-meeting" : ""} ${selected ? "selected" : ""}`} onClick={() => session && selectAttendanceSession(session.id)} aria-label={session ? `${dateKey}: ${session.title}` : dateKey}>{day}</button>;
                       })}
                     </div>
                   </section>
@@ -2363,6 +2392,20 @@ export default function AwardTracker({
                       </span>
                     ))}
                   </div>
+                  <div className="attendance-controls" role="search">
+                    <label>
+                      Search members
+                      <input value={attendanceQuery} onChange={(event) => setAttendanceQuery(event.target.value)} placeholder="Name, rank or squad" />
+                    </label>
+                    {!isNco && !isSquadLeader && <label>
+                      Squad
+                      <select value={attendanceSquad} onChange={(event) => setAttendanceSquad(event.target.value)}>
+                        <option value="all">All squads</option><option>Alpha</option><option>Bravo</option><option>Charlie</option><option>Delta</option>
+                      </select>
+                    </label>}
+                    {canManageAttendance && <button type="button" className="primary" disabled={saving === "attendance-all" || !attendanceMembers.length} onClick={markAllPresent}>{saving === "attendance-all" ? "Saving…" : "Mark all present"}</button>}
+                  </div>
+                  <p className="attendance-leave-note">Before leaving, check the summary above. Yellow means one or more member details are still missing.</p>
                   <div className="attendance-rows">
                     {attendanceMembers.map((member) => {
                       const key = `attendance-${activeSession.id}-${member.id}`;
@@ -2977,11 +3020,8 @@ export default function AwardTracker({
               <div className="form-row">
                 <label>
                   School
-                  <input
-                    name="school"
-                    required={!overrideMemberDetails}
-                    defaultValue={editingMember?.school ?? ""}
-                  />
+                  <input name="school" list="approved-schools" required={!overrideMemberDetails} defaultValue={editingMember?.school ?? ""} placeholder="Choose an approved school or keep legacy text" />
+                  <datalist id="approved-schools">{schoolOptions.map((school) => <option key={school} value={school} />)}</datalist>
                 </label>
                 <label>
                   Email
