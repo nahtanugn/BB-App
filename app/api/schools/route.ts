@@ -13,11 +13,23 @@ const KUCHING_SCHOOLS = [
   "Kolej Vokasional Kuching", "Sekolah Seni Kuching", "SMK Agama Tun Ahmad Zaidi", "SMK DPH Abdul Gapor (Integrasi)", "SMK Seri Setia", "SMK Tabuan Jaya", "SMK Bako", "SMK Demak Baru", "SMK Bandar Samariang", "SMK Petrajaya", "SMK Tunku Abdul Rahman", "SMK Santubong", "SMK Semerah Padi", "SMK Green Road", "SMK Bandar Kuching No. 1", "Kolej Datu Patinggi Abang Haji Abdillah", "SMK Pending", "SMK Batu Lintang", "SMK Padungan", "SMK Tun Abang Haji Openg", "SMK Tinggi Kuching", "SMK St Joseph (M)", "SMK St Teresa", "SMK St Thomas (M)", "SMK St Mary (M)", "SMT Sejingkat",
 ];
 
+function standardizeSchoolName(value: string) {
+  return value.trim().replace(/\s+/g, " ").toUpperCase().replaceAll("SJK(C)", "SJK (C)").replaceAll("SJK ( C )", "SJK (C)");
+}
+
 async function ensureSchema() {
   await env.DB.prepare(`CREATE TABLE IF NOT EXISTS school_directory (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL COLLATE NOCASE UNIQUE, active INTEGER NOT NULL DEFAULT 1, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, created_by TEXT NOT NULL DEFAULT '')`).run();
   const now = new Date().toISOString();
   await env.DB.prepare(`INSERT OR IGNORE INTO school_directory (name, created_at, updated_at) SELECT DISTINCT TRIM(school), ?, ? FROM members WHERE TRIM(school) != ''`).bind(now, now).run();
-  await env.DB.batch(KUCHING_SCHOOLS.map((name) => env.DB.prepare("INSERT OR IGNORE INTO school_directory (name, created_at, updated_at, created_by) VALUES (?, ?, ?, 'system-kuching-register')").bind(name, now, now)));
+  // Canonicalise directory labels without changing member profile free text.
+  const existing = await env.DB.prepare("SELECT id, name FROM school_directory").all<{ id: number; name: string }>();
+  for (const row of existing.results) {
+    const canonical = standardizeSchoolName(row.name);
+    if (canonical === row.name) continue;
+    try { await env.DB.prepare("UPDATE school_directory SET name = ?, updated_at = ? WHERE id = ?").bind(canonical, now, row.id).run(); }
+    catch { await env.DB.prepare("UPDATE school_directory SET active = 0, updated_at = ? WHERE id = ?").bind(now, row.id).run(); }
+  }
+  await env.DB.batch(KUCHING_SCHOOLS.map((name) => env.DB.prepare("INSERT OR IGNORE INTO school_directory (name, created_at, updated_at, created_by) VALUES (?, ?, ?, 'system-kuching-register')").bind(standardizeSchoolName(name), now, now)));
 }
 
 export async function GET(request: Request) {
@@ -32,7 +44,7 @@ export async function POST(request: Request) {
   if (user.role !== "admin") return Response.json({ error: "Administrator access required" }, { status: 403 });
   await ensureSchema();
   const body = await request.json() as { action?: string; id?: number; name?: string };
-  const name = String(body.name ?? "").trim().replace(/\s+/g, " ");
+  const name = standardizeSchoolName(String(body.name ?? ""));
   if (body.action === "archive") { if (!body.id) return Response.json({ error: "School id required" }, { status: 400 }); await env.DB.prepare("UPDATE school_directory SET active = 0, updated_at = ? WHERE id = ?").bind(new Date().toISOString(), body.id).run(); await writeAuditEvent({ actor: user, action: "school_archived", entityType: "school", entityId: body.id }); return Response.json({ ok: true }); }
   if (!name) return Response.json({ error: "School name is required" }, { status: 400 });
   try { await env.DB.prepare("INSERT INTO school_directory (name, created_at, updated_at, created_by) VALUES (?, ?, ?, ?)").bind(name, new Date().toISOString(), new Date().toISOString(), user.email).run(); } catch { return Response.json({ error: "That school already exists" }, { status: 409 }); }
