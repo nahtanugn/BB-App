@@ -1751,7 +1751,7 @@ export default function AwardTracker({
               </button>
             ) : view === "members" && canAddMembers ? (
               <button className="primary" onClick={openAddMember}>
-                ＋ Add member
+                Add member
               </button>
             ) : null}
           </div>

@@ -49,7 +49,7 @@ export default function ManageHub({
   ].filter((group) => group.tools.length);
 
   return <main className="manage-hub-page">
-    <header className="category-page-header"><div><p className="eyebrow">MANAGE</p><h1>{staff ? "Company tools" : "My requests"}</h1><p>{staff ? "Open the area you need without searching through a long menu." : "Submit requests and follow their progress from one place."}</p></div></header>
+    <header className="category-page-header"><div><p className="eyebrow">MANAGE</p><h1>{staff ? "Manage" : "My requests"}</h1><p>{staff ? "Requests, stock and administration are grouped by purpose." : "Submit requests and follow their progress from one place."}</p></div></header>
     <div className="manage-group-grid">
       {groups.map((group) => <section className="panel manage-group" key={group.title}>
         <div className="panel-heading"><div><p className="eyebrow">{group.title.toUpperCase()}</p><h2>{group.title}</h2><p>{group.description}</p></div><span>{group.tools.length}</span></div>

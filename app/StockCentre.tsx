@@ -218,7 +218,7 @@ export default function StockCentre(props: {
       <section className="stock-page">
         <div className="stock-heading">
           <div><p className="eyebrow">COMPANY INVENTORY</p><h1>Stock Centre</h1><p>Uniform and award balances, issues and returns in one auditable place.</p></div>
-          {canAdjust && <button className="primary" onClick={() => setShowAdd(true)}>+ Add stock item</button>}
+          {canAdjust && <button className="primary" onClick={() => setShowAdd(true)}>Add stock item</button>}
         </div>
         {notice && <p className="form-success" role="status">{notice}</p>}
         {error && <p className="form-error">{error}</p>}
@@ -239,7 +239,7 @@ export default function StockCentre(props: {
             </div>
             {tab === "dashboard" ? (
               <section className="quartermaster-workspace">
-                <div className="quartermaster-intro"><div><p className="eyebrow">QUARTERMASTER WORKSPACE</p><h2>Today’s store work</h2><p>Handle requests, stock alerts and handovers from one place.</p></div><div className="quartermaster-actions"><button className="primary" onClick={() => { const item = data.items.find((entry) => entry.condition !== "defective"); if (item) setSelected(item); }}>Issue or return item</button>{data.permissions.includes("stock.export") && <button className="secondary" onClick={exportReorderList}>Export reorder list</button>}</div></div>
+                <div className="quartermaster-intro"><div><p className="eyebrow">QUARTERMASTER</p><h2>Today’s store work</h2><p>Handle requests, stock alerts and handovers from one place.</p></div><div className="quartermaster-actions"><button className="primary" onClick={() => { const item = data.items.find((entry) => entry.condition !== "defective"); if (item) setSelected(item); }}>Record issue or return</button>{data.permissions.includes("stock.export") && <button className="secondary" onClick={exportReorderList}>Export reorder list</button>}</div></div>
                 <div className="quartermaster-grid">
                   <article><span>Awaiting review</span><strong>{data.dashboard?.requests.filter((request) => request.status === "pending").length ?? 0}</strong><small>uniform requests</small></article>
                   <article><span>Ready to collect</span><strong>{data.dashboard?.requests.filter((request) => request.status === "ready").length ?? 0}</strong><small>member handovers</small></article>

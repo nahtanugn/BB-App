@@ -108,7 +108,7 @@ export default function AutomationCentre({ readOnly }: { readOnly: boolean }) {
   return (
     <main className="automation-page">
       <header className="automation-hero">
-        <div><p className="eyebrow">AUTOMATED OPERATIONS</p><h1>Automation Centre</h1><p>Daily checks run at 08:00 Malaysia time. The system creates follow-up work but never makes official decisions.</p></div>
+        <div><p className="eyebrow">ADMINISTRATION</p><h1>Automation</h1><p>Daily checks run at 08:00 Malaysia time. The system creates follow-up work but never makes official decisions.</p></div>
         {!readOnly && <button className="primary" disabled={busy} onClick={runNow}>{busy ? "Running…" : "Run checks now"}</button>}
       </header>
       {notice && <p className="form-success" role="status">{notice}</p>}

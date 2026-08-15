@@ -150,7 +150,7 @@ export default function AppShell({
         { route: "uniforms", category: "Requests & Operations", label: "Requests", description: "Uniform and award requests", icon: "▤" },
       );
     }
-    values.push({ route: "events", category: "Programme & Events", label: "Meetings & events", description: "Programme, RSVP and registers", icon: "◫" });
+    values.push({ route: "events", category: "Programme & Events", label: "Meetings and events", description: "Programme, RSVPs and registers", icon: "◫" });
     if (["member", "nco", "squad_leader"].includes(user.role))
       values.push({ route: "journey", category: "People & Progress", label: "My journey", description: "Your goals and progress", icon: "◎" });
     if ((seniorApplicant || mayReviewSubmissions) && (activeSection ?? user.member_section) !== "junior")
@@ -209,10 +209,10 @@ export default function AppShell({
     manage: items.filter((item) => hubForRoute(item.route) === "manage"),
   } satisfies Record<AppHub, NavItem[]>;
   const hubDefinitions: Array<{ hub: AppHub; label: string; memberLabel?: string; description: string; icon: string; route: AppRoute; badge?: number }> = [
-    { hub: "home", label: "Home", description: "Priorities and overview", icon: "⌂", route: "home", badge: actionCount },
-    { hub: "people", label: "People", memberLabel: "Progress", description: staff ? "Members and progress" : "My progress", icon: "♙", route: staff ? "members" : "awards" },
-    { hub: "programme", label: "Programme", description: "Events and resources", icon: "◫", route: "events" },
-    { hub: "manage", label: staff ? "Manage" : "Requests", description: staff ? "Requests and administration" : "My requests", icon: "◆", route: "manage" },
+    { hub: "home", label: "Home", description: "Priorities and updates", icon: "⌂", route: "home", badge: actionCount },
+    { hub: "people", label: "People", memberLabel: "Progress", description: staff ? "Members, awards and attendance" : "My progress", icon: "♙", route: staff ? "members" : "awards" },
+    { hub: "programme", label: "Programme", description: "Meetings, resources and notices", icon: "◫", route: "events" },
+    { hub: "manage", label: staff ? "Manage" : "Requests", description: staff ? "Requests, stock and administration" : "My requests", icon: "◆", route: "manage" },
   ];
   const contextItems = activeHub === "people" || activeHub === "programme" ? hubItems[activeHub] : [];
 

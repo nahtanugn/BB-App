@@ -110,7 +110,7 @@ export default function ActionCentre({
   ] : [
     { label: "Find a member", target: "/?open=members" },
     { label: "Take attendance", target: "/?open=attendance" },
-    { label: "Open Manage", target: "/?open=manage" },
+    { label: "Manage requests", target: "/?open=manage" },
   ];
 
   async function update(action: "dismiss_item" | "snooze_item", itemId: number) {

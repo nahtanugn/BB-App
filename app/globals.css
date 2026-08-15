@@ -3038,3 +3038,185 @@ button:disabled { opacity: .62; cursor: wait; }
   .stock-filters, .stock-filters-categorised { grid-template-columns: 1fr; }
   .stock-search { grid-column: auto; }
 }
+
+/* Shared UI consistency layer
+   These rules intentionally come last so every portal uses the same visual
+   language even while older page-specific styles are gradually retired. */
+:root {
+  --ui-card-radius: 18px;
+  --ui-control-radius: 12px;
+  --ui-control-height: 46px;
+  --ui-card-border: #dce5ed;
+  --ui-card-shadow: 0 8px 24px rgba(11, 47, 85, .055);
+}
+
+.unified-app-content :is(
+  .panel,
+  .member-card,
+  .resource-card,
+  .submission-card,
+  .uniform-request-card,
+  .request-create-card,
+  .announcement-composer,
+  .announcement-card,
+  .stock-card,
+  .admin-account-list-panel,
+  .admin-account-editor,
+  .role-form,
+  .role-list article,
+  .assignment-list article
+) {
+  border-color: var(--ui-card-border);
+  border-radius: var(--ui-card-radius);
+  box-shadow: var(--ui-card-shadow);
+}
+
+.unified-app-content :is(.panel-heading, .request-section-heading, .stock-section-heading) {
+  min-height: 78px;
+  padding: 18px 20px;
+  align-items: center;
+}
+
+.unified-app-content :is(
+  .category-page-header,
+  .stock-heading,
+  .uniform-request-hero,
+  .admin-centre-hero,
+  .automation-hero,
+  .resources-hero,
+  .announcement-hero,
+  .onboarding-management-hero
+) {
+  min-height: 150px;
+  margin-bottom: 18px;
+  padding: 25px 28px;
+  border: 1px solid var(--ui-card-border);
+  border-radius: var(--ui-card-radius);
+  box-shadow: var(--ui-card-shadow);
+}
+
+.unified-app-content :is(
+  .category-page-header,
+  .stock-heading,
+  .uniform-request-hero,
+  .admin-centre-hero,
+  .automation-hero,
+  .resources-hero
+) {
+  background: white;
+}
+
+.unified-app-content :is(
+  .category-page-header,
+  .stock-heading,
+  .uniform-request-hero,
+  .admin-centre-hero,
+  .automation-hero,
+  .resources-hero,
+  .announcement-hero,
+  .onboarding-management-hero
+) h1 {
+  margin: 4px 0 8px;
+  font-size: clamp(34px, 4.4vw, 52px);
+}
+
+.unified-app-content :where(
+  input:not([type="checkbox"]):not([type="radio"]):not([type="hidden"]),
+  select
+) {
+  min-height: var(--ui-control-height);
+  border: 1px solid #ccd9e5;
+  border-radius: var(--ui-control-radius);
+  background-color: white;
+}
+
+.unified-app-content textarea {
+  min-height: 92px;
+  padding: 11px 12px;
+  border: 1px solid #ccd9e5;
+  border-radius: var(--ui-control-radius);
+  background: white;
+  font: inherit;
+}
+
+.unified-app-content :is(input, select, textarea):focus {
+  border-color: var(--blue);
+  outline: 0;
+  box-shadow: 0 0 0 3px rgba(28, 111, 209, .13);
+}
+
+.primary,
+.secondary {
+  min-height: var(--ui-control-height);
+  padding: 0 18px;
+  border-radius: var(--ui-control-radius);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.secondary {
+  border: 1px solid #cddae6;
+  background: white;
+  color: var(--navy);
+  box-shadow: 0 4px 12px rgba(11, 47, 85, .055);
+}
+
+.secondary:hover { border-color: #a9bfd3; background: #f7fafc; }
+.primary:disabled, .secondary:disabled { cursor: not-allowed; opacity: .55; box-shadow: none; }
+
+.unified-app-content :is(.stat-grid, .stock-summary, .admin-summary, .quartermaster-grid, .journey-stats) {
+  align-items: stretch;
+}
+
+.unified-app-content :is(.stat-card, .stock-summary article, .admin-summary article, .quartermaster-grid article, .journey-stats article) {
+  min-height: 112px;
+  border: 1px solid var(--ui-card-border);
+  border-radius: 16px;
+  background: white;
+  box-shadow: var(--ui-card-shadow);
+}
+
+.unified-app-content label {
+  color: var(--navy);
+  font-weight: 750;
+}
+
+@media (max-width: 760px) {
+  :root { --ui-card-radius: 16px; --ui-control-height: 48px; }
+
+  .unified-app-content :is(
+    .category-page-header,
+    .stock-heading,
+    .uniform-request-hero,
+    .admin-centre-hero,
+    .automation-hero,
+    .resources-hero,
+    .announcement-hero,
+    .onboarding-management-hero
+  ) {
+    min-height: 0;
+    margin-bottom: 14px;
+    padding: 20px;
+    align-items: stretch;
+  }
+
+  .unified-app-content :is(
+    .category-page-header,
+    .stock-heading,
+    .uniform-request-hero,
+    .admin-centre-hero,
+    .automation-hero,
+    .resources-hero,
+    .announcement-hero,
+    .onboarding-management-hero
+  ) h1 { font-size: 34px; }
+
+  .unified-app-content :is(.panel-heading, .request-section-heading, .stock-section-heading) {
+    min-height: 70px;
+    padding: 16px;
+    align-items: flex-start;
+  }
+
+  .primary, .secondary { width: 100%; }
+  .unified-app-content .form-row { grid-template-columns: 1fr; }
+}

@@ -79,7 +79,7 @@ export default function OnboardingCentre({
   const content = (
     <section className={embedded ? "onboarding-management embedded" : "onboarding-management"}>
       {notice && <div className="action-toast" role="status"><span>✓</span>{notice}<button onClick={() => setNotice("")} aria-label="Dismiss confirmation">×</button></div>}
-      <div className="onboarding-management-hero"><div><p className="eyebrow">ONBOARDING OPERATIONS</p><h1>Access & profile review</h1><p>Approve member access, resolve correction requests and monitor incomplete setup.</p></div></div>
+      <div className="onboarding-management-hero"><div><p className="eyebrow">ADMINISTRATION</p><h1>Onboarding</h1><p>Review access requests, profile corrections and incomplete setup.</p></div></div>
       {error && <p className="form-error">{error}</p>}
       {!data ? <p className="empty-inline">Loading onboarding work…</p> : (
         <>

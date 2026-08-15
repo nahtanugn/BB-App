@@ -258,7 +258,7 @@ export default function AdminCentre({
       {notice && <div className="action-toast" role="status"><span>✓</span>{notice}<button onClick={() => setNotice("")} aria-label="Dismiss confirmation">×</button></div>}
       <section className="admin-centre-page">
         <div className="admin-centre-hero">
-          <div><p className="eyebrow">ADMINISTRATION</p><h1>Roles & accounts</h1><p>{readOnly ? "View membership logins, access levels and custom operational roles." : "Manage membership logins, access levels and custom operational roles in one place."}</p></div>
+          <div><p className="eyebrow">ADMINISTRATION</p><h1>Accounts and roles</h1><p>{readOnly ? "View member logins, access levels and custom roles." : "Manage member logins, access levels and custom roles in one place."}</p></div>
           <label className="admin-search"><span>⌕</span><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search accounts" /></label>
         </div>
         {error && <p className="form-error">{error}</p>}
