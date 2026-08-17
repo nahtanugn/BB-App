@@ -2556,7 +2556,7 @@ button:disabled { opacity: .62; cursor: wait; }
 .home-snapshot small { margin-top: 7px; color: var(--muted); font-size: 9px; }
 .home-quick-actions { margin-bottom: 14px; padding: 17px; display: grid; grid-template-columns: minmax(190px, .7fr) minmax(0, 1.3fr); align-items: center; gap: 16px; }
 .home-quick-actions h2 { margin: 4px 0 0; color: var(--navy); font: 700 21px/1.15 Georgia, serif; }
-.home-quick-actions > div:last-child { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+.home-quick-actions > div:last-child { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
 .home-quick-actions button { min-height: 44px; padding: 0 12px; display: flex; align-items: center; justify-content: space-between; gap: 8px; border: 1px solid #d4e0eb; border-radius: 10px; background: #f8fbfe; color: var(--navy); font-size: 10px; font-weight: 800; text-align: left; }
 .home-quick-actions button span { color: var(--blue); font-size: 17px; }
 .home-announcement { width: 100%; margin-bottom: 16px; padding: 15px 18px; display: grid; grid-template-columns: 36px minmax(0, 1fr) auto; align-items: center; gap: 12px; color: var(--ink); text-align: left; }

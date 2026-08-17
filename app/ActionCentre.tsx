@@ -107,10 +107,12 @@ export default function ActionCentre({
     { label: "View my progress", target: "/?open=awards" },
     { label: "View programme", target: "/?open=events" },
     { label: "Make a request", target: "/?open=manage" },
+    { label: "Open resources", target: "/?open=resources" },
   ] : [
     { label: "Find a member", target: "/?open=members" },
     { label: "Take attendance", target: "/?open=attendance" },
     { label: "Manage requests", target: "/?open=manage" },
+    { label: "Open resources", target: "/?open=resources" },
   ];
 
   async function update(action: "dismiss_item" | "snooze_item", itemId: number) {
