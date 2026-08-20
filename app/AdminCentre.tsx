@@ -266,7 +266,18 @@ export default function AdminCentre({
 
   async function archiveSchool(id: number) {
     if (!window.confirm("Archive this school from future member forms? Existing records remain unchanged.")) return;
-    await fetch("/api/schools", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "archive", id }) }); await load(); setNotice("School archived.");
+    setBusy(true); setError(""); setNotice("");
+    try {
+      const response = await fetch("/api/schools", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "archive", id }) });
+      const result = await response.json() as { error?: string; message?: string };
+      if (!response.ok) throw new Error(result.error ?? "Unable to archive school");
+      await load();
+      setNotice(result.message ?? "School archived.");
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : "Unable to archive school");
+    } finally {
+      setBusy(false);
+    }
   }
 
   return (
@@ -298,7 +309,7 @@ export default function AdminCentre({
           </select>
         </label>
 
-        {tab === "audit" ? <AuditHistory /> : tab === "schools" ? <section className="panel school-directory"><div className="panel-heading"><div><p className="eyebrow">DATA QUALITY</p><h2>School directory</h2><p>Approved names appear as suggestions in member forms. Existing free-text values are preserved.</p></div><span>{schools.length}</span></div><form onSubmit={addSchool} className="inline-form"><input value={newSchool} onChange={(event) => setNewSchool(event.target.value)} placeholder="e.g. SMK Tinggi Kuching" required /><button className="primary" disabled={busy}>{busy ? "Adding…" : "Add school"}</button></form><div className="school-list">{schools.map((school) => <article key={school.id}><strong>{school.name}</strong><button className="danger-link" onClick={() => archiveSchool(school.id)}>Archive</button></article>)}</div></section> : tab === "junior-ranks" ? (
+        {tab === "audit" ? <AuditHistory /> : tab === "schools" ? <section className="panel school-directory"><div className="panel-heading"><div><p className="eyebrow">DATA QUALITY</p><h2>School directory</h2><p>Approved names appear as suggestions in member forms. Existing free-text values are preserved.</p></div><span>{schools.length}</span></div><form onSubmit={addSchool} className="inline-form"><input value={newSchool} onChange={(event) => setNewSchool(event.target.value)} placeholder="e.g. SMK Tinggi Kuching" required /><button className="primary" disabled={busy}>{busy ? "Adding…" : "Add school"}</button></form><div className="school-list">{schools.map((school) => <article key={school.id}><strong>{school.name}</strong><button className="danger-link" disabled={busy} onClick={() => void archiveSchool(school.id)}>Archive</button></article>)}</div></section> : tab === "junior-ranks" ? (
           <section className="junior-rank-review panel"><div className="panel-heading"><div><p className="eyebrow">MANUAL REVIEW</p><h2>Junior members needing a rank</h2><p>These members remain unchanged until you choose their correct Junior rank.</p></div><span>{juniorRankReviews.length}</span></div>{juniorRankReviews.map((member) => <article key={member.id}><div><strong>{member.name}</strong><small>{member.squad} · joined {member.joined_at} · {member.email}</small></div><select defaultValue="Pre-Junior" aria-label={`Choose rank for ${member.name}`}><option>Pre-Junior</option><option>Junior</option><option>Assistant Leading Boy</option><option>Leading Boy</option><option>Chief Leading Boy</option></select><button className="primary" disabled={busy} onClick={(event) => reviewJuniorRank(member, (event.currentTarget.previousElementSibling as HTMLSelectElement).value)}>Save rank</button></article>)}{!juniorRankReviews.length && <div className="operations-empty"><span>✓</span><h2>All Junior ranks are reviewed</h2><p>No Junior member remains recorded as Private.</p></div>}</section>
         ) : tab === "accounts" ? (
           <div className="admin-account-layout">
