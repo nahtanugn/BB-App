@@ -98,6 +98,7 @@ export default function ResourceLibrary({
   }, [categoryFilter, query, resources]);
 
   const grouped = useMemo(() => {
+    if (sortMode === "recent") return [["Most recent", [...visible].sort((a, b) => b.created_at.localeCompare(a.created_at))] as [string, Resource[]]];
     const groups = new Map<string, Resource[]>();
     visible.forEach((resource) =>
       groups.set(resource.category, [
@@ -105,7 +106,7 @@ export default function ResourceLibrary({
         resource,
       ]),
     );
-    return [...groups.entries()].map(([category, items]) => [category, sortMode === "recent" ? [...items].sort((a, b) => b.created_at.localeCompare(a.created_at)) : items] as [string, Resource[]]);
+    return [...groups.entries()];
   }, [sortMode, visible]);
 
   async function createResource(event: FormEvent<HTMLFormElement>) {
