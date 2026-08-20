@@ -41,6 +41,8 @@ export default function ResourceLibrary({
 }) {
   const [resources, setResources] = useState<Resource[]>([]);
   const [query, setQuery] = useState("");
+  const [categoryFilter, setCategoryFilter] = useState("all");
+  const [sortMode, setSortMode] = useState<"category" | "recent">("category");
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
   const [busy, setBusy] = useState(false);
@@ -84,16 +86,16 @@ export default function ResourceLibrary({
       );
   }, []);
 
+  const categories = useMemo(() => [...new Set(resources.map((resource) => resource.category).filter(Boolean))].sort((a, b) => a.localeCompare(b)), [resources]);
   const visible = useMemo(() => {
     const term = query.trim().toLowerCase();
-    return resources.filter(
-      (resource) =>
-        !term ||
-        `${resource.title} ${resource.description} ${resource.category}`
+    return resources.filter((resource) => {
+        if (categoryFilter !== "all" && resource.category !== categoryFilter) return false;
+        return !term || `${resource.title} ${resource.description} ${resource.category}`
           .toLowerCase()
-          .includes(term),
-    );
-  }, [query, resources]);
+          .includes(term);
+    });
+  }, [categoryFilter, query, resources]);
 
   const grouped = useMemo(() => {
     const groups = new Map<string, Resource[]>();
@@ -103,8 +105,8 @@ export default function ResourceLibrary({
         resource,
       ]),
     );
-    return [...groups.entries()];
-  }, [visible]);
+    return [...groups.entries()].map(([category, items]) => [category, sortMode === "recent" ? [...items].sort((a, b) => b.created_at.localeCompare(a.created_at)) : items] as [string, Resource[]]);
+  }, [sortMode, visible]);
 
   async function createResource(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -203,6 +205,10 @@ export default function ResourceLibrary({
             aria-label="Search resources"
           />
         </label>
+        <div className="resource-toolbar" aria-label="Resource filters">
+          <label>Category<select value={categoryFilter} onChange={(event) => setCategoryFilter(event.target.value)}><option value="all">All categories</option>{categories.map((category) => <option value={category} key={category}>{category}</option>)}</select></label>
+          <label>Sort<select value={sortMode} onChange={(event) => setSortMode(event.target.value as "category" | "recent")}><option value="category">By category</option><option value="recent">Most recent</option></select></label>
+        </div>
       </section>
       {canManageResources && (
         <section className="resource-editor panel">
