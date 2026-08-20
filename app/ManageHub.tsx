@@ -5,6 +5,7 @@ import type { AppRoute, ShellUser } from "./AppShell";
 
 type Tool = { route: AppRoute; label: string; description: string; icon: string };
 type CountRow = { rule_key?: string; total?: number };
+type PersonalRequestSummary = { awards: { pending: number; total: number }; uniforms: { active: number; total: number } };
 
 export default function ManageHub({
   user,
@@ -18,6 +19,7 @@ export default function ManageHub({
   onOpen: (route: AppRoute) => void;
 }) {
   const [workCounts, setWorkCounts] = useState<Record<string, number>>({});
+  const [personalRequests, setPersonalRequests] = useState<PersonalRequestSummary | null>(null);
   useEffect(() => {
     let active = true;
     const refresh = async () => {
@@ -44,6 +46,23 @@ export default function ManageHub({
     const timer = window.setInterval(refresh, 5000);
     return () => { active = false; window.clearInterval(timer); };
   }, [stockAccess]);
+  useEffect(() => {
+    if (!["member", "nco", "squad_leader"].includes(user.role)) return;
+    let active = true;
+    Promise.all([
+      fetch("/api/submissions", { cache: "no-store" }).then(async (response) => response.ok ? await response.json() as { submissions?: Array<{ status: string }> } : { submissions: [] }),
+      fetch("/api/uniform-requests", { cache: "no-store" }).then(async (response) => response.ok ? await response.json() as { ownRequests?: Array<{ status: string }> } : { ownRequests: [] }),
+    ]).then(([awards, uniforms]) => {
+      if (!active) return;
+      const awardRows = awards.submissions ?? [];
+      const uniformRows = uniforms.ownRequests ?? [];
+      setPersonalRequests({
+        awards: { total: awardRows.length, pending: awardRows.filter((row) => row.status === "pending").length },
+        uniforms: { total: uniformRows.length, active: uniformRows.filter((row) => ["pending", "approved", "ready"].includes(row.status)).length },
+      });
+    }).catch(() => undefined);
+    return () => { active = false; };
+  }, [user.role]);
   const temporaryAdmin = Boolean(
     user.role !== "viewer" &&
       user.temporary_access_role === "temporary_admin" &&
@@ -81,6 +100,7 @@ export default function ManageHub({
   return <main className="manage-hub-page">
     <header className="category-page-header"><div><p className="eyebrow">MANAGE</p><h1>{staff ? "Manage" : "My requests"}</h1><p>{staff ? "Requests, stock and administration are grouped by purpose." : "Submit requests and follow their progress from one place."}</p></div></header>
     <div className="manage-group-grid">
+      {personalRequests && <section className="panel personal-request-summary"><div className="panel-heading"><div><p className="eyebrow">MY REQUESTS</p><h2>Request status</h2><p>A quick view of your award and uniform applications.</p></div><span>{personalRequests.uniforms.total + (activeSection === "junior" ? 0 : personalRequests.awards.total)}</span></div><div className="personal-request-cards">{activeSection !== "junior" && <button type="button" onClick={() => onOpen("submissions")}><strong>Award submissions</strong><span>{personalRequests.awards.pending ? `${personalRequests.awards.pending} awaiting review` : `${personalRequests.awards.total} submitted`}</span><b>›</b></button>}<button type="button" onClick={() => onOpen("uniforms")}><strong>Uniform requests</strong><span>{personalRequests.uniforms.active ? `${personalRequests.uniforms.active} active` : `${personalRequests.uniforms.total} submitted`}</span><b>›</b></button></div></section>}
       {groups.map((group) => <section className="panel manage-group" key={group.title}>
         <div className="panel-heading"><div><p className="eyebrow">{group.title.toUpperCase()}</p><h2>{group.title}</h2><p>{group.description}</p></div><span>{group.tools.reduce((total, tool) => total + countFor(tool.route), 0) || group.tools.length}</span></div>
         <div className="manage-tool-list">
