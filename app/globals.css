@@ -2548,12 +2548,14 @@ button:disabled { opacity: .62; cursor: wait; }
 .member-profile-actions .danger-link { min-height: 38px; padding: 0 9px; }
 
 .simplified-home-hero { min-height: 0; }
-.home-snapshot { margin: 16px 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+.home-snapshot { margin: 16px 0; display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 12px; }
 .home-snapshot article { min-height: 112px; padding: 18px; }
 .home-snapshot span, .home-snapshot strong, .home-snapshot small { display: block; }
 .home-snapshot span { color: var(--muted); font-size: 9px; font-weight: 800; text-transform: uppercase; letter-spacing: .08em; }
 .home-snapshot strong { margin-top: 10px; color: var(--navy); font: 700 31px/1 Georgia, serif; }
 .home-snapshot small { margin-top: 7px; color: var(--muted); font-size: 9px; }
+.manage-tool-list > button { position: relative; }
+.manage-tool-list > button em { min-width: 22px; height: 22px; padding: 0 6px; display: inline-grid; place-items: center; border-radius: 999px; background: #fff2c8; color: #87600a; font-size: 10px; font-style: normal; font-weight: 850; }
 .home-quick-actions { margin-bottom: 14px; padding: 17px; display: grid; grid-template-columns: minmax(190px, .7fr) minmax(0, 1.3fr); align-items: center; gap: 16px; }
 .home-quick-actions h2 { margin: 4px 0 0; color: var(--navy); font: 700 21px/1.15 Georgia, serif; }
 .home-quick-actions > div:last-child { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }

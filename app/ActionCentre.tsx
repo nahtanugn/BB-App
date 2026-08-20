@@ -21,6 +21,8 @@ type TrackerSummary = {
   attendancePercent?: number;
   awardsEarned?: number;
   upcomingEvents?: number;
+  pendingUniformRequests?: number;
+  subscriptionPaid?: boolean;
 };
 
 const ruleLabels: Record<string, string> = {
@@ -97,7 +99,9 @@ export default function ActionCentre({
   const snapshot = summary?.mode === "personal" ? [
     { label: "Attendance", value: `${summary.attendancePercent ?? 0}%`, note: "completed meetings" },
     { label: "Awards", value: summary.awardsEarned ?? 0, note: "earned" },
+    { label: "Requests", value: (summary.pendingSubmissions ?? 0) + (summary.pendingUniformRequests ?? 0), note: "awaiting action" },
     { label: "Coming up", value: summary.upcomingEvents ?? 0, note: "events" },
+    { label: "Subscription", value: summary.subscriptionPaid ? "Paid" : "Due", note: "current year" },
   ] : [
     { label: "Members", value: summary?.memberCount ?? "—", note: "Senior and Junior" },
     { label: "Attendance", value: `${summary?.completedRegisters ?? 0}/${summary?.meetingsThisYear ?? 0}`, note: "registers complete" },

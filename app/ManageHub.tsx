@@ -1,8 +1,10 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import type { AppRoute, ShellUser } from "./AppShell";
 
 type Tool = { route: AppRoute; label: string; description: string; icon: string };
+type CountRow = { rule_key?: string; total?: number };
 
 export default function ManageHub({
   user,
@@ -15,6 +17,33 @@ export default function ManageHub({
   activeSection: "senior" | "junior";
   onOpen: (route: AppRoute) => void;
 }) {
+  const [workCounts, setWorkCounts] = useState<Record<string, number>>({});
+  useEffect(() => {
+    let active = true;
+    const refresh = async () => {
+      const counts: Record<string, number> = {};
+      try {
+        const response = await fetch("/api/automation", { cache: "no-store" });
+        if (response.ok) {
+          const result = await response.json() as { counts?: CountRow[] };
+          (result.counts ?? []).forEach((row) => { if (row.rule_key) counts[row.rule_key] = Number(row.total ?? 0); });
+        }
+        if (stockAccess) {
+          const response = await fetch("/api/stock?dashboard=1", { cache: "no-store" });
+          if (response.ok) {
+            const result = await response.json() as { dashboard?: { requests?: Array<{ status: string }>; lowStock?: unknown[] } };
+            const requests = result.dashboard?.requests ?? [];
+            counts.uniform_requests = requests.filter((request) => ["pending", "approved", "ready"].includes(request.status)).length;
+            counts.low_stock = result.dashboard?.lowStock?.length ?? 0;
+          }
+        }
+      } catch { /* Work counts are supplemental; keep the hub usable when they are unavailable. */ }
+      if (active) setWorkCounts(counts);
+    };
+    refresh();
+    const timer = window.setInterval(refresh, 5000);
+    return () => { active = false; window.clearInterval(timer); };
+  }, [stockAccess]);
   const temporaryAdmin = Boolean(
     user.role !== "viewer" &&
       user.temporary_access_role === "temporary_admin" &&
@@ -47,16 +76,20 @@ export default function ManageHub({
     { title: "Stock", description: "Uniform requests, inventory and issued items", tools: stockTools },
     { title: "Administration", description: "Accounts, data and company controls", tools: adminTools },
   ].filter((group) => group.tools.length);
+  const countFor = (route: AppRoute) => route === "submissions" ? (workCounts.award_reviews ?? 0) : route === "uniforms" ? (workCounts.uniform_requests ?? 0) : route === "stock" ? (workCounts.low_stock ?? 0) : route === "onboarding" ? (workCounts.incomplete_onboarding ?? 0) + (workCounts.data_quality ?? 0) : 0;
 
   return <main className="manage-hub-page">
     <header className="category-page-header"><div><p className="eyebrow">MANAGE</p><h1>{staff ? "Manage" : "My requests"}</h1><p>{staff ? "Requests, stock and administration are grouped by purpose." : "Submit requests and follow their progress from one place."}</p></div></header>
     <div className="manage-group-grid">
       {groups.map((group) => <section className="panel manage-group" key={group.title}>
-        <div className="panel-heading"><div><p className="eyebrow">{group.title.toUpperCase()}</p><h2>{group.title}</h2><p>{group.description}</p></div><span>{group.tools.length}</span></div>
+        <div className="panel-heading"><div><p className="eyebrow">{group.title.toUpperCase()}</p><h2>{group.title}</h2><p>{group.description}</p></div><span>{group.tools.reduce((total, tool) => total + countFor(tool.route), 0) || group.tools.length}</span></div>
         <div className="manage-tool-list">
-          {group.tools.map((tool) => <button type="button" onClick={() => onOpen(tool.route)} key={tool.route}>
-            <span aria-hidden="true">{tool.icon}</span><div><strong>{tool.label}</strong><small>{tool.description}</small></div><b>›</b>
-          </button>)}
+          {group.tools.map((tool) => {
+            const count = countFor(tool.route);
+            return <button type="button" onClick={() => onOpen(tool.route)} key={tool.route}>
+            <span aria-hidden="true">{tool.icon}</span><div><strong>{tool.label}</strong><small>{tool.description}</small></div>{count > 0 && <em aria-label={`${count} pending`}>{count}</em>}<b>›</b>
+          </button>;
+          })}
         </div>
       </section>)}
     </div>

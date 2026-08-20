@@ -5,6 +5,7 @@ import {
   hasTemporaryAdminAccess,
 } from "../../../lib/auth";
 import { writeAuditEvent } from "../../../lib/audit";
+import { ensureStockSchema } from "../../../lib/stock";
 
 type AwardSeed = {
   code: string;
@@ -717,9 +718,11 @@ export async function GET(request: Request) {
     if (url.searchParams.get("summary") === "1") {
       const db = env.DB;
       if (user.role === "member" && !hasTemporaryAccess && !trackerPermissions.length) {
+        await ensureStockSchema(db);
         const member = await db.prepare("SELECT id, section, service_award_count FROM members WHERE LOWER(email) = LOWER(?) LIMIT 1").bind(user.email).first<{ id: number; section: string; service_award_count: number }>();
         if (!member) return Response.json({ summary: { mode: "personal", attendancePercent: 0, awardsEarned: 0, upcomingEvents: 0 } });
-        const [attendance, awards, events] = await Promise.all([
+        const currentYear = new Date().getFullYear();
+        const [attendance, awards, events, submissions, uniformRequests, subscription] = await Promise.all([
           db.prepare(`SELECT
             SUM(CASE WHEN ar.status = 'present' THEN 1 ELSE 0 END) AS present,
             SUM(CASE WHEN ar.status IN ('present', 'absent') THEN 1 ELSE 0 END) AS counted
@@ -728,6 +731,9 @@ export async function GET(request: Request) {
             WHERE s.section = ? AND s.meeting_date <= date('now')`).bind(member.id, member.section).first<{ present: number | null; counted: number | null }>(),
           db.prepare("SELECT COUNT(*) AS total FROM member_awards WHERE member_id = ? AND status = 'awarded'").bind(member.id).first<{ total: number }>(),
           db.prepare("SELECT COUNT(*) AS total FROM company_events WHERE event_date >= datetime('now') AND cancelled_at IS NULL AND section IN ('all', ?)").bind(member.section).first<{ total: number }>(),
+          db.prepare("SELECT COUNT(*) AS total FROM award_submissions WHERE member_id = ? AND status IN ('pending', 'in_progress') AND archived_at IS NULL").bind(member.id).first<{ total: number }>(),
+          db.prepare("SELECT COUNT(*) AS total FROM uniform_requests WHERE member_id = ? AND status IN ('pending', 'approved', 'ready')").bind(member.id).first<{ total: number }>(),
+          db.prepare("SELECT paid FROM member_subscriptions WHERE member_id = ? AND year = ?").bind(member.id, currentYear).first<{ paid: number }>(),
         ]);
         const counted = Number(attendance?.counted ?? 0);
         return Response.json({ summary: {
@@ -735,6 +741,9 @@ export async function GET(request: Request) {
           attendancePercent: counted ? Math.round((Number(attendance?.present ?? 0) / counted) * 100) : 0,
           awardsEarned: Number(awards?.total ?? 0) + Number(member.service_award_count ?? 0),
           upcomingEvents: Number(events?.total ?? 0),
+          pendingSubmissions: Number(submissions?.total ?? 0),
+          pendingUniformRequests: Number(uniformRequests?.total ?? 0),
+          subscriptionPaid: Number(subscription?.paid ?? 0) === 1,
         } });
       }
       const [members, meetings, completeRegisters, submissions] = await Promise.all([
