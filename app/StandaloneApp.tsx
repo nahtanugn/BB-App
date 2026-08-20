@@ -544,6 +544,12 @@ export default function StandaloneApp() {
     event.preventDefault();
     const formElement = event.currentTarget;
     const form = new FormData(formElement);
+    const newPassword = String(form.get("newPassword") ?? "");
+    const confirmation = String(form.get("newPasswordConfirm") ?? "");
+    if (confirmation && newPassword !== confirmation) {
+      setError("The new passwords do not match.");
+      return;
+    }
     setBusy(true);
     setError("");
     setNotice("");
@@ -553,7 +559,7 @@ export default function StandaloneApp() {
       body: JSON.stringify({
         action: "change_password",
         currentPassword: form.get("currentPassword"),
-        newPassword: form.get("newPassword"),
+        newPassword,
       }),
     });
     const result = (await response.json()) as { error?: string };
@@ -808,6 +814,10 @@ export default function StandaloneApp() {
                       minLength={10}
                       required
                     />
+                  </label>
+                  <label>
+                    Confirm new password
+                    <input name="newPasswordConfirm" type="password" minLength={10} required autoComplete="new-password" />
                   </label>
                   <button className="primary" disabled={busy}>
                     Update password

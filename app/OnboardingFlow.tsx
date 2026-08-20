@@ -39,6 +39,7 @@ export default function OnboardingFlow({
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
+  const [newPasswordValue, setNewPasswordValue] = useState("");
 
   async function load() {
     const response = await fetch("/api/onboarding", { cache: "no-store" });
@@ -79,6 +80,12 @@ export default function OnboardingFlow({
     event.preventDefault();
     const formElement = event.currentTarget;
     const form = new FormData(formElement);
+    const newPassword = String(form.get("newPassword") ?? "");
+    const confirmation = String(form.get("newPasswordConfirm") ?? "");
+    if (confirmation && newPassword !== confirmation) {
+      setError("The new passwords do not match.");
+      return;
+    }
     setBusy(true); setError(""); setNotice("");
     const response = await fetch("/api/auth", {
       method: "POST",
@@ -86,7 +93,7 @@ export default function OnboardingFlow({
       body: JSON.stringify({
         action: "change_password",
         currentPassword: form.get("currentPassword"),
-        newPassword: form.get("newPassword"),
+        newPassword,
       }),
     });
     const result = (await response.json()) as { error?: string };
@@ -95,6 +102,7 @@ export default function OnboardingFlow({
       return setError(result.error ?? "Unable to change password");
     }
     formElement.reset();
+    setNewPasswordValue("");
     setNotice("Your private password is now active.");
     await load();
     setBusy(false);
@@ -151,7 +159,9 @@ export default function OnboardingFlow({
             <p>Replace the password used for your access request. Use at least 10 characters.</p>
             <form onSubmit={changePassword}>
               <label>Current password<input name="currentPassword" type="password" required autoComplete="current-password" /></label>
-              <label>New private password<input name="newPassword" type="password" minLength={10} required autoComplete="new-password" /></label>
+              <label>New private password<input name="newPassword" type="password" minLength={10} required autoComplete="new-password" value={newPasswordValue} onChange={(event) => setNewPasswordValue(event.target.value)} /></label>
+              <label>Confirm new password<input name="newPasswordConfirm" type="password" minLength={10} required autoComplete="new-password" /></label>
+              <ul className="password-checklist" aria-label="Password requirements"><li className={newPasswordValue.length >= 10 ? "valid" : ""}>{newPasswordValue.length >= 10 ? "✓" : "○"} At least 10 characters</li><li className={/[A-Z]/.test(newPasswordValue) ? "valid" : ""}>{/[A-Z]/.test(newPasswordValue) ? "✓" : "○"} One uppercase letter</li><li className={/[0-9]/.test(newPasswordValue) ? "valid" : ""}>{/[0-9]/.test(newPasswordValue) ? "✓" : "○"} One number</li></ul>
               <button className="primary" disabled={busy}>{busy ? "Updating…" : "Secure my account"}</button>
             </form>
           </section>

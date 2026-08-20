@@ -2568,6 +2568,8 @@ button:disabled { opacity: .62; cursor: wait; }
 .resource-toolbar { display: flex; justify-content: flex-end; gap: 8px; }
 .resource-toolbar label { display: grid; gap: 4px; color: var(--muted); font-size: 9px; font-weight: 800; }
 .resource-toolbar select { min-height: 38px; padding: 0 10px; border: 1px solid var(--line); border-radius: 9px; background: white; color: var(--navy); font: inherit; font-size: 11px; }
+.password-checklist { margin: -4px 0 2px; padding: 0; display: grid; gap: 5px; list-style: none; color: var(--muted); font-size: 10px; }
+.password-checklist li.valid { color: #16835f; font-weight: 750; }
 .personal-request-summary { grid-column: 1 / -1; }
 .personal-request-cards { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 9px; }
 .personal-request-cards button { min-height: 68px; padding: 13px 15px; display: grid; grid-template-columns: 1fr auto; gap: 3px 12px; align-items: center; border: 1px solid #dbe5ee; border-radius: 11px; background: #f8fbff; color: var(--navy); text-align: left; }
