@@ -110,7 +110,7 @@ export default function ActionCentre({
   const quickActions = ["member", "nco", "squad_leader"].includes(userRole) ? [
     { label: "View my progress", target: "/?open=awards" },
     { label: "View programme", target: "/?open=events" },
-    { label: "Make a request", target: "/?open=manage" },
+    { label: "View my requests", target: "/?open=manage" },
     { label: "Open resources", target: "/?open=resources" },
   ] : [
     { label: "Find a member", target: "/?open=members" },
