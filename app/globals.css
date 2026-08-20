@@ -2556,6 +2556,15 @@ button:disabled { opacity: .62; cursor: wait; }
 .home-snapshot small { margin-top: 7px; color: var(--muted); font-size: 9px; }
 .manage-tool-list > button { position: relative; }
 .manage-tool-list > button em { min-width: 22px; height: 22px; padding: 0 6px; display: inline-grid; place-items: center; border-radius: 999px; background: #fff2c8; color: #87600a; font-size: 10px; font-style: normal; font-weight: 850; }
+.admin-filter-bar { margin: 14px 0; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 9px; }
+.admin-filter-bar label { display: grid; gap: 5px; color: var(--muted); font-size: 10px; font-weight: 800; }
+.admin-filter-bar select { width: 100%; min-height: 40px; padding: 0 9px; border: 1px solid var(--line); border-radius: 9px; background: white; color: var(--navy); font: inherit; font-size: 11px; }
+.admin-data-quality { margin-top: 14px; padding: 15px 18px; display: flex; align-items: center; justify-content: space-between; gap: 18px; }
+.admin-data-quality h2 { margin: 4px 0; color: var(--navy); font: 700 20px/1.1 Georgia, serif; }
+.admin-data-quality p { margin: 0; color: var(--muted); font-size: 11px; }
+.admin-quality-items { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 8px; }
+.admin-quality-items span { padding: 9px 11px; border: 1px solid #eadba8; border-radius: 10px; background: #fffaf0; color: #725814; font-size: 10px; font-weight: 700; }
+.admin-quality-items strong { margin-right: 4px; font: 700 19px Georgia, serif; }
 .quartermaster-heading-actions { display: inline-flex; align-items: center; gap: 8px; }
 .quartermaster-heading-actions button { min-height: 32px; padding: 0 10px; border: 1px solid #c9d9e8; border-radius: 8px; background: #f6faff; color: var(--blue); font-size: 10px; font-weight: 800; }
 .quartermaster-section-heading small { display: block; margin-top: 3px; color: var(--muted); font-size: 10px; }
@@ -2612,6 +2621,10 @@ button:disabled { opacity: .62; cursor: wait; }
   .home-quick-actions > div:last-child { grid-template-columns: 1fr; }
   .home-quick-actions button { min-height: 46px; }
   .home-announcement { grid-template-columns: 34px minmax(0, 1fr); }.home-announcement b { grid-column: 2; }
+  .admin-filter-bar { grid-template-columns: 1fr 1fr; }
+  .admin-data-quality { align-items: stretch; flex-direction: column; }
+  .admin-quality-items { justify-content: stretch; }
+  .admin-quality-items span { flex: 1; min-width: 0; }
   .action-centre-page .action-summary-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .simplified-home-hero.action-centre-hero { min-height: 0; padding-right: 20px; }
   .modal-backdrop { padding: 0; align-items: stretch; place-items: stretch; }

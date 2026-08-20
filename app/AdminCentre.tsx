@@ -50,6 +50,10 @@ export default function AdminCentre({
   const [newSchool, setNewSchool] = useState("");
   const [juniorRankReviews, setJuniorRankReviews] = useState<JuniorRankReview[]>([]);
   const [query, setQuery] = useState("");
+  const [roleFilter, setRoleFilter] = useState("all");
+  const [statusFilter, setStatusFilter] = useState("active");
+  const [sectionFilter, setSectionFilter] = useState("all");
+  const [squadFilter, setSquadFilter] = useState("all");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
@@ -88,8 +92,20 @@ export default function AdminCentre({
 
   const visibleUsers = useMemo(() => {
     const term = query.trim().toLowerCase();
-    return users.filter((user) => !term || `${user.name} ${user.email} ${user.role} ${user.squad}`.toLowerCase().includes(term));
-  }, [query, users]);
+    return users.filter((user) => {
+      if (roleFilter !== "all" && user.role !== roleFilter) return false;
+      if (statusFilter === "active" && !user.active) return false;
+      if (statusFilter === "disabled" && user.active) return false;
+      if (sectionFilter !== "all" && user.member_section !== sectionFilter) return false;
+      if (squadFilter !== "all" && user.squad !== squadFilter) return false;
+      return !term || `${user.name} ${user.email} ${user.role} ${user.squad}`.toLowerCase().includes(term);
+    });
+  }, [query, roleFilter, sectionFilter, squadFilter, statusFilter, users]);
+  const duplicateEmailCount = useMemo(() => {
+    const countsByEmail = new Map<string, number>();
+    users.forEach((user) => countsByEmail.set(user.email.trim().toLowerCase(), (countsByEmail.get(user.email.trim().toLowerCase()) ?? 0) + 1));
+    return [...countsByEmail.values()].filter((count) => count > 1).length;
+  }, [users]);
   const counts = useMemo(() => ({
     active: users.filter((user) => user.active).length,
     disabled: users.filter((user) => !user.active).length,
@@ -268,6 +284,10 @@ export default function AdminCentre({
           <article><span>Member logins</span><strong>{counts.members}</strong></article>
           <article><span>Staff accounts</span><strong>{counts.staff}</strong></article>
         </div>}
+        {currentUser.role === "admin" && <section className="admin-data-quality panel" aria-label="Account data quality">
+          <div><p className="eyebrow">DATA QUALITY</p><h2>Needs attention</h2><p>Resolve these account-linking issues before they become workflow problems.</p></div>
+          <div className="admin-quality-items"><span><strong>{pendingMembers.length}</strong> members without a login</span><span><strong>{duplicateEmailCount}</strong> duplicate email groups</span><span><strong>{users.filter((user) => user.role === "member" && !user.member_section).length}</strong> unlinked sections</span></div>
+        </section>}
         <div className="admin-tabs" role="tablist" aria-label="Administration sections">
           {adminTabOptions.map((option) => <button type="button" role="tab" aria-selected={tab === option.value} className={tab === option.value ? "active" : ""} onClick={() => setTab(option.value)} key={option.value}>{option.label}</button>)}
         </div>
@@ -283,7 +303,13 @@ export default function AdminCentre({
         ) : tab === "accounts" ? (
           <div className="admin-account-layout">
             <section className="admin-account-list-panel">
-              <div className="request-section-heading"><div><p className="eyebrow">ACCOUNTS</p><h2>Existing users</h2></div><span>{visibleUsers.length}</span></div>
+              <div className="admin-filter-bar" aria-label="Filter accounts">
+                <label>Role<select value={roleFilter} onChange={(event) => setRoleFilter(event.target.value)}><option value="all">All roles</option><option value="admin">Administrator</option><option value="officer">Officer</option><option value="nco">NCO</option><option value="squad_leader">Squad Leader</option><option value="viewer">Viewer</option><option value="member">Member</option></select></label>
+                <label>Status<select value={statusFilter} onChange={(event) => setStatusFilter(event.target.value)}><option value="active">Active only</option><option value="all">All statuses</option><option value="disabled">Disabled only</option></select></label>
+                <label>Section<select value={sectionFilter} onChange={(event) => setSectionFilter(event.target.value)}><option value="all">All sections</option><option value="senior">Senior</option><option value="junior">Junior</option></select></label>
+                <label>Squad<select value={squadFilter} onChange={(event) => setSquadFilter(event.target.value)}><option value="all">All squads</option><option>Alpha</option><option>Bravo</option><option>Charlie</option><option>Delta</option></select></label>
+              </div>
+              <div className="request-section-heading"><div><p className="eyebrow">ACCOUNTS</p><h2>Existing users</h2><p>{statusFilter === "active" ? "Active accounts" : "All account records"} · use filters to find a person quickly.</p></div><span>{visibleUsers.length}</span></div>
               <div className="admin-account-list">
                 {visibleUsers.map((user) => (
                   <article className={!user.active ? "disabled" : ""} key={user.id}>
