@@ -790,15 +790,18 @@ export async function GET(request: Request) {
     const section = allowedSections.includes(requestedSection)
       ? requestedSection
       : "senior";
+    const squadLimited = ["nco", "squad_leader"].includes(user.role) && !hasTemporaryAccess;
+    if (squadLimited && user.member_section && section !== user.member_section)
+      return Response.json({ error: "This account can only access its assigned section" }, { status: 403 });
     const [memberResult, sessionResult, attendanceResult, subscriptionResult, bandSubscriptionResult] =
       await Promise.all([
       db
         .prepare(
           `SELECT members.*, COALESCE(users.role, '') AS account_role FROM members
            LEFT JOIN users ON LOWER(users.email) = LOWER(members.email)
-           WHERE members.section = ? ORDER BY members.name COLLATE NOCASE`,
+           WHERE members.section = ?${squadLimited ? " AND members.squad = ?" : ""} ORDER BY members.name COLLATE NOCASE`,
         )
-        .bind(section)
+        .bind(...(squadLimited ? [section, user.squad] : [section]))
         .all<{
           joined_at: string;
           service_years: number;
@@ -810,7 +813,7 @@ export async function GET(request: Request) {
         )
         .bind(section)
         .all(),
-      ["nco", "squad_leader"].includes(user.role) && !hasTemporaryAccess
+      squadLimited
         ? db
             .prepare(
               `SELECT ar.session_id, ar.member_id, ar.status
@@ -829,15 +832,15 @@ export async function GET(request: Request) {
             .all(),
       db
         .prepare(
-          "SELECT ms.member_id, ms.year, ms.paid FROM member_subscriptions ms INNER JOIN members m ON m.id = ms.member_id WHERE m.section = ? ORDER BY ms.year DESC, m.name COLLATE NOCASE",
+          `SELECT ms.member_id, ms.year, ms.paid FROM member_subscriptions ms INNER JOIN members m ON m.id = ms.member_id WHERE m.section = ?${squadLimited ? " AND m.squad = ?" : ""} ORDER BY ms.year DESC, m.name COLLATE NOCASE`,
         )
-        .bind(section)
+        .bind(...(squadLimited ? [section, user.squad] : [section]))
         .all(),
       db
         .prepare(
-          "SELECT bs.member_id, bs.year, bs.status FROM band_subscriptions bs INNER JOIN members m ON m.id = bs.member_id WHERE m.section = ? ORDER BY bs.year DESC, m.name COLLATE NOCASE",
+          `SELECT bs.member_id, bs.year, bs.status FROM band_subscriptions bs INNER JOIN members m ON m.id = bs.member_id WHERE m.section = ?${squadLimited ? " AND m.squad = ?" : ""} ORDER BY bs.year DESC, m.name COLLATE NOCASE`,
         )
-        .bind(section)
+        .bind(...(squadLimited ? [section, user.squad] : [section]))
         .all(),
     ]);
     const members = memberResult.results.map((member) => ({
@@ -854,9 +857,9 @@ export async function GET(request: Request) {
           .all(),
         db
           .prepare(
-            "SELECT ma.member_id, ma.award_code, ma.level, ma.status FROM member_awards ma INNER JOIN members m ON m.id = ma.member_id WHERE m.section = ? AND ma.award_code != 'duke_of_edinburgh'",
+            `SELECT ma.member_id, ma.award_code, ma.level, ma.status FROM member_awards ma INNER JOIN members m ON m.id = ma.member_id WHERE m.section = ?${squadLimited ? " AND m.squad = ?" : ""} AND ma.award_code != 'duke_of_edinburgh'`,
           )
-          .bind(section)
+          .bind(...(squadLimited ? [section, user.squad] : [section]))
           .all(),
         getSubmissionNotifications(section),
       ]);
@@ -930,6 +933,9 @@ export async function POST(request: Request) {
     const section = allowedSections.includes(requestedSection)
       ? requestedSection
       : "senior";
+    const squadLimited = ["nco", "squad_leader"].includes(user.role) && !hasTemporaryAccess;
+    if (squadLimited && user.member_section && section !== user.member_section)
+      return Response.json({ error: "This account can only access its assigned section" }, { status: 403 });
     const canOverrideMemberDetails = hasOperationalAdminAccess(user);
     const overrideRequiredDetails =
       canOverrideMemberDetails && body.overrideRequiredDetails === true;
@@ -955,7 +961,7 @@ export async function POST(request: Request) {
 
     if (action === "create_member") {
       const name = String(body.name ?? "").trim();
-      const squad = String(body.squad ?? "Alpha");
+      const squad = squadLimited ? user.squad : String(body.squad ?? "Alpha");
       const joinedAt = String(
         body.joinedAt ?? new Date().getUTCFullYear(),
       );
@@ -1054,6 +1060,11 @@ export async function POST(request: Request) {
           { error: "Valid member details are required" },
           { status: 400 },
         );
+      if (squadLimited) {
+        const target = await db.prepare("SELECT squad FROM members WHERE id = ? AND section = ?").bind(memberId, section).first<{ squad: string }>();
+        if (!target || target.squad !== user.squad)
+          return Response.json({ error: "You can only edit members in your assigned squad" }, { status: 403 });
+      }
       if (!validRank(section, rank))
         return Response.json(
           { error: `Choose a valid ${section === "junior" ? "Junior" : "Senior"} Section rank` },
