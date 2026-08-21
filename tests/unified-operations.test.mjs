@@ -196,4 +196,8 @@ test("new operations APIs are connected to the Manage hub without changing navig
   assert.match(expansion, /Preview member import/);
   assert.match(expansion, /Only administrators can publish public information/);
   assert.match(expansion, /\/api\/feature-expansion\?kind=analytics/);
+  assert.match(expansion, /accept="\.csv,text\/csv"/);
+  assert.match(expansion, /parseCsv/);
+  assert.match(expansion, /analytics\?\.awards/);
+  assert.match(expansion, /analytics\?\.subscriptions/);
 });
