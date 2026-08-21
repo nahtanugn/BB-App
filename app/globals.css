@@ -2617,6 +2617,13 @@ button:disabled { opacity: .62; cursor: wait; }
 .expansion-centre .expansion-grid > .panel p strong { color: var(--navy); }
 .expansion-centre .audit-list { min-width: 0; display: grid; gap: 8px; }
 .expansion-centre .audit-list article { min-height: 66px; padding: 12px 14px; box-sizing: border-box; }
+.expansion-centre .expansion-grid > .inline-form { grid-column: span 2; grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: end; }
+.expansion-centre .inline-form h3,
+.expansion-centre .inline-form textarea,
+.expansion-centre .inline-form > .primary { grid-column: 1 / -1; }
+.expansion-centre .inline-form h3 { margin: 0 0 2px; color: var(--navy); font-size: 17px; }
+.expansion-centre .inline-form textarea { width: 100%; box-sizing: border-box; resize: vertical; }
+.expansion-centre .inline-form > .primary { justify-self: start; min-width: 150px; }
 
 /* Cross-page UI baseline: every hub uses the same columns, headers and
    overflow behaviour so controls do not drift between portals. */
@@ -2674,6 +2681,11 @@ button:disabled { opacity: .62; cursor: wait; }
   .expansion-centre .admin-tabs { padding: 11px 12px; overflow-x: auto; flex-wrap: nowrap; }
   .expansion-centre .admin-tabs button { flex: 0 0 auto; min-height: 40px; padding-inline: 12px; }
   .expansion-centre > .expansion-grid { grid-template-columns: 1fr; padding: 14px 12px 18px; }
+  .expansion-centre .expansion-grid > .inline-form { grid-column: auto; grid-template-columns: 1fr; }
+  .expansion-centre .inline-form h3,
+  .expansion-centre .inline-form textarea,
+  .expansion-centre .inline-form > .primary { grid-column: auto; }
+  .expansion-centre .inline-form > .primary { width: 100%; }
   .expansion-centre .expansion-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
   .expansion-centre .expansion-stats article { min-height: 90px; padding: 13px; }
   .member-card .card-actions { width: auto; margin: 0; }

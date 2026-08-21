@@ -217,3 +217,11 @@ test("notification feed hides legacy attendance reminders and collapses duplicat
   assert.match(sourceText, /duplicate_rank = 1/);
   assert.match(sourceText, /Attendance is incomplete/);
 });
+
+test("messages composer stays readable across desktop and mobile layouts", async () => {
+  const css = await source("../app/globals.css");
+  assert.match(css, /\.expansion-centre \.expansion-grid > \.inline-form/);
+  assert.match(css, /grid-template-columns: repeat\(2, minmax\(0, 1fr\)\)/);
+  assert.match(css, /\.expansion-centre \.inline-form h3/);
+  assert.match(css, /\.expansion-centre \.inline-form > \.primary \{ width: 100%; \}/);
+});
