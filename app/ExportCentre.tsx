@@ -102,6 +102,16 @@ function joinedYear(value: string) {
   return /^(\d{4})/.exec(value)?.[1] ?? value;
 }
 
+// Keep reports aligned with the managed school directory while preserving the
+// original member value in full exports. This prevents punctuation/case variants
+// from appearing as separate school filters.
+function standardizeSchoolName(value: string) {
+  const canonical = value.trim().replace(/\s+/g, " ").toUpperCase().replaceAll("SJK(C)", "SJK (C)").replaceAll("SJK ( C )", "SJK (C)");
+  if (/^ST\.? JOSEPH'?S?\s+PRIVATE\s+PRIMARY\s+SCHOOL$/.test(canonical) || /^ST\.? JOSEPH\s+PRIVATE\s+PRIMARY\s+SCHOOL$/.test(canonical)) return "ST JOSEPH'S PRIVATE PRIMARY SCHOOL";
+  if (/^ST\.? JOSEPH'?S?\s+PRIVATE\s+SECONDARY\s+SCHOOL$/.test(canonical) || /^ST\.? JOSEPH\s+PRIVATE\s+SECONDARY\s+SCHOOL$/.test(canonical)) return "ST JOSEPH'S PRIVATE SECONDARY SCHOOL";
+  return canonical;
+}
+
 function pathwayFor(
   dataset: TrackerData,
   member: Member,
@@ -267,7 +277,7 @@ export default function ExportCentre({
         dataset.members
           .filter(() => section === "both" || dataset.section === section)
           .filter((item) => squad === "all" || item.squad === squad)
-          .filter((item) => school === "all" || item.school === school)
+          .filter((item) => school === "all" || standardizeSchoolName(item.school) === school)
           .map((item) => ({
             key: `${dataset.section}:${item.id}`,
             label: `${item.name} · ${sectionLabel(dataset.section)} · ${item.squad}`,
@@ -277,7 +287,7 @@ export default function ExportCentre({
   );
 
   const schools = useMemo(
-    () => [...new Set(datasets.flatMap((dataset) => dataset.members.map((item) => item.school.trim()).filter(Boolean)))].sort((a, b) => a.localeCompare(b)),
+    () => [...new Set(datasets.flatMap((dataset) => dataset.members.map((item) => standardizeSchoolName(item.school)).filter(Boolean)))].sort((a, b) => a.localeCompare(b)),
     [datasets],
   );
 
@@ -319,7 +329,7 @@ export default function ExportCentre({
       );
       return dataset.members
         .filter((item) => squad === "all" || item.squad === squad)
-        .filter((item) => school === "all" || item.school === school)
+        .filter((item) => school === "all" || standardizeSchoolName(item.school) === school)
         .filter(
           (item) => member === "all" || member === `${dataset.section}:${item.id}`,
         )
