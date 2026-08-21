@@ -15,12 +15,24 @@ export async function GET(request: Request) {
     const user = await getCurrentUser(request);
     if (!user) return Response.json({ error: "Sign in required" }, { status: 401 });
     await ensureEventSchema();
+    const url = new URL(request.url);
+    const calendarEventId = Number(url.searchParams.get("calendar"));
+    if (calendarEventId) {
+      const event = await runtime.DB.prepare("SELECT id, title, event_date, end_date, location, description, audience FROM company_events WHERE id = ? AND cancelled_at IS NULL").bind(calendarEventId).first<{ id: number; title: string; event_date: string; end_date: string | null; location: string; description: string; audience: string }>();
+      if (!event || !canSeeAudience(user, event.audience)) return Response.json({ error: "Event not available" }, { status: 404 });
+      const escape = (value: string) => value.replaceAll("\\", "\\\\").replaceAll(";", "\\;").replaceAll(",", "\\,").replaceAll("\n", "\\n");
+      const toUtc = (value: string) => new Date(value).toISOString().replaceAll("-", "").replaceAll(":", "").replace(/\.\d{3}Z$/, "Z");
+      const start = toUtc(event.event_date);
+      const end = event.end_date ? toUtc(event.end_date) : toUtc(new Date(new Date(event.event_date).getTime() + 60 * 60 * 1000).toISOString());
+      const body = ["BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//11KCHBB//Company Events//EN", "BEGIN:VEVENT", `UID:11kchbb-event-${event.id}@11kchbb`, `DTSTAMP:${toUtc(new Date().toISOString())}`, `DTSTART:${start}`, `DTEND:${end}`, `SUMMARY:${escape(event.title)}`, event.location ? `LOCATION:${escape(event.location)}` : "", event.description ? `DESCRIPTION:${escape(event.description)}` : "", "END:VEVENT", "END:VCALENDAR"].filter(Boolean).join("\r\n") + "\r\n";
+      return new Response(body, { headers: { "Content-Type": "text/calendar; charset=utf-8", "Content-Disposition": `attachment; filename="11kchbb-event-${event.id}.ics"`, "Cache-Control": "private, no-store" } });
+    }
     const member = await linkedMember(user.email);
     const visibleSections = member ? ["all", member.section] : (canManageEvents(user) || user.role === "viewer" ? sections : ["all"]);
     const placeholders = visibleSections.map(() => "?").join(",");
-    const events = await runtime.DB.prepare(`SELECT events.*, COUNT(rsvps.member_id) AS rsvp_total,
+    const events = await runtime.DB.prepare(`SELECT events.*, recurrence.frequency AS recurrence_frequency, recurrence.interval AS recurrence_interval, recurrence.until_date AS recurrence_until_date, COUNT(rsvps.member_id) AS rsvp_total,
       SUM(CASE WHEN rsvps.status = 'going' THEN 1 ELSE 0 END) AS going_total
-      FROM company_events events LEFT JOIN event_rsvps rsvps ON rsvps.event_id = events.id
+      FROM company_events events LEFT JOIN event_rsvps rsvps ON rsvps.event_id = events.id LEFT JOIN event_recurrence recurrence ON recurrence.event_id = events.id
       WHERE events.cancelled_at IS NULL AND events.section IN (${placeholders})
         AND (events.audience != 'nco_council' OR ? = 1)
       GROUP BY events.id ORDER BY events.event_date ASC, events.id ASC`).bind(...visibleSections, canSeeAudience(user, "nco_council") ? 1 : 0).all();
@@ -79,6 +91,11 @@ export async function POST(request: Request) {
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`)
         .bind(title, eventDate, String(body.endDate ?? "") || null, String(body.location ?? "").trim().slice(0, 160), String(body.description ?? "").trim().slice(0, 2000), section, audience, attendanceSessionId, user.id, user.name, now, now).run();
       const eventId = Number(result.meta.last_row_id);
+      const frequency = String(body.recurrenceFrequency ?? "none");
+      if (["weekly", "monthly"].includes(frequency)) {
+        const interval = Math.min(12, Math.max(1, Number(body.recurrenceInterval) || 1));
+        await runtime.DB.prepare("INSERT INTO event_recurrence (event_id, frequency, interval, until_date, created_at) VALUES (?, ?, ?, ?, ?)").bind(eventId, frequency, interval, String(body.recurrenceUntil ?? "") || null, now).run();
+      }
       const recipients = await runtime.DB.prepare(`SELECT users.id FROM users JOIN members ON LOWER(members.email) = LOWER(users.email)
         WHERE users.active = 1 AND users.account_status = 'active' AND members.section IN (?, ?)
           AND (? != 'nco_council' OR users.role IN ('nco', 'squad_leader'))`).bind(section === "all" ? "senior" : section, section === "all" ? "junior" : section, audience).all<{ id: number }>();

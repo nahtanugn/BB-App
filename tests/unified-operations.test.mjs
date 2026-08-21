@@ -129,3 +129,38 @@ test("automation is durable, deduplicated, permission-aware and decision-safe", 
   assert.match(recovery, /time travel/i);
   assert.match(recovery, /Do not copy it into[\s\S]*GitHub artifacts/i);
 });
+
+test("feature expansion foundation keeps sensitive workflows additive and permission-safe", async () => {
+  const [migration, featureApi, eventsApi, tracker, offline, eventCentre] = await Promise.all([
+    source("../drizzle/0029_feature_expansion_foundation.sql"),
+    source("../app/api/feature-expansion/route.ts"),
+    source("../app/api/events/route.ts"),
+    source("../app/AwardTracker.tsx"),
+    source("../app/offlineAttendance.ts"),
+    source("../app/EventCentre.tsx"),
+  ]);
+  assert.match(migration, /attendance_qr_codes/);
+  assert.match(migration, /attendance_sync_conflicts/);
+  assert.match(migration, /member_documents/);
+  assert.match(migration, /parent_invitations/);
+  assert.match(migration, /certificates/);
+  assert.match(migration, /training_records/);
+  assert.match(migration, /member_transfers/);
+  assert.match(migration, /equipment_holdings/);
+  assert.match(migration, /message_threads/);
+  assert.match(migration, /import_jobs/);
+  assert.match(featureApi, /action === "create_qr"/);
+  assert.match(featureApi, /expires_at > \?/);
+  assert.match(featureApi, /action === "check_in"/);
+  assert.match(featureApi, /action === "sync_attendance"/);
+  assert.match(featureApi, /attendance_sync_conflicts/);
+  assert.match(featureApi, /action === "review_conflict"/);
+  assert.match(featureApi, /Only verified or awarded records can receive a certificate/);
+  assert.match(eventsApi, /Content-Type.*text\/calendar/);
+  assert.match(eventsApi, /calendarEventId/);
+  assert.match(eventCentre, /Add to calendar/);
+  assert.match(offline, /indexedDB/);
+  assert.match(offline, /sync_attendance/);
+  assert.match(tracker, /queueOfflineAttendance/);
+  assert.match(tracker, /flushOfflineAttendance/);
+});

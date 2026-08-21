@@ -33,6 +33,11 @@ export async function ensureEventSchema() {
       created_by_user_id INTEGER NOT NULL, created_at TEXT NOT NULL, completed_at TEXT,
       FOREIGN KEY(member_id) REFERENCES members(id) ON DELETE CASCADE
     )`),
+    runtime.DB.prepare(`CREATE TABLE IF NOT EXISTS event_recurrence (
+      event_id INTEGER PRIMARY KEY, frequency TEXT NOT NULL, interval INTEGER NOT NULL DEFAULT 1,
+      until_date TEXT, created_at TEXT NOT NULL,
+      FOREIGN KEY(event_id) REFERENCES company_events(id) ON DELETE CASCADE
+    )`),
     runtime.DB.prepare("CREATE INDEX IF NOT EXISTS idx_company_events_section_date ON company_events(section, event_date)"),
     runtime.DB.prepare("CREATE INDEX IF NOT EXISTS idx_member_goals_member_status ON member_goals(member_id, status)"),
   ]);

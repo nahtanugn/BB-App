@@ -3,6 +3,7 @@
 import { FormEvent, useEffect, useMemo, useState } from "react";
 import AwardSubmissions from "./AwardSubmissions";
 import ExportCentre from "./ExportCentre";
+import { flushOfflineAttendance, queueOfflineAttendance } from "./offlineAttendance";
 
 type Member = {
   id: number;
@@ -370,6 +371,13 @@ export default function AwardTracker({
     if ("serviceWorker" in navigator)
       navigator.serviceWorker.register("/sw.js").catch(() => undefined);
   }, [section]);
+
+  useEffect(() => {
+    const sync = () => { void flushOfflineAttendance().then((result) => { if (result.applied || result.conflicts) setNotice(result.conflicts ? `Attendance synced with ${result.conflicts} conflict${result.conflicts === 1 ? "" : "s"} for review.` : `Synced ${result.applied} offline attendance update${result.applied === 1 ? "" : "s"}.`); }).catch(() => undefined); };
+    sync();
+    window.addEventListener("online", sync);
+    return () => window.removeEventListener("online", sync);
+  }, []);
 
   function switchSection(next: "senior" | "junior") {
     setData(null);
@@ -857,16 +865,23 @@ export default function AwardTracker({
           }
         : existing,
     );
+    const payload = {
+      action: "update_attendance",
+      section,
+      sessionId,
+      memberId,
+      status,
+    };
+    if (!navigator.onLine) {
+      await queueOfflineAttendance({ sessionId, memberId, status, updatedAt: new Date().toISOString() });
+      setNotice("Saved offline. It will sync when you reconnect.");
+      setSaving("");
+      return;
+    }
     const response = await fetch("/api/tracker", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        action: "update_attendance",
-        section,
-        sessionId,
-        memberId,
-        status,
-      }),
+      body: JSON.stringify(payload),
     });
     if (!response.ok) {
       const result = (await response.json()) as { error?: string };
