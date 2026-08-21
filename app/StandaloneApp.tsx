@@ -20,6 +20,7 @@ import MemberJourney from "./MemberJourney";
 import ManageHub from "./ManageHub";
 import NotificationCentre from "./NotificationCentre";
 import ExportCentre from "./ExportCentre";
+import ManagedSchoolSelect from "./ManagedSchoolSelect";
 
 type User = {
   id: number;
@@ -661,7 +662,7 @@ export default function StandaloneApp() {
               <label>Request password<input name="password" type="password" minLength={10} required autoComplete="new-password" /><small>You will replace this after approval.</small></label>
               <div className="form-row"><label>Section<select name="section" defaultValue="senior"><option value="senior">Senior</option><option value="junior">Junior</option></select></label><label>Squad<select name="squad" defaultValue="Alpha"><option>Alpha</option><option>Bravo</option><option>Charlie</option><option>Delta</option></select></label></div>
               <label>Joined year<input name="joinedYear" type="number" min="1950" max={new Date().getFullYear()} required /></label>
-              <label>School<input name="school" required /></label>
+              <ManagedSchoolSelect />
               <label>Contact number<input name="contactNumber" type="tel" required /></label>
               <label>Emergency contact number<input name="emergencyContactNumber" type="tel" required /></label>
               <label>Parent / guardian name<input name="parentsName" required /></label>

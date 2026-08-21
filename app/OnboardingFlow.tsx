@@ -1,6 +1,7 @@
 "use client";
 
 import { FormEvent, useEffect, useState } from "react";
+import ManagedSchoolSelect from "./ManagedSchoolSelect";
 
 type Member = {
   id: number;
@@ -196,7 +197,7 @@ export default function OnboardingFlow({
                     <label>Full name<input name="name" required defaultValue={member.name} /></label>
                     <div className="form-row"><label>Section<select name="section" defaultValue={member.section}><option value="senior">Senior</option><option value="junior">Junior</option></select></label><label>Squad<select name="squad" defaultValue={member.squad}><option>Alpha</option><option>Bravo</option><option>Charlie</option><option>Delta</option></select></label></div>
                     <label>Joined year<input name="joinedYear" type="number" min="1950" max={new Date().getFullYear()} required defaultValue={member.joined_at} /></label>
-                    <label>School<input name="school" required defaultValue={member.school} /></label>
+                    <ManagedSchoolSelect defaultValue={member.school} />
                     <label>Contact number<input name="contactNumber" required defaultValue={member.contact_number} /></label>
                     <label>Emergency contact number<input name="emergencyContactNumber" required defaultValue={member.emergency_contact_number} /></label>
                     <label>Parent / guardian name<input name="parentsName" required defaultValue={member.parents_name} /></label>
