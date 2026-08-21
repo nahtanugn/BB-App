@@ -2659,6 +2659,9 @@ button:disabled { opacity: .62; cursor: wait; }
 .expansion-centre .stacked-form .form-help { margin: -5px 0 2px; color: var(--muted); font-size: 11px; line-height: 1.45; }
 .expansion-centre .expansion-grid-single { grid-template-columns: minmax(0, 1fr); }
 .expansion-centre .expansion-grid-single > .stacked-form { max-width: 760px; }
+.expansion-centre .expansion-grid > .import-form,
+.expansion-centre .expansion-grid > .template-form { grid-column: span 2; }
+.expansion-centre .analytics-empty { color: #8a99a8; font-style: italic; }
 
 /* Cross-page UI baseline: every hub uses the same columns, headers and
    overflow behaviour so controls do not drift between portals. */
@@ -2724,6 +2727,8 @@ button:disabled { opacity: .62; cursor: wait; }
   .expansion-centre .stacked-form { padding: 18px 15px; }
   .expansion-centre .stacked-form fieldset { grid-template-columns: 1fr; }
   .expansion-centre .expansion-grid-single > .stacked-form { max-width: none; }
+  .expansion-centre .expansion-grid > .import-form,
+  .expansion-centre .expansion-grid > .template-form { grid-column: auto; }
   .expansion-centre .expansion-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
   .expansion-centre .expansion-stats article { min-height: 90px; padding: 13px; }
   .member-card .card-actions { width: auto; margin: 0; }
