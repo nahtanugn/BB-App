@@ -34,6 +34,17 @@ async function ensureExpansionTables() {
     runtime.DB.prepare(`CREATE TABLE IF NOT EXISTS equipment_holdings (
       id INTEGER PRIMARY KEY AUTOINCREMENT, member_id INTEGER NOT NULL, item_id INTEGER NOT NULL, quantity INTEGER NOT NULL DEFAULT 1,
       issued_at TEXT NOT NULL, returned_at TEXT, issued_by_user_id INTEGER NOT NULL, returned_by_user_id INTEGER, notes TEXT NOT NULL DEFAULT '')`),
+    runtime.DB.prepare(`CREATE TABLE IF NOT EXISTS message_threads (
+      id INTEGER PRIMARY KEY AUTOINCREMENT, subject TEXT NOT NULL, created_by_user_id INTEGER NOT NULL, created_at TEXT NOT NULL)`),
+    runtime.DB.prepare(`CREATE TABLE IF NOT EXISTS messages (
+      id INTEGER PRIMARY KEY AUTOINCREMENT, thread_id INTEGER NOT NULL, sender_user_id INTEGER NOT NULL,
+      recipient_user_id INTEGER NOT NULL, body TEXT NOT NULL, read_at TEXT, created_at TEXT NOT NULL)`),
+    runtime.DB.prepare(`CREATE TABLE IF NOT EXISTS import_jobs (
+      id INTEGER PRIMARY KEY AUTOINCREMENT, status TEXT NOT NULL DEFAULT 'preview', file_name TEXT NOT NULL,
+      summary_json TEXT NOT NULL DEFAULT '{}', created_by_user_id INTEGER NOT NULL, created_at TEXT NOT NULL, completed_at TEXT)`),
+    runtime.DB.prepare(`CREATE TABLE IF NOT EXISTS public_content (
+      id INTEGER PRIMARY KEY AUTOINCREMENT, content_type TEXT NOT NULL, title TEXT NOT NULL, body TEXT NOT NULL,
+      published INTEGER NOT NULL DEFAULT 0, updated_by_user_id INTEGER NOT NULL, updated_at TEXT NOT NULL)`),
   ]);
 }
 
@@ -77,6 +88,25 @@ export async function GET(request: Request) {
     const rows = await runtime.DB.prepare(`SELECT h.*, i.name AS item_name, i.variant, i.stock_type
       FROM equipment_holdings h LEFT JOIN stock_items i ON i.id = h.item_id WHERE h.member_id = ? ORDER BY h.issued_at DESC`).bind(memberId).all();
     return Response.json({ holdings: rows.results });
+  }
+  if (kind === "analytics") {
+    if (!isStaff(user)) return Response.json({ error: "Officer access required" }, { status: 403 });
+    const [attendance, awards, subscriptions, stock] = await Promise.all([
+      runtime.DB.prepare(`SELECT s.section, COUNT(*) AS registers,
+        SUM(CASE WHEN r.status = 'present' THEN 1 ELSE 0 END) AS present,
+        SUM(CASE WHEN r.status IN ('absent', 'excused') THEN 1 ELSE 0 END) AS recorded
+        FROM attendance_sessions s LEFT JOIN attendance_records r ON r.session_id = s.id
+        WHERE s.meeting_date <= date('now') GROUP BY s.section`).all(),
+      runtime.DB.prepare("SELECT m.section, ma.status, COUNT(*) AS total FROM member_awards ma JOIN members m ON m.id = ma.member_id GROUP BY m.section, ma.status").all(),
+      runtime.DB.prepare("SELECT m.section, ms.paid, COUNT(*) AS total FROM member_subscriptions ms JOIN members m ON m.id = ms.member_id GROUP BY m.section, ms.paid").all(),
+      runtime.DB.prepare(`SELECT stock_type, COUNT(*) AS items, SUM(CASE WHEN condition != 'defective' AND quantity <= reorder_level THEN 1 ELSE 0 END) AS low_stock FROM (SELECT i.stock_type, i.condition, i.reorder_level, COALESCE(SUM(t.quantity_delta), 0) AS quantity FROM stock_items i LEFT JOIN stock_transactions t ON t.item_id = i.id WHERE i.active = 1 GROUP BY i.id) GROUP BY stock_type`).all(),
+    ]);
+    return Response.json({ attendance: attendance.results, awards: awards.results, subscriptions: subscriptions.results, stock: stock.results });
+  }
+  if (kind === "messages") {
+    const rows = await runtime.DB.prepare(`SELECT m.*, t.subject FROM messages m JOIN message_threads t ON t.id = m.thread_id
+      WHERE m.recipient_user_id = ? OR m.sender_user_id = ? ORDER BY m.created_at DESC LIMIT 200`).bind(user.id, user.id).all();
+    return Response.json({ messages: rows.results });
   }
   return Response.json({ error: "Unknown feature collection" }, { status: 400 });
 }
@@ -136,6 +166,36 @@ export async function POST(request: Request) {
     if (resolution === "apply") await runtime.DB.prepare(`INSERT INTO attendance_records (session_id, member_id, status, updated_at, updated_by) VALUES (?, ?, ?, ?, ?) ON CONFLICT(session_id, member_id) DO UPDATE SET status = excluded.status, updated_at = excluded.updated_at, updated_by = excluded.updated_by`).bind(conflict.session_id, conflict.member_id, conflict.incoming_status, conflict.incoming_updated_at, user.email).run();
     await runtime.DB.prepare("UPDATE attendance_sync_conflicts SET status = ?, reviewed_by_user_id = ?, reviewed_at = ? WHERE id = ?").bind(resolution === "apply" ? "applied" : "rejected", user.id, now, conflictId).run();
     return Response.json({ ok: true, message: resolution === "apply" ? "Conflict applied." : "Conflict rejected." });
+  }
+
+  if (action === "send_message") {
+    if (!user || user.role === "viewer" || user.role === "member") return Response.json({ error: "This account cannot send staff messages" }, { status: 403 });
+    const recipientUserId = Number(body.recipientUserId); const message = String(body.message ?? "").trim().slice(0, 4000); const subject = String(body.subject ?? "").trim().slice(0, 160) || "11KCHBB message";
+    if (!recipientUserId || !message) return Response.json({ error: "Choose a recipient and enter a message" }, { status: 400 });
+    const recipient = await runtime.DB.prepare("SELECT id, role FROM users WHERE id = ? AND active = 1 AND account_status = 'active'").bind(recipientUserId).first<{ id: number; role: string }>();
+    if (!recipient || recipient.role === "viewer") return Response.json({ error: "Recipient is not available" }, { status: 404 });
+    const thread = await runtime.DB.prepare("INSERT INTO message_threads (subject, created_by_user_id, created_at) VALUES (?, ?, ?)").bind(subject, user.id, now).run();
+    await runtime.DB.prepare("INSERT INTO messages (thread_id, sender_user_id, recipient_user_id, body, created_at) VALUES (?, ?, ?, ?, ?)").bind(Number(thread.meta.last_row_id), user.id, recipientUserId, message, now).run();
+    await writeAuditEvent({ actor: user, action: "message_sent", entityType: "message_thread", entityId: Number(thread.meta.last_row_id) });
+    return Response.json({ ok: true, message: "Message sent." });
+  }
+
+  if (action === "mark_message_read") {
+    const messageId = Number(body.messageId);
+    await runtime.DB.prepare("UPDATE messages SET read_at = ? WHERE id = ? AND recipient_user_id = ?").bind(now, messageId, user.id).run();
+    return Response.json({ ok: true });
+  }
+
+  if (action === "preview_import") {
+    if (!hasOperationalAdminAccess(user)) return Response.json({ error: "Officer access required" }, { status: 403 });
+    const fileName = String(body.fileName ?? "import.csv").slice(0, 180); const rows = Array.isArray(body.rows) ? body.rows as Array<Record<string, unknown>> : [];
+    const seenEmails = new Set<string>(); const errors: Array<{ row: number; message: string }> = []; const preview = rows.slice(0, 1000);
+    const existing = await runtime.DB.prepare("SELECT lower(email) AS email FROM members WHERE email != ''").all<{ email: string }>();
+    const existingEmails = new Set(existing.results.map((row) => row.email));
+    preview.forEach((row, index) => { const email = String(row.email ?? "").trim().toLowerCase(); const name = String(row.name ?? "").trim(); if (!name) errors.push({ row: index + 1, message: "Name is required" }); if (email && (seenEmails.has(email) || existingEmails.has(email))) errors.push({ row: index + 1, message: "Duplicate email" }); if (email) seenEmails.add(email); });
+    const summary = { rows: preview.length, errors: errors.length, duplicateEmails: errors.filter((error) => error.message === "Duplicate email").length };
+    const job = await runtime.DB.prepare("INSERT INTO import_jobs (status, file_name, summary_json, created_by_user_id, created_at) VALUES ('preview', ?, ?, ?, ?)").bind(fileName, JSON.stringify({ ...summary, errors }), user.id, now).run();
+    return Response.json({ ok: true, jobId: Number(job.meta.last_row_id), summary, errors });
   }
 
   if (!["add_training", "add_transfer", "issue_equipment", "return_equipment", "issue_certificate"].includes(action)) return Response.json({ error: "Unknown feature action" }, { status: 400 });

@@ -164,3 +164,23 @@ test("feature expansion foundation keeps sensitive workflows additive and permis
   assert.match(tracker, /queueOfflineAttendance/);
   assert.match(tracker, /flushOfflineAttendance/);
 });
+
+test("operations expansion keeps messaging, analytics, imports and public content restricted", async () => {
+  const [featureApi, publicApi, migration] = await Promise.all([
+    source("../app/api/feature-expansion/route.ts"),
+    source("../app/api/public-content/route.ts"),
+    source("../drizzle/0029_feature_expansion_foundation.sql"),
+  ]);
+  assert.match(featureApi, /kind === "analytics"/);
+  assert.match(featureApi, /kind === "messages"/);
+  assert.match(featureApi, /action === "send_message"/);
+  assert.match(featureApi, /action === "preview_import"/);
+  assert.match(featureApi, /Duplicate email/);
+  assert.match(featureApi, /This account cannot send staff messages/);
+  assert.match(publicApi, /hasAdminOrTemporaryAccess/);
+  assert.match(publicApi, /published = 1/);
+  assert.match(publicApi, /action === "publish"/);
+  assert.match(migration, /public_content/);
+  assert.match(migration, /import_jobs/);
+  assert.match(migration, /message_threads/);
+});
