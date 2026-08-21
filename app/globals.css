@@ -2661,6 +2661,7 @@ button:disabled { opacity: .62; cursor: wait; }
 .expansion-centre .expansion-grid-single > .stacked-form { max-width: 760px; }
 .expansion-centre .expansion-grid > .import-form,
 .expansion-centre .expansion-grid > .template-form { grid-column: span 2; }
+.expansion-centre .expansion-grid > .import-form:only-child { grid-column: 1 / -1; }
 .expansion-centre .analytics-empty { color: #8a99a8; font-style: italic; }
 
 /* Cross-page UI baseline: every hub uses the same columns, headers and

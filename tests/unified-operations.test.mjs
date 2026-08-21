@@ -227,4 +227,5 @@ test("messages composer stays readable across desktop and mobile layouts", async
   assert.match(css, /\.expansion-centre \.stacked-form \{/);
   assert.match(css, /\.expansion-centre \.stacked-form fieldset/);
   assert.match(css, /\.expansion-centre \.expansion-grid-single/);
+  assert.match(css, /\.expansion-centre \.expansion-grid > \.import-form:only-child/);
 });
