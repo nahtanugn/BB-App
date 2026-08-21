@@ -166,10 +166,11 @@ test("feature expansion foundation keeps sensitive workflows additive and permis
 });
 
 test("operations expansion keeps messaging, analytics, imports and public content restricted", async () => {
-  const [featureApi, publicApi, migration] = await Promise.all([
+  const [featureApi, publicApi, migration, migration30] = await Promise.all([
     source("../app/api/feature-expansion/route.ts"),
     source("../app/api/public-content/route.ts"),
     source("../drizzle/0029_feature_expansion_foundation.sql"),
+    source("../drizzle/0030_import_templates_and_trends.sql"),
   ]);
   assert.match(featureApi, /kind === "analytics"/);
   assert.match(featureApi, /kind === "messages"/);
@@ -183,6 +184,12 @@ test("operations expansion keeps messaging, analytics, imports and public conten
   assert.match(migration, /public_content/);
   assert.match(migration, /import_jobs/);
   assert.match(migration, /message_threads/);
+  assert.match(migration30, /import_job_rows/);
+  assert.match(migration30, /report_templates/);
+  assert.match(featureApi, /commit_import/);
+  assert.match(featureApi, /rollback_import/);
+  assert.match(featureApi, /sendOptionalEmail/);
+  assert.match(featureApi, /kind === "recipients"/);
 });
 
 test("new operations APIs are connected to the Manage hub without changing navigation", async () => {
@@ -193,11 +200,13 @@ test("new operations APIs are connected to the Manage hub without changing navig
   assert.match(manage, /ExpansionCentre/);
   assert.match(manage, /staff && <ExpansionCentre/);
   assert.match(expansion, /Insights and communication/);
-  assert.match(expansion, /Preview member import/);
+  assert.match(expansion, /Import members/);
   assert.match(expansion, /Only administrators can publish public information/);
   assert.match(expansion, /\/api\/feature-expansion\?kind=analytics/);
-  assert.match(expansion, /accept="\.csv,text\/csv"/);
+  assert.match(expansion, /accept="\.xlsx/);
   assert.match(expansion, /parseCsv/);
-  assert.match(expansion, /analytics\?\.awards/);
-  assert.match(expansion, /analytics\?\.subscriptions/);
+  assert.match(expansion, /attendanceTrend/);
+  assert.match(expansion, /retention/);
+  assert.match(expansion, /Commit import/);
+  assert.match(expansion, /Report templates/);
 });

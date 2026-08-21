@@ -42,6 +42,15 @@ async function ensureExpansionTables() {
     runtime.DB.prepare(`CREATE TABLE IF NOT EXISTS import_jobs (
       id INTEGER PRIMARY KEY AUTOINCREMENT, status TEXT NOT NULL DEFAULT 'preview', file_name TEXT NOT NULL,
       summary_json TEXT NOT NULL DEFAULT '{}', created_by_user_id INTEGER NOT NULL, created_at TEXT NOT NULL, completed_at TEXT)`),
+    runtime.DB.prepare(`CREATE TABLE IF NOT EXISTS import_job_rows (
+      id INTEGER PRIMARY KEY AUTOINCREMENT, job_id INTEGER NOT NULL, row_number INTEGER NOT NULL,
+      row_json TEXT NOT NULL, validation_json TEXT NOT NULL DEFAULT '[]', created_at TEXT NOT NULL)`),
+    runtime.DB.prepare(`CREATE TABLE IF NOT EXISTS import_job_members (
+      id INTEGER PRIMARY KEY AUTOINCREMENT, job_id INTEGER NOT NULL, member_id INTEGER NOT NULL, created_at TEXT NOT NULL)`),
+    runtime.DB.prepare(`CREATE TABLE IF NOT EXISTS report_templates (
+      id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL UNIQUE, description TEXT NOT NULL DEFAULT '',
+      datasets_json TEXT NOT NULL DEFAULT '[]', filters_json TEXT NOT NULL DEFAULT '{}',
+      created_by_user_id INTEGER NOT NULL, updated_at TEXT NOT NULL, active INTEGER NOT NULL DEFAULT 1)`),
     runtime.DB.prepare(`CREATE TABLE IF NOT EXISTS public_content (
       id INTEGER PRIMARY KEY AUTOINCREMENT, content_type TEXT NOT NULL, title TEXT NOT NULL, body TEXT NOT NULL,
       published INTEGER NOT NULL DEFAULT 0, updated_by_user_id INTEGER NOT NULL, updated_at TEXT NOT NULL)`),
@@ -55,6 +64,19 @@ function isStaff(user: Awaited<ReturnType<typeof getCurrentUser>>) {
 function isSquadMemberAllowed(user: NonNullable<Awaited<ReturnType<typeof getCurrentUser>>>, member: { section: string; squad: string }) {
   if (!["nco", "squad_leader"].includes(user.role)) return true;
   return member.section === user.member_section && member.squad === user.squad;
+}
+
+async function sendOptionalEmail(to: string, subject: string, text: string) {
+  const webhook = (env as unknown as { EMAIL_WEBHOOK_URL?: string }).EMAIL_WEBHOOK_URL;
+  if (!webhook || !to) return false;
+  try {
+    const response = await fetch(webhook, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ to, subject, text }) });
+    return response.ok;
+  } catch { return false; }
+}
+
+function canAccessThread(userId: number, thread: { created_by_user_id: number }, messages: Array<{ sender_user_id: number; recipient_user_id: number }>) {
+  return thread.created_by_user_id === userId || messages.some((message) => message.sender_user_id === userId || message.recipient_user_id === userId);
 }
 
 export async function GET(request: Request) {
@@ -91,7 +113,7 @@ export async function GET(request: Request) {
   }
   if (kind === "analytics") {
     if (!isStaff(user)) return Response.json({ error: "Officer access required" }, { status: 403 });
-    const [attendance, awards, subscriptions, stock] = await Promise.all([
+    const [attendance, awards, subscriptions, stock, attendanceTrend, memberTrend, squadComparison] = await Promise.all([
       runtime.DB.prepare(`SELECT s.section, COUNT(*) AS registers,
         SUM(CASE WHEN r.status = 'present' THEN 1 ELSE 0 END) AS present,
         SUM(CASE WHEN r.status IN ('absent', 'excused') THEN 1 ELSE 0 END) AS recorded
@@ -100,13 +122,46 @@ export async function GET(request: Request) {
       runtime.DB.prepare("SELECT m.section, ma.status, COUNT(*) AS total FROM member_awards ma JOIN members m ON m.id = ma.member_id GROUP BY m.section, ma.status").all(),
       runtime.DB.prepare("SELECT m.section, ms.paid, COUNT(*) AS total FROM member_subscriptions ms JOIN members m ON m.id = ms.member_id GROUP BY m.section, ms.paid").all(),
       runtime.DB.prepare(`SELECT stock_type, COUNT(*) AS items, SUM(CASE WHEN condition != 'defective' AND quantity <= reorder_level THEN 1 ELSE 0 END) AS low_stock FROM (SELECT i.stock_type, i.condition, i.reorder_level, COALESCE(SUM(t.quantity_delta), 0) AS quantity FROM stock_items i LEFT JOIN stock_transactions t ON t.item_id = i.id WHERE i.active = 1 GROUP BY i.id) GROUP BY stock_type`).all(),
+      runtime.DB.prepare(`SELECT strftime('%Y-%m', s.meeting_date) AS month, SUM(CASE WHEN r.status = 'present' THEN 1 ELSE 0 END) AS present, SUM(CASE WHEN r.status IN ('present','absent','excused') THEN 1 ELSE 0 END) AS recorded FROM attendance_sessions s LEFT JOIN attendance_records r ON r.session_id = s.id WHERE s.meeting_date <= date('now') GROUP BY month ORDER BY month`).all(),
+      runtime.DB.prepare("SELECT substr(joined_at, 1, 4) AS joined_year, COUNT(*) AS total, COUNT(*) AS retained FROM members GROUP BY substr(joined_at, 1, 4) ORDER BY joined_year").all(),
+      runtime.DB.prepare("SELECT section, squad, COUNT(*) AS members, ROUND(AVG(CASE WHEN joined_at != '' THEN CAST(strftime('%Y','now') AS INTEGER) - CAST(substr(joined_at, 1, 4) AS INTEGER) ELSE 0 END), 1) AS average_service_years FROM members GROUP BY section, squad ORDER BY section, squad").all(),
     ]);
-    return Response.json({ attendance: attendance.results, awards: awards.results, subscriptions: subscriptions.results, stock: stock.results });
+    return Response.json({ attendance: attendance.results, awards: awards.results, subscriptions: subscriptions.results, stock: stock.results, attendanceTrend: attendanceTrend.results, memberTrend: memberTrend.results, retention: memberTrend.results, squadComparison: squadComparison.results });
+  }
+  if (kind === "recipients") {
+    if (!isStaff(user) || ["viewer", "member"].includes(user.role)) return Response.json({ error: "Staff access required" }, { status: 403 });
+    const rows = await runtime.DB.prepare("SELECT id, name, email, role, squad, member_section FROM users WHERE active = 1 AND account_status = 'active' AND role != 'viewer' ORDER BY name").all();
+    const recipients = rows.results.filter((row) => !["nco", "squad_leader"].includes(user.role) || (row as { squad?: string; member_section?: string }).squad === user.squad && (row as { member_section?: string }).member_section === user.member_section);
+    return Response.json({ recipients });
   }
   if (kind === "messages") {
     const rows = await runtime.DB.prepare(`SELECT m.*, t.subject FROM messages m JOIN message_threads t ON t.id = m.thread_id
       WHERE m.recipient_user_id = ? OR m.sender_user_id = ? ORDER BY m.created_at DESC LIMIT 200`).bind(user.id, user.id).all();
     return Response.json({ messages: rows.results });
+  }
+  if (kind === "thread") {
+    const threadId = Number(url.searchParams.get("threadId"));
+    const thread = await runtime.DB.prepare("SELECT * FROM message_threads WHERE id = ?").bind(threadId).first<{ created_by_user_id: number }>();
+    const rows = await runtime.DB.prepare("SELECT * FROM messages WHERE thread_id = ? ORDER BY created_at").bind(threadId).all<{ sender_user_id: number; recipient_user_id: number }>();
+    if (!thread || !canAccessThread(user.id, thread, rows.results)) return Response.json({ error: "Thread not available" }, { status: 404 });
+    return Response.json({ thread, messages: rows.results });
+  }
+  if (kind === "import-job") {
+    if (!hasOperationalAdminAccess(user)) return Response.json({ error: "Officer access required" }, { status: 403 });
+    const jobId = Number(url.searchParams.get("jobId"));
+    const job = await runtime.DB.prepare("SELECT * FROM import_jobs WHERE id = ?").bind(jobId).first();
+    if (!job) return Response.json({ error: "Import job not found" }, { status: 404 });
+    const rows = await runtime.DB.prepare("SELECT row_number, row_json, validation_json FROM import_job_rows WHERE job_id = ? ORDER BY row_number").bind(jobId).all();
+    return Response.json({ job, rows: rows.results });
+  }
+  if (kind === "report-templates") {
+    if (!isStaff(user)) return Response.json({ error: "Staff access required" }, { status: 403 });
+    const rows = await runtime.DB.prepare("SELECT * FROM report_templates WHERE active = 1 ORDER BY name").all();
+    return Response.json({ templates: rows.results });
+  }
+  if (kind === "email-status") {
+    if (user.role !== "admin") return Response.json({ error: "Administrator access required" }, { status: 403 });
+    return Response.json({ configured: Boolean((env as unknown as { EMAIL_WEBHOOK_URL?: string }).EMAIL_WEBHOOK_URL) });
   }
   return Response.json({ error: "Unknown feature collection" }, { status: 400 });
 }
@@ -172,12 +227,21 @@ export async function POST(request: Request) {
     if (!user || user.role === "viewer" || user.role === "member") return Response.json({ error: "This account cannot send staff messages" }, { status: 403 });
     const recipientUserId = Number(body.recipientUserId); const message = String(body.message ?? "").trim().slice(0, 4000); const subject = String(body.subject ?? "").trim().slice(0, 160) || "11KCHBB message";
     if (!recipientUserId || !message) return Response.json({ error: "Choose a recipient and enter a message" }, { status: 400 });
-    const recipient = await runtime.DB.prepare("SELECT id, role FROM users WHERE id = ? AND active = 1 AND account_status = 'active'").bind(recipientUserId).first<{ id: number; role: string }>();
+    const recipient = await runtime.DB.prepare("SELECT id, role, email FROM users WHERE id = ? AND active = 1 AND account_status = 'active'").bind(recipientUserId).first<{ id: number; role: string; email: string }>();
     if (!recipient || recipient.role === "viewer") return Response.json({ error: "Recipient is not available" }, { status: 404 });
-    const thread = await runtime.DB.prepare("INSERT INTO message_threads (subject, created_by_user_id, created_at) VALUES (?, ?, ?)").bind(subject, user.id, now).run();
-    await runtime.DB.prepare("INSERT INTO messages (thread_id, sender_user_id, recipient_user_id, body, created_at) VALUES (?, ?, ?, ?, ?)").bind(Number(thread.meta.last_row_id), user.id, recipientUserId, message, now).run();
-    await writeAuditEvent({ actor: user, action: "message_sent", entityType: "message_thread", entityId: Number(thread.meta.last_row_id) });
-    return Response.json({ ok: true, message: "Message sent." });
+    let threadId = Number(body.threadId);
+    if (threadId) {
+      const thread = await runtime.DB.prepare("SELECT * FROM message_threads WHERE id = ?").bind(threadId).first<{ created_by_user_id: number }>();
+      const existing = await runtime.DB.prepare("SELECT sender_user_id, recipient_user_id FROM messages WHERE thread_id = ?").bind(threadId).all<{ sender_user_id: number; recipient_user_id: number }>();
+      if (!thread || !canAccessThread(user.id, thread, existing.results)) return Response.json({ error: "Thread not available" }, { status: 404 });
+    } else {
+      const thread = await runtime.DB.prepare("INSERT INTO message_threads (subject, created_by_user_id, created_at) VALUES (?, ?, ?)").bind(subject, user.id, now).run();
+      threadId = Number(thread.meta.last_row_id);
+    }
+    await runtime.DB.prepare("INSERT INTO messages (thread_id, sender_user_id, recipient_user_id, body, created_at) VALUES (?, ?, ?, ?, ?)").bind(threadId, user.id, recipientUserId, message, now).run();
+    const emailSent = await sendOptionalEmail(recipient.email, subject, message);
+    await writeAuditEvent({ actor: user, action: "message_sent", entityType: "message_thread", entityId: threadId });
+    return Response.json({ ok: true, threadId, emailSent, message: "Message sent." });
   }
 
   if (action === "mark_message_read") {
@@ -192,10 +256,65 @@ export async function POST(request: Request) {
     const seenEmails = new Set<string>(); const errors: Array<{ row: number; message: string }> = []; const preview = rows.slice(0, 1000);
     const existing = await runtime.DB.prepare("SELECT lower(email) AS email FROM members WHERE email != ''").all<{ email: string }>();
     const existingEmails = new Set(existing.results.map((row) => row.email));
-    preview.forEach((row, index) => { const email = String(row.email ?? "").trim().toLowerCase(); const name = String(row.name ?? "").trim(); if (!name) errors.push({ row: index + 1, message: "Name is required" }); if (email && (seenEmails.has(email) || existingEmails.has(email))) errors.push({ row: index + 1, message: "Duplicate email" }); if (email) seenEmails.add(email); });
+    preview.forEach((row, index) => { const email = String(row.email ?? "").trim().toLowerCase(); const name = String(row.name ?? "").trim(); const rowErrors: string[] = []; if (!name) rowErrors.push("Name is required"); if (!email) rowErrors.push("Email is required"); if (email && (seenEmails.has(email) || existingEmails.has(email))) rowErrors.push("Duplicate email"); if (!String(row.section ?? "senior").trim()) rowErrors.push("Section is required"); if (!String(row.squad ?? "").trim()) rowErrors.push("Squad is required"); rowErrors.forEach((message) => errors.push({ row: index + 1, message })); if (email) seenEmails.add(email); });
     const summary = { rows: preview.length, errors: errors.length, duplicateEmails: errors.filter((error) => error.message === "Duplicate email").length };
     const job = await runtime.DB.prepare("INSERT INTO import_jobs (status, file_name, summary_json, created_by_user_id, created_at) VALUES ('preview', ?, ?, ?, ?)").bind(fileName, JSON.stringify({ ...summary, errors }), user.id, now).run();
-    return Response.json({ ok: true, jobId: Number(job.meta.last_row_id), summary, errors });
+    const jobId = Number(job.meta.last_row_id);
+    for (const [index, row] of preview.entries()) {
+      const rowErrors = errors.filter((error) => error.row === index + 1).map((error) => error.message);
+      await runtime.DB.prepare("INSERT INTO import_job_rows (job_id, row_number, row_json, validation_json, created_at) VALUES (?, ?, ?, ?, ?)").bind(jobId, index + 1, JSON.stringify(row), JSON.stringify(rowErrors), now).run();
+    }
+    return Response.json({ ok: true, jobId, summary, errors });
+  }
+
+  if (action === "commit_import") {
+    if (!hasOperationalAdminAccess(user)) return Response.json({ error: "Officer access required" }, { status: 403 });
+    const jobId = Number(body.jobId); const job = await runtime.DB.prepare("SELECT * FROM import_jobs WHERE id = ? AND status = 'preview'").bind(jobId).first<{ id: number; summary_json: string }>();
+    if (!job) return Response.json({ error: "Preview import not found or already completed" }, { status: 404 });
+    const summary = JSON.parse(job.summary_json) as { errors?: unknown[] };
+    if (summary.errors?.length) return Response.json({ error: "Fix validation errors before committing" }, { status: 409 });
+    const rows = await runtime.DB.prepare("SELECT row_json FROM import_job_rows WHERE job_id = ? ORDER BY row_number").bind(jobId).all<{ row_json: string }>();
+    const created: Array<{ id: number; createdAt: string }> = [];
+    for (const item of rows.results) {
+      const row = JSON.parse(item.row_json) as Record<string, unknown>; const createdAt = new Date().toISOString();
+      const joinedYear = Number(row.joined_year ?? row.joinedYear ?? new Date().getUTCFullYear());
+      const result = await runtime.DB.prepare("INSERT INTO members (name, email, section, squad, rank, joined_at, service_years, school, contact_number, emergency_contact_number, parents_name, band_member, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)").bind(String(row.name), String(row.email).trim().toLowerCase(), String(row.section ?? "senior"), String(row.squad ?? "Unassigned"), String(row.rank ?? "Private"), `${joinedYear}-01-01`, Math.max(0, new Date().getUTCFullYear() - joinedYear), String(row.school ?? ""), String(row.contact_number ?? ""), String(row.emergency_contact_number ?? ""), String(row.parents_name ?? ""), Number(row.band_member ?? 0) ? 1 : 0, createdAt).run();
+      created.push({ id: Number(result.meta.last_row_id), createdAt });
+    }
+    for (const item of created) await runtime.DB.prepare("INSERT INTO import_job_members (job_id, member_id, created_at) VALUES (?, ?, ?)").bind(jobId, item.id, item.createdAt).run();
+    await runtime.DB.prepare("UPDATE import_jobs SET status = 'committed', completed_at = ? WHERE id = ?").bind(now, jobId).run();
+    await writeAuditEvent({ actor: user, action: "import_committed", entityType: "import_job", entityId: jobId, after: { count: created.length } });
+    return Response.json({ ok: true, count: created.length, message: "Import committed successfully." });
+  }
+
+  if (action === "rollback_import") {
+    if (user.role !== "admin" && user.temporary_access_role !== "temporary_admin") return Response.json({ error: "Administrator access required" }, { status: 403 });
+    const jobId = Number(body.jobId); const job = await runtime.DB.prepare("SELECT id FROM import_jobs WHERE id = ? AND status = 'committed'").bind(jobId).first();
+    if (!job) return Response.json({ error: "Committed import not found" }, { status: 404 });
+    const rows = await runtime.DB.prepare("SELECT member_id, created_at FROM import_job_members WHERE job_id = ?").bind(jobId).all<{ member_id: number; created_at: string }>();
+    let removed = 0; for (const row of rows.results) { const result = await runtime.DB.prepare("DELETE FROM members WHERE id = ? AND created_at = ?").bind(row.member_id, row.created_at).run(); removed += result.meta.changes ?? 0; }
+    await runtime.DB.prepare("UPDATE import_jobs SET status = 'rolled_back', completed_at = ? WHERE id = ?").bind(now, jobId).run();
+    await writeAuditEvent({ actor: user, action: "import_rolled_back", entityType: "import_job", entityId: jobId, after: { removed } });
+    return Response.json({ ok: true, removed, message: "Import rolled back safely." });
+  }
+
+  if (action === "save_report_template") {
+    if (!hasOperationalAdminAccess(user)) return Response.json({ error: "Officer access required" }, { status: 403 });
+    const name = String(body.name ?? "").trim().slice(0, 120); if (!name) return Response.json({ error: "Template name is required" }, { status: 400 });
+    const allowed = new Set(["members", "attendance", "awards", "submissions", "subscriptions", "stock"]); const datasets = Array.isArray(body.datasets) ? body.datasets.filter((item): item is string => typeof item === "string" && allowed.has(item)) : [];
+    await runtime.DB.prepare("INSERT INTO report_templates (name, description, datasets_json, filters_json, created_by_user_id, updated_at) VALUES (?, ?, ?, ?, ?, ?) ON CONFLICT(name) DO UPDATE SET description = excluded.description, datasets_json = excluded.datasets_json, filters_json = excluded.filters_json, updated_at = excluded.updated_at, active = 1").bind(name, String(body.description ?? "").trim(), JSON.stringify(datasets), JSON.stringify(body.filters ?? {}), user.id, now).run();
+    return Response.json({ ok: true, message: "Report template saved." });
+  }
+  if (action === "delete_report_template") {
+    if (user.role !== "admin") return Response.json({ error: "Administrator access required" }, { status: 403 });
+    await runtime.DB.prepare("UPDATE report_templates SET active = 0, updated_at = ? WHERE id = ?").bind(now, Number(body.templateId)).run(); return Response.json({ ok: true, message: "Report template removed." });
+  }
+  if (action === "publish") {
+    if (user.role !== "admin" && user.temporary_access_role !== "temporary_admin") return Response.json({ error: "Administrator access required" }, { status: 403 });
+    const title = String(body.title ?? "").trim().slice(0, 160); const content = String(body.body ?? "").trim().slice(0, 10000);
+    if (!title || !content) return Response.json({ error: "Title and content are required" }, { status: 400 });
+    await runtime.DB.prepare("INSERT INTO public_content (content_type, title, body, published, updated_by_user_id, updated_at) VALUES (?, ?, ?, 1, ?, ?)").bind(String(body.contentType ?? "notice"), title, content, user.id, now).run();
+    return Response.json({ ok: true, message: "Public information published." });
   }
 
   if (!["add_training", "add_transfer", "issue_equipment", "return_equipment", "issue_certificate"].includes(action)) return Response.json({ error: "Unknown feature action" }, { status: 400 });

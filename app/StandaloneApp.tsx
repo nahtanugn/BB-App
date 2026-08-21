@@ -21,6 +21,7 @@ import ManageHub from "./ManageHub";
 import NotificationCentre from "./NotificationCentre";
 import ExportCentre from "./ExportCentre";
 import ManagedSchoolSelect from "./ManagedSchoolSelect";
+import PublicInformation from "./PublicInformation";
 
 type User = {
   id: number;
@@ -73,6 +74,7 @@ export default function StandaloneApp() {
   const [showAccount, setShowAccount] = useState(false);
   const [route, setRoute] = useState<AppRoute>("home");
   const [requestingAccess, setRequestingAccess] = useState(false);
+  const [showPublicInformation, setShowPublicInformation] = useState(() => typeof window !== "undefined" && new URL(window.location.href).searchParams.get("public") === "1");
   const [accessRequestNotice, setAccessRequestNotice] = useState("");
   const [onboardingPendingCount, setOnboardingPendingCount] = useState(0);
   const [announcementSummary, setAnnouncementSummary] = useState<{
@@ -579,6 +581,8 @@ export default function StandaloneApp() {
       </main>
     );
 
+  if (!auth.user && showPublicInformation) return <PublicInformation onBack={() => { setShowPublicInformation(false); window.history.replaceState({}, "", "/"); }} />;
+
   if (!auth.user)
     return (
       <main className="auth-screen">
@@ -670,7 +674,7 @@ export default function StandaloneApp() {
               <button className="primary auth-submit" disabled={busy}>{busy ? "Submitting…" : "Submit access request"}</button>
             </form>
           )}
-          {!auth.setupRequired && !requestingAccess && <button className="request-access-button" onClick={() => { setRequestingAccess(true); setError(""); setAccessRequestNotice(""); }}>Request member access</button>}
+          {!auth.setupRequired && !requestingAccess && <><button className="request-access-button" onClick={() => { setRequestingAccess(true); setError(""); setAccessRequestNotice(""); }}>Request member access</button><button type="button" className="text-button" onClick={() => { setShowPublicInformation(true); window.history.pushState({}, "", "/?public=1"); }}>Public information</button></>}
           <small>Private by default · No ChatGPT account required</small>
         </section>
       </main>
