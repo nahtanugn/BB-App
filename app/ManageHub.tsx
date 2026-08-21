@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import type { AppRoute, ShellUser } from "./AppShell";
+import ExpansionCentre from "./ExpansionCentre";
 
 type Tool = { route: AppRoute; label: string; description: string; icon: string };
 type CountRow = { rule_key?: string; total?: number };
@@ -113,5 +114,6 @@ export default function ManageHub({
         </div>
       </section>)}
     </div>
+    {staff && <ExpansionCentre user={user} />}
   </main>;
 }

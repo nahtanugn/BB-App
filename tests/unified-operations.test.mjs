@@ -184,3 +184,16 @@ test("operations expansion keeps messaging, analytics, imports and public conten
   assert.match(migration, /import_jobs/);
   assert.match(migration, /message_threads/);
 });
+
+test("new operations APIs are connected to the Manage hub without changing navigation", async () => {
+  const [manage, expansion] = await Promise.all([
+    source("../app/ManageHub.tsx"),
+    source("../app/ExpansionCentre.tsx"),
+  ]);
+  assert.match(manage, /ExpansionCentre/);
+  assert.match(manage, /staff && <ExpansionCentre/);
+  assert.match(expansion, /Insights and communication/);
+  assert.match(expansion, /Preview member import/);
+  assert.match(expansion, /Only administrators can publish public information/);
+  assert.match(expansion, /\/api\/feature-expansion\?kind=analytics/);
+});
