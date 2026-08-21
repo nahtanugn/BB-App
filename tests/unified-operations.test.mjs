@@ -210,3 +210,10 @@ test("new operations APIs are connected to the Manage hub without changing navig
   assert.match(expansion, /Commit import/);
   assert.match(expansion, /Report templates/);
 });
+
+test("notification feed hides legacy attendance reminders and collapses duplicate alerts", async () => {
+  const sourceText = await source("../app/api/notifications/route.ts");
+  assert.match(sourceText, /ROW_NUMBER\(\) OVER/);
+  assert.match(sourceText, /duplicate_rank = 1/);
+  assert.match(sourceText, /Attendance is incomplete/);
+});

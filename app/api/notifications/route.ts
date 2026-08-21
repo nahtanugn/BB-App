@@ -22,15 +22,31 @@ export async function GET(request: Request) {
     // kept solely in the Action Centre. Keep them out of the feed and badge.
     const visibleNotification = "target_url != '/?open=attendance' AND title != 'Attendance is incomplete'";
     const notifications = await env.DB.prepare(
-      `SELECT id, type, title, body, target_url, read_at, created_at
-       FROM notifications WHERE recipient_user_id = ? AND ${visibleNotification}
+      `WITH ranked AS (
+         SELECT id, type, title, body, target_url, read_at, created_at,
+           ROW_NUMBER() OVER (
+             PARTITION BY recipient_user_id, type, title, body, target_url
+             ORDER BY created_at DESC, id DESC
+           ) AS duplicate_rank
+         FROM notifications WHERE recipient_user_id = ? AND ${visibleNotification}
+       )
+       SELECT id, type, title, body, target_url, read_at, created_at
+       FROM ranked WHERE duplicate_rank = 1
        ORDER BY created_at DESC LIMIT 100`,
     )
       .bind(user.id)
       .all();
     const unread = await env.DB.prepare(
-      `SELECT COUNT(*) AS total FROM notifications
-       WHERE recipient_user_id = ? AND read_at IS NULL AND ${visibleNotification}`,
+      `WITH ranked AS (
+         SELECT read_at,
+           ROW_NUMBER() OVER (
+             PARTITION BY recipient_user_id, type, title, body, target_url
+             ORDER BY created_at DESC, id DESC
+           ) AS duplicate_rank
+         FROM notifications WHERE recipient_user_id = ? AND ${visibleNotification}
+       )
+       SELECT COUNT(*) AS total FROM ranked
+       WHERE duplicate_rank = 1 AND read_at IS NULL`,
     )
       .bind(user.id)
       .first<{ total: number }>();
