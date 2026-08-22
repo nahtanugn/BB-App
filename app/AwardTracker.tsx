@@ -86,6 +86,23 @@ type TrackerData = {
   section: "senior" | "junior";
 };
 
+type TrackerCacheEntry = { data: TrackerData; updatedAt: number };
+const trackerMemoryCache = new Map<string, TrackerCacheEntry>();
+const trackerCacheLifetime = 5 * 60 * 1000;
+
+function cachedTrackerData(key: string) {
+  const cached = trackerMemoryCache.get(key);
+  if (!cached || Date.now() - cached.updatedAt > trackerCacheLifetime) {
+    trackerMemoryCache.delete(key);
+    return null;
+  }
+  return cached.data;
+}
+
+function rememberTrackerData(key: string, data: TrackerData) {
+  trackerMemoryCache.set(key, { data, updatedAt: Date.now() });
+}
+
 const statusOrder: Status[] = [
   "not_started",
   "in_progress",
@@ -286,9 +303,10 @@ export default function AwardTracker({
   const canOverrideMemberDetails = hasOperationalAdminAccess;
   const [internalSection, setInternalSection] = useState<"senior" | "junior">("senior");
   const section = selectedSection ?? internalSection;
+  const trackerCacheKey = `${user?.email ?? "anonymous"}:${user?.role ?? "unknown"}:${user?.squad ?? ""}:${section}`;
   const canViewSubmissions =
     section === "senior" && roleCanViewSubmissions;
-  const [data, setData] = useState<TrackerData | null>(null);
+  const [data, setData] = useState<TrackerData | null>(() => cachedTrackerData(trackerCacheKey));
   const [error, setError] = useState("");
   const [actionError, setActionError] = useState("");
   const [notice, setNotice] = useState("");
@@ -343,6 +361,7 @@ export default function AwardTracker({
       };
       if (!response.ok)
         throw new Error(result.error ?? "Unable to load the tracker");
+      rememberTrackerData(trackerCacheKey, result);
       setData(result);
       setError("");
     } catch (cause) {
@@ -361,6 +380,7 @@ export default function AwardTracker({
         };
         if (!response.ok)
           throw new Error(result.error ?? "Unable to load the tracker");
+        rememberTrackerData(trackerCacheKey, result);
         setData(result);
       })
       .catch((cause: unknown) => {
@@ -370,7 +390,7 @@ export default function AwardTracker({
       });
     if ("serviceWorker" in navigator)
       navigator.serviceWorker.register("/sw.js").catch(() => undefined);
-  }, [section]);
+  }, [section, trackerCacheKey]);
 
   useEffect(() => {
     const sync = () => { void flushOfflineAttendance().then((result) => { if (result.applied || result.conflicts) setNotice(result.conflicts ? `Attendance synced with ${result.conflicts} conflict${result.conflicts === 1 ? "" : "s"} for review.` : `Synced ${result.applied} offline attendance update${result.applied === 1 ? "" : "s"}.`); }).catch(() => undefined); };
@@ -380,7 +400,8 @@ export default function AwardTracker({
   }, []);
 
   function switchSection(next: "senior" | "junior") {
-    setData(null);
+    const nextCacheKey = `${user?.email ?? "anonymous"}:${user?.role ?? "unknown"}:${user?.squad ?? ""}:${next}`;
+    setData(cachedTrackerData(nextCacheKey));
     setInternalSection(next);
     onSectionChange?.(next);
     setCategory(next === "junior" ? "Junior Awards" : "Compulsory");
@@ -1299,6 +1320,20 @@ export default function AwardTracker({
         <p>{error}</p>
         <button onClick={load}>Try again</button>
       </main>
+    );
+  if (!data && embedded)
+    return (
+      <section className="tracker-loading-skeleton" aria-live="polite" aria-busy="true">
+        <div>
+          <span className="skeleton-line skeleton-line-short" />
+          <span className="skeleton-line skeleton-line-title" />
+          <span className="skeleton-line" />
+        </div>
+        <div className="tracker-loading-grid">
+          <span /><span /><span />
+        </div>
+        <p>Loading {activeView === "members" ? "members" : activeView === "attendance" ? "attendance" : activeView === "subscriptions" ? "subscriptions" : "awards"}…</p>
+      </section>
     );
   if (!data)
     return (

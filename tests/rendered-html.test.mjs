@@ -16,6 +16,10 @@ test("defines the 11KCHBB App application shell and sharing metadata", async () 
   assert.match(layout, /\/app-photo\.jpeg/);
   assert.match(layout, /\/app-photo\.jpeg/);
   assert.match(tracker, /Preparing your award records/);
+  assert.match(tracker, /trackerMemoryCache/);
+  assert.match(tracker, /cachedTrackerData/);
+  assert.match(tracker, /className="tracker-loading-skeleton"/);
+  assert.match(styles, /\.tracker-loading-skeleton/);
   assert.match(tracker, /Attendance dates/);
   assert.match(tracker, /aria-label="Attendance meeting date"/);
   assert.match(tracker, /Earliest to latest/);

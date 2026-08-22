@@ -396,11 +396,55 @@ function validJoiningYear(value: string) {
 }
 
 let initialized = false;
+let schemaInitialization: Promise<void> | null = null;
 
 async function ensureSchema() {
   if (initialized) return;
+  if (schemaInitialization) return schemaInitialization;
+  schemaInitialization = initializeSchema().catch((error) => {
+    schemaInitialization = null;
+    throw error;
+  });
+  return schemaInitialization;
+}
+
+async function initializeSchema() {
   const db = env.DB;
   if (!db) throw new Error("The shared database is not available.");
+
+  // Production migrations already maintain these tables. Avoid replaying the
+  // full schema, award seed and legacy conversions on every new Worker isolate.
+  // The slower repair path remains available for a new or incomplete database.
+  const coreTables = await db.prepare(`SELECT COUNT(*) AS total
+    FROM sqlite_master
+    WHERE type = 'table' AND name IN (
+      'members', 'award_definitions', 'member_awards',
+      'attendance_sessions', 'attendance_records',
+      'member_subscriptions', 'band_subscriptions'
+    )`).first<{ total: number }>();
+  if (Number(coreTables?.total ?? 0) === 7) {
+    const readiness = await db.prepare(`SELECT
+      (SELECT COUNT(*) FROM pragma_table_info('members')
+        WHERE name IN ('school', 'contact_number', 'emergency_contact_number', 'email', 'parents_name', 'service_award_count', 'band_member', 'section')) AS member_columns,
+      (SELECT COUNT(*) FROM pragma_table_info('award_definitions') WHERE name = 'section') AS award_columns,
+      (SELECT COUNT(*) FROM pragma_table_info('attendance_sessions') WHERE name IN ('section', 'audience')) AS attendance_columns,
+      (SELECT COUNT(*) FROM award_definitions WHERE section IN ('senior', 'junior')) AS award_count`).first<{
+        member_columns: number;
+        award_columns: number;
+        attendance_columns: number;
+        award_count: number;
+      }>();
+    const requiredAwardCount = awards.length + juniorAwards.length;
+    if (
+      Number(readiness?.member_columns ?? 0) === 8 &&
+      Number(readiness?.award_columns ?? 0) === 1 &&
+      Number(readiness?.attendance_columns ?? 0) === 2 &&
+      Number(readiness?.award_count ?? 0) >= requiredAwardCount
+    ) {
+      initialized = true;
+      return;
+    }
+  }
 
   await db.batch([
     db.prepare(`CREATE TABLE IF NOT EXISTS members (

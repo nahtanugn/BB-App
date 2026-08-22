@@ -72,3 +72,11 @@ test("section boundaries prevent Junior data from entering the Senior submission
   assert.match(tracker, /allowedSections/);
 });
 
+test("tracker cold starts use a fast schema readiness probe", async () => {
+  const tracker = await source("../app/api/tracker/route.ts");
+  assert.match(tracker, /schemaInitialization/);
+  assert.match(tracker, /FROM sqlite_master/);
+  assert.match(tracker, /pragma_table_info\('members'\)/);
+  assert.match(tracker, /requiredAwardCount = awards\.length \+ juniorAwards\.length/);
+  assert.match(tracker, /Avoid replaying the[\s\S]*full schema/);
+});
