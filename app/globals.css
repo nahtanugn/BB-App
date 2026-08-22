@@ -39,6 +39,8 @@ button:focus-visible, input:focus-visible, select:focus-visible { outline: 3px s
 .branding-preview strong { color: var(--navy); font-size: 18px; }
 .branding-preview small { margin-top: 5px; color: var(--muted); }
 .branding-settings .form-actions { display: flex; gap: 10px; flex-wrap: wrap; }
+.branding-settings .operations-field-grid > label { align-content: start; }
+.branding-settings input[type="file"] { min-height: 52px; padding: 10px 12px; overflow: hidden; }
 .auth-brand .brand-mark { width: 56px; height: 56px; border-radius: 14px; }
 .brand strong, .brand span { display: block; }
 .brand strong { font-size: 16px; letter-spacing: -.2px; }

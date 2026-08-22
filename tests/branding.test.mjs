@@ -21,6 +21,7 @@ test("administrators can customise deployment branding without exposing logo dat
   assert.match(settings, /App name/);
   assert.match(settings, /Company logo/);
   assert.match(settings, /Use standard BB logo/);
+  assert.match(settings, /className="panel operations-form"/);
   assert.match(settings, /standard BB emblem is used until an administrator uploads a company logo/);
   assert.match(shell, /branding\.appName/);
   assert.match(context, /app-branding-updated/);
