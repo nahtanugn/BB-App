@@ -84,6 +84,45 @@ const permissionGroups = [
       ["stock.export", "Export stock data"],
     ],
   },
+  {
+    title: "Programme operations",
+    description: "Parade plans, duty rosters and event committees",
+    options: [
+      ["programme.plans.manage", "Manage parade plans and templates"],
+      ["programme.rosters.manage", "Manage duty rosters"],
+      ["programme.committees.manage", "Manage event committees and tasks"],
+    ],
+  },
+  {
+    title: "Leave, promotion & service",
+    description: "Progress reviews with separate squad and final authority",
+    options: [
+      ["leave.review_squad", "Confirm squad leave requests"],
+      ["leave.approve", "Give final leave decisions"],
+      ["promotion.rules.manage", "Configure promotion requirements"],
+      ["promotion.review", "Review readiness and record promotion decisions"],
+      ["service.verify_squad", "Confirm squad service hours"],
+      ["service.approve", "Give final service-hour approval"],
+    ],
+  },
+  {
+    title: "Band Centre",
+    description: "Band members, instruments and programme",
+    options: [
+      ["band.view", "View Band Centre"],
+      ["band.manage_profiles", "Manage band profiles"],
+      ["band.manage_instruments", "Issue, return and maintain instruments"],
+      ["band.manage_programme", "Manage rehearsals, performances and assessments"],
+    ],
+  },
+  {
+    title: "Emergency operations",
+    description: "Time-sensitive roll call and audited contact access",
+    options: [
+      ["emergency.manage", "Start and update emergency roll calls"],
+      ["emergency.view_contacts", "View audited emergency contacts"],
+    ],
+  },
 ] as const;
 
 export default function CustomRoleManager({

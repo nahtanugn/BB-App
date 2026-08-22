@@ -6,6 +6,17 @@ All notable changes to 11KCHBB App are recorded here.
 
 ### Added
 
+- Company operations workspaces for Parade Planning, Duty Rosters, Event
+  Committees, Leave Requests, Promotion Readiness, Service Hours, Band Centre
+  and Emergency Roll Call.
+- Two-stage squad and Officer reviews for leave and service records, with
+  attendance conflict protection and verified-hour progress.
+- Band member profiles, instrument issue/return history, maintenance alerts,
+  rehearsals, performances and proficiency assessments.
+- Configurable promotion rules and waivers, with advisory readiness shown in
+  staff views and each linked member's journey.
+- Role-aware Action Centre reminders for duties, committees, leave, service,
+  band maintenance and emergency responses.
 - Controlled member access requests from the public sign-in screen.
 - Administrator registration approval, rejection, profile matching and
   member-profile creation.
@@ -18,6 +29,12 @@ All notable changes to 11KCHBB App are recorded here.
 
 ### Security and accountability
 
+- Server-side section and squad isolation covers every new operations route,
+  including direct API access and emergency-contact views.
+- Official attendance, leave, service and promotion decisions are never made
+  automatically; duplicate submissions are rejected with idempotency keys.
+- Every emergency contact view, roll-call change, promotion decision and band
+  instrument movement is auditable.
 - Pending and rejected accounts cannot create authenticated sessions.
 - Requested and temporary passwords remain salted hashes.
 - Viewer access is read-only, and temporary/custom access cannot approve

@@ -21,7 +21,15 @@ export type AppRoute =
   | "onboarding"
   | "automation"
   | "events"
-  | "journey";
+  | "journey"
+  | "parades"
+  | "duties"
+  | "committees"
+  | "leave"
+  | "promotion"
+  | "service"
+  | "band"
+  | "emergency";
 
 export type ShellUser = {
   name: string;
@@ -54,7 +62,14 @@ const routeHub: Record<AppRoute, AppHub> = {
   attendance: "people",
   subscriptions: "people",
   journey: "people",
+  leave: "people",
+  promotion: "people",
+  service: "people",
   events: "programme",
+  parades: "programme",
+  duties: "programme",
+  committees: "programme",
+  band: "programme",
   resources: "programme",
   announcements: "programme",
   manage: "manage",
@@ -65,6 +80,7 @@ const routeHub: Record<AppRoute, AppHub> = {
   onboarding: "manage",
   automation: "manage",
   exports: "manage",
+  emergency: "home",
 };
 
 export function hubForRoute(route: AppRoute): AppHub {
@@ -151,6 +167,22 @@ export default function AppShell({
       );
     }
     values.push({ route: "events", category: "Programme & Events", label: "Meetings and events", description: "Programme, RSVPs and registers", icon: "◫" });
+    if (staff) values.push(
+      { route: "parades", category: "Programme & Events", label: "Parade planner", description: "Templates and published programmes", icon: "▤" },
+      { route: "duties", category: "Programme & Events", label: "Duty roster", description: "Assignments and substitutions", icon: "✓" },
+      { route: "committees", category: "Programme & Events", label: "Committees", description: "Event teams and tasks", icon: "◎" },
+    );
+    if (operational || user.custom_permissions.some((permission) => permission.startsWith("band.")))
+      values.push({ route: "band", category: "Programme & Events", label: "Band Centre", description: "Members, instruments and programme", icon: "♫" });
+    if (["member", "nco", "squad_leader"].includes(user.role) || operational || user.custom_permissions.some((permission) => permission.startsWith("leave.")))
+      values.push({ route: "leave", category: "People & Progress", label: "Leave", description: "Event absence requests", icon: "↪" });
+    if (staff) values.push(
+      { route: "promotion", category: "People & Progress", label: "Promotion readiness", description: "Requirements and advisory progress", icon: "↑" },
+      { route: "service", category: "People & Progress", label: "Service hours", description: "Submission and verification", icon: "◷" },
+    );
+    else values.push({ route: "service", category: "People & Progress", label: "My service", description: "Submit and track service hours", icon: "◷" });
+    if (operational || ["nco", "squad_leader"].includes(user.role) || user.custom_permissions.some((permission) => permission.startsWith("emergency.")))
+      values.push({ route: "emergency", category: "Home", label: "Emergency roll call", description: "Safeguarding status check", icon: "!" });
     if (["member", "nco", "squad_leader"].includes(user.role))
       values.push({ route: "journey", category: "People & Progress", label: "My journey", description: "Your goals and progress", icon: "◎" });
     if ((seniorApplicant || mayReviewSubmissions) && (activeSection ?? user.member_section) !== "junior")
@@ -204,8 +236,8 @@ export default function AppShell({
   const orderedItems = (routes: AppRoute[]) => routes.map((itemRoute) => items.find((item) => item.route === itemRoute)).filter((item): item is NavItem => Boolean(item));
   const hubItems = {
     home: items.filter((item) => hubForRoute(item.route) === "home"),
-    people: orderedItems(["members", "awards", "attendance", "subscriptions", "journey"]),
-    programme: orderedItems(["events", "resources", "announcements"]),
+    people: orderedItems(["members", "awards", "attendance", "subscriptions", "leave", "promotion", "service", "journey"]),
+    programme: orderedItems(["events", "parades", "duties", "committees", "band", "resources", "announcements"]),
     manage: items.filter((item) => hubForRoute(item.route) === "manage"),
   } satisfies Record<AppHub, NavItem[]>;
   const hubDefinitions: Array<{ hub: AppHub; label: string; memberLabel?: string; description: string; icon: string; route: AppRoute; badge?: number }> = [

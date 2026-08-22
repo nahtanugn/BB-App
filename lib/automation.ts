@@ -17,6 +17,12 @@ export const AUTOMATION_RULES = [
   ["data_quality", "Member data quality", ["admin", "officer"]],
   ["company_subscription", "Company subscriptions", ["admin", "officer"]],
   ["band_subscription", "Band subscriptions", ["admin", "officer"]],
+  ["duty_rosters", "Duty rosters", ["admin", "officer"]],
+  ["committee_tasks", "Committee tasks", ["admin", "officer"]],
+  ["leave_requests", "Leave requests", ["admin", "officer"]],
+  ["service_verification", "Service verification", ["admin", "officer"]],
+  ["band_maintenance", "Band instrument maintenance", ["admin", "officer"]],
+  ["emergency_roll_call", "Emergency roll call", ["admin", "officer"]],
 ] as const;
 
 type RuleKey = (typeof AUTOMATION_RULES)[number][0];
@@ -448,6 +454,37 @@ async function collectCandidates(db: D1Database, now: Date) {
         targetUrl: "/?open=subscriptions",
       });
     }
+  }
+
+  if (enabled("duty_rosters")) {
+    const recipients = await activeUserIdsForRolesOrPermission(configuredRoles(rules, "duty_rosters", ["admin", "officer"]), "programme.rosters.manage");
+    const rows = await db.prepare("SELECT id, starts_at FROM duty_assignments WHERE member_id IS NULL AND status NOT IN ('completed','cancelled')").all<{ id: number; starts_at: string }>();
+    for (const row of rows.results) candidates.push({ ruleKey: "duty_rosters", sourceType: "duty_assignment", sourceId: String(row.id), recipientUserIds: recipients, title: "Duty remains unfilled", description: "Assign a member before the duty begins.", targetUrl: "/?open=duties", priority: "important", dueAt: row.starts_at });
+  }
+  if (enabled("committee_tasks")) {
+    const staff = await activeUserIdsForRolesOrPermission(configuredRoles(rules, "committee_tasks", ["admin", "officer"]), "programme.committees.manage");
+    const rows = await db.prepare("SELECT id,title,deadline FROM committee_tasks WHERE status NOT IN ('completed','cancelled')").all<{ id: number; title: string; deadline: string | null }>();
+    for (const row of rows.results) candidates.push({ ruleKey: "committee_tasks", sourceType: "committee_task", sourceId: String(row.id), recipientUserIds: staff, title: "Committee task outstanding", description: row.title, targetUrl: "/?open=committees", dueAt: row.deadline });
+  }
+  if (enabled("leave_requests")) {
+    const recipients = await activeUserIdsForRolesOrPermission(configuredRoles(rules, "leave_requests", ["admin", "officer"]), "leave.approve");
+    const rows = await db.prepare("SELECT id FROM leave_requests WHERE status='pending_final' AND withdrawn_at IS NULL").all<{ id: number }>();
+    for (const row of rows.results) candidates.push({ ruleKey: "leave_requests", sourceType: "leave_request", sourceId: String(row.id), recipientUserIds: recipients, title: "Leave request needs final approval", description: "A squad-confirmed request needs an authorised decision.", targetUrl: "/?open=leave", priority: "important" });
+  }
+  if (enabled("service_verification")) {
+    const recipients = await activeUserIdsForRolesOrPermission(configuredRoles(rules, "service_verification", ["admin", "officer"]), "service.approve");
+    const rows = await db.prepare("SELECT id FROM service_hour_submissions WHERE status='pending_final'").all<{ id: number }>();
+    for (const row of rows.results) candidates.push({ ruleKey: "service_verification", sourceType: "service_hours", sourceId: String(row.id), recipientUserIds: recipients, title: "Service hours need final approval", description: "Only fully verified hours count toward progress.", targetUrl: "/?open=service" });
+  }
+  if (enabled("band_maintenance")) {
+    const recipients = await activeUserIdsForRolesOrPermission(configuredRoles(rules, "band_maintenance", ["admin", "officer"]), "band.manage_instruments");
+    const rows = await db.prepare("SELECT id,name,maintenance_due_at,due_at FROM band_instruments WHERE active=1 AND (condition IN ('maintenance','defective') OR maintenance_due_at<=date('now') OR (current_holder_member_id IS NOT NULL AND due_at<date('now')))").all<{ id: number; name: string; maintenance_due_at: string | null; due_at: string | null }>();
+    for (const row of rows.results) candidates.push({ ruleKey: "band_maintenance", sourceType: "band_instrument", sourceId: String(row.id), recipientUserIds: recipients, title: "Band instrument needs attention", description: `${row.name} needs maintenance or return follow-up.`, targetUrl: "/?open=band", priority: "important", dueAt: row.maintenance_due_at ?? row.due_at });
+  }
+  if (enabled("emergency_roll_call")) {
+    const recipients = await activeUserIdsForRolesOrPermission(configuredRoles(rules, "emergency_roll_call", ["admin", "officer"]), "emergency.manage");
+    const rows = await db.prepare("SELECT s.id,COUNT(r.member_id) AS missing FROM emergency_sessions s JOIN emergency_responses r ON r.session_id=s.id AND r.status IN ('missing','unknown') WHERE s.status='active' GROUP BY s.id").all<{ id: number; missing: number }>();
+    for (const row of rows.results) candidates.push({ ruleKey: "emergency_roll_call", sourceType: "emergency_session", sourceId: String(row.id), recipientUserIds: recipients, title: "Emergency responses outstanding", description: `${row.missing} members are missing or unknown.`, targetUrl: "/?open=emergency", priority: "urgent" });
   }
 
   for (const candidate of candidates)

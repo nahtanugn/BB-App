@@ -22,6 +22,7 @@ import NotificationCentre from "./NotificationCentre";
 import ExportCentre from "./ExportCentre";
 import ManagedSchoolSelect from "./ManagedSchoolSelect";
 import PublicInformation from "./PublicInformation";
+import CompanyOperationsCentre, { type OperationsModule } from "./CompanyOperationsCentre";
 
 type User = {
   id: number;
@@ -138,6 +139,9 @@ export default function StandaloneApp() {
       ["home", "manage"].includes(requested) ||
       ["resources", "uniforms", "announcements"].includes(requested) ||
       requested === "events" ||
+      (["parades", "duties", "committees", "promotion", "service", "leave", "band", "emergency"].includes(requested) &&
+        (staff || ["member", "nco", "squad_leader"].includes(auth.user.role) ||
+          auth.user.custom_permissions.some((permission) => ["programme.", "leave.", "promotion.", "service.", "band.", "emergency."].some((prefix) => permission.startsWith(prefix))))) ||
       (requested === "journey" &&
         ["member", "nco", "squad_leader"].includes(auth.user.role)) ||
       (requested === "stock" && stockAccess) ||
@@ -249,6 +253,14 @@ export default function StandaloneApp() {
         "company-overview": "home",
         manage: "manage",
         exports: "exports",
+        parades: "parades",
+        duties: "duties",
+        committees: "committees",
+        leave: "leave",
+        promotion: "promotion",
+        service: "service",
+        band: "band",
+        emergency: "emergency",
       };
       navigate(aliases[target] ?? target, true);
     }, 0);
@@ -704,6 +716,14 @@ export default function StandaloneApp() {
       subscriptions: "subscriptions",
       admin: "admin",
       exports: "exports",
+      parades: "parades",
+      duties: "duties",
+      committees: "committees",
+      leave: "leave",
+      promotion: "promotion",
+      service: "service",
+      band: "band",
+      emergency: "emergency",
       manage: "manage",
       home: "home",
     };
@@ -737,6 +757,8 @@ export default function StandaloneApp() {
     page = <main className="member-progress-page"><MemberProgress user={currentUser} /></main>;
   else if (route === "events")
     page = <EventCentre />;
+  else if (["parades", "duties", "committees", "leave", "promotion", "service", "band", "emergency"].includes(route))
+    page = <CompanyOperationsCentre module={route as OperationsModule} activeSection={activeSection} />;
   else if (route === "journey" && ["member", "nco", "squad_leader"].includes(currentUser.role))
     page = <MemberJourney />;
   else {

@@ -37,6 +37,12 @@ const ruleLabels: Record<string, string> = {
   data_quality: "Data quality",
   company_subscription: "Subscriptions",
   band_subscription: "Band",
+  duty_rosters: "Duties",
+  committee_tasks: "Committees",
+  leave_requests: "Leave",
+  service_verification: "Service",
+  band_maintenance: "Band maintenance",
+  emergency_roll_call: "Emergency",
 };
 
 export default function ActionCentre({
@@ -116,6 +122,7 @@ export default function ActionCentre({
     { label: "Find a member", target: "/?open=members" },
     { label: "Take attendance", target: "/?open=attendance" },
     { label: "Manage requests", target: "/?open=manage" },
+    { label: "Emergency roll call", target: "/?open=emergency" },
     { label: "Open resources", target: "/?open=resources" },
   ];
 

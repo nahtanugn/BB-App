@@ -11,9 +11,9 @@ export async function GET(request: Request) {
     const member = await linkedMember(user.email);
     if (!member) return Response.json({ linked: false, accountEmail: user.email });
     const year = new Date().getFullYear();
-    const [goals, awards, attendance, events, subscription] = await Promise.all([
+    const [goals, awards, attendance, events, subscription, serviceHours, promotionRules, training] = await Promise.all([
       runtime.DB.prepare("SELECT * FROM member_goals WHERE member_id = ? ORDER BY status, created_at DESC").bind(member.id).all(),
-      runtime.DB.prepare(`SELECT awards.name, awards.category, progress.level, progress.status FROM member_awards progress
+      runtime.DB.prepare(`SELECT awards.code, awards.name, awards.category, progress.level, progress.status FROM member_awards progress
         JOIN award_definitions awards ON awards.code = progress.award_code WHERE progress.member_id = ?
         ORDER BY progress.updated_at DESC LIMIT 8`).bind(member.id).all(),
       runtime.DB.prepare(`SELECT sessions.meeting_date, records.status FROM attendance_records records
@@ -26,9 +26,28 @@ export async function GET(request: Request) {
         ORDER BY events.event_date ASC LIMIT 5`).bind(member.id, new Date().toISOString().slice(0, 10), member.section).all(),
       runtime.DB.prepare(`SELECT paid, (SELECT status FROM band_subscriptions WHERE member_id = ? AND year = ?) AS band_status
         FROM member_subscriptions WHERE member_id = ? AND year = ?`).bind(member.id, year, member.id, year).first<{ paid: number; band_status: string | null }>(),
+      runtime.DB.prepare(`SELECT status, COALESCE(SUM(duration_minutes), 0) AS minutes, COUNT(*) AS records
+        FROM service_hour_submissions WHERE member_id = ? GROUP BY status ORDER BY status`).bind(member.id).all<{ status: string; minutes: number; records: number }>(),
+      runtime.DB.prepare("SELECT * FROM promotion_rules WHERE section = ? AND active = 1 ORDER BY target_rank").bind(member.section).all<{ id: number; target_rank: string; minimum_attendance_percent: number; required_awards_json: string; required_training_json: string; minimum_service_hours: number; officer_assessment_required: number }>(),
+      runtime.DB.prepare("SELECT training_type, title FROM training_records WHERE member_id = ? AND status = 'completed'").bind(member.id).all<{ training_type: string; title: string }>(),
     ]);
     const completed = goals.results.filter((goal: { status: string }) => goal.status === "completed").length;
-    return Response.json({ linked: true, member, goals: goals.results, awards: awards.results, attendance: attendance.results, upcomingEvents: events.results, subscription: subscription ?? { paid: 0, band_status: null }, summary: { completedGoals: completed, totalGoals: goals.results.length } });
+    const markedAttendance = attendance.results.filter((record: { status: string }) => ["present", "absent", "excused"].includes(record.status));
+    const attendancePercent = markedAttendance.length ? Math.round((markedAttendance.filter((record: { status: string }) => record.status === "present").length / markedAttendance.length) * 100) : 0;
+    const earnedAwards = new Set(awards.results.flatMap((item: { code: string; name: string; level: string }) => [item.code, item.name, item.level, `${item.code}:${item.level}`, `${item.name}:${item.level}`]));
+    const completedTraining = new Set(training.results.flatMap((item) => [item.training_type, item.title]));
+    const approvedServiceMinutes = serviceHours.results.find((item) => item.status === "approved")?.minutes ?? 0;
+    const promotionReadiness = promotionRules.results.map((rule) => {
+      const parse = (value: string) => { try { const list = JSON.parse(value || "[]"); return Array.isArray(list) ? list.map(String) : []; } catch { return []; } };
+      const checks = [
+        { label: `Attendance of at least ${rule.minimum_attendance_percent}%`, met: attendancePercent >= rule.minimum_attendance_percent },
+        ...parse(rule.required_awards_json).map((required) => ({ label: `Award: ${required}`, met: earnedAwards.has(required) })),
+        ...parse(rule.required_training_json).map((required) => ({ label: `Training: ${required}`, met: completedTraining.has(required) })),
+        { label: `${rule.minimum_service_hours} verified service hours`, met: approvedServiceMinutes >= rule.minimum_service_hours * 60 },
+      ];
+      return { ruleId: rule.id, targetRank: rule.target_rank, ready: checks.every((check) => check.met), checks, officerAssessmentRequired: Boolean(rule.officer_assessment_required) };
+    });
+    return Response.json({ linked: true, member, goals: goals.results, awards: awards.results, attendance: attendance.results, upcomingEvents: events.results, subscription: subscription ?? { paid: 0, band_status: null }, serviceHours: serviceHours.results, promotionReadiness, summary: { completedGoals: completed, totalGoals: goals.results.length } });
   } catch (error) {
     return Response.json({ error: error instanceof Error ? error.message : "Unable to load your journey" }, { status: 500 });
   }

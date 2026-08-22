@@ -36,6 +36,21 @@ export const APP_PERMISSIONS = [
   "announcements.publish",
   "announcements.manage",
   "exports.full",
+  "programme.plans.manage",
+  "programme.rosters.manage",
+  "programme.committees.manage",
+  "leave.review_squad",
+  "leave.approve",
+  "promotion.rules.manage",
+  "promotion.review",
+  "service.verify_squad",
+  "service.approve",
+  "band.view",
+  "band.manage_profiles",
+  "band.manage_instruments",
+  "band.manage_programme",
+  "emergency.manage",
+  "emergency.view_contacts",
 ] as const;
 
 export type AppPermission = (typeof APP_PERMISSIONS)[number];
