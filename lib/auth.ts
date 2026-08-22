@@ -179,7 +179,7 @@ export async function ensureAuthSchema() {
     VALUES ('privacy_notice', ?, 1, ?)
     ON CONFLICT(setting_key) DO NOTHING`)
     .bind(
-      "11KCHBB uses your submitted information only for company administration, attendance, awards, subscriptions, resources and member safety. Access is limited according to each account’s role. Please confirm that your details are accurate.",
+      "This app uses submitted information only for company administration, attendance, awards, subscriptions, resources and member safety. Access is limited according to each account’s role. Please confirm that your details are accurate.",
       now,
     )
     .run();

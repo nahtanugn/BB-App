@@ -1,4 +1,4 @@
-# Contributing to 11KCHBB App
+# Contributing to BB Company App
 
 Thank you for helping improve the app. Changes should be developed and reviewed
 without using the live company database.

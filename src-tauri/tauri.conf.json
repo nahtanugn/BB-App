@@ -1,17 +1,17 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
-  "productName": "11KCHBB App",
+  "productName": "BB Company App",
   "version": "1.1.0",
-  "identifier": "my.11kchbb.app",
+  "identifier": "org.example.bb-company-app",
   "build": {
-    "frontendDist": "https://app.11kchbb.workers.dev/"
+    "frontendDist": "setup"
   },
   "app": {
     "windows": [
       {
         "label": "main",
-        "title": "11KCHBB App",
-        "url": "https://app.11kchbb.workers.dev/",
+        "title": "BB Company App",
+        "url": "index.html",
         "width": 1280,
         "height": 820,
         "minWidth": 360,
@@ -28,11 +28,10 @@
   "bundle": {
     "active": true,
     "category": "Productivity",
-    "copyright": "Copyright © 2026 11th Kuching Company",
-    "shortDescription": "Manage 11KCHBB members, attendance, awards and resources.",
-    "longDescription": "The official company management app for the 11th Kuching Company, connected securely to the live 11KCHBB service.",
-    "publisher": "11th Kuching Company",
-    "homepage": "https://app.11kchbb.workers.dev/",
+    "copyright": "Copyright © 2026 BB Company App contributors",
+    "shortDescription": "Manage company members, attendance, awards and resources.",
+    "longDescription": "A configurable company management app connected securely to its own deployment.",
+    "publisher": "BB Company App contributors",
     "icon": [
       "icons/32x32.png",
       "icons/128x128.png",
@@ -42,4 +41,3 @@
     ]
   }
 }
-

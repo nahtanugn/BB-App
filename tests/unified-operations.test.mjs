@@ -50,7 +50,7 @@ test("every portal uses one URL-aware, role-aware application shell", async () =
   assert.match(standalone, /<NotificationCentre>/);
   assert.match(standalone, /window\.history\[replace \? "replaceState" : "pushState"\]/);
   assert.match(standalone, /popstate/);
-  assert.match(standalone, /11kchbb-active-section/);
+  assert.match(standalone, /bb-company-app-active-section/);
   assert.match(standalone, /selectedSection=\{activeSection\}/);
   assert.match(manage, /activeSection !== "junior"/);
   assert.match(standalone, /new URL\(window\.location\.href\)\.searchParams/);
@@ -243,4 +243,12 @@ test("destructive text actions remain usable touch targets", async () => {
   const css = await source("../app/globals.css");
   assert.match(css, /\.danger-link \{ min-height: 38px; padding: 0 9px;/);
   assert.match(css, /\.subscription-controls \.section-switch button \{ min-height: 40px; \}/);
+});
+
+test("custom access management cannot overflow the account dialog", async () => {
+  const css = await source("../app/globals.css");
+  assert.match(css, /\.account-modal \.custom-role-layout \{ grid-template-columns: minmax\(0, 1fr\); \}/);
+  assert.match(css, /\.account-modal \.role-form-fields,/);
+  assert.match(css, /\.account-modal \.role-form input,/);
+  assert.match(css, /max-width: 100%;/);
 });

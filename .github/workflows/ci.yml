@@ -35,4 +35,4 @@ jobs:
         run: pnpm test
 
       - name: Validate database migrations
-        run: pnpm exec wrangler d1 migrations apply anchor-awards-db --local --config wrangler.migrations.jsonc
+        run: pnpm exec wrangler d1 migrations apply bb-company-app-db --local --config wrangler.migrations.jsonc

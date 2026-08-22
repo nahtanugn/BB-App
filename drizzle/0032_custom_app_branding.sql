@@ -12,5 +12,5 @@ CREATE TABLE IF NOT EXISTS `app_branding` (
 INSERT INTO `app_branding`
   (`id`, `app_name`, `short_name`, `company_name`, `subtitle`, `updated_at`)
 VALUES
-  (1, '11KCHBB App', '11KCHBB App', '11th Kuching Company', 'BB Section Tracker', datetime('now'))
+  (1, 'BB Company App', 'BB App', 'Your BB Company', 'BB Section Tracker', datetime('now'))
 ON CONFLICT(`id`) DO NOTHING;

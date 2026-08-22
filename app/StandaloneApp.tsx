@@ -93,7 +93,7 @@ export default function StandaloneApp() {
     if (typeof window === "undefined") return "senior";
     const requested = new URL(window.location.href).searchParams.get("section");
     if (requested === "junior" || requested === "senior") return requested;
-    return window.localStorage.getItem("11kchbb-active-section") === "junior" ? "junior" : "senior";
+    return window.localStorage.getItem("bb-company-app-active-section") === "junior" ? "junior" : "senior";
   });
   const [users, setUsers] = useState<ManagedUser[]>([]);
   const [pendingMembers, setPendingMembers] = useState<PendingMember[]>([]);
@@ -172,7 +172,7 @@ export default function StandaloneApp() {
   const switchActiveSection = useCallback((next: "senior" | "junior") => {
     setActiveSection(next);
     setSubmissionSection(next);
-    window.localStorage.setItem("11kchbb-active-section", next);
+    window.localStorage.setItem("bb-company-app-active-section", next);
     const url = new URL(window.location.href);
     url.searchParams.set("section", next);
     window.history.replaceState({ route }, "", `${url.pathname}${url.search}`);

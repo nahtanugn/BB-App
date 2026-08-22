@@ -10,7 +10,25 @@ permissions:
   contents: write
 
 jobs:
+  validate-base-release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v6
+      - name: Set up Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: pnpm
+      - name: Install project dependencies
+        run: pnpm install --frozen-lockfile
+      - name: Verify generic distribution
+        run: pnpm test
+
   build-desktop:
+    needs: validate-base-release
     strategy:
       fail-fast: false
       matrix:
@@ -63,15 +81,15 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           tagName: v__VERSION__
-          releaseName: "11KCHBB App v__VERSION__"
+          releaseName: "BB Company App Base v__VERSION__"
           releaseBody: |
-            Desktop edition of 11KCHBB App for macOS, Windows and Linux.
+            Generic base edition of BB Company App for macOS, Windows and Linux.
 
-            This release connects to the same live 11KCHBB service, so authorised users see the same synchronised members, attendance, awards and account data on every device.
+            On first launch, enter the web address supplied by your company administrator. The installer contains no company-specific branding, live database, member records, credentials or deployment address.
 
             These installers are unsigned. Your operating system may display a security warning during installation.
           releaseDraft: false
           prerelease: false
           generateReleaseNotes: true
-          releaseAssetNamePattern: "11KCHBB-App-[version]-[platform]-[arch][setup].[ext]"
+          releaseAssetNamePattern: "BB-Company-App-Base-[version]-[platform]-[arch][setup].[ext]"
           args: ${{ matrix.args }}

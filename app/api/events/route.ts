@@ -1,6 +1,7 @@
 import { getCurrentUser, getRuntimeEnv } from "../../../lib/auth";
 import { canManageEvents, ensureEventSchema, linkedMember } from "../../../lib/events";
 import { createNotifications } from "../../../lib/notifications";
+import { getBranding } from "../../../lib/branding";
 
 const runtime = getRuntimeEnv();
 const sections = ["all", "senior", "junior"];
@@ -24,8 +25,10 @@ export async function GET(request: Request) {
       const toUtc = (value: string) => new Date(value).toISOString().replaceAll("-", "").replaceAll(":", "").replace(/\.\d{3}Z$/, "Z");
       const start = toUtc(event.event_date);
       const end = event.end_date ? toUtc(event.end_date) : toUtc(new Date(new Date(event.event_date).getTime() + 60 * 60 * 1000).toISOString());
-      const body = ["BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//11KCHBB//Company Events//EN", "BEGIN:VEVENT", `UID:11kchbb-event-${event.id}@11kchbb`, `DTSTAMP:${toUtc(new Date().toISOString())}`, `DTSTART:${start}`, `DTEND:${end}`, `SUMMARY:${escape(event.title)}`, event.location ? `LOCATION:${escape(event.location)}` : "", event.description ? `DESCRIPTION:${escape(event.description)}` : "", "END:VEVENT", "END:VCALENDAR"].filter(Boolean).join("\r\n") + "\r\n";
-      return new Response(body, { headers: { "Content-Type": "text/calendar; charset=utf-8", "Content-Disposition": `attachment; filename="11kchbb-event-${event.id}.ics"`, "Cache-Control": "private, no-store" } });
+      const branding = await getBranding();
+      const calendarSlug = branding.shortName.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") || "bb-company-app";
+      const body = ["BEGIN:VCALENDAR", "VERSION:2.0", `PRODID:-//${escape(branding.appName)}//Company Events//EN`, "BEGIN:VEVENT", `UID:${calendarSlug}-event-${event.id}@company-app`, `DTSTAMP:${toUtc(new Date().toISOString())}`, `DTSTART:${start}`, `DTEND:${end}`, `SUMMARY:${escape(event.title)}`, event.location ? `LOCATION:${escape(event.location)}` : "", event.description ? `DESCRIPTION:${escape(event.description)}` : "", "END:VEVENT", "END:VCALENDAR"].filter(Boolean).join("\r\n") + "\r\n";
+      return new Response(body, { headers: { "Content-Type": "text/calendar; charset=utf-8", "Content-Disposition": `attachment; filename="${calendarSlug}-event-${event.id}.ics"`, "Cache-Control": "private, no-store" } });
     }
     const member = await linkedMember(user.email);
     const visibleSections = member ? ["all", member.section] : (canManageEvents(user) || user.role === "viewer" ? sections : ["all"]);

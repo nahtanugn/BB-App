@@ -118,7 +118,7 @@ async function sendPush(
             publicKey: runtime.VAPID_PUBLIC_KEY,
             privateKey: runtime.VAPID_PRIVATE_KEY,
             subject:
-              runtime.VAPID_SUBJECT ?? "mailto:11thkuchingbb@gmail.com",
+              runtime.VAPID_SUBJECT ?? "mailto:admin@example.com",
           },
         );
         const response = await fetch(row.endpoint, payload);

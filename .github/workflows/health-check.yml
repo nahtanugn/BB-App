@@ -17,9 +17,12 @@ jobs:
         id: health
         continue-on-error: true
         run: |
-          status="$(curl --silent --show-error --output health.json --write-out '%{http_code}' --max-time 20 https://app.11kchbb.workers.dev/api/health)"
+          test -n "$APP_URL"
+          status="$(curl --silent --show-error --output health.json --write-out '%{http_code}' --max-time 20 "$APP_URL/api/health")"
           test "$status" = "200"
           grep -q '"status":"ok"' health.json
+        env:
+          APP_URL: ${{ vars.APP_URL }}
 
       - name: Open or update health incident
         if: steps.health.outcome == 'failure'

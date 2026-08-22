@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Connect BB Company App</title>
+    <style>
+      :root {
+        font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        color: #102a43;
+        background: #eef4f9;
+      }
+      * { box-sizing: border-box; }
+      body { margin: 0; min-height: 100vh; display: grid; place-items: center; padding: 24px; }
+      main { width: min(100%, 620px); background: #fff; border: 1px solid #d8e3ee; border-radius: 28px; padding: clamp(28px, 7vw, 52px); box-shadow: 0 24px 70px rgba(8,52,95,.12); }
+      .brand { display: flex; align-items: center; gap: 18px; margin-bottom: 38px; }
+      .logo { width: 72px; height: 72px; flex: 0 0 auto; }
+      .eyebrow { margin: 0 0 6px; color: #1674d1; font-size: 12px; font-weight: 800; letter-spacing: .16em; text-transform: uppercase; }
+      h1 { margin: 0; color: #08345f; font-family: Georgia, serif; font-size: clamp(32px, 7vw, 48px); line-height: 1.05; }
+      p { color: #64748b; font-size: 17px; line-height: 1.6; }
+      label { display: block; margin: 28px 0 9px; color: #08345f; font-weight: 750; }
+      input { width: 100%; min-height: 58px; padding: 0 17px; border: 1px solid #b9c9d8; border-radius: 14px; color: #102a43; background: #fff; font: inherit; }
+      input:focus { outline: 3px solid rgba(22,116,209,.22); border-color: #1674d1; }
+      button { width: 100%; min-height: 58px; margin-top: 18px; border: 0; border-radius: 14px; color: #fff; background: #1674d1; font: inherit; font-weight: 800; cursor: pointer; }
+      button:hover { background: #0d63b8; }
+      button.secondary { color: #08345f; background: #eaf3fc; }
+      .hint { margin: 11px 0 0; font-size: 14px; }
+      .error { min-height: 24px; color: #b42318; font-size: 14px; font-weight: 700; }
+      .saved { padding: 18px; border-radius: 16px; background: #f3f7fb; overflow-wrap: anywhere; }
+      [hidden] { display: none !important; }
+    </style>
+  </head>
+  <body>
+    <main>
+      <div class="brand">
+        <svg class="logo" viewBox="0 0 512 512" aria-label="BB Company App logo">
+          <rect width="512" height="512" rx="112" fill="#0b2f55" />
+          <path d="M256 78 407 132v111c0 96-61 161-151 194-90-33-151-98-151-194V132z" fill="#f2bd32" />
+          <path d="M256 111 374 153v90c0 75-45 128-118 159-73-31-118-84-118-159v-90z" fill="#fff" />
+          <text x="256" y="286" text-anchor="middle" font-family="Georgia,serif" font-size="126" font-weight="700" fill="#0b2f55">BB</text>
+        </svg>
+        <div><p class="eyebrow">Base desktop app</p><strong>BB Company App</strong></div>
+      </div>
+
+      <section id="setup">
+        <h1>Connect your company</h1>
+        <p>Enter the web address supplied by your company administrator. The desktop app does not contain or copy company records.</p>
+        <form id="form">
+          <label for="url">Company app address</label>
+          <input id="url" name="url" type="url" inputmode="url" autocomplete="url" placeholder="https://your-company.workers.dev" required />
+          <p class="hint">Use an HTTPS address. Local development may use http://localhost.</p>
+          <p class="error" id="error" role="alert"></p>
+          <button type="submit">Save and open company app</button>
+        </form>
+      </section>
+
+      <section id="opening" hidden>
+        <h1>Opening your company app</h1>
+        <p class="saved" id="saved-url"></p>
+        <p>The app will open automatically. Choose change address if this is not the correct company.</p>
+        <button type="button" id="open">Open now</button>
+        <button type="button" class="secondary" id="change">Change address</button>
+      </section>
+    </main>
+    <script>
+      const key = "bb-company-app-url";
+      const setup = document.querySelector("#setup");
+      const opening = document.querySelector("#opening");
+      const input = document.querySelector("#url");
+      const error = document.querySelector("#error");
+      const savedUrl = document.querySelector("#saved-url");
+      let timer;
+
+      function normalise(value) {
+        const candidate = new URL(value.trim());
+        const local = candidate.hostname === "localhost" || candidate.hostname === "127.0.0.1";
+        if (candidate.protocol !== "https:" && !(local && candidate.protocol === "http:")) throw new Error("Use a secure HTTPS address.");
+        candidate.hash = "";
+        return candidate.toString();
+      }
+      function openApp(value) { window.location.replace(value); }
+      function showOpening(value) {
+        setup.hidden = true; opening.hidden = false; savedUrl.textContent = value;
+        timer = window.setTimeout(() => openApp(value), 2600);
+      }
+      document.querySelector("#form").addEventListener("submit", event => {
+        event.preventDefault(); error.textContent = "";
+        try { const value = normalise(input.value); localStorage.setItem(key, value); showOpening(value); }
+        catch (reason) { error.textContent = reason instanceof Error ? reason.message : "Enter a valid company app address."; }
+      });
+      document.querySelector("#open").addEventListener("click", () => openApp(localStorage.getItem(key)));
+      document.querySelector("#change").addEventListener("click", () => {
+        window.clearTimeout(timer); const value = localStorage.getItem(key) || ""; localStorage.removeItem(key);
+        opening.hidden = true; setup.hidden = false; input.value = value; input.focus();
+      });
+      const existing = localStorage.getItem(key);
+      if (existing) showOpening(existing);
+    </script>
+  </body>
+</html>

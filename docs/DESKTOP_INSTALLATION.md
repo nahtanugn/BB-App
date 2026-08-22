@@ -1,9 +1,11 @@
 # Desktop installation
 
-The desktop edition opens the live 11KCHBB service in a dedicated application
-window. It does not create a separate database: authorised users see the same
-synchronised members, attendance, awards, submissions, stock and account data
-as the web app.
+The desktop release is a generic base application. On first launch, enter the
+company app address supplied by an administrator. The installer contains no
+company database, member records, credentials or company-specific branding.
+
+After connection, authorised users see the same synchronised members,
+attendance, awards, submissions, stock and account data as the web app.
 
 ## Downloads
 
@@ -14,10 +16,14 @@ Download the installer for your computer from the latest GitHub release:
 - **Windows:** NSIS EXE or MSI installer
 - **Linux:** AppImage or Debian package
 
+If the wrong company address was saved, reopen the desktop app and choose
+**Change address** before the automatic connection completes.
+
 ## Unsigned-app notice
 
 Version 1.1.0 is distributed without paid Apple or Microsoft code-signing
-certificates. Download only from the official 11KCHBB GitHub repository.
+certificates. Download only from the official project or your organisation's
+approved GitHub repository.
 
 ### macOS
 
@@ -34,4 +40,3 @@ downloaded from the official release before choosing **More info → Run anyway*
 For the AppImage, enable **Allow executing file as program** in the file
 properties before opening it. Debian-based systems may install the `.deb`
 package instead.
-

@@ -45,3 +45,18 @@ next-env.d.ts
 /outputs/
 /work/
 /src-tauri/target/
+
+# private operational data and local backups
+*.sqlite
+*.sqlite3
+*.db
+*.db-wal
+*.db-shm
+*.csv
+*.xlsx
+*.xls
+*.heic
+/backups/
+/exports/
+/uploads/
+/private-documents/

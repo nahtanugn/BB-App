@@ -1,6 +1,6 @@
 # Changelog
 
-All notable changes to 11KCHBB App are recorded here.
+All notable changes to BB Company App are recorded here.
 
 ## [Unreleased]
 

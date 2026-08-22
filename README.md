@@ -1,34 +1,46 @@
-# 11KCHBB App
+# BB Company App
 
-11KCHBB App is an open-source, mobile-first tracker for Boys' Brigade Junior and Senior Sections. It keeps each section's members, awards, submissions and attendance separate while allowing officers to switch between them.
+A reusable, open-source, mobile-first company management app for Boys' Brigade Junior and Senior Sections. Each deployment has its own Cloudflare Worker, D1 database, users and branding.
 
-## What is included
+This repository contains application source, additive database migrations, tests and deployment templates only. It does not contain a production database, member records, passwords, API tokens or private documents.
 
-- Responsive dashboard for phones, tablets and desktop computers
-- Installable Progressive Web App
-- Current Senior Section award catalogue from the August 2024 BB Malaysia Members' Handbook
-- Junior Section White, Green, Purple, Blue, Red, Silver and Gold award pathway
-- Touch-friendly award matrix with five progress states
-- Member profiles, ranks, squads and service years
-- Editable member details with safeguarded member deletion
-- Meeting attendance registers with Present, Absent and Excused statuses
-- Automatic President's Award readiness indicator
-- CSV export for backups and spreadsheet reporting
-- Durable Cloudflare D1 data storage
-- Independent email-and-password officer accounts with administrator controls
-- Separate Senior and Junior Section records
-- Role-based access for officers, NCOs, squad leaders, members and custom roles
-- Controlled member self-registration with administrator approval
-- Guided first-login security, profile, privacy and role onboarding
-- Squad-scoped profile correction review with an accountable approval history
-- Company and band subscription registers
-- Uniform and award stock management
+## Included modules
 
-## Status model
+- Installable Progressive Web App for phones, tablets and desktops
+- Configurable app name, company name, subtitle and logo
+- Junior and Senior member profiles, awards and attendance
+- Role, squad, section, temporary-access and custom-permission controls
+- Meetings, programme planning, duty rosters and committees
+- Award and uniform requests
+- Uniform, award and instrument stock management
+- Onboarding, subscriptions, resources and announcements
+- Audit history, school reports, full exports and operational automation
+- Optional desktop wrappers for macOS, Windows and Linux
 
-Each award record moves through:
+## Create a company deployment
 
-`Not started → In progress → Submitted → Verified → Awarded`
+1. Select **Use this template** on GitHub, or fork the repository.
+2. Create a Cloudflare D1 database.
+3. Create a Cloudflare API token that can deploy Workers and manage that D1 database.
+4. Add these GitHub repository variables:
+
+   - `APP_URL` — for example `https://your-app.your-subdomain.workers.dev`
+   - `WORKER_NAME` — a unique Worker name
+   - `D1_DATABASE_NAME` — the Cloudflare D1 database name
+
+5. Add these GitHub Actions secrets:
+
+   - `CLOUDFLARE_API_TOKEN`
+   - `CLOUDFLARE_ACCOUNT_ID`
+   - `D1_DATABASE_ID`
+   - `ADMIN_EMAIL` — the email allowed to create the first administrator
+
+6. Add the Worker secret `SETUP_TOKEN` in Cloudflare. Use a long, random, one-time setup code.
+7. Run **Actions → Deploy web app → Run workflow → deploy-production**.
+8. Open the deployed app and create the first administrator.
+9. Open **Manage → Accounts and roles → App branding** to set the company name and logo.
+
+Never commit production values to this repository. `.dev.vars.example` documents the supported local variables without containing usable credentials.
 
 ## Local development
 
@@ -37,79 +49,42 @@ Requirements:
 - Node.js 22 or newer
 - pnpm 11 or newer
 
-Install and start the project:
-
 ```bash
 pnpm install
+cp .dev.vars.example .dev.vars
 pnpm run dev
 ```
 
-Open `http://localhost:3000`.
+The placeholder D1 identifier is sufficient for a source build. To connect local development to a real database, put that deployment's values in the ignored `.dev.vars` file or export them in the shell.
 
-## Build
+## Validation
 
 ```bash
-pnpm run build
+pnpm lint
+pnpm test
 ```
 
-The app is designed for the OpenAI Sites / Cloudflare Workers runtime and uses a D1 binding named `DB`. The logical binding is declared in `.openai/hosting.json`.
+`pnpm test` performs a production build and runs the regression, permission, migration and interface checks.
+
+## Data separation
+
+Every company should use a separate Cloudflare account or separate Worker and D1 database. Sharing this GitHub source does not share live data. Do not copy D1 exports, member spreadsheets, `.dev.vars`, Cloudflare tokens, encryption keys or account passwords into GitHub.
 
 ## Desktop editions
 
-The same live app is available as a Tauri desktop application for Apple Silicon
-and Intel Macs, Windows and Linux. Desktop installations use the production
-service and database, so data stays synchronised with the web and mobile app.
+Official GitHub Releases contain only the generic base desktop app. On first launch, users enter their organisation's deployed app address. The installers do not carry a database, credentials, company branding or a fixed production URL. See [Desktop installation](docs/DESKTOP_INSTALLATION.md).
 
-Desktop builds are produced automatically for version tags. See
-[Desktop installation](docs/DESKTOP_INSTALLATION.md) for downloads and the
-unsigned-app installation notice.
-
-## Independent Cloudflare deployment
-
-The standalone build runs directly on Cloudflare Workers and does not require a ChatGPT account. Its D1 binding and administrator email are configured in `vite.config.ts`; set the `SETUP_TOKEN` Worker secret, then run:
-
-```bash
-pnpm run deploy:standalone
-```
-
-On first launch, the configured administrator email and one-time setup code create the initial administrator. Administrators can then create or disable officer accounts from inside the app.
-
-Members may use **Request member access** on the sign-in page. Requests remain
-pending and cannot access company data until an administrator confirms the
-member-profile match or creates a profile. Requested passwords are stored only
-as salted hashes. Approved users must replace that password, verify their
-profile, acknowledge the current privacy notice and finish the short account
-guide.
-
-Administrators manage registrations, profile corrections, incomplete setup,
-privacy-notice versions and approval history from **Admin Centre → Onboarding**.
-Officers can review profile corrections; NCOs and squad leaders can only review
-corrections for their assigned squad.
+Companies that want their own branded installers may fork the repository and use `scripts/configure-desktop.mjs` in a separate release workflow. Company-specific installers should be published from that company's fork, not from this base repository.
 
 ## Award syllabus
 
-The built-in catalogue follows the BB Malaysia Senior Section award classification published in the August 2024 Members' Handbook. Companies should verify nationally administered award requirements against the latest official circulars and forms before submission.
+The built-in catalogues provide a starting point for BB Junior and Senior Section tracking. Deploying companies remain responsible for checking their current national handbooks, circulars, safeguarding rules and privacy obligations.
 
-11KCHBB App is an independent open-source project and is not an official BB Malaysia product. The project does not include or claim ownership of BB Malaysia logos, badge artwork or handbook content.
+This is an independent open-source project and is not an official Boys' Brigade national product. It does not claim ownership of national badge artwork or handbook content.
 
 ## Contributing
 
-Issues and pull requests are welcome. Read [CONTRIBUTING.md](CONTRIBUTING.md)
-before making changes. All development must use fictional test data; live member
-records and production credentials must never be committed to GitHub.
-
-Useful contribution areas include:
-
-- Additional eligibility checkers
-- Attendance and community-service logging
-- Import templates
-- PDF reports
-- Translations
-- Accessibility testing
-
-## Privacy
-
-Only collect information needed to administer awards. Configure deployment access appropriately, limit officer permissions and follow your organisation's data-handling policies. Do not store identity-card numbers or sensitive pastoral notes in this first release.
+Issues and pull requests are welcome. Read [CONTRIBUTING.md](CONTRIBUTING.md) before making changes. Use fictional test data only.
 
 ## Licence
 

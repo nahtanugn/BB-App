@@ -92,7 +92,7 @@ test("defines the customisable application shell and sharing metadata", async ()
   assert.match(tracker, /aria-controls="mobile-more-menu"/);
   assert.match(styles, /\.sidebar nav \.nav-secondary \{ display: none; \}/);
   assert.match(styles, /\.sidebar nav \.mobile-more \{ display: flex; \}/);
-  assert.match(styles, /11KCHBB responsive command-centre redesign/);
+  assert.match(styles, /Responsive command-centre redesign/);
   assert.match(styles, /\.primary \{[\s\S]*?min-height: 46px;/);
   assert.match(styles, /\.auth-card input \{ min-height: 52px;/);
   assert.match(styles, /\.topbar \{[\s\S]*?backdrop-filter: blur\(16px\)/);
@@ -312,7 +312,7 @@ test("ships the Malaysia Senior Section catalogue, role-based portals and instal
   assert.match(tracker, /No fee amount is recorded/);
   assert.match(tracker, /canManageSubscriptions/);
   assert.match(tracker, /Open Export Centre/);
-  assert.match(tracker, /11kchbb-all-member-records-/);
+  assert.match(tracker, /all-member-records-/);
   assert.match(
     tracker,
     /All Senior and Junior member records exported successfully/,

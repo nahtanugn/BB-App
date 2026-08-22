@@ -60,7 +60,7 @@ self.addEventListener("push", (event) => {
       body: message.body || "Open the app to view this update.",
       icon: "/api/branding?logo=1",
       badge: "/api/branding?logo=1",
-      tag: message.tag || "11kchbb-update",
+      tag: message.tag || "bb-company-app-update",
       data: { url: message.url || "/" },
     }),
   );

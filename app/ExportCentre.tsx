@@ -108,8 +108,6 @@ function joinedYear(value: string) {
 // from appearing as separate school filters.
 function standardizeSchoolName(value: string) {
   const canonical = value.trim().replace(/\s+/g, " ").toUpperCase().replaceAll("SJK(C)", "SJK (C)").replaceAll("SJK ( C )", "SJK (C)");
-  if (/^ST\.? JOSEPH'?S?\s+PRIVATE\s+PRIMARY\s+SCHOOL$/.test(canonical) || /^ST\.? JOSEPH\s+PRIVATE\s+PRIMARY\s+SCHOOL$/.test(canonical)) return "ST JOSEPH'S PRIVATE PRIMARY SCHOOL";
-  if (/^ST\.? JOSEPH'?S?\s+PRIVATE\s+SECONDARY\s+SCHOOL$/.test(canonical) || /^ST\.? JOSEPH\s+PRIVATE\s+SECONDARY\s+SCHOOL$/.test(canonical)) return "ST JOSEPH'S PRIVATE SECONDARY SCHOOL";
   return canonical;
 }
 
@@ -789,7 +787,8 @@ export default function ExportCentre({
             type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
           }),
         );
-        link.download = `11kchbb-export-${date}.xlsx`;
+        const exportSlug = branding.shortName.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") || "bb-company-app";
+        link.download = `${exportSlug}-export-${date}.xlsx`;
         link.click();
         URL.revokeObjectURL(link.href);
       } else if (printWindow) {

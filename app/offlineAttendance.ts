@@ -7,7 +7,7 @@ export type OfflineAttendanceChange = {
   updatedAt: string;
 };
 
-const databaseName = "11kchbb-offline";
+const databaseName = "bb-company-app-offline";
 const storeName = "attendance";
 
 function openDatabase() {

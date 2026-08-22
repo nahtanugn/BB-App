@@ -1297,7 +1297,8 @@ export default function AwardTracker({
       link.href = URL.createObjectURL(
         new Blob([`\ufeff${csv}`], { type: "text/csv;charset=utf-8" }),
       );
-      link.download = `11kchbb-all-member-records-${new Date().toISOString().slice(0, 10)}.csv`;
+      const exportSlug = branding.shortName.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") || "bb-company-app";
+      link.download = `${exportSlug}-all-member-records-${new Date().toISOString().slice(0, 10)}.csv`;
       link.click();
       URL.revokeObjectURL(link.href);
       setNotice("All Senior and Junior member records exported successfully.");

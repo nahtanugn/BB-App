@@ -28,8 +28,8 @@ button:focus-visible, input:focus-visible, select:focus-visible { outline: 3px s
 .app-shell { min-height: 100vh; display: grid; grid-template-columns: 244px minmax(0, 1fr); }
 .sidebar { position: sticky; top: 0; height: 100vh; padding: 30px 20px 22px; background: var(--navy); color: white; display: flex; flex-direction: column; overflow-y: auto; }
 .brand { display: flex; align-items: center; gap: 12px; padding: 0 9px 32px; }
-.brand-mark { width: 42px; height: 42px; border-radius: 13px; display: grid; place-items: center; flex: 0 0 auto; background: #fff url("/app-photo.jpeg") center / cover no-repeat; color: transparent; font-weight: 900; font-family: Georgia, serif; box-shadow: inset 0 0 0 1px rgba(11,47,85,.12), 0 4px 12px rgba(3,29,52,.12); }
-.brand-mark.app-photo { background: #fff url("/app-photo.jpeg") center / cover no-repeat; color: transparent; box-shadow: inset 0 0 0 1px rgba(11,47,85,.12), 0 4px 12px rgba(3,29,52,.12); }
+.brand-mark { width: 42px; height: 42px; border-radius: 13px; display: grid; place-items: center; flex: 0 0 auto; background: #fff url("/default-app-logo.svg") center / cover no-repeat; color: transparent; font-weight: 900; font-family: Georgia, serif; box-shadow: inset 0 0 0 1px rgba(11,47,85,.12), 0 4px 12px rgba(3,29,52,.12); }
+.brand-mark.app-photo { background: #fff url("/default-app-logo.svg") center / cover no-repeat; color: transparent; box-shadow: inset 0 0 0 1px rgba(11,47,85,.12), 0 4px 12px rgba(3,29,52,.12); }
 .branding-settings { display: grid; gap: 18px; }
 .branding-settings > header p:last-child { margin: 8px 0 0; color: var(--muted); }
 .branding-settings > form { max-width: 860px; padding: 24px; display: grid; gap: 22px; }
@@ -888,7 +888,7 @@ h2 { color: var(--navy); }
   }
 }
 
-/* 11KCHBB responsive command-centre redesign */
+/* Responsive command-centre redesign */
 :root {
   --navy: #082f56;
   --navy-2: #0d416f;
@@ -1153,6 +1153,33 @@ h1 { font-size: clamp(30px, 3.1vw, 46px); line-height: 1; letter-spacing: -1.5px
   top: 0;
   z-index: 4;
 }
+/* Custom-role management is embedded inside the account dialog. Its normal
+   two-column desktop layout is wider than the dialog, so keep this instance
+   in a readable single-column flow regardless of the viewport width. */
+.account-modal .custom-role-manager,
+.account-modal .custom-role-layout,
+.account-modal .custom-role-column,
+.account-modal .role-form,
+.account-modal .assignment-form {
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+}
+.account-modal .custom-role-intro {
+  align-items: stretch;
+  flex-direction: column;
+}
+.account-modal .custom-role-summary { width: 100%; }
+.account-modal .custom-role-summary article { min-width: 0; flex: 1; }
+.account-modal .custom-role-layout { grid-template-columns: minmax(0, 1fr); }
+.account-modal .role-form-fields,
+.account-modal .permission-group > div:last-child { grid-template-columns: minmax(0, 1fr); }
+.account-modal .role-list article,
+.account-modal .assignment-list article { flex-wrap: wrap; }
+.account-modal .role-card-actions { width: 100%; padding-left: 24px; }
+.account-modal .role-form input,
+.account-modal .role-form select { min-width: 0; max-width: 100%; }
 .modal-heading {
   min-height: 88px;
   padding: 21px 24px;

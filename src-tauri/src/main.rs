@@ -1,4 +1,3 @@
 fn main() {
-    eleven_kchbb_app_lib::run();
+    bb_company_app_lib::run();
 }
-

@@ -2,6 +2,7 @@ import { env } from "cloudflare:workers";
 import { getCurrentUser, hasOperationalAdminAccess } from "../../../lib/auth";
 import { linkedMember } from "../../../lib/events";
 import { writeAuditEvent } from "../../../lib/audit";
+import { getBranding } from "../../../lib/branding";
 
 const runtime = env as typeof env & { DB: D1Database };
 
@@ -225,7 +226,8 @@ export async function POST(request: Request) {
 
   if (action === "send_message") {
     if (!user || user.role === "viewer" || user.role === "member") return Response.json({ error: "This account cannot send staff messages" }, { status: 403 });
-    const recipientUserId = Number(body.recipientUserId); const message = String(body.message ?? "").trim().slice(0, 4000); const subject = String(body.subject ?? "").trim().slice(0, 160) || "11KCHBB message";
+    const branding = await getBranding();
+    const recipientUserId = Number(body.recipientUserId); const message = String(body.message ?? "").trim().slice(0, 4000); const subject = String(body.subject ?? "").trim().slice(0, 160) || `${branding.shortName} message`;
     if (!recipientUserId || !message) return Response.json({ error: "Choose a recipient and enter a message" }, { status: 400 });
     const recipient = await runtime.DB.prepare("SELECT id, role, email FROM users WHERE id = ? AND active = 1 AND account_status = 'active'").bind(recipientUserId).first<{ id: number; role: string; email: string }>();
     if (!recipient || recipient.role === "viewer") return Response.json({ error: "Recipient is not available" }, { status: 404 });
@@ -335,7 +337,9 @@ export async function POST(request: Request) {
     const awardCode = String(body.awardCode ?? "").trim(); const level = String(body.level ?? "").trim();
     const awarded = await runtime.DB.prepare("SELECT status FROM member_awards WHERE member_id = ? AND award_code = ? AND level = ?").bind(memberId, awardCode, level).first<{ status: string }>();
     if (!awarded || !["awarded", "verified"].includes(awarded.status)) return Response.json({ error: "Only verified or awarded records can receive a certificate" }, { status: 409 });
-    const certificateNumber = `11KCHBB-${new Date().getUTCFullYear()}-${crypto.randomUUID().slice(0, 8).toUpperCase()}`;
+    const branding = await getBranding();
+    const certificatePrefix = branding.shortName.toUpperCase().replace(/[^A-Z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 16) || "BB";
+    const certificateNumber = `${certificatePrefix}-${new Date().getUTCFullYear()}-${crypto.randomUUID().slice(0, 8).toUpperCase()}`;
     await runtime.DB.prepare("INSERT INTO certificates (member_id, award_code, level, certificate_number, issued_at, issued_by_user_id, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)").bind(memberId, awardCode, level, certificateNumber, now, user.id, now).run();
     return Response.json({ ok: true, certificateNumber, message: "Certificate record created." });
   }

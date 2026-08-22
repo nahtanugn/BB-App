@@ -1,6 +1,7 @@
 "use client";
 
 import { FormEvent, useEffect, useMemo, useState } from "react";
+import { useBranding } from "./BrandingContext";
 
 type StockItem = {
   id: number;
@@ -46,6 +47,7 @@ export default function StockCentre(props: {
   onLogout: () => void;
 }) {
   void props;
+  const branding = useBranding();
   const [data, setData] = useState<StockData | null>(null);
   const [tab, setTab] = useState<"dashboard" | "overview" | "uniform" | "award" | "history">("dashboard");
   const [query, setQuery] = useState("");
@@ -174,7 +176,8 @@ export default function StockCentre(props: {
     ].map((row) => row.map((value) => `"${String(value ?? "").replaceAll('"', '""')}"`).join(",")).join("\n");
     const url = URL.createObjectURL(new Blob([csv], { type: "text/csv;charset=utf-8" }));
     const link = document.createElement("a");
-    link.href = url; link.download = "11KCHBB-reorder-list.csv"; link.click(); URL.revokeObjectURL(url);
+    const slug = branding.shortName.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") || "bb-company-app";
+    link.href = url; link.download = `${slug}-reorder-list.csv`; link.click(); URL.revokeObjectURL(url);
     setNotice("Reorder list downloaded.");
   }
 

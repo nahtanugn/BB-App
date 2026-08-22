@@ -242,7 +242,7 @@ export async function ensureStockSchema(db: D1Database) {
         .run();
       await db.prepare(`INSERT INTO stock_transactions
         (item_id, transaction_type, quantity_delta, notes, created_by, created_by_name, created_at)
-        VALUES (?, 'opening_balance', ?, 'Imported from 11KCHBB Company Stock.xlsx', 0, 'Opening stock import', ?)`)
+        VALUES (?, 'opening_balance', ?, 'Imported from company stock workbook', 0, 'Opening stock import', ?)`)
         .bind(Number(item.meta.last_row_id), seed.quantity, now)
         .run();
     }

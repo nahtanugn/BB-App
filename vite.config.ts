@@ -1,41 +1,39 @@
 import vinext from "vinext";
 import { defineConfig } from "vite";
-import hostingConfig from "./.openai/hosting.json";
 import { sites } from "./build/sites-vite-plugin";
 
-const ANCHOR_AWARDS_DATABASE_ID =
-  "f01d8a1a-11ff-4c9f-a01f-1338e29f04f1";
-
-const { d1, r2 } = hostingConfig;
+const databaseBinding = "DB";
+const databaseName = process.env.D1_DATABASE_NAME ?? "bb-company-app-db";
+const databaseId = process.env.D1_DATABASE_ID ?? "00000000-0000-0000-0000-000000000000";
+const workerName = process.env.WORKER_NAME ?? "bb-company-app";
+const r2BucketName = process.env.R2_BUCKET_NAME;
 
 // macOS Seatbelt blocks FSEvents, so Codex previews need polling for HMR.
 const isCodexSeatbeltSandbox = process.env.CODEX_SANDBOX === "seatbelt";
 
 const localBindingConfig = {
-  name: "app",
+  name: workerName,
   main: "./worker/index.ts",
   compatibility_flags: ["nodejs_compat"],
   workers_dev: true,
   preview_urls: false,
-  d1_databases: d1
+  d1_databases: [
+    {
+      binding: databaseBinding,
+      database_name: databaseName,
+      database_id: databaseId,
+    },
+  ],
+  r2_buckets: r2BucketName
     ? [
         {
-          binding: d1,
-          database_name: "anchor-awards-db",
-          database_id: ANCHOR_AWARDS_DATABASE_ID,
-        },
-      ]
-    : [],
-  r2_buckets: r2
-    ? [
-        {
-          binding: r2,
-          bucket_name: "site-creator-r2",
+          binding: "DOCUMENTS",
+          bucket_name: r2BucketName,
         },
       ]
     : [],
   vars: {
-    ADMIN_EMAIL: "nguyx04@gmail.com",
+    ADMIN_EMAIL: process.env.ADMIN_EMAIL ?? "admin@example.com",
   },
   triggers: {
     // The database scheduler claims only the configured Malaysia-time periods.

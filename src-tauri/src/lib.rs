@@ -2,6 +2,5 @@
 pub fn run() {
     tauri::Builder::default()
         .run(tauri::generate_context!())
-        .expect("error while running the 11KCHBB desktop app");
+        .expect("error while running the BB Company desktop app");
 }
-

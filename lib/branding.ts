@@ -10,11 +10,11 @@ export type AppBranding = {
 };
 
 export const DEFAULT_BRANDING: AppBranding = {
-  appName: "11KCHBB App",
-  shortName: "11KCHBB App",
-  companyName: "11th Kuching Company",
+  appName: "BB Company App",
+  shortName: "BB App",
+  companyName: "Your BB Company",
   subtitle: "BB Section Tracker",
-  logoUrl: "/app-photo.jpeg",
+  logoUrl: "/default-app-logo.svg",
   updatedAt: "",
 };
 

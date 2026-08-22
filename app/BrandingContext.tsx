@@ -3,7 +3,7 @@
 import { createContext, type CSSProperties, type ReactNode, useContext, useEffect, useState } from "react";
 
 export type Branding = { appName: string; shortName: string; companyName: string; subtitle: string; logoUrl: string; updatedAt: string };
-export const defaultBranding: Branding = { appName: "11KCHBB App", shortName: "11KCHBB App", companyName: "11th Kuching Company", subtitle: "BB Section Tracker", logoUrl: "/app-photo.jpeg", updatedAt: "" };
+export const defaultBranding: Branding = { appName: "BB Company App", shortName: "BB App", companyName: "Your BB Company", subtitle: "BB Section Tracker", logoUrl: "/default-app-logo.svg", updatedAt: "" };
 const BrandingContext = createContext(defaultBranding);
 
 export function BrandingProvider({ children }: { children: ReactNode }) {
