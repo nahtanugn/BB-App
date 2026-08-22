@@ -1,6 +1,7 @@
 "use client";
 
 import { FormEvent, useEffect, useMemo, useState } from "react";
+import { brandingLogoStyle, useBranding } from "./BrandingContext";
 
 type User = {
   name: string;
@@ -39,6 +40,7 @@ export default function ResourceLibrary({
 }: {
   user: User;
 }) {
+  const branding = useBranding();
   const [resources, setResources] = useState<Resource[]>([]);
   const [query, setQuery] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("all");
@@ -190,7 +192,7 @@ export default function ResourceLibrary({
     <main className="resources-shell">
       <section className="resources-hero">
         <div>
-          <p className="eyebrow">11TH KUCHING COMPANY</p>
+          <p className="eyebrow">{branding.companyName.toUpperCase()}</p>
           <h1>Resources</h1>
           <p>
             Company materials, training guides and useful links in one shared
@@ -330,7 +332,8 @@ export default function ResourceLibrary({
             <div
               className="brand-mark app-photo"
               role="img"
-              aria-label="11th Kuching Company"
+              aria-label={branding.companyName}
+              style={brandingLogoStyle(branding)}
             />
             <h2>No resources yet</h2>
             <p>

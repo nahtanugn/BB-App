@@ -1,6 +1,7 @@
 "use client";
 
 import { type ReactNode, useEffect, useMemo, useRef, useState } from "react";
+import { brandingLogoStyle, useBranding } from "./BrandingContext";
 
 export type AppRoute =
   | "home"
@@ -116,6 +117,7 @@ export default function AppShell({
   onSectionChange?: (section: "senior" | "junior") => void;
   children: ReactNode;
 }) {
+  const branding = useBranding();
   const [moreOpen, setMoreOpen] = useState(false);
   const closeButton = useRef<HTMLButtonElement>(null);
   const temporaryAdmin = Boolean(
@@ -264,8 +266,8 @@ export default function AppShell({
     <div className="unified-app-shell">
       <aside className="unified-sidebar">
         <div className="unified-brand">
-          <div className="brand-mark app-photo" role="img" aria-label="11th Kuching Company" />
-          <div><strong>11KCHBB App</strong><span>{user.role.replaceAll("_", " ")} access</span></div>
+          <div className="brand-mark app-photo" style={brandingLogoStyle(branding)} role="img" aria-label={branding.companyName} />
+          <div><strong>{branding.appName}</strong><span>{user.role.replaceAll("_", " ")} access</span></div>
         </div>
         {activeSection && onSectionChange && <div className="unified-section-control" role="group" aria-label="Working section">
           <span>WORKING SECTION</span>
@@ -296,7 +298,7 @@ export default function AppShell({
 
       <div className="unified-app-content">
         {activeSection && onSectionChange && <header className="unified-mobile-header">
-          <strong>11KCHBB App</strong>
+          <strong>{branding.shortName}</strong>
           <div className="unified-mobile-section-control" role="group" aria-label="Working section">
             <button type="button" className={activeSection === "senior" ? "active" : ""} aria-pressed={activeSection === "senior"} onClick={() => onSectionChange("senior")}>Senior</button>
             <button type="button" className={activeSection === "junior" ? "active" : ""} aria-pressed={activeSection === "junior"} onClick={() => onSectionChange("junior")}>Junior</button>

@@ -23,6 +23,7 @@ import ExportCentre from "./ExportCentre";
 import ManagedSchoolSelect from "./ManagedSchoolSelect";
 import PublicInformation from "./PublicInformation";
 import CompanyOperationsCentre, { type OperationsModule } from "./CompanyOperationsCentre";
+import { brandingLogoStyle, useBranding } from "./BrandingContext";
 
 type User = {
   id: number;
@@ -68,6 +69,7 @@ type AuthState = {
 };
 
 export default function StandaloneApp() {
+  const branding = useBranding();
   const [auth, setAuth] = useState<AuthState | null>(null);
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
@@ -587,8 +589,8 @@ export default function StandaloneApp() {
   if (!auth)
     return (
       <main className="loading-state">
-        <div className="brand-mark pulse">A</div>
-        <p>{error || "Opening 11KCHBB App…"}</p>
+        <div className="brand-mark app-photo pulse" style={brandingLogoStyle(branding)} />
+        <p>{error || `Opening ${branding.appName}…`}</p>
       </main>
     );
 
@@ -599,10 +601,10 @@ export default function StandaloneApp() {
       <main className="auth-screen">
         <section className="auth-card">
           <div className="auth-brand">
-            <div className="brand-mark">A</div>
+            <div className="brand-mark app-photo" style={brandingLogoStyle(branding)} />
             <div>
-              <strong>11KCHBB App</strong>
-              <span>Company portal</span>
+              <strong>{branding.appName}</strong>
+              <span>{branding.companyName}</span>
             </div>
           </div>
           <p className="eyebrow">

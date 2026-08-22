@@ -1,4 +1,4 @@
-const CACHE = "11kchbb-app-v4";
+const CACHE = "company-app-v5";
 
 self.addEventListener("install", () => {
   self.skipWaiting();
@@ -22,7 +22,7 @@ self.addEventListener("fetch", (event) => {
               <meta charset="utf-8">
               <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
               <meta name="theme-color" content="#0b2f55">
-              <title>11KCHBB App · Offline</title>
+              <title>Company app · Offline</title>
               <style>
                 *{box-sizing:border-box}
                 body{min-height:100vh;margin:0;padding:24px;display:grid;place-items:center;background:#f3f6f9;color:#142033;font-family:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
@@ -37,7 +37,7 @@ self.addEventListener("fetch", (event) => {
               <main>
                 <div class="mark">11</div>
                 <h1>You’re offline</h1>
-                <p>Reconnect to the internet, then try opening the 11KCHBB App again.</p>
+                <p>Reconnect to the internet, then try opening the app again.</p>
                 <button onclick="location.reload()">Try again</button>
               </main>
             </body>
@@ -53,13 +53,13 @@ self.addEventListener("push", (event) => {
   try {
     message = event.data ? JSON.parse(event.data.text()) : {};
   } catch {
-    message = { title: "11KCHBB App", body: "You have a new notification." };
+    message = { title: "Company app", body: "You have a new notification." };
   }
   event.waitUntil(
-    self.registration.showNotification(message.title || "11KCHBB App", {
+    self.registration.showNotification(message.title || "Company app", {
       body: message.body || "Open the app to view this update.",
-      icon: "/app-photo.jpeg",
-      badge: "/app-photo.jpeg",
+      icon: "/api/branding?logo=1",
+      badge: "/api/branding?logo=1",
       tag: message.tag || "11kchbb-update",
       data: { url: message.url || "/" },
     }),

@@ -1,6 +1,7 @@
 "use client";
 
 import AwardSubmissions from "./AwardSubmissions";
+import { useBranding } from "./BrandingContext";
 
 type User = {
   name: string;
@@ -25,6 +26,7 @@ export default function SubmissionsPage({
   onBack: () => void;
   onLogout: () => void;
 }) {
+  const branding = useBranding();
   const section = "senior" as const;
   const hasTemporaryAdminAccess = Boolean(
     user.role !== "viewer" &&
@@ -44,7 +46,7 @@ export default function SubmissionsPage({
     <main className="resources-shell submissions-page">
       <section className="resources-hero submissions-hero">
         <div>
-          <p className="eyebrow">11TH KUCHING COMPANY</p>
+          <p className="eyebrow">{branding.companyName.toUpperCase()}</p>
           <h1>
             {canReviewAll
               ? "Senior Submission Portal"

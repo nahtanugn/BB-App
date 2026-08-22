@@ -4,6 +4,7 @@ import { FormEvent, useEffect, useMemo, useState } from "react";
 import AwardSubmissions from "./AwardSubmissions";
 import ExportCentre from "./ExportCentre";
 import { flushOfflineAttendance, queueOfflineAttendance } from "./offlineAttendance";
+import { brandingLogoStyle, useBranding } from "./BrandingContext";
 
 type Member = {
   id: number;
@@ -261,6 +262,7 @@ export default function AwardTracker({
   selectedSection,
   onSectionChange,
 }: AwardTrackerProps) {
+  const branding = useBranding();
   const hasTemporaryAdminAccess = Boolean(
     user?.role !== "viewer" &&
       user?.temporary_access_role === "temporary_admin" &&
@@ -1314,9 +1316,10 @@ export default function AwardTracker({
         <div
           className="brand-mark app-photo"
           role="img"
-          aria-label="11th Kuching Company"
+          aria-label={branding.companyName}
+          style={brandingLogoStyle(branding)}
         />
-        <h1>11KCHBB App</h1>
+        <h1>{branding.appName}</h1>
         <p>{error}</p>
         <button onClick={load}>Try again</button>
       </main>
@@ -1341,7 +1344,8 @@ export default function AwardTracker({
         <div
           className="brand-mark app-photo pulse"
           role="img"
-          aria-label="11th Kuching Company"
+          aria-label={branding.companyName}
+          style={brandingLogoStyle(branding)}
         />
         <p>Preparing your award records…</p>
       </main>
@@ -1415,10 +1419,11 @@ export default function AwardTracker({
           <div
             className="brand-mark app-photo"
             role="img"
-            aria-label="11th Kuching Company"
+            aria-label={branding.companyName}
+            style={brandingLogoStyle(branding)}
           />
           <div>
-            <strong>11KCHBB App</strong>
+            <strong>{branding.appName}</strong>
             <span>
               {isNco
                 ? "NCO attendance"

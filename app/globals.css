@@ -30,6 +30,15 @@ button:focus-visible, input:focus-visible, select:focus-visible { outline: 3px s
 .brand { display: flex; align-items: center; gap: 12px; padding: 0 9px 32px; }
 .brand-mark { width: 42px; height: 42px; border-radius: 13px; display: grid; place-items: center; flex: 0 0 auto; background: #fff url("/app-photo.jpeg") center / cover no-repeat; color: transparent; font-weight: 900; font-family: Georgia, serif; box-shadow: inset 0 0 0 1px rgba(11,47,85,.12), 0 4px 12px rgba(3,29,52,.12); }
 .brand-mark.app-photo { background: #fff url("/app-photo.jpeg") center / cover no-repeat; color: transparent; box-shadow: inset 0 0 0 1px rgba(11,47,85,.12), 0 4px 12px rgba(3,29,52,.12); }
+.branding-settings { display: grid; gap: 18px; }
+.branding-settings > header p:last-child { margin: 8px 0 0; color: var(--muted); }
+.branding-settings > form { max-width: 860px; padding: 24px; display: grid; gap: 22px; }
+.branding-preview { min-height: 92px; padding: 16px; display: flex; align-items: center; gap: 16px; border: 1px solid var(--line); border-radius: 16px; background: #f7f9fb; }
+.branding-preview > span { width: 60px; height: 60px; flex: 0 0 60px; border-radius: 15px; background: white center / cover no-repeat; box-shadow: inset 0 0 0 1px var(--line); }
+.branding-preview strong, .branding-preview small { display: block; }
+.branding-preview strong { color: var(--navy); font-size: 18px; }
+.branding-preview small { margin-top: 5px; color: var(--muted); }
+.branding-settings .form-actions { display: flex; gap: 10px; flex-wrap: wrap; }
 .auth-brand .brand-mark { width: 56px; height: 56px; border-radius: 14px; }
 .brand strong, .brand span { display: block; }
 .brand strong { font-size: 16px; letter-spacing: -.2px; }

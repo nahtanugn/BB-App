@@ -1,9 +1,11 @@
 import type { MetadataRoute } from "next";
+import { getBranding } from "../lib/branding";
 
-export default function manifest(): MetadataRoute.Manifest {
+export default async function manifest(): Promise<MetadataRoute.Manifest> {
+  const branding = await getBranding();
   return {
-    name: "11KCHBB App · Section Tracker",
-    short_name: "11KCHBB App",
+    name: `${branding.appName} · ${branding.subtitle}`,
+    short_name: branding.shortName,
     description: "Track Boys' Brigade Junior and Senior Section records across every device.",
     start_url: "/",
     display: "standalone",
@@ -12,9 +14,8 @@ export default function manifest(): MetadataRoute.Manifest {
     orientation: "any",
     icons: [
       {
-        src: "/app-photo.jpeg",
-        sizes: "1152x1152",
-        type: "image/jpeg",
+        src: branding.logoUrl,
+        sizes: "any",
         purpose: "any",
       },
     ],

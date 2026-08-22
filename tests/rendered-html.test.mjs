@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
 
-test("defines the 11KCHBB App application shell and sharing metadata", async () => {
+test("defines the customisable application shell and sharing metadata", async () => {
   const [layout, tracker, standalone, exportCentre, styles] = await Promise.all([
     readFile(new URL("../app/layout.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/AwardTracker.tsx", import.meta.url), "utf8"),
@@ -11,10 +11,10 @@ test("defines the 11KCHBB App application shell and sharing metadata", async () 
     readFile(new URL("../app/globals.css", import.meta.url), "utf8"),
   ]);
 
-  assert.match(layout, /11KCHBB App · BB Section Tracker/);
+  assert.match(layout, /getBranding/);
+  assert.match(layout, /branding\.appName/);
   assert.match(layout, /manifest: "\/manifest\.webmanifest"/);
-  assert.match(layout, /\/app-photo\.jpeg/);
-  assert.match(layout, /\/app-photo\.jpeg/);
+  assert.match(layout, /branding\.logoUrl/);
   assert.match(tracker, /Preparing your award records/);
   assert.match(tracker, /trackerMemoryCache/);
   assert.match(tracker, /cachedTrackerData/);
@@ -118,7 +118,7 @@ test("defines the 11KCHBB App application shell and sharing metadata", async () 
     /\.account-modal \.modal-heading \{[\s\S]*?position: sticky;/,
   );
   assert.match(styles, /\.sidebar nav button \{[\s\S]*?min-height: 62px;/);
-  assert.match(standalone, /Company portal/);
+  assert.match(standalone, /branding\.companyName/);
   assert.match(standalone, /Create your administrator account/);
   assert.match(standalone, /Edit account/);
   assert.match(standalone, /Save changes/);
@@ -335,7 +335,7 @@ test("ships the Malaysia Senior Section catalogue, role-based portals and instal
   assert.match(route, /WHERE section = \?/);
   assert.match(route, /attendance_sessions WHERE section = \?/);
   assert.doesNotMatch(resourceLibrary, /<AppNavigation/);
-  assert.match(resourceLibrary, /11TH KUCHING COMPANY/);
+  assert.match(resourceLibrary, /branding\.companyName\.toUpperCase/);
   assert.match(resourceLibrary, /canManageResources/);
   assert.match(resourceLibrary, /hasTemporaryAdminAccess/);
   assert.doesNotMatch(resourceLibrary, /onManageAccount/);
@@ -402,8 +402,9 @@ test("ships the Malaysia Senior Section catalogue, role-based portals and instal
   assert.match(memberProgress, /AWARDS MATRIX/);
   assert.match(memberProgress, /View only/);
   assert.match(manifest, /display: "standalone"/);
-  assert.match(manifest, /app-photo\.jpeg/);
-  assert.match(serviceWorker, /11kchbb-app-v4/);
+  assert.match(manifest, /getBranding/);
+  assert.match(manifest, /branding\.logoUrl/);
+  assert.match(serviceWorker, /company-app-v5/);
   assert.match(serviceWorker, /addEventListener\("push"/);
   assert.match(serviceWorker, /showNotification/);
   assert.match(serviceWorker, /addEventListener\("notificationclick"/);

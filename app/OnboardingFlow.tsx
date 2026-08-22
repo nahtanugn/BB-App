@@ -2,6 +2,7 @@
 
 import { FormEvent, useEffect, useState } from "react";
 import ManagedSchoolSelect from "./ManagedSchoolSelect";
+import { brandingLogoStyle, useBranding } from "./BrandingContext";
 
 type Member = {
   id: number;
@@ -34,6 +35,7 @@ export default function OnboardingFlow({
   onComplete: () => Promise<void>;
   onLogout: () => Promise<void>;
 }) {
+  const branding = useBranding();
   const [data, setData] = useState<Data | null>(null);
   const [showCorrection, setShowCorrection] = useState(false);
   const [checked, setChecked] = useState<number[]>([]);
@@ -127,7 +129,7 @@ export default function OnboardingFlow({
   }
 
   if (!data)
-    return <main className="loading-state"><div className="brand-mark pulse">A</div><p>{error || "Preparing your account…"}</p></main>;
+    return <main className="loading-state"><div className="brand-mark app-photo pulse" style={brandingLogoStyle(branding)} /><p>{error || "Preparing your account…"}</p></main>;
 
   const activeStep = !data.steps.password ? 1 : !data.steps.profile ? 2 : !data.steps.privacy ? 3 : 4;
   const member = data.member;
@@ -135,7 +137,7 @@ export default function OnboardingFlow({
     <main className="onboarding-shell">
       <section className="onboarding-card">
         <header className="onboarding-header">
-          <div className="auth-brand"><div className="brand-mark app-photo" /><div><strong>11KCHBB App</strong><span>Account onboarding</span></div></div>
+          <div className="auth-brand"><div className="brand-mark app-photo" style={brandingLogoStyle(branding)} /><div><strong>{branding.appName}</strong><span>Account onboarding</span></div></div>
           <button className="text-button" onClick={onLogout}>Sign out</button>
         </header>
         <div className="onboarding-intro">

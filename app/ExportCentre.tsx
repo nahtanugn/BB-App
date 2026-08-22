@@ -1,6 +1,7 @@
 "use client";
 
 import { FormEvent, useEffect, useMemo, useState } from "react";
+import { useBranding } from "./BrandingContext";
 
 type Status =
   | "not_started"
@@ -209,6 +210,7 @@ export default function ExportCentre({
   onLegacyCsv?: () => Promise<void>;
   presentation?: "modal" | "page";
 }) {
+  const branding = useBranding();
   const [datasets, setDatasets] = useState<TrackerData[]>([]);
   const [submissions, setSubmissions] = useState<Submission[]>([]);
   const [loading, setLoading] = useState(true);
@@ -361,7 +363,7 @@ export default function ExportCentre({
           return [item.name, sectionLabel(dataset.section), item.rank, item.squad, joinedYear(item.joined_at), sessions.length, present, absent, excused, count("unmarked"), marked ? Math.round((present / marked) * 100) : "Not yet available", `${earned.length + item.service_award_count} (${item.service_award_count} service)`, active];
         }),
       });
-      sheets.unshift({ name: "Export Overview", headers: ["Export Information", "Value"], rows: [["Company", "11th Kuching Company, The Boys' Brigade in Malaysia"], ["Report Type", "School progress report"], ["School", school === "all" ? "All schools" : school], ["Sections", section === "both" ? "Senior & Junior" : sectionLabel(section)], ["Squad", squad === "all" ? "All squads" : squad], ["Reporting Year", reportYear === "all" ? "All years" : reportYear], ["Member Count", selected.length], ["Privacy", "Progress only; sensitive fields excluded"]] });
+      sheets.unshift({ name: "Export Overview", headers: ["Export Information", "Value"], rows: [["Company", branding.companyName], ["Report Type", "School progress report"], ["School", school === "all" ? "All schools" : school], ["Sections", section === "both" ? "Senior & Junior" : sectionLabel(section)], ["Squad", squad === "all" ? "All squads" : squad], ["Reporting Year", reportYear === "all" ? "All years" : reportYear], ["Member Count", selected.length], ["Privacy", "Progress only; sensitive fields excluded"]] });
       return { sheets, memberCount: selected.length };
     }
 
@@ -690,7 +692,7 @@ export default function ExportCentre({
         name: "Export Overview",
         headers: ["Export Information", "Value"],
         rows: [
-          ["Company", "11th Kuching Company, The Boys' Brigade in Malaysia"],
+          ["Company", branding.companyName],
           ["Prepared At", new Date().toLocaleString("en-MY")],
           ["Sections", section === "both" ? "Senior & Junior" : sectionLabel(section)],
           ["Report Type", "Full operational export"],
@@ -724,7 +726,7 @@ export default function ExportCentre({
       if (format === "xlsx") {
         const ExcelJS = await import("exceljs");
         const workbook = new ExcelJS.Workbook();
-        workbook.creator = "11KCHBB App";
+        workbook.creator = branding.appName;
         workbook.created = new Date();
         sheets.forEach((sheet) => {
           const worksheet = workbook.addWorksheet(sheet.name, {
@@ -796,7 +798,7 @@ export default function ExportCentre({
             (sheet) => `<section><h2>${escapeHtml(sheet.name)}</h2><table><thead><tr>${sheet.headers.map((header) => `<th>${escapeHtml(header)}</th>`).join("")}</tr></thead><tbody>${sheet.rows.map((row) => `<tr>${row.map((cell) => `<td>${escapeHtml(cell)}</td>`).join("")}</tr>`).join("")}</tbody></table></section>`,
           )
           .join("");
-        printWindow.document.write(`<!doctype html><html><head><title>11KCHBB Export ${date}</title><style>@page{size:landscape;margin:10mm}body{font-family:Arial,sans-serif;color:#14253b}h1{color:#0b3158;margin-bottom:4px}p{color:#607086;margin-top:0}section{break-before:page}section:first-of-type{break-before:auto}h2{color:#1269c7}table{width:100%;border-collapse:collapse;font-size:8px}th{background:#0b3158;color:white}th,td{padding:5px;border:1px solid #ccd5df;text-align:left;vertical-align:top}tr:nth-child(even){background:#f4f7fa}</style></head><body><h1>11KCHBB App · Export Report</h1><p>Prepared ${date} · ${memberCount} member${memberCount === 1 ? "" : "s"} · ${reportYear === "all" ? "All years" : reportYear}</p>${tables}<script>window.onload=()=>window.print()</script></body></html>`);
+        printWindow.document.write(`<!doctype html><html><head><title>${escapeHtml(branding.appName)} Export ${date}</title><style>@page{size:landscape;margin:10mm}body{font-family:Arial,sans-serif;color:#14253b}h1{color:#0b3158;margin-bottom:4px}p{color:#607086;margin-top:0}section{break-before:page}section:first-of-type{break-before:auto}h2{color:#1269c7}table{width:100%;border-collapse:collapse;font-size:8px}th{background:#0b3158;color:white}th,td{padding:5px;border:1px solid #ccd5df;text-align:left;vertical-align:top}tr:nth-child(even){background:#f4f7fa}</style></head><body><h1>${escapeHtml(branding.appName)} · Export Report</h1><p>Prepared ${date} · ${memberCount} member${memberCount === 1 ? "" : "s"} · ${reportYear === "all" ? "All years" : reportYear}</p>${tables}<script>window.onload=()=>window.print()</script></body></html>`);
         printWindow.document.close();
       }
       void fetch("/api/audit", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "export_created", entityType: reportType === "school" ? "school_report" : "full_export", metadata: { format, section, squad, school, reportYear, memberCount, datasets: reportType === "school" ? ["progress"] : Object.entries(included).filter(([, value]) => value).map(([key]) => key) } }) }).catch(() => undefined);
