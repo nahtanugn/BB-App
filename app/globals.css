@@ -3321,6 +3321,8 @@ button:disabled { opacity: .62; cursor: wait; }
   input:not([type="checkbox"]):not([type="radio"]):not([type="hidden"]),
   select
 ) {
+  box-sizing: border-box;
+  height: var(--ui-control-height);
   min-height: var(--ui-control-height);
   border: 1px solid #ccd9e5;
   border-radius: var(--ui-control-radius);
