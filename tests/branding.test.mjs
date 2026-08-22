@@ -25,8 +25,12 @@ test("administrators can customise deployment branding without exposing logo dat
   assert.match(shell, /branding\.appName/);
   assert.match(context, /app-branding-updated/);
   assert.match(context, /default-bb-logo\.png/);
+  assert.match(context, /appName: "BB App"/);
   assert.match(defaults, /default-bb-logo\.png/);
+  assert.match(defaults, /appName: "BB App"/);
+  assert.doesNotMatch(defaults, /appName: "BB Company App"/);
   assert.match(desktopSetup, /default-bb-logo\.png/);
   assert.match(migration, /CREATE TABLE IF NOT EXISTS `app_branding`/);
+  assert.match(migration, /\(1, 'BB App', 'BB App'/);
   assert.doesNotMatch(migration, /DROP TABLE|DELETE FROM/);
 });

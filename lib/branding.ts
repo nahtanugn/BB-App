@@ -10,7 +10,7 @@ export type AppBranding = {
 };
 
 export const DEFAULT_BRANDING: AppBranding = {
-  appName: "BB Company App",
+  appName: "BB App",
   shortName: "BB App",
   companyName: "Your BB Company",
   subtitle: "BB Section Tracker",
