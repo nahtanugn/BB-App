@@ -167,6 +167,7 @@ export default function AppShell({
       );
     }
     values.push({ route: "events", category: "Programme & Events", label: "Meetings and events", description: "Programme, RSVPs and registers", icon: "◫" });
+    if (user.role === "member") values.push({ route: "duties", category: "Programme & Events", label: "My duties", description: "Assignments and availability", icon: "✓" });
     if (staff) values.push(
       { route: "parades", category: "Programme & Events", label: "Parade planner", description: "Templates and published programmes", icon: "▤" },
       { route: "duties", category: "Programme & Events", label: "Duty roster", description: "Assignments and substitutions", icon: "✓" },
