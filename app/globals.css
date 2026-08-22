@@ -3583,6 +3583,11 @@ button:disabled { opacity: .62; cursor: wait; }
 .operations-form textarea { min-height: 96px; resize: vertical; }
 .operations-form .primary, .operations-form .danger-button { justify-self: start; min-height: 48px; padding: 0 24px; }
 .operations-form.compact { align-content: start; }
+.operations-callout { min-width: 0; padding: 24px; display: flex; align-items: center; justify-content: space-between; gap: 20px; border-radius: 22px; }
+.operations-callout > div { min-width: 0; }
+.operations-callout h2 { margin: 3px 0 7px; color: var(--navy); font-family: Georgia, serif; font-size: clamp(22px, 2vw, 30px); font-weight: 500; }
+.operations-callout p:last-child { margin: 0; color: var(--muted); font-size: 13px; line-height: 1.55; }
+.operations-callout > .primary { flex: 0 0 auto; min-height: 48px; display: inline-flex; align-items: center; justify-content: center; padding: 0 24px; text-align: center; text-decoration: none; white-space: nowrap; }
 .operations-field-grid { display: grid !important; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
 .operations-field-grid .span-2 { grid-column: 1 / -1; }
 .operations-field-grid .check-row { min-height: 48px; display: flex; align-items: center; gap: 10px; border: 1px solid #d7e2ec; border-radius: 12px; padding: 0 13px; }
@@ -3663,6 +3668,8 @@ button:disabled { opacity: .62; cursor: wait; }
   .operations-form, .operations-list, .readiness-list, .emergency-register { padding: 18px; border-radius: 18px; }
   .operations-form input, .operations-form select, .operations-form textarea { min-height: 52px; font-size: 16px; }
   .operations-form .primary, .operations-form .danger-button { width: 100%; justify-self: stretch; }
+  .operations-callout { padding: 18px; align-items: stretch; flex-direction: column; border-radius: 18px; }
+  .operations-callout > .primary { width: 100%; min-height: 52px; white-space: normal; }
   .operations-list > article > div:first-child { min-width: 0; flex-basis: 100%; }
   .operations-row-actions { width: 100%; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .operations-row-actions button { width: 100%; }

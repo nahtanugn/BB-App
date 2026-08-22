@@ -37,13 +37,14 @@ test("operations API enforces squad scope, final authority, and decision safety"
 });
 
 test("all operations are linked into the shared role-aware shell", async () => {
-  const [shell, standalone, centre, roles, automation, journey] = await Promise.all([
+  const [shell, standalone, centre, roles, automation, journey, styles] = await Promise.all([
     source("../app/AppShell.tsx"),
     source("../app/StandaloneApp.tsx"),
     source("../app/CompanyOperationsCentre.tsx"),
     source("../app/CustomRoleManager.tsx"),
     source("../lib/automation.ts"),
     source("../app/MemberJourney.tsx"),
+    source("../app/globals.css"),
   ]);
   for (const route of ["parades", "duties", "committees", "leave", "promotion", "service", "band", "emergency"])
     assert.match(shell, new RegExp(`"${route}"`));
@@ -58,4 +59,6 @@ test("all operations are linked into the shared role-aware shell", async () => {
   assert.match(automation, /committee_tasks/);
   assert.match(journey, /Promotion readiness/);
   assert.match(journey, /VERIFIED SERVICE/);
+  assert.match(styles, /\.operations-callout \{[^}]*padding: 24px;[^}]*display: flex;/);
+  assert.match(styles, /\.operations-callout > \.primary \{[^}]*display: inline-flex;/);
 });
