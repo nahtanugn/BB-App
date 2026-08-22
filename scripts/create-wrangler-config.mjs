@@ -1,5 +1,5 @@
 import { mkdirSync, writeFileSync } from "node:fs";
-import { dirname, resolve } from "node:path";
+import { dirname, relative, resolve } from "node:path";
 
 const required = ["WORKER_NAME", "D1_DATABASE_NAME", "D1_DATABASE_ID"];
 const missing = required.filter((name) => !process.env[name]?.trim());
@@ -8,6 +8,7 @@ if (missing.length) {
 }
 
 const output = resolve(process.argv[2] ?? ".wrangler/deployment.json");
+const migrationsDir = relative(dirname(output), resolve("drizzle")).replaceAll("\\", "/");
 mkdirSync(dirname(output), { recursive: true });
 writeFileSync(output, `${JSON.stringify({
   name: process.env.WORKER_NAME,
@@ -18,7 +19,7 @@ writeFileSync(output, `${JSON.stringify({
     binding: "DB",
     database_name: process.env.D1_DATABASE_NAME,
     database_id: process.env.D1_DATABASE_ID,
-    migrations_dir: "drizzle",
+    migrations_dir: migrationsDir,
   }],
 }, null, 2)}\n`);
 

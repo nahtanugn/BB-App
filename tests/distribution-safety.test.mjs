@@ -13,10 +13,11 @@ test("the distribution contains generic deployment configuration and no tracked 
   const config = await readFile(new URL("../vite.config.ts", import.meta.url), "utf8");
   const migrations = await readFile(new URL("../wrangler.migrations.jsonc", import.meta.url), "utf8");
   const deploy = await readFile(new URL("../.github/workflows/deploy-web.yml", import.meta.url), "utf8");
+  const deploymentConfig = await readFile(new URL("../scripts/create-wrangler-config.mjs", import.meta.url), "utf8");
   const desktop = await readFile(new URL("../.github/workflows/desktop-release.yml", import.meta.url), "utf8");
   const tauri = await readFile(new URL("../src-tauri/tauri.conf.json", import.meta.url), "utf8");
   const setup = await readFile(new URL("../src-tauri/setup/index.html", import.meta.url), "utf8");
-  const source = `${config}\n${migrations}\n${deploy}\n${desktop}\n${tauri}\n${setup}`;
+  const source = `${config}\n${migrations}\n${deploy}\n${deploymentConfig}\n${desktop}\n${tauri}\n${setup}`;
   const legacyCompanyName = "11" + "KCHBB";
   const legacyDomain = "app." + "11kchbb.workers.dev";
 
@@ -28,6 +29,8 @@ test("the distribution contains generic deployment configuration and no tracked 
   assert.match(deploy, /secrets\.D1_DATABASE_ID/);
   assert.match(deploy, /secrets\.ADMIN_EMAIL/);
   assert.match(deploy, /vars\.APP_URL/);
+  assert.match(deploymentConfig, /relative\(dirname\(output\), resolve\("drizzle"\)\)/);
+  assert.match(deploymentConfig, /migrations_dir: migrationsDir/);
   assert.doesNotMatch(desktop, /vars\.APP_URL|DESKTOP_APP_NAME|DESKTOP_PUBLISHER/);
   assert.match(desktop, /BB-Company-App-Base/);
   assert.match(tauri, /"frontendDist": "setup"/);
