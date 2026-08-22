@@ -265,7 +265,7 @@ h2 { color: var(--navy); }
 .attendance-register-complete { border-color: #9dd7c2; }.attendance-register-incomplete { border-color: #ecd17d; }.attendance-register-complete .attendance-heading { border-left: 5px solid #197054; }.attendance-register-incomplete .attendance-heading { border-left: 5px solid #d39a16; }
 .attendance-heading small { display: block; margin-top: 5px; color: var(--muted); font-size: 9px; }
 .attendance-register-status { display: inline-flex; align-items: center; margin-top: 9px; padding: 5px 9px; border-radius: 999px; font-size: 9px; font-weight: 800; }.attendance-register-status::before { content: ""; width: 7px; height: 7px; margin-right: 6px; border-radius: 50%; background: currentColor; }.attendance-register-status.complete { background: var(--green-soft); color: #197054; }.attendance-register-status.incomplete { background: #fff4cc; color: #a56c00; }
-.danger-link { border: 0; background: transparent; color: var(--danger); font-size: 9px; font-weight: 750; }
+.danger-link { min-height: 38px; padding: 0 9px; border: 0; border-radius: 8px; background: transparent; color: var(--danger); font-size: 9px; font-weight: 750; }
 .attendance-summary { padding: 12px 20px; display: flex; flex-wrap: wrap; gap: 8px; border-bottom: 1px solid #edf0f3; background: #f8fafb; }
 .attendance-summary span { padding: 6px 9px; border-radius: 99px; background: white; color: var(--muted); font-size: 8px; border: 1px solid var(--line); }
 .attendance-summary span.present { background: var(--green-soft); color: var(--green); border-color: #bfe6d7; }
@@ -2608,6 +2608,7 @@ button:disabled { opacity: .62; cursor: wait; }
 .expansion-centre .admin-tabs { margin: 0; padding: 14px 18px; display: flex; flex-wrap: wrap; gap: 6px; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); background: #fbfdff; }
 .expansion-centre .admin-tabs button { min-height: 38px; padding: 0 15px; border: 1px solid transparent; border-radius: 9px; background: transparent; color: var(--muted); font-size: 10px; font-weight: 850; }
 .expansion-centre .admin-tabs button.active { border-color: #c8dced; background: var(--navy); color: white; }
+.expansion-mobile-tabs { display: none; }
 .expansion-centre > .expansion-grid { padding: 20px 22px 24px; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); align-items: start; gap: 14px; }
 .expansion-centre .expansion-stats { grid-column: 1 / -1; margin: 0; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
 .expansion-centre .expansion-stats article { min-height: 104px; padding: 16px; box-sizing: border-box; }
@@ -2623,6 +2624,22 @@ button:disabled { opacity: .62; cursor: wait; }
 .expansion-centre .inline-form > .primary { grid-column: 1 / -1; }
 .expansion-centre .inline-form h3 { margin: 0 0 2px; color: var(--navy); font-size: 17px; }
 .expansion-centre .inline-form textarea { width: 100%; box-sizing: border-box; resize: vertical; }
+.expansion-centre .inline-form input,
+.expansion-centre .inline-form select,
+.expansion-centre .inline-form textarea {
+  width: 100%;
+  min-width: 0;
+  min-height: 46px;
+  padding: 10px 12px;
+  box-sizing: border-box;
+  border: 1px solid #cddae7;
+  border-radius: 10px;
+  background: white;
+  color: var(--ink);
+  font: inherit;
+  font-size: 12px;
+}
+.expansion-centre .inline-form textarea { line-height: 1.45; }
 .expansion-centre .inline-form > .primary { justify-self: start; min-width: 150px; }
 .expansion-centre .stacked-form {
   min-width: 0;
@@ -2717,8 +2734,9 @@ button:disabled { opacity: .62; cursor: wait; }
   .manage-tool-list > button { min-height: 70px; }
   .manage-group .panel-heading { min-height: 96px; }
   .expansion-centre > .panel-heading { min-height: 0; padding: 18px 16px; }
-  .expansion-centre .admin-tabs { padding: 11px 12px; overflow-x: auto; flex-wrap: nowrap; }
-  .expansion-centre .admin-tabs button { flex: 0 0 auto; min-height: 40px; padding-inline: 12px; }
+  .expansion-centre .admin-tabs { display: none; }
+  .expansion-mobile-tabs { padding: 12px 12px 0; display: grid; gap: 6px; color: var(--navy); font-size: 9px; font-weight: 850; }
+  .expansion-mobile-tabs select { width: 100%; min-width: 0; min-height: 46px; padding: 0 12px; box-sizing: border-box; border: 1px solid #cddae7; border-radius: 10px; background: #f8fbfe; color: var(--navy); font: inherit; font-size: 12px; }
   .expansion-centre > .expansion-grid { grid-template-columns: 1fr; padding: 14px 12px 18px; }
   .expansion-centre .expansion-grid > .inline-form { grid-column: auto; grid-template-columns: 1fr; }
   .expansion-centre .inline-form h3,

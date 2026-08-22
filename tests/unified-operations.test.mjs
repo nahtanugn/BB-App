@@ -219,7 +219,10 @@ test("notification feed hides legacy attendance reminders and collapses duplicat
 });
 
 test("messages composer stays readable across desktop and mobile layouts", async () => {
-  const css = await source("../app/globals.css");
+  const [css, expansion] = await Promise.all([
+    source("../app/globals.css"),
+    source("../app/ExpansionCentre.tsx"),
+  ]);
   assert.match(css, /\.expansion-centre \.expansion-grid > \.inline-form/);
   assert.match(css, /grid-template-columns: repeat\(2, minmax\(0, 1fr\)\)/);
   assert.match(css, /\.expansion-centre \.inline-form h3/);
@@ -228,5 +231,15 @@ test("messages composer stays readable across desktop and mobile layouts", async
   assert.match(css, /\.expansion-centre \.stacked-form fieldset/);
   assert.match(css, /\.expansion-centre \.expansion-grid-single/);
   assert.match(css, /\.expansion-centre \.expansion-grid > \.import-form:only-child/);
+  assert.match(css, /\.expansion-centre \.inline-form select/);
+  assert.match(css, /\.expansion-mobile-tabs \{ padding:/);
+  assert.match(css, /\.expansion-centre \.admin-tabs \{ display: none; \}/);
+  assert.match(expansion, /className="expansion-mobile-tabs"/);
+  assert.match(expansion, /aria-label="Expansion tool"/);
   assert.match(css, /height: var\(--ui-control-height\);\n  min-height: var\(--ui-control-height\);/);
+});
+
+test("destructive text actions remain usable touch targets", async () => {
+  const css = await source("../app/globals.css");
+  assert.match(css, /\.danger-link \{ min-height: 38px; padding: 0 9px;/);
 });
