@@ -23,7 +23,7 @@ jobs:
   validate:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: pnpm/action-setup@v6
       - uses: actions/setup-node@v7
         with:
@@ -45,7 +45,7 @@ jobs:
       D1_DATABASE_NAME: ${{ vars.D1_DATABASE_NAME }}
       D1_DATABASE_ID: ${{ secrets.D1_DATABASE_ID }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: pnpm/action-setup@v6
       - uses: actions/setup-node@v7
         with:
