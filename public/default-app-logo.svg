@@ -1,8 +1,0 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-labelledby="title description">
-  <title id="title">BB Company App placeholder logo</title>
-  <desc id="description">A navy rounded square with a gold shield and the letters BB.</desc>
-  <rect width="512" height="512" rx="112" fill="#0b2f55"/>
-  <path d="M256 78 407 132v111c0 96-61 161-151 194-90-33-151-98-151-194V132z" fill="#f2bd32"/>
-  <path d="M256 111 374 153v90c0 75-45 128-118 159-73-31-118-84-118-159v-90z" fill="#fff"/>
-  <text x="256" y="286" text-anchor="middle" font-family="Georgia,serif" font-size="126" font-weight="700" fill="#0b2f55">BB</text>
-</svg>

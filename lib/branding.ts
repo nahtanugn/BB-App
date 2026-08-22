@@ -14,7 +14,7 @@ export const DEFAULT_BRANDING: AppBranding = {
   shortName: "BB App",
   companyName: "Your BB Company",
   subtitle: "BB Section Tracker",
-  logoUrl: "/default-app-logo.svg",
+  logoUrl: "/default-bb-logo.png",
   updatedAt: "",
 };
 
