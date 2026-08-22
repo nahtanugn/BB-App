@@ -31,6 +31,8 @@ test("operations API enforces squad scope, final authority, and decision safety"
   assert.match(api, /The member rank was not changed automatically/);
   assert.match(api, /emergency_contact_viewed/);
   assert.match(api, /operations_idempotency_keys/);
+  assert.match(api, /const allowedSquads = new Set\(\["Alpha", "Bravo", "Charlie", "Delta"\]\)/);
+  assert.match(api, /!row\.squad \|\| row\.squad === user\.squad/);
   assert.doesNotMatch(api, /UPDATE members SET rank/);
 });
 
@@ -48,6 +50,8 @@ test("all operations are linked into the shared role-aware shell", async () => {
   assert.match(standalone, /CompanyOperationsCentre/);
   assert.match(centre, /Parade planner/);
   assert.match(centre, /Emergency roll call/);
+  assert.match(centre, /<option value="">Everyone<\/option>/);
+  assert.doesNotMatch(centre, /<input name="squad"/);
   assert.match(roles, /programme\.plans\.manage/);
   assert.match(roles, /emergency\.view_contacts/);
   assert.match(automation, /band_maintenance/);

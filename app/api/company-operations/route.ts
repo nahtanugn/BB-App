@@ -7,6 +7,7 @@ import { activeUserIdForEmail, activeUserIdsForRolesOrPermission, createNotifica
 type RuntimeEnv = { DB: D1Database };
 const runtime = env as unknown as RuntimeEnv;
 const allowedModules = new Set(["parades", "duties", "committees", "leave", "promotion", "service", "band", "emergency"]);
+const allowedSquads = new Set(["Alpha", "Bravo", "Charlie", "Delta"]);
 
 function jsonList(value: unknown) {
   if (!Array.isArray(value)) return [];
@@ -18,6 +19,7 @@ function storedJsonList(value: unknown) {
 }
 function text(value: unknown, max = 5000) { return String(value ?? "").trim().slice(0, max); }
 function number(value: unknown) { const parsed = Number(value); return Number.isFinite(parsed) ? parsed : 0; }
+function operationsSquad(value: unknown) { const selected = text(value, 40); return selected === "" || allowedSquads.has(selected) ? selected : null; }
 function isFinalStaff(user: NonNullable<Awaited<ReturnType<typeof getCurrentUser>>>) { return hasOperationalAdminAccess(user); }
 async function memberById(id: number) {
   return runtime.DB.prepare("SELECT id, name, rank, section, squad, email, emergency_contact_number, parents_name, band_member FROM members WHERE id = ?")
@@ -25,7 +27,7 @@ async function memberById(id: number) {
 }
 function scoped<T extends { section: string; squad: string }>(user: NonNullable<Awaited<ReturnType<typeof getCurrentUser>>>, rows: T[]) {
   if (hasOperationalAdminAccess(user) || user.role === "viewer") return rows;
-  return rows.filter((row) => row.section === user.member_section && row.squad === user.squad);
+  return rows.filter((row) => row.section === user.member_section && (!row.squad || row.squad === user.squad));
 }
 async function notifyMember(memberId: number, title: string, body: string, targetUrl: string, entityKey: string) {
   const member = await memberById(memberId); if (!member?.email) return;
@@ -179,14 +181,16 @@ export async function POST(request: Request) {
 
   if (action === "create_parade_template") {
     if (!(hasPermission(user,"programme.plans.manage") || isSquadOperationsUser(user))) return Response.json({ error:"Parade planning permission required"},{status:403});
-    const section = text(body.section,20); const squad = isSquadOperationsUser(user) ? user.squad : text(body.squad,40);
+    const requestedSquad=operationsSquad(body.squad); if(!isSquadOperationsUser(user)&&requestedSquad===null)return Response.json({error:"Select Everyone, Alpha, Bravo, Charlie, or Delta"},{status:400});
+    const section = text(body.section,20); const squad = isSquadOperationsUser(user) ? user.squad : requestedSquad ?? "";
     if (isSquadOperationsUser(user) && section !== user.member_section) return Response.json({error:"You can manage only your assigned squad"},{status:403});
     const result = await runtime.DB.prepare("INSERT INTO parade_templates (name,section,squad,notes,created_by_user_id,created_at,updated_at) VALUES (?,?,?,?,?,?,?)").bind(text(body.name,160),section,squad,text(body.notes),user.id,now,now).run();
     const id=Number(result.meta.last_row_id); const items=Array.isArray(body.items)?body.items as Array<Record<string,unknown>>:[]; for(let i=0;i<items.length;i++)await runtime.DB.prepare("INSERT INTO parade_template_items (template_id,position,activity,starts_at,ends_at,location,person_in_charge,notes) VALUES (?,?,?,?,?,?,?,?)").bind(id,i,text(items[i].activity,200),text(items[i].startsAt,8),text(items[i].endsAt,8),text(items[i].location,160),text(items[i].personInCharge,160),text(items[i].notes)).run(); await audit(user,"parade_template_created","parade_template",id,undefined,body); return Response.json({ok:true,id,message:"Parade template and activities created."});
   }
   if (action === "create_parade_plan") {
     if (!(hasPermission(user,"programme.plans.manage") || isSquadOperationsUser(user))) return Response.json({error:"Parade planning permission required"},{status:403});
-    const section=text(body.section,20); const squad=isSquadOperationsUser(user)?user.squad:text(body.squad,40); if(!hasPermission(user,"programme.plans.manage")&&!canManageSquadRecord(user,section,squad)) return Response.json({error:"You can manage only your assigned squad"},{status:403});
+    const requestedSquad=operationsSquad(body.squad); if(!isSquadOperationsUser(user)&&requestedSquad===null)return Response.json({error:"Select Everyone, Alpha, Bravo, Charlie, or Delta"},{status:400});
+    const section=text(body.section,20); const squad=isSquadOperationsUser(user)?user.squad:requestedSquad ?? ""; if(!hasPermission(user,"programme.plans.manage")&&!canManageSquadRecord(user,section,squad)) return Response.json({error:"You can manage only your assigned squad"},{status:403});
     const result=await runtime.DB.prepare("INSERT INTO parade_plans (event_id,template_id,title,plan_date,section,squad,status,created_by_user_id,created_at,updated_at) VALUES (?,?,?,?,?,?,'draft',?,?,?)").bind(number(body.eventId)||null,number(body.templateId)||null,text(body.title,160),text(body.planDate,10),section,squad,user.id,now,now).run();
     const id=Number(result.meta.last_row_id); const items=Array.isArray(body.items)?body.items as Array<Record<string,unknown>>:[]; for(let i=0;i<items.length;i++) await runtime.DB.prepare("INSERT INTO parade_plan_items (plan_id,position,activity,starts_at,ends_at,location,person_in_charge,notes) VALUES (?,?,?,?,?,?,?,?)").bind(id,i,text(items[i].activity,200),text(items[i].startsAt,8),text(items[i].endsAt,8),text(items[i].location,160),text(items[i].personInCharge,160),text(items[i].notes)).run();
     await audit(user,"parade_plan_created","parade_plan",id,undefined,body); return Response.json({ok:true,id,message:"Parade plan saved as a draft."});
@@ -200,7 +204,7 @@ export async function POST(request: Request) {
   }
   if (action === "assign_duty") {
     if (!(hasPermission(user,"programme.rosters.manage")||isSquadOperationsUser(user))) return Response.json({error:"Duty roster permission required"},{status:403});
-    const memberId=number(body.memberId); const member=memberId?await memberById(memberId):null; const section=member?.section??text(body.section,20); const squad=member?.squad??(isSquadOperationsUser(user)?user.squad:text(body.squad,40));
+    const memberId=number(body.memberId); const member=memberId?await memberById(memberId):null; const requestedSquad=operationsSquad(body.squad); if(!member&&!isSquadOperationsUser(user)&&requestedSquad===null)return Response.json({error:"Select Everyone, Alpha, Bravo, Charlie, or Delta"},{status:400}); const section=member?.section??text(body.section,20); const squad=member?.squad??(isSquadOperationsUser(user)?user.squad:requestedSquad ?? "");
     if(member&&!canViewMemberScope(user,member)&&!hasPermission(user,"programme.rosters.manage"))return Response.json({error:"Member not available"},{status:404});
     const result=await runtime.DB.prepare("INSERT INTO duty_assignments (event_id,duty_type_id,member_id,section,squad,starts_at,ends_at,status,notes,assigned_by_user_id,created_at,updated_at) VALUES (?,?,?,?,?,?,?,'assigned',?,?,?,?)").bind(number(body.eventId)||null,number(body.dutyTypeId),member?.id??null,section,squad,text(body.startsAt,30),text(body.endsAt,30)||null,text(body.notes),user.id,now,now).run(); const id=Number(result.meta.last_row_id);
     if(member){ await notifyMember(member.id,"Duty assigned",`You have been assigned ${text(body.dutyName,120)||"a company duty"}.`,"/?open=duties",`duty:${id}`); const recipient=member.email?await activeUserIdForEmail(member.email):null; if(recipient)await actionItem({key:`duty:${id}`,rule:"duty_rosters",recipients:[recipient],title:"Duty assigned",description:`${text(body.dutyName,120)||"Company duty"} · ${text(body.startsAt,30)}`,url:"/?open=duties",sourceType:"duty_assignment",sourceId:String(id)}); } else {const recipients=await activeUserIdsForRolesOrPermission(["admin","officer"],"programme.rosters.manage");await actionItem({key:`duty-unfilled:${id}`,rule:"duty_rosters",recipients,title:"Duty remains unfilled",description:`${text(body.dutyName,120)||"A duty"} needs a member assignment.`,url:"/?open=duties",sourceType:"duty_assignment",sourceId:String(id),priority:"important"});}
@@ -218,7 +222,7 @@ export async function POST(request: Request) {
     return Response.json({ok:true,message:available?"Duty availability confirmed.":"Unavailability recorded and staff were alerted."});
   }
   if (action === "create_committee") {
-    if (!(hasPermission(user,"programme.committees.manage")||isSquadOperationsUser(user))) return Response.json({error:"Committee permission required"},{status:403}); const section=isSquadOperationsUser(user)?user.member_section:text(body.section,20); const squad=isSquadOperationsUser(user)?user.squad:text(body.squad,40); const result=await runtime.DB.prepare("INSERT INTO event_committees (event_id,name,section,squad,status,notes,created_by_user_id,created_at,updated_at) VALUES (?,?,?,?,'active',?,?,?,?)").bind(number(body.eventId)||null,text(body.name,160),section,squad,text(body.notes),user.id,now,now).run(); const id=Number(result.meta.last_row_id); await audit(user,"committee_created","event_committee",id,undefined,body); return Response.json({ok:true,id,message:"Committee created."});
+    if (!(hasPermission(user,"programme.committees.manage")||isSquadOperationsUser(user))) return Response.json({error:"Committee permission required"},{status:403}); const requestedSquad=operationsSquad(body.squad); if(!isSquadOperationsUser(user)&&requestedSquad===null)return Response.json({error:"Select Everyone, Alpha, Bravo, Charlie, or Delta"},{status:400}); const section=isSquadOperationsUser(user)?user.member_section:text(body.section,20); const squad=isSquadOperationsUser(user)?user.squad:requestedSquad ?? ""; const result=await runtime.DB.prepare("INSERT INTO event_committees (event_id,name,section,squad,status,notes,created_by_user_id,created_at,updated_at) VALUES (?,?,?,?,'active',?,?,?,?)").bind(number(body.eventId)||null,text(body.name,160),section,squad,text(body.notes),user.id,now,now).run(); const id=Number(result.meta.last_row_id); await audit(user,"committee_created","event_committee",id,undefined,body); return Response.json({ok:true,id,message:"Committee created."});
   }
   if (action === "add_committee_task") {
     if (!(hasPermission(user,"programme.committees.manage")||isSquadOperationsUser(user))) return Response.json({error:"Committee permission required"},{status:403});
