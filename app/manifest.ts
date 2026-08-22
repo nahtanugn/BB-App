@@ -18,6 +18,11 @@ export default async function manifest(): Promise<MetadataRoute.Manifest> {
         sizes: "any",
         purpose: "any",
       },
+      {
+        src: branding.logoUrl,
+        sizes: "any",
+        purpose: "maskable",
+      },
     ],
   };
 }

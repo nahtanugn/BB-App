@@ -15,7 +15,7 @@ export async function generateMetadata(): Promise<Metadata> {
     title: `${branding.appName} · ${branding.subtitle}`,
     description,
     applicationName: branding.appName,
-    manifest: "/manifest.webmanifest",
+    manifest: `/manifest.webmanifest?v=${encodeURIComponent(branding.updatedAt || "default")}`,
     icons: {
       icon: branding.logoUrl,
       shortcut: branding.logoUrl,

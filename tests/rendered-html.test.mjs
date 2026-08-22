@@ -13,7 +13,7 @@ test("defines the customisable application shell and sharing metadata", async ()
 
   assert.match(layout, /getBranding/);
   assert.match(layout, /branding\.appName/);
-  assert.match(layout, /manifest: "\/manifest\.webmanifest"/);
+  assert.match(layout, /manifest: `\/manifest\.webmanifest\?v=/);
   assert.match(layout, /branding\.logoUrl/);
   assert.match(tracker, /Preparing your award records/);
   assert.match(tracker, /trackerMemoryCache/);

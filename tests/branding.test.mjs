@@ -5,7 +5,7 @@ import test from "node:test";
 async function source(path) { return readFile(new URL(path, import.meta.url), "utf8"); }
 
 test("administrators can customise deployment branding without exposing logo data", async () => {
-  const [api, settings, shell, context, defaults, desktopSetup, migration] = await Promise.all([
+  const [api, settings, shell, context, defaults, desktopSetup, migration, manifest, layout] = await Promise.all([
     source("../app/api/branding/route.ts"),
     source("../app/BrandingSettings.tsx"),
     source("../app/AppShell.tsx"),
@@ -13,6 +13,8 @@ test("administrators can customise deployment branding without exposing logo dat
     source("../lib/branding.ts"),
     source("../src-tauri/setup/index.html"),
     source("../drizzle/0032_custom_app_branding.sql"),
+    source("../app/manifest.ts"),
+    source("../app/layout.tsx"),
   ]);
   assert.match(api, /user\.role !== "admin"/);
   assert.match(api, /PNG, JPEG or WebP logo smaller than 750 KB/);
@@ -22,6 +24,8 @@ test("administrators can customise deployment branding without exposing logo dat
   assert.match(settings, /Company logo/);
   assert.match(settings, /Use standard BB logo/);
   assert.match(settings, /className="panel operations-form"/);
+  assert.match(settings, /refreshInstallMetadata/);
+  assert.match(settings, /Add to Dock again/);
   assert.match(settings, /standard BB emblem is used until an administrator uploads a company logo/);
   assert.match(shell, /branding\.appName/);
   assert.match(context, /app-branding-updated/);
@@ -33,5 +37,7 @@ test("administrators can customise deployment branding without exposing logo dat
   assert.match(desktopSetup, /default-bb-logo\.png/);
   assert.match(migration, /CREATE TABLE IF NOT EXISTS `app_branding`/);
   assert.match(migration, /\(1, 'BB App', 'BB App'/);
+  assert.match(manifest, /purpose: "maskable"/);
+  assert.match(layout, /manifest\.webmanifest\?v=/);
   assert.doesNotMatch(migration, /DROP TABLE|DELETE FROM/);
 });
