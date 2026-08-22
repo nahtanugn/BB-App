@@ -139,9 +139,9 @@ export default function StandaloneApp() {
       ["home", "manage"].includes(requested) ||
       ["resources", "uniforms", "announcements"].includes(requested) ||
       requested === "events" ||
-      (["parades", "duties", "committees", "promotion", "service", "leave", "band", "emergency"].includes(requested) &&
+      (["parades", "duties", "committees", "promotion", "service", "leave", "band"].includes(requested) &&
         (staff || ["member", "nco", "squad_leader"].includes(auth.user.role) ||
-          auth.user.custom_permissions.some((permission) => ["programme.", "leave.", "promotion.", "service.", "band.", "emergency."].some((prefix) => permission.startsWith(prefix))))) ||
+          auth.user.custom_permissions.some((permission) => ["programme.", "leave.", "promotion.", "service.", "band."].some((prefix) => permission.startsWith(prefix))))) ||
       (requested === "journey" &&
         ["member", "nco", "squad_leader"].includes(auth.user.role)) ||
       (requested === "stock" && stockAccess) ||
@@ -260,7 +260,6 @@ export default function StandaloneApp() {
         promotion: "promotion",
         service: "service",
         band: "band",
-        emergency: "emergency",
       };
       navigate(aliases[target] ?? target, true);
     }, 0);
@@ -723,7 +722,6 @@ export default function StandaloneApp() {
       promotion: "promotion",
       service: "service",
       band: "band",
-      emergency: "emergency",
       manage: "manage",
       home: "home",
     };
@@ -757,7 +755,7 @@ export default function StandaloneApp() {
     page = <main className="member-progress-page"><MemberProgress user={currentUser} /></main>;
   else if (route === "events")
     page = <EventCentre />;
-  else if (["parades", "duties", "committees", "leave", "promotion", "service", "band", "emergency"].includes(route))
+  else if (["parades", "duties", "committees", "leave", "promotion", "service", "band"].includes(route))
     page = <CompanyOperationsCentre module={route as OperationsModule} activeSection={activeSection} />;
   else if (route === "journey" && ["member", "nco", "squad_leader"].includes(currentUser.role))
     page = <MemberJourney />;

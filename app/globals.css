@@ -3606,7 +3606,7 @@ button:disabled { opacity: .62; cursor: wait; }
 .operations-scope { align-self: center; padding: 10px 14px; border: 1px solid #cfe0f1; border-radius: 999px; background: #edf5fd; color: var(--navy); font-size: 12px; font-weight: 800; }
 .operations-layout { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: start; gap: 18px; }
 .operations-layout > .wide, .operations-layout > .operations-mini-grid, .operations-layout > .operations-summary { grid-column: 1 / -1; }
-.operations-form, .operations-list, .readiness-list, .emergency-register { min-width: 0; padding: 24px; border-radius: 22px; }
+.operations-form, .operations-list, .readiness-list { min-width: 0; padding: 24px; border-radius: 22px; }
 .operations-form { display: grid; gap: 16px; }
 .operations-form > div:first-child h2, .operations-form > h2, .operations-section-heading h2 { margin: 3px 0 0; color: var(--navy); font-family: Georgia, serif; font-size: clamp(22px, 2vw, 30px); font-weight: 500; }
 .operations-form label { min-width: 0; display: grid; gap: 7px; color: var(--navy); font-size: 12px; font-weight: 800; }
@@ -3662,13 +3662,6 @@ button:disabled { opacity: .62; cursor: wait; }
 .readiness-list li strong { font-size: 11px; }
 .readiness-list li small { color: var(--muted); font-size: 9px; }
 .privacy-note { margin: 0; padding: 12px; border-radius: 11px; background: #fff7dd; color: #70540d; font-size: 11px; line-height: 1.5; }
-.emergency-counts { margin: 16px 0; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; }
-.emergency-counts article { min-height: 72px; display: grid; place-items: center; align-content: center; border-radius: 13px; background: #f4f7fa; }
-.emergency-counts strong { color: var(--navy); font-family: Georgia, serif; font-size: 26px; }
-.emergency-counts span { color: var(--muted); font-size: 10px; text-transform: capitalize; }
-.emergency-member { min-height: 72px; display: grid; grid-template-columns: minmax(160px, 1fr) auto minmax(300px, auto) auto; align-items: center; gap: 12px; border-bottom: 1px solid var(--line); }
-.emergency-member > div:first-child { display: grid; gap: 3px; }
-.emergency-member small { color: var(--muted); }
 .segmented-actions { display: flex; gap: 4px; }
 .segmented-actions button { min-height: 36px; padding: 6px 10px; border: 1px solid #d4e0eb; border-radius: 9px; background: #fff; color: var(--muted); font-size: 10px; font-weight: 800; text-transform: capitalize; }
 .segmented-actions button.active { border-color: var(--blue); background: #eaf3fd; color: var(--blue); }
@@ -3689,15 +3682,13 @@ button:disabled { opacity: .62; cursor: wait; }
   .operations-field-grid .span-2 { grid-column: auto; }
   .operations-list > article { align-items: flex-start; flex-wrap: wrap; }
   .operations-list > article > div:first-child { flex-basis: calc(100% - 100px); }
-  .emergency-member { padding: 14px 0; grid-template-columns: 1fr auto; }
-  .emergency-member .segmented-actions { grid-column: 1 / -1; display: grid; grid-template-columns: repeat(4, 1fr); }
   .journey-readiness > article { grid-template-columns: 1fr; }
 }
 @media (max-width: 520px) {
   .operations-centre { padding: 12px 12px calc(94px + env(safe-area-inset-bottom)); gap: 12px; }
   .operations-header { align-items: flex-start; }
   .operations-scope { align-self: flex-start; }
-  .operations-form, .operations-list, .readiness-list, .emergency-register { padding: 18px; border-radius: 18px; }
+  .operations-form, .operations-list, .readiness-list { padding: 18px; border-radius: 18px; }
   .operations-form input, .operations-form select, .operations-form textarea { min-height: 52px; font-size: 16px; }
   .operations-form .primary, .operations-form .danger-button { width: 100%; justify-self: stretch; }
   .operations-callout { padding: 18px; align-items: stretch; flex-direction: column; border-radius: 18px; }
@@ -3707,7 +3698,5 @@ button:disabled { opacity: .62; cursor: wait; }
   .operations-row-actions button { width: 100%; }
   .operations-list details { width: 100%; }
   .operations-list details form { position: static; width: 100%; margin-top: 8px; box-shadow: none; }
-  .operations-summary, .emergency-counts { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .emergency-member { grid-template-columns: minmax(0, 1fr) auto; }
-  .emergency-member > .text-button { grid-column: 1 / -1; justify-self: stretch; min-height: 44px; }
+  .operations-summary { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }

@@ -42,7 +42,6 @@ const ruleLabels: Record<string, string> = {
   leave_requests: "Leave",
   service_verification: "Service",
   band_maintenance: "Band maintenance",
-  emergency_roll_call: "Emergency",
 };
 
 export default function ActionCentre({

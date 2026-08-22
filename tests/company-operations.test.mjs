@@ -6,7 +6,7 @@ async function source(path) {
   return readFile(new URL(path, import.meta.url), "utf8");
 }
 
-test("company operations migration is additive and covers all eight workspaces", async () => {
+test("company operations migration remains additive and preserves historical roll-call data", async () => {
   const migration = await source("../drizzle/0031_company_operations.sql");
   for (const table of [
     "parade_plans", "duty_assignments", "leave_requests", "promotion_rules",
@@ -29,14 +29,14 @@ test("operations API enforces squad scope, final authority, and decision safety"
   assert.match(api, /Existing attendance was preserved/);
   assert.match(api, /Defective instruments cannot be issued/);
   assert.match(api, /The member rank was not changed automatically/);
-  assert.match(api, /emergency_contact_viewed/);
   assert.match(api, /operations_idempotency_keys/);
   assert.match(api, /const allowedSquads = new Set\(\["Alpha", "Bravo", "Charlie", "Delta"\]\)/);
   assert.match(api, /!row\.squad \|\| row\.squad === user\.squad/);
+  assert.doesNotMatch(api, /start_emergency|update_emergency_response|close_emergency|view_emergency_contact/);
   assert.doesNotMatch(api, /UPDATE members SET rank/);
 });
 
-test("all operations are linked into the shared role-aware shell", async () => {
+test("active operations are linked into the shared role-aware shell", async () => {
   const [shell, standalone, centre, roles, automation, journey, styles] = await Promise.all([
     source("../app/AppShell.tsx"),
     source("../app/StandaloneApp.tsx"),
@@ -46,15 +46,16 @@ test("all operations are linked into the shared role-aware shell", async () => {
     source("../app/MemberJourney.tsx"),
     source("../app/globals.css"),
   ]);
-  for (const route of ["parades", "duties", "committees", "leave", "promotion", "service", "band", "emergency"])
+  for (const route of ["parades", "duties", "committees", "leave", "promotion", "service", "band"])
     assert.match(shell, new RegExp(`"${route}"`));
+  assert.doesNotMatch(shell, /Emergency roll call|route: "emergency"/);
   assert.match(standalone, /CompanyOperationsCentre/);
   assert.match(centre, /Parade planner/);
-  assert.match(centre, /Emergency roll call/);
+  assert.doesNotMatch(centre, /Emergency roll call|Start roll call/);
   assert.match(centre, /<option value="">Everyone<\/option>/);
   assert.doesNotMatch(centre, /<input name="squad"/);
   assert.match(roles, /programme\.plans\.manage/);
-  assert.match(roles, /emergency\.view_contacts/);
+  assert.doesNotMatch(roles, /emergency\.manage|emergency\.view_contacts/);
   assert.match(automation, /band_maintenance/);
   assert.match(automation, /committee_tasks/);
   assert.match(journey, /Promotion readiness/);

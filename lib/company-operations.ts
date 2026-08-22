@@ -15,8 +15,6 @@ export const OPERATIONS_PERMISSIONS = [
   "band.manage_profiles",
   "band.manage_instruments",
   "band.manage_programme",
-  "emergency.manage",
-  "emergency.view_contacts",
 ] as const;
 
 export function hasPermission(user: AppUser, permission: string) {

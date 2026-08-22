@@ -115,14 +115,6 @@ const permissionGroups = [
       ["band.manage_programme", "Manage rehearsals, performances and assessments"],
     ],
   },
-  {
-    title: "Emergency operations",
-    description: "Time-sensitive roll call and audited contact access",
-    options: [
-      ["emergency.manage", "Start and update emergency roll calls"],
-      ["emergency.view_contacts", "View audited emergency contacts"],
-    ],
-  },
 ] as const;
 
 export default function CustomRoleManager({

@@ -22,7 +22,6 @@ export const AUTOMATION_RULES = [
   ["leave_requests", "Leave requests", ["admin", "officer"]],
   ["service_verification", "Service verification", ["admin", "officer"]],
   ["band_maintenance", "Band instrument maintenance", ["admin", "officer"]],
-  ["emergency_roll_call", "Emergency roll call", ["admin", "officer"]],
 ] as const;
 
 type RuleKey = (typeof AUTOMATION_RULES)[number][0];
@@ -112,6 +111,10 @@ export async function ensureAutomationSchema(db: D1Database) {
       ON CONFLICT(rule_key) DO NOTHING`)
       .bind(ruleKey, JSON.stringify(roles), now)
       .run();
+  await db.batch([
+    db.prepare("UPDATE automation_rules SET enabled = 0, updated_at = ? WHERE rule_key = 'emergency_roll_call'").bind(now),
+    db.prepare("UPDATE automation_action_items SET status = 'resolved', resolved_at = ? WHERE rule_key = 'emergency_roll_call' AND status IN ('open','snoozed')").bind(now),
+  ]);
 }
 
 function kuchingParts(date: Date) {
@@ -480,11 +483,6 @@ async function collectCandidates(db: D1Database, now: Date) {
     const recipients = await activeUserIdsForRolesOrPermission(configuredRoles(rules, "band_maintenance", ["admin", "officer"]), "band.manage_instruments");
     const rows = await db.prepare("SELECT id,name,maintenance_due_at,due_at FROM band_instruments WHERE active=1 AND (condition IN ('maintenance','defective') OR maintenance_due_at<=date('now') OR (current_holder_member_id IS NOT NULL AND due_at<date('now')))").all<{ id: number; name: string; maintenance_due_at: string | null; due_at: string | null }>();
     for (const row of rows.results) candidates.push({ ruleKey: "band_maintenance", sourceType: "band_instrument", sourceId: String(row.id), recipientUserIds: recipients, title: "Band instrument needs attention", description: `${row.name} needs maintenance or return follow-up.`, targetUrl: "/?open=band", priority: "important", dueAt: row.maintenance_due_at ?? row.due_at });
-  }
-  if (enabled("emergency_roll_call")) {
-    const recipients = await activeUserIdsForRolesOrPermission(configuredRoles(rules, "emergency_roll_call", ["admin", "officer"]), "emergency.manage");
-    const rows = await db.prepare("SELECT s.id,COUNT(r.member_id) AS missing FROM emergency_sessions s JOIN emergency_responses r ON r.session_id=s.id AND r.status IN ('missing','unknown') WHERE s.status='active' GROUP BY s.id").all<{ id: number; missing: number }>();
-    for (const row of rows.results) candidates.push({ ruleKey: "emergency_roll_call", sourceType: "emergency_session", sourceId: String(row.id), recipientUserIds: recipients, title: "Emergency responses outstanding", description: `${row.missing} members are missing or unknown.`, targetUrl: "/?open=emergency", priority: "urgent" });
   }
 
   for (const candidate of candidates)

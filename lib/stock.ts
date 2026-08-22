@@ -49,8 +49,6 @@ export const APP_PERMISSIONS = [
   "band.manage_profiles",
   "band.manage_instruments",
   "band.manage_programme",
-  "emergency.manage",
-  "emergency.view_contacts",
 ] as const;
 
 export type AppPermission = (typeof APP_PERMISSIONS)[number];

@@ -28,8 +28,7 @@ export type AppRoute =
   | "leave"
   | "promotion"
   | "service"
-  | "band"
-  | "emergency";
+  | "band";
 
 export type ShellUser = {
   name: string;
@@ -80,7 +79,6 @@ const routeHub: Record<AppRoute, AppHub> = {
   onboarding: "manage",
   automation: "manage",
   exports: "manage",
-  emergency: "home",
 };
 
 export function hubForRoute(route: AppRoute): AppHub {
@@ -182,8 +180,6 @@ export default function AppShell({
       { route: "service", category: "People & Progress", label: "Service hours", description: "Submission and verification", icon: "◷" },
     );
     else values.push({ route: "service", category: "People & Progress", label: "My service", description: "Submit and track service hours", icon: "◷" });
-    if (operational || ["nco", "squad_leader"].includes(user.role) || user.custom_permissions.some((permission) => permission.startsWith("emergency.")))
-      values.push({ route: "emergency", category: "Home", label: "Emergency roll call", description: "Safeguarding status check", icon: "!" });
     if (["member", "nco", "squad_leader"].includes(user.role))
       values.push({ route: "journey", category: "People & Progress", label: "My journey", description: "Your goals and progress", icon: "◎" });
     if ((seniorApplicant || mayReviewSubmissions) && (activeSection ?? user.member_section) !== "junior")
