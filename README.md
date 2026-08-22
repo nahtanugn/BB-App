@@ -1,4 +1,4 @@
-# BB Company App
+# BB App
 
 A reusable, open-source, mobile-first company management app for Boys' Brigade Junior and Senior Sections. Each deployment has its own Cloudflare Worker, D1 database, users and branding.
 

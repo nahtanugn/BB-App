@@ -1,8 +1,8 @@
 [package]
 name = "bb-company-app"
-version = "1.1.0"
-description = "Desktop edition of the BB Company App"
-authors = ["BB Company App contributors"]
+version = "1.2.0"
+description = "Desktop edition of BB App"
+authors = ["BB App contributors"]
 license = "MIT"
 repository = "https://github.com/your-org/bb-company-app"
 edition = "2021"

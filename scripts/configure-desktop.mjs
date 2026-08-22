@@ -4,7 +4,7 @@ const appUrl = process.env.APP_URL?.trim();
 if (!appUrl) throw new Error("APP_URL is required for a desktop build.");
 
 const appName = process.env.DESKTOP_APP_NAME?.trim() || "BB App";
-const publisher = process.env.DESKTOP_PUBLISHER?.trim() || "BB Company App contributors";
+const publisher = process.env.DESKTOP_PUBLISHER?.trim() || "BB App contributors";
 const path = "src-tauri/tauri.conf.json";
 const config = JSON.parse(readFileSync(path, "utf8"));
 config.productName = appName;

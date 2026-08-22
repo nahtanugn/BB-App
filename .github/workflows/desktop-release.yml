@@ -81,9 +81,9 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           tagName: v__VERSION__
-          releaseName: "BB Company App Base v__VERSION__"
+          releaseName: "BB App Base v__VERSION__"
           releaseBody: |
-            Generic base edition of BB Company App for macOS, Windows and Linux.
+            Generic base edition of BB App for macOS, Windows and Linux.
 
             On first launch, enter the web address supplied by your company administrator. The installer contains no company-specific branding, live database, member records, credentials or deployment address.
 
@@ -91,5 +91,5 @@ jobs:
           releaseDraft: false
           prerelease: false
           generateReleaseNotes: true
-          releaseAssetNamePattern: "BB-Company-App-Base-[version]-[platform]-[arch][setup].[ext]"
+          releaseAssetNamePattern: "BB-App-Base-[version]-[platform]-[arch][setup].[ext]"
           args: ${{ matrix.args }}

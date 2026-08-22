@@ -1,7 +1,7 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
-  "productName": "BB Company App",
-  "version": "1.1.0",
+  "productName": "BB App",
+  "version": "1.2.0",
   "identifier": "org.example.bb-company-app",
   "build": {
     "frontendDist": "setup"
@@ -10,7 +10,7 @@
     "windows": [
       {
         "label": "main",
-        "title": "BB Company App",
+        "title": "BB App",
         "url": "index.html",
         "width": 1280,
         "height": 820,
@@ -28,10 +28,10 @@
   "bundle": {
     "active": true,
     "category": "Productivity",
-    "copyright": "Copyright © 2026 BB Company App contributors",
+    "copyright": "Copyright © 2026 BB App contributors",
     "shortDescription": "Manage company members, attendance, awards and resources.",
     "longDescription": "A configurable company management app connected securely to its own deployment.",
-    "publisher": "BB Company App contributors",
+    "publisher": "BB App contributors",
     "icon": [
       "icons/32x32.png",
       "icons/128x128.png",

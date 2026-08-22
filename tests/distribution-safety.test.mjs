@@ -32,7 +32,7 @@ test("the distribution contains generic deployment configuration and no tracked 
   assert.match(deploymentConfig, /relative\(dirname\(output\), resolve\("drizzle"\)\)/);
   assert.match(deploymentConfig, /migrations_dir: migrationsDir/);
   assert.doesNotMatch(desktop, /vars\.APP_URL|DESKTOP_APP_NAME|DESKTOP_PUBLISHER/);
-  assert.match(desktop, /BB-Company-App-Base/);
+  assert.match(desktop, /BB-App-Base/);
   assert.match(tauri, /"frontendDist": "setup"/);
   assert.match(setup, /bb-company-app-url/);
   assert.match(setup, /Company app address/);

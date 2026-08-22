@@ -1,4 +1,4 @@
-# BB Company App recovery
+# BB App recovery
 
 ## Database
 
