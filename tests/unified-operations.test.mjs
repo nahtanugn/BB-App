@@ -242,4 +242,5 @@ test("messages composer stays readable across desktop and mobile layouts", async
 test("destructive text actions remain usable touch targets", async () => {
   const css = await source("../app/globals.css");
   assert.match(css, /\.danger-link \{ min-height: 38px; padding: 0 9px;/);
+  assert.match(css, /\.subscription-controls \.section-switch button \{ min-height: 40px; \}/);
 });
