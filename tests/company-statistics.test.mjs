@@ -24,3 +24,11 @@ test("company statistics is reachable from Manage and the shared shell", () => {
   assert.match(read("app/AppShell.tsx"), /Company Statistics/);
   assert.match(read("app/StandaloneApp.tsx"), /CompanyStatisticsCentre/);
 });
+
+test("company statistics explains gender abbreviations and preserves Warrant Officer as one rank", () => {
+  const source = read("app/CompanyStatisticsCentre.tsx");
+  assert.match(source, /Male \(M\)/);
+  assert.match(source, /Female \(F\)/);
+  assert.match(source, /Warrant Officer — Working/);
+  assert.doesNotMatch(source, /warrantWorkingM.*replace\(/);
+});
