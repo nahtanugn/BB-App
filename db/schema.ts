@@ -24,7 +24,55 @@ export const members = sqliteTable("members", {
     .default(""),
   email: text("email").notNull().default(""),
   parentsName: text("parents_name").notNull().default(""),
+  gender: text("gender").notNull().default(""),
+  ethnicity: text("ethnicity").notNull().default(""),
+  acceptedChrist: integer("accepted_christ", { mode: "boolean" }).notNull().default(false),
+  baptised: integer("baptised", { mode: "boolean" }).notNull().default(false),
+  officerWorkStatus: text("officer_work_status").notNull().default(""),
   isDemo: integer("is_demo", { mode: "boolean" }).notNull().default(false),
+  createdAt: text("created_at").notNull(),
+});
+
+export const companyStatistics = sqliteTable("company_statistics", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  reportingYear: integer("reporting_year").notNull(),
+  status: text("status").notNull().default("draft"),
+  lockedAt: text("locked_at"),
+  lockedByUserId: integer("locked_by_user_id"),
+  captainName: text("captain_name").notNull().default(""),
+  chaplainName: text("chaplain_name").notNull().default(""),
+  submissionDate: text("submission_date").notNull().default(""),
+  receivedBy: text("received_by").notNull().default(""),
+  dateReceived: text("date_received").notNull().default(""),
+  dataEntryName: text("data_entry_name").notNull().default(""),
+  remarks: text("remarks").notNull().default(""),
+  notes: text("notes").notNull().default(""),
+  createdAt: text("created_at").notNull(),
+  updatedAt: text("updated_at").notNull(),
+}, (table) => [uniqueIndex("company_statistics_year_idx").on(table.reportingYear)]);
+
+export const companyStatisticsInputs = sqliteTable("company_statistics_inputs", {
+  statisticsId: integer("statistics_id").primaryKey().references(() => companyStatistics.id, { onDelete: "cascade" }),
+  payload: text("payload").notNull().default("{}"),
+  updatedAt: text("updated_at").notNull(),
+});
+
+export const companyStatisticsMemberStatus = sqliteTable("company_statistics_member_status", {
+  statisticsId: integer("statistics_id").notNull().references(() => companyStatistics.id, { onDelete: "cascade" }),
+  memberId: integer("member_id").notNull().references(() => members.id, { onDelete: "cascade" }),
+  membershipStatus: text("membership_status").notNull().default("continuing"),
+  categoryOverride: text("category_override").notNull().default(""),
+  genderOverride: text("gender_override").notNull().default(""),
+  ethnicityOverride: text("ethnicity_override").notNull().default(""),
+  updatedAt: text("updated_at").notNull(),
+}, (table) => [primaryKey({ columns: [table.statisticsId, table.memberId] })]);
+
+export const companyStatisticsAudit = sqliteTable("company_statistics_audit", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  statisticsId: integer("statistics_id").notNull().references(() => companyStatistics.id, { onDelete: "cascade" }),
+  action: text("action").notNull(),
+  actorUserId: integer("actor_user_id").notNull(),
+  details: text("details").notNull().default("{}"),
   createdAt: text("created_at").notNull(),
 });
 

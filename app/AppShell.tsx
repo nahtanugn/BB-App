@@ -7,6 +7,7 @@ export type AppRoute =
   | "home"
   | "manage"
   | "exports"
+  | "company-statistics"
   | "operations"
   | "company-overview"
   | "awards"
@@ -80,6 +81,7 @@ const routeHub: Record<AppRoute, AppHub> = {
   onboarding: "manage",
   automation: "manage",
   exports: "manage",
+  "company-statistics": "manage",
 };
 
 export function hubForRoute(route: AppRoute): AppHub {
@@ -215,6 +217,8 @@ export default function AppShell({
       values.push({ route: "automation", category: "Administration", label: "Automation", description: "Rules, runs and reminders", icon: "↻" });
     if (operational || user.custom_permissions.includes("exports.full"))
       values.push({ route: "exports", category: "Administration", label: "Export Centre", description: "Reports and secure backups", icon: "↓" });
+    if (["admin", "officer", "viewer"].includes(user.role))
+      values.push({ route: "company-statistics", category: "Administration", label: "Company Statistics", description: "Annual form and snapshots", icon: "▤" });
     return values;
   }, [
     actionCount,

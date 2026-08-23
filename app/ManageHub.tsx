@@ -90,6 +90,7 @@ export default function ManageHub({
     ...(staff ? [{ route: "onboarding" as const, label: "Onboarding", description: "Registrations and profile corrections", icon: "◎" }] : []),
     ...(["admin", "viewer"].includes(user.role) ? [{ route: "automation" as const, label: "Automation", description: "Rules, reminders and run history", icon: "↻" }] : []),
     ...(mayExport ? [{ route: "exports" as const, label: "Export Centre", description: "School reports and secure backups", icon: "↓" }] : []),
+    ...(["admin", "officer", "viewer"].includes(user.role) ? [{ route: "company-statistics" as const, label: "Company Statistics", description: "Annual form and locked snapshots", icon: "▤" }] : []),
   ];
   const groups = [
     { title: "Requests", description: "Applications and items waiting for action", tools: requestTools },

@@ -17,6 +17,7 @@ export const AUTOMATION_RULES = [
   ["data_quality", "Member data quality", ["admin", "officer"]],
   ["company_subscription", "Company subscriptions", ["admin", "officer"]],
   ["band_subscription", "Band subscriptions", ["admin", "officer"]],
+  ["company_statistics", "Annual company statistics", ["admin", "officer"]],
   ["duty_rosters", "Duty rosters", ["admin", "officer"]],
   ["committee_tasks", "Committee tasks", ["admin", "officer"]],
   ["leave_requests", "Leave requests", ["admin", "officer"]],
@@ -456,6 +457,15 @@ async function collectCandidates(db: D1Database, now: Date) {
         title, description: `The ${local.year} record remains unpaid.`,
         targetUrl: "/?open=subscriptions",
       });
+    }
+  }
+
+  const statisticsRule = rules.get("company_statistics");
+  if (statisticsRule?.enabled && statisticsRule.due_month_day && local.monthDay >= statisticsRule.due_month_day) {
+    const snapshot = await db.prepare("SELECT id FROM company_statistics WHERE reporting_year = ? AND status = 'final' LIMIT 1").bind(local.year).first<{ id: number }>();
+    if (!snapshot) {
+      const recipients = await roleIds(db, configuredRoles(rules, "company_statistics", ["admin", "officer"]));
+      candidates.push({ ruleKey: "company_statistics", sourceType: "company_statistics", sourceId: String(local.year), recipientUserIds: recipients, title: "Annual company statistics need finalisation", description: `The ${local.year} company statistics snapshot is not finalised.`, targetUrl: "/?open=company-statistics", priority: "important" });
     }
   }
 

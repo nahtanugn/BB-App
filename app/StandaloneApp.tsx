@@ -22,6 +22,7 @@ import NotificationCentre from "./NotificationCentre";
 import ExportCentre from "./ExportCentre";
 import ManagedSchoolSelect from "./ManagedSchoolSelect";
 import PublicInformation from "./PublicInformation";
+import CompanyStatisticsCentre from "./CompanyStatisticsCentre";
 import CompanyOperationsCentre, { type OperationsModule } from "./CompanyOperationsCentre";
 import { brandingLogoStyle, useBranding } from "./BrandingContext";
 
@@ -162,7 +163,9 @@ export default function StandaloneApp() {
       (requested === "onboarding" && staff) ||
       (requested === "admin" && ["admin", "officer", "viewer"].includes(auth.user.role)) ||
       (requested === "automation" && ["admin", "viewer"].includes(auth.user.role)) ||
-      (requested === "exports" && (operational || auth.user.custom_permissions.includes("exports.full")));
+      (requested === "exports" && (operational || auth.user.custom_permissions.includes("exports.full"))) ||
+      (requested === "company-statistics" && ["admin", "officer", "viewer"].includes(auth.user.role));
+
     const safeRoute = allowed ? requested : "home";
     setRoute(safeRoute);
     const params = new URLSearchParams();
@@ -259,6 +262,7 @@ export default function StandaloneApp() {
         "company-overview": "home",
         manage: "manage",
         exports: "exports",
+        "company-statistics": "company-statistics",
         parades: "parades",
         duties: "duties",
         committees: "committees",
@@ -721,6 +725,7 @@ export default function StandaloneApp() {
       subscriptions: "subscriptions",
       admin: "admin",
       exports: "exports",
+      "company-statistics": "company-statistics",
       parades: "parades",
       duties: "duties",
       committees: "committees",
@@ -741,6 +746,8 @@ export default function StandaloneApp() {
     page = <ManageHub user={currentUser} stockAccess={Boolean(stockAccess)} activeSection={activeSection} onOpen={navigate} />;
   else if (route === "exports")
     page = <ExportCentre currentYear={new Date().getFullYear()} presentation="page" onComplete={setNotice} />;
+  else if (route === "company-statistics" && ["admin", "officer", "viewer"].includes(currentUser.role))
+    page = <CompanyStatisticsCentre user={currentUser} currentYear={new Date().getFullYear()} />;
   else if (route === "submissions")
     page = <SubmissionsPage user={currentUser} initialSection={submissionSection} onLogout={logout} onBack={() => navigate("home")} />;
   else if (route === "stock")
