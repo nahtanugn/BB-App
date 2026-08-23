@@ -25,10 +25,11 @@ test("company statistics is reachable from Manage and the shared shell", () => {
   assert.match(read("app/StandaloneApp.tsx"), /CompanyStatisticsCentre/);
 });
 
-test("company statistics explains gender abbreviations and preserves Warrant Officer as one rank", () => {
+test("company statistics uses the complete official officer-rank list", () => {
   const source = read("app/CompanyStatisticsCentre.tsx");
   assert.match(source, /Male \(M\)/);
   assert.match(source, /Female \(F\)/);
-  assert.match(source, /Warrant Officer — Working/);
-  assert.doesNotMatch(source, /warrantWorkingM.*replace\(/);
+  for (const rank of ["Staff Sergeant", "Warrant Officer", "Lieutenant", "Captain", "Honorary Captain", "Chaplain"]) assert.match(source, new RegExp(rank));
+  assert.doesNotMatch(source, /M means Male and F means Female/);
+  assert.doesNotMatch(source, /warrantWorkingM/);
 });
