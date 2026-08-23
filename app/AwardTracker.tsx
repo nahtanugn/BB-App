@@ -20,6 +20,7 @@ type Member = {
   emergency_contact_number: string;
   email: string;
   parents_name: string;
+  ethnicity: string;
   is_demo: number;
   account_role?: string;
 };
@@ -157,7 +158,7 @@ function serviceYearsFromJoined(value: string) {
 }
 
 function memberCompleteness(member: Member) {
-  const fields: Array<[string, string]> = [["School", member.school], ["Contact number", member.contact_number], ["Emergency contact", member.emergency_contact_number], ["Email", member.email], ["Parents' name", member.parents_name]];
+  const fields: Array<[string, string]> = [["School", member.school], ["Contact number", member.contact_number], ["Emergency contact", member.emergency_contact_number], ["Email", member.email], ["Parents' name", member.parents_name], ["Ethnicity", member.ethnicity]];
   const missing = fields.filter(([, value]) => !value.trim()).map(([label]) => label);
   return { percent: Math.round(((fields.length - missing.length) / fields.length) * 100), missing };
 }
@@ -773,6 +774,7 @@ export default function AwardTracker({
         emergencyContactNumber: form.get("emergencyContactNumber"),
         email: form.get("email"),
         parentsName: form.get("parentsName"),
+        ethnicity: form.get("ethnicity"),
         bandMember: form.get("bandMember") === "on",
         overrideRequiredDetails:
           canOverrideMemberDetails && overrideMemberDetails,
@@ -832,6 +834,37 @@ export default function AwardTracker({
     }
     await load();
     setNotice(`${member.name} was removed successfully.`);
+    setSaving("");
+  }
+
+  async function transferMemberToSenior(member: Member) {
+    if (
+      !window.confirm(
+        `Transfer ${member.name} to the Senior Section? Their details and linked records will be retained, and their rank will reset to Private.`,
+      )
+    )
+      return;
+    setSaving(`transfer-member-${member.id}`);
+    setActionError("");
+    setNotice("");
+    const response = await fetch("/api/tracker", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        action: "transfer_member_to_senior",
+        section: "junior",
+        memberId: member.id,
+      }),
+    });
+    const result = (await response.json()) as { error?: string; message?: string };
+    if (!response.ok) {
+      setActionError(result.error ?? "Unable to transfer this member");
+      setSaving("");
+      return;
+    }
+    setViewingMemberId(null);
+    switchSection("senior");
+    setNotice(result.message ?? `${member.name} transferred to the Senior Section.`);
     setSaving("");
   }
 
@@ -2752,6 +2785,7 @@ export default function AwardTracker({
                       <div className="member-profile-actions">
                         {canViewSubmissions && <button className="edit-member" onClick={() => setSubmissionMember(viewingMember)}>Submissions</button>}
                         {canEditMembers && <button className="edit-member" onClick={() => { setViewingMemberId(null); openEditMember(viewingMember); }}>Edit details</button>}
+                        {hasOperationalAdminAccess && section === "junior" && <button className="edit-member" disabled={saving === `transfer-member-${viewingMember.id}`} onClick={() => transferMemberToSenior(viewingMember)}>{saving === `transfer-member-${viewingMember.id}` ? "Transferring…" : "Transfer to Senior"}</button>}
                         {canManageAwards && <button className="danger-link" onClick={() => deleteMember(viewingMember)}>Delete member</button>}
                       </div>
                     </div>
@@ -2759,6 +2793,10 @@ export default function AwardTracker({
                       <div>
                         <dt>School</dt>
                         <dd>{viewingMember.school || "Not recorded"}</dd>
+                      </div>
+                      <div>
+                        <dt>Ethnicity (race)</dt>
+                        <dd>{viewingMember.ethnicity || "Not recorded"}</dd>
                       </div>
                       <div>
                         <dt>Joined year</dt>
@@ -3104,6 +3142,15 @@ export default function AwardTracker({
                   name="parentsName"
                   required={!overrideMemberDetails}
                   defaultValue={editingMember?.parents_name ?? ""}
+                />
+              </label>
+              <label>
+                Ethnicity (race)
+                <input
+                  name="ethnicity"
+                  required={!overrideMemberDetails}
+                  placeholder="e.g. Chinese, Malay, Iban"
+                  defaultValue={editingMember?.ethnicity ?? ""}
                 />
               </label>
               <label className="override-details band-member-field">
