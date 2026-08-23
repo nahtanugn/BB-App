@@ -70,6 +70,12 @@ Official GitHub Releases contain only the generic base desktop app. On first lau
 
 Companies that want their own branded installers may fork the repository and use `scripts/configure-desktop.mjs` in a separate release workflow. Company-specific installers should be published from that company's fork, not from this base repository.
 
+## Tutorial
+
+The public user guide uses the generic **BB App** name so every company can reuse it: [Download the BB App user guide slides](tutorial-output/BB-App-User-Guide.pptx).
+
+Each deployed company can still set its own name and logo under **Manage → Accounts and roles → App branding**. Those saved settings remain private to that company's Cloudflare deployment.
+
 ## Award syllabus
 
 The built-in catalogues provide a starting point for BB Junior and Senior Section tracking. Deploying companies remain responsible for checking their current national handbooks, circulars, safeguarding rules and privacy obligations.
