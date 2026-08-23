@@ -692,7 +692,7 @@ export default function StandaloneApp() {
             </form>
           )}
           {!auth.setupRequired && !requestingAccess && <><button className="request-access-button" onClick={() => { setRequestingAccess(true); setError(""); setAccessRequestNotice(""); }}>Request member access</button><button type="button" className="text-button" onClick={() => { setShowPublicInformation(true); window.history.pushState({}, "", "/?public=1"); }}>Public information</button></>}
-          <small>Private by default · No ChatGPT account required</small>
+          <small>Private by default</small>
         </section>
       </main>
     );
