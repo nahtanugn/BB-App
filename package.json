@@ -16,7 +16,23 @@
     "desktop": "tauri",
     "desktop:build": "tauri build",
     "db:generate": "drizzle-kit generate",
+    "db:migrations:apply": "wrangler d1 migrations apply DB --remote --config wrangler.jsonc",
+    "deploy": "pnpm run db:migrations:apply && wrangler deploy",
+    "deploy:full": "pnpm run build && pnpm run deploy",
     "deploy:standalone": "pnpm run build && wrangler deploy --config dist/server/wrangler.json"
+  },
+  "cloudflare": {
+    "bindings": {
+      "DB": {
+        "description": "A private D1 database is created automatically for this BB company."
+      },
+      "ADMIN_EMAIL": {
+        "description": "Enter the email address of the person who will create the first administrator account."
+      },
+      "SETUP_TOKEN": {
+        "description": "Create a private one-time setup code with at least 16 characters. The first administrator enters it once, and it must not be shared publicly."
+      }
+    }
   },
   "dependencies": {
     "@block65/webcrypto-web-push": "1.0.2",

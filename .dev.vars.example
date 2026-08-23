@@ -1,8 +1,3 @@
-SETUP_TOKEN=replace-with-a-long-random-one-time-code
-ADMIN_EMAIL=admin@example.com
-D1_DATABASE_NAME=bb-company-app-db
-D1_DATABASE_ID=00000000-0000-0000-0000-000000000000
-WORKER_NAME=bb-company-app
-APP_URL=https://your-worker.your-subdomain.workers.dev
-VAPID_SUBJECT=mailto:admin@example.com
-EMAIL_WEBHOOK_URL=
+# Required only for the first administrator account. Cloudflare stores this as
+# an encrypted Worker secret during one-click deployment.
+SETUP_TOKEN=replace-with-a-private-code-of-at-least-16-characters

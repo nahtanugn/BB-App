@@ -1,5 +1,7 @@
 # BB App
 
+[![Deploy to Cloudflare](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https://github.com/nahtanugn/BB-App)
+
 A reusable, open-source, mobile-first company management app for Boys' Brigade Junior and Senior Sections. Each deployment has its own Cloudflare Worker, D1 database, users and branding.
 
 This repository contains application source, additive database migrations, tests and deployment templates only. It does not contain a production database, member records, passwords, API tokens or private documents.
@@ -19,28 +21,20 @@ This repository contains application source, additive database migrations, tests
 
 ## Create a company deployment
 
-1. Select **Use this template** on GitHub, or fork the repository.
-2. Create a Cloudflare D1 database.
-3. Create a Cloudflare API token that can deploy Workers and manage that D1 database.
-4. Add these GitHub repository variables:
+The recommended installation is the **Deploy to Cloudflare** button above. It creates a copy of BB App in the company's GitHub account, provisions a private D1 database, applies the database migrations and publishes the app through Cloudflare Workers.
 
-   - `APP_URL` — for example `https://your-app.your-subdomain.workers.dev`
-   - `WORKER_NAME` — a unique Worker name
-   - `D1_DATABASE_NAME` — the Cloudflare D1 database name
+1. Sign in to the company's Cloudflare and GitHub accounts.
+2. Select **Deploy to Cloudflare** above.
+3. Authorise Cloudflare to create a new GitHub repository.
+4. Choose a unique Worker name, such as `1st-kuching-bb-app`.
+5. Replace `admin@example.com` with the first administrator's real email address.
+6. Enter a private one-time setup code with at least 16 characters.
+7. Select **Deploy** and wait for the build to finish.
+8. Open the new `workers.dev` address shown by Cloudflare.
+9. Create the administrator using the same email and one-time setup code.
+10. Open **Manage → Accounts and roles → App branding** to set the company name and logo.
 
-5. Add these GitHub Actions secrets:
-
-   - `CLOUDFLARE_API_TOKEN`
-   - `CLOUDFLARE_ACCOUNT_ID`
-   - `D1_DATABASE_ID`
-   - `ADMIN_EMAIL` — the email allowed to create the first administrator
-
-6. Add the Worker secret `SETUP_TOKEN` in Cloudflare. Use a long, random, one-time setup code.
-7. Run **Actions → Deploy web app → Run workflow → deploy-production**.
-8. Open the deployed app and create the first administrator.
-9. Open **Manage → Accounts and roles → App branding** to set the company name and logo.
-
-Never commit production values to this repository. `.dev.vars.example` documents the supported local variables without containing usable credentials.
+See [One-click Cloudflare installation](docs/ONE_CLICK_CLOUDFLARE.md) for troubleshooting and handover instructions. Never commit setup codes, passwords, production exports or Cloudflare tokens to GitHub.
 
 ## Local development
 

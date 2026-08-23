@@ -2,44 +2,8 @@ import vinext from "vinext";
 import { defineConfig } from "vite";
 import { sites } from "./build/sites-vite-plugin";
 
-const databaseBinding = "DB";
-const databaseName = process.env.D1_DATABASE_NAME ?? "bb-company-app-db";
-const databaseId = process.env.D1_DATABASE_ID ?? "00000000-0000-0000-0000-000000000000";
-const workerName = process.env.WORKER_NAME ?? "bb-company-app";
-const r2BucketName = process.env.R2_BUCKET_NAME;
-
 // macOS Seatbelt blocks FSEvents, so Codex previews need polling for HMR.
 const isCodexSeatbeltSandbox = process.env.CODEX_SANDBOX === "seatbelt";
-
-const localBindingConfig = {
-  name: workerName,
-  main: "./worker/index.ts",
-  compatibility_flags: ["nodejs_compat"],
-  workers_dev: true,
-  preview_urls: false,
-  d1_databases: [
-    {
-      binding: databaseBinding,
-      database_name: databaseName,
-      database_id: databaseId,
-    },
-  ],
-  r2_buckets: r2BucketName
-    ? [
-        {
-          binding: "DOCUMENTS",
-          bucket_name: r2BucketName,
-        },
-      ]
-    : [],
-  vars: {
-    ADMIN_EMAIL: process.env.ADMIN_EMAIL ?? "admin@example.com",
-  },
-  triggers: {
-    // The database scheduler claims only the configured Malaysia-time periods.
-    crons: ["*/15 * * * *"],
-  },
-};
 
 export default defineConfig(async () => {
   // Keep Wrangler and Miniflare state project-local. These are non-secret tool
@@ -59,8 +23,10 @@ export default defineConfig(async () => {
       vinext(),
       sites(),
       cloudflare({
+        configPath: process.env.D1_DATABASE_ID
+          ? ".wrangler/deployment.json"
+          : "wrangler.jsonc",
         viteEnvironment: { name: "rsc", childEnvironments: ["ssr"] },
-        config: localBindingConfig,
       }),
     ],
   };
