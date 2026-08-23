@@ -55,6 +55,7 @@ export async function ensureAuthSchema() {
       email TEXT NOT NULL DEFAULT '',
       parents_name TEXT NOT NULL DEFAULT '',
       ethnicity TEXT NOT NULL DEFAULT '',
+      religion TEXT NOT NULL DEFAULT '',
       is_demo INTEGER NOT NULL DEFAULT 0,
       created_at TEXT NOT NULL
     )`),
@@ -152,6 +153,9 @@ export async function ensureAuthSchema() {
   const memberColumns = await runtime.DB.prepare("PRAGMA table_info(members)").all<{ name: string }>();
   if (!memberColumns.results.some((column) => column.name === "ethnicity")) {
     await runtime.DB.prepare("ALTER TABLE members ADD COLUMN ethnicity TEXT NOT NULL DEFAULT ''").run();
+  }
+  if (!memberColumns.results.some((column) => column.name === "religion")) {
+    await runtime.DB.prepare("ALTER TABLE members ADD COLUMN religion TEXT NOT NULL DEFAULT ''").run();
   }
   const userColumns = await runtime.DB.prepare("PRAGMA table_info(users)").all<{ name: string }>();
   if (!userColumns.results.some((column) => column.name === "squad")) {

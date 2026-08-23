@@ -26,6 +26,7 @@ export const members = sqliteTable("members", {
   parentsName: text("parents_name").notNull().default(""),
   gender: text("gender").notNull().default(""),
   ethnicity: text("ethnicity").notNull().default(""),
+  religion: text("religion").notNull().default(""),
   acceptedChrist: integer("accepted_christ", { mode: "boolean" }).notNull().default(false),
   baptised: integer("baptised", { mode: "boolean" }).notNull().default(false),
   officerWorkStatus: text("officer_work_status").notNull().default(""),

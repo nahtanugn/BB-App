@@ -425,7 +425,7 @@ async function initializeSchema() {
   if (Number(coreTables?.total ?? 0) === 7) {
     const readiness = await db.prepare(`SELECT
       (SELECT COUNT(*) FROM pragma_table_info('members')
-        WHERE name IN ('school', 'contact_number', 'emergency_contact_number', 'email', 'parents_name', 'service_award_count', 'band_member', 'section', 'ethnicity')) AS member_columns,
+        WHERE name IN ('school', 'contact_number', 'emergency_contact_number', 'email', 'parents_name', 'service_award_count', 'band_member', 'section', 'ethnicity', 'religion')) AS member_columns,
       (SELECT COUNT(*) FROM pragma_table_info('award_definitions') WHERE name = 'section') AS award_columns,
       (SELECT COUNT(*) FROM pragma_table_info('attendance_sessions') WHERE name IN ('section', 'audience')) AS attendance_columns,
       (SELECT COUNT(*) FROM award_definitions WHERE section IN ('senior', 'junior')) AS award_count`).first<{
@@ -436,7 +436,7 @@ async function initializeSchema() {
       }>();
     const requiredAwardCount = awards.length + juniorAwards.length;
     if (
-      Number(readiness?.member_columns ?? 0) === 9 &&
+      Number(readiness?.member_columns ?? 0) === 10 &&
       Number(readiness?.award_columns ?? 0) === 1 &&
       Number(readiness?.attendance_columns ?? 0) === 2 &&
       Number(readiness?.award_count ?? 0) >= requiredAwardCount
@@ -463,6 +463,7 @@ async function initializeSchema() {
       email TEXT NOT NULL DEFAULT '',
       parents_name TEXT NOT NULL DEFAULT '',
       ethnicity TEXT NOT NULL DEFAULT '',
+      religion TEXT NOT NULL DEFAULT '',
       is_demo INTEGER NOT NULL DEFAULT 0,
       created_at TEXT NOT NULL
     )`),
@@ -586,6 +587,10 @@ async function initializeSchema() {
     [
       "ethnicity",
       "ALTER TABLE members ADD COLUMN ethnicity TEXT NOT NULL DEFAULT ''",
+    ],
+    [
+      "religion",
+      "ALTER TABLE members ADD COLUMN religion TEXT NOT NULL DEFAULT ''",
     ],
   ].filter(([column]) => !existingMemberColumns.has(column));
   if (missingMemberColumns.length) {
@@ -1039,8 +1044,11 @@ export async function POST(request: Request) {
         .toLowerCase();
       const parentsName = String(body.parentsName ?? "").trim();
       const ethnicity = String(body.ethnicity ?? "").trim();
+      const religion = String(body.religion ?? "").trim();
       if (ethnicity.length > 60)
         return Response.json({ error: "Ethnicity must be 60 characters or fewer" }, { status: 400 });
+      if (religion.length > 60)
+        return Response.json({ error: "Religion must be 60 characters or fewer" }, { status: 400 });
       const bandMember = body.bandMember === true;
       const rank = String(body.rank ?? (section === "junior" ? "Pre-Junior" : "Private"));
       if (!name)
@@ -1074,6 +1082,7 @@ export async function POST(request: Request) {
         ["Email", email],
         ["Parents Name", parentsName],
         ["Ethnicity", ethnicity],
+        ["Religion", religion],
       ].filter(([, value]) => !value);
       if (missingDetails.length && !overrideRequiredDetails)
         return Response.json(
@@ -1085,8 +1094,8 @@ export async function POST(request: Request) {
       await db
         .prepare(
           `INSERT INTO members
-        (name, rank, squad, section, joined_at, service_years, band_member, school, contact_number, emergency_contact_number, email, parents_name, ethnicity, is_demo, created_at)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, ?)`,
+        (name, rank, squad, section, joined_at, service_years, band_member, school, contact_number, emergency_contact_number, email, parents_name, ethnicity, religion, is_demo, created_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, ?)`,
         )
         .bind(
           name,
@@ -1102,10 +1111,11 @@ export async function POST(request: Request) {
           email,
           parentsName,
           ethnicity,
+          religion,
           new Date().toISOString(),
         )
         .run();
-      await writeAuditEvent({ actor: user, action: "member_created", entityType: "member", after: { name, rank, squad, section, joinedAt, school, email, ethnicity } });
+      await writeAuditEvent({ actor: user, action: "member_created", entityType: "member", after: { name, rank, squad, section, joinedAt, school, email, ethnicity, religion } });
     } else if (action === "update_member") {
       const memberId = Number(body.memberId);
       const name = String(body.name ?? "").trim();
@@ -1123,8 +1133,11 @@ export async function POST(request: Request) {
         .toLowerCase();
       const parentsName = String(body.parentsName ?? "").trim();
       const ethnicity = String(body.ethnicity ?? "").trim();
+      const religion = String(body.religion ?? "").trim();
       if (ethnicity.length > 60)
         return Response.json({ error: "Ethnicity must be 60 characters or fewer" }, { status: 400 });
+      if (religion.length > 60)
+        return Response.json({ error: "Religion must be 60 characters or fewer" }, { status: 400 });
       const bandMember = body.bandMember === true;
       const rank = String(body.rank ?? (section === "junior" ? "Pre-Junior" : "Private"));
       if (!memberId || !name)
@@ -1163,6 +1176,7 @@ export async function POST(request: Request) {
         ["Email", email],
         ["Parents Name", parentsName],
         ["Ethnicity", ethnicity],
+        ["Religion", religion],
       ].filter(([, value]) => !value);
       if (missingDetails.length && !overrideRequiredDetails)
         return Response.json(
@@ -1173,7 +1187,7 @@ export async function POST(request: Request) {
         );
       await db
         .prepare(
-          `UPDATE members SET name = ?, rank = ?, squad = ?, joined_at = ?, service_years = ?, band_member = ?, school = ?, contact_number = ?, emergency_contact_number = ?, email = ?, parents_name = ?, ethnicity = ? WHERE id = ? AND section = ?`,
+          `UPDATE members SET name = ?, rank = ?, squad = ?, joined_at = ?, service_years = ?, band_member = ?, school = ?, contact_number = ?, emergency_contact_number = ?, email = ?, parents_name = ?, ethnicity = ?, religion = ? WHERE id = ? AND section = ?`,
         )
         .bind(
           name,
@@ -1188,11 +1202,12 @@ export async function POST(request: Request) {
           email,
           parentsName,
           ethnicity,
+          religion,
           memberId,
           section,
         )
         .run();
-      await writeAuditEvent({ actor: user, action: "member_updated", entityType: "member", entityId: memberId, after: { name, rank, squad, section, joinedAt, school, email, ethnicity } });
+      await writeAuditEvent({ actor: user, action: "member_updated", entityType: "member", entityId: memberId, after: { name, rank, squad, section, joinedAt, school, email, ethnicity, religion } });
     } else if (action === "transfer_member_to_senior") {
       if (!hasOperationalAdminAccess(user))
         return Response.json({ error: "Administrator or Officer access required" }, { status: 403 });

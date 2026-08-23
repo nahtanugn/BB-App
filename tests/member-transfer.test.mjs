@@ -13,7 +13,19 @@ test("member profiles collect and display ethnicity", () => {
   assert.match(tracker, /<select\s+name="ethnicity"/);
   for (const ethnicity of ["Chinese", "Malay", "Iban", "Bidayuh", "Melanau", "Indian", "Orang Ulu", "Others"]) assert.match(tracker, new RegExp(ethnicity));
   assert.match(route, /\["Ethnicity", ethnicity\]/);
-  assert.match(route, /parents_name, ethnicity, is_demo/);
+  assert.match(route, /parents_name, ethnicity, religion, is_demo/);
+});
+
+test("member profiles collect and display religion separately", () => {
+  const tracker = read("app/AwardTracker.tsx");
+  const route = read("app/api/tracker/route.ts");
+  const migration = read("drizzle/0034_member_religion.sql");
+  assert.match(tracker, /standardReligions/);
+  assert.match(tracker, /<select\s+name="religion"/);
+  for (const religion of ["Christianity", "Islam", "Buddhism", "Hinduism", "Sikhism", "No religion"]) assert.match(tracker, new RegExp(religion));
+  assert.match(route, /\["Religion", religion\]/);
+  assert.match(route, /ethnicity, religion, is_demo/);
+  assert.match(migration, /ADD COLUMN `religion` text NOT NULL DEFAULT ''/);
 });
 
 test("Junior to Senior transfer retains the member and resets rank safely", () => {

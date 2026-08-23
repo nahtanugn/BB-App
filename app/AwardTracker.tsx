@@ -21,6 +21,7 @@ type Member = {
   email: string;
   parents_name: string;
   ethnicity: string;
+  religion: string;
   is_demo: number;
   account_role?: string;
 };
@@ -143,6 +144,18 @@ const standardEthnicities = [
   "Others",
 ];
 
+const standardReligions = [
+  "Christianity",
+  "Islam",
+  "Buddhism",
+  "Hinduism",
+  "Sikhism",
+  "Taoism / Chinese Traditional Religion",
+  "Traditional / Indigenous Beliefs",
+  "Other",
+  "No religion",
+];
+
 function initials(name: string) {
   return name
     .split(/\s+/)
@@ -169,7 +182,7 @@ function serviceYearsFromJoined(value: string) {
 }
 
 function memberCompleteness(member: Member) {
-  const fields: Array<[string, string]> = [["School", member.school], ["Contact number", member.contact_number], ["Emergency contact", member.emergency_contact_number], ["Email", member.email], ["Parents' name", member.parents_name], ["Ethnicity", member.ethnicity]];
+  const fields: Array<[string, string]> = [["School", member.school], ["Contact number", member.contact_number], ["Emergency contact", member.emergency_contact_number], ["Email", member.email], ["Parents' name", member.parents_name], ["Ethnicity", member.ethnicity], ["Religion", member.religion]];
   const missing = fields.filter(([, value]) => !value.trim()).map(([label]) => label);
   return { percent: Math.round(((fields.length - missing.length) / fields.length) * 100), missing };
 }
@@ -786,6 +799,7 @@ export default function AwardTracker({
         email: form.get("email"),
         parentsName: form.get("parentsName"),
         ethnicity: form.get("ethnicity"),
+        religion: form.get("religion"),
         bandMember: form.get("bandMember") === "on",
         overrideRequiredDetails:
           canOverrideMemberDetails && overrideMemberDetails,
@@ -2810,6 +2824,10 @@ export default function AwardTracker({
                         <dd>{viewingMember.ethnicity || "Not recorded"}</dd>
                       </div>
                       <div>
+                        <dt>Religion</dt>
+                        <dd>{viewingMember.religion || "Not recorded"}</dd>
+                      </div>
+                      <div>
                         <dt>Joined year</dt>
                         <dd>{joinedYear(viewingMember.joined_at)}</dd>
                       </div>
@@ -3168,6 +3186,22 @@ export default function AwardTracker({
                   )}
                   {standardEthnicities.map((ethnicity) => (
                     <option key={ethnicity} value={ethnicity}>{ethnicity}</option>
+                  ))}
+                </select>
+              </label>
+              <label>
+                Religion
+                <select
+                  name="religion"
+                  required={!overrideMemberDetails}
+                  defaultValue={editingMember?.religion ?? ""}
+                >
+                  <option value="">Select religion</option>
+                  {editingMember?.religion && !standardReligions.includes(editingMember.religion) && (
+                    <option value={editingMember.religion}>{editingMember.religion} (existing)</option>
+                  )}
+                  {standardReligions.map((religion) => (
+                    <option key={religion} value={religion}>{religion}</option>
                   ))}
                 </select>
               </label>
