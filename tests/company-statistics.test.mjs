@@ -33,3 +33,11 @@ test("company statistics uses the complete official officer-rank list", () => {
   assert.doesNotMatch(source, /M means Male and F means Female/);
   assert.doesNotMatch(source, /warrantWorkingM/);
 });
+
+test("company statistics supports editable spiritual and ethnicity classifications", () => {
+  const source = read("app/CompanyStatisticsCentre.tsx");
+  for (const classification of ["Accepted Christ", "Baptist", "Non-Believer"]) assert.match(source, new RegExp(classification));
+  assert.match(source, /New ethnicity category/);
+  assert.match(source, /Add ethnicity/);
+  assert.match(source, /removeInput\("ethnicity"/);
+});
