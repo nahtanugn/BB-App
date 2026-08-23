@@ -132,6 +132,17 @@ const attendanceLabel: Record<AttendanceStatus, string> = {
   excused: "Excused",
 };
 
+const standardEthnicities = [
+  "Chinese",
+  "Malay",
+  "Iban",
+  "Bidayuh",
+  "Melanau",
+  "Indian",
+  "Orang Ulu",
+  "Others",
+];
+
 function initials(name: string) {
   return name
     .split(/\s+/)
@@ -3146,12 +3157,19 @@ export default function AwardTracker({
               </label>
               <label>
                 Ethnicity (race)
-                <input
+                <select
                   name="ethnicity"
                   required={!overrideMemberDetails}
-                  placeholder="e.g. Chinese, Malay, Iban"
                   defaultValue={editingMember?.ethnicity ?? ""}
-                />
+                >
+                  <option value="">Select ethnicity</option>
+                  {editingMember?.ethnicity && !standardEthnicities.includes(editingMember.ethnicity) && (
+                    <option value={editingMember.ethnicity}>{editingMember.ethnicity} (existing)</option>
+                  )}
+                  {standardEthnicities.map((ethnicity) => (
+                    <option key={ethnicity} value={ethnicity}>{ethnicity}</option>
+                  ))}
+                </select>
               </label>
               <label className="override-details band-member-field">
                 <input

@@ -3768,3 +3768,32 @@ button:disabled { opacity: .62; cursor: wait; }
   .operations-list details form { position: static; width: 100%; margin-top: 8px; box-shadow: none; }
   .operations-summary { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
+
+/* Final shared form-control sizing. Safari renders native selects shorter when
+   height is left as auto, so use one explicit size for fields across portals. */
+.unified-app-content :is(
+  input:not([type="checkbox"]):not([type="radio"]):not([type="hidden"]):not([type="file"]):not([type="color"]),
+  select,
+  .school-dropdown-trigger
+) {
+  box-sizing: border-box;
+  height: 48px !important;
+  min-height: 48px !important;
+  border-radius: 11px;
+}
+
+.unified-app-content :is(.search, .resource-search, .stock-search, .admin-search) input {
+  height: auto !important;
+  min-height: 0 !important;
+}
+
+@media (max-width: 760px) {
+  .unified-app-content :is(
+    input:not([type="checkbox"]):not([type="radio"]):not([type="hidden"]):not([type="file"]):not([type="color"]),
+    select,
+    .school-dropdown-trigger
+  ) {
+    height: 52px !important;
+    min-height: 52px !important;
+  }
+}

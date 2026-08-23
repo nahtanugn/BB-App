@@ -1039,6 +1039,8 @@ export async function POST(request: Request) {
         .toLowerCase();
       const parentsName = String(body.parentsName ?? "").trim();
       const ethnicity = String(body.ethnicity ?? "").trim();
+      if (ethnicity.length > 60)
+        return Response.json({ error: "Ethnicity must be 60 characters or fewer" }, { status: 400 });
       const bandMember = body.bandMember === true;
       const rank = String(body.rank ?? (section === "junior" ? "Pre-Junior" : "Private"));
       if (!name)
@@ -1121,6 +1123,8 @@ export async function POST(request: Request) {
         .toLowerCase();
       const parentsName = String(body.parentsName ?? "").trim();
       const ethnicity = String(body.ethnicity ?? "").trim();
+      if (ethnicity.length > 60)
+        return Response.json({ error: "Ethnicity must be 60 characters or fewer" }, { status: 400 });
       const bandMember = body.bandMember === true;
       const rank = String(body.rank ?? (section === "junior" ? "Pre-Junior" : "Private"));
       if (!memberId || !name)
