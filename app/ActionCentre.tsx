@@ -121,7 +121,6 @@ export default function ActionCentre({
     { label: "Find a member", target: "/?open=members" },
     { label: "Take attendance", target: "/?open=attendance" },
     { label: "Manage requests", target: "/?open=manage" },
-    { label: "Emergency roll call", target: "/?open=emergency" },
     { label: "Open resources", target: "/?open=resources" },
   ];
 

@@ -497,7 +497,7 @@ h2 { color: var(--navy); }
 .submission-empty strong { color: var(--navy); font-family: Georgia, serif; }
 .submission-empty p { margin: 7px 0 0; color: var(--muted); font-size: 9px; }
 
-.modal-backdrop { position: fixed; inset: 0; z-index: 50; padding: 20px; display: grid; place-items: center; background: rgba(4, 22, 39, .56); backdrop-filter: blur(3px); }
+.modal-backdrop { position: fixed; inset: 0; z-index: 120; padding: 20px; display: grid; place-items: center; background: rgba(4, 22, 39, .56); backdrop-filter: blur(3px); }
 .modal { width: min(520px, 100%); max-height: calc(100vh - 40px); overflow-x: hidden; overflow-y: auto; border-radius: 16px; background: white; box-shadow: 0 30px 90px rgba(0,0,0,.25); }
 .modal-heading { padding: 21px 24px 17px; border-bottom: 1px solid var(--line); display: flex; justify-content: space-between; }
 .modal-heading h2 { margin: 0; font-family: Georgia, serif; font-size: 23px; }
@@ -3576,6 +3576,22 @@ button:disabled { opacity: .62; cursor: wait; }
     min-height: 46px;
     height: 46px;
   }
+
+  /* Phone controls must remain comfortably tappable even in dense registers
+     and administrative lists. */
+  .attendance-mini-days button,
+  .attendance-mini-blank { min-height: 40px; }
+  .user-actions :is(button, .text-button, .danger-link),
+  .resource-delete { min-width: 42px; min-height: 42px; }
+  .automation-rule-grid input[type="checkbox"],
+  .automation-recipients input[type="checkbox"] {
+    width: 22px;
+    min-width: 22px;
+    height: 22px;
+    min-height: 22px;
+    accent-color: var(--blue);
+  }
+  .automation-recipients .checkbox-row { min-height: 42px; }
 }
 
 @media (max-width: 760px) {

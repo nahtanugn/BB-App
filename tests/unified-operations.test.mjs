@@ -73,9 +73,29 @@ test("the simplified Home uses a lightweight summary and progressive task disclo
   assert.match(home, /slice\(0, 3\)/);
   assert.match(home, /home-snapshot/);
   assert.match(home, /home-quick-actions/);
+  assert.doesNotMatch(home, /Emergency roll call|open=emergency/);
   assert.match(trackerApi, /searchParams\.get\("summary"\) === "1"/);
   assert.match(trackerApi, /completedRegisters/);
   assert.match(trackerApi, /attendancePercent/);
+});
+
+test("delayed permissions do not discard valid Stock Centre deep links", async () => {
+  const standalone = await source("../app/StandaloneApp.tsx");
+  assert.match(standalone, /useState<boolean \| null>\(null\)/);
+  assert.match(standalone, /target === "stock" && stockAccess === null/);
+  assert.match(standalone, /stockAccess=\{Boolean\(stockAccess\)\}/);
+});
+
+test("mobile overlays and compact controls remain above the shared shell and touch friendly", async () => {
+  const [styles, band] = await Promise.all([
+    source("../app/globals.css"),
+    source("../app/CompanyOperationsCentre.tsx"),
+  ]);
+  assert.match(styles, /\.modal-backdrop \{[^}]*z-index: 120/);
+  assert.match(styles, /\.attendance-mini-days button,[\s\S]*?min-height: 40px/);
+  assert.match(styles, /\.automation-rule-grid input\[type="checkbox"\][\s\S]*?width: 22px/);
+  assert.match(band, /Rehearsal title<input name="title"/);
+  assert.match(band, /Performance title<input name="title"/);
 });
 
 test("events and journeys are durable, linked and permission-safe", async () => {

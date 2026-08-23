@@ -84,7 +84,10 @@ export default function StandaloneApp() {
     unreadCount: number;
     latest: { title: string; body: string; priority: string } | null;
   }>({ unreadCount: 0, latest: null });
-  const [stockAccess, setStockAccess] = useState(false);
+  // `null` means the permission check is still in flight. Keeping that state
+  // distinct from a genuine denial prevents a valid Stock Centre deep link
+  // from being replaced with Home before the server has answered.
+  const [stockAccess, setStockAccess] = useState<boolean | null>(null);
   const [actionCount, setActionCount] = useState(0);
   const [submissionSection, setSubmissionSection] = useState<
     "senior" | "junior"
@@ -238,6 +241,7 @@ export default function StandaloneApp() {
     if (!auth?.user || auth.user.onboarding_required) return;
     const target = new URL(window.location.href).searchParams.get("open") as AppRoute | null;
     if (!target) return;
+    if (target === "stock" && stockAccess === null) return;
     const timer = window.setTimeout(() => {
       const aliases: Record<string, AppRoute> = {
         "uniform-requests": "uniforms",
@@ -266,7 +270,7 @@ export default function StandaloneApp() {
       navigate(aliases[target] ?? target, true);
     }, 0);
     return () => window.clearTimeout(timer);
-  }, [auth?.user, navigate]);
+  }, [auth?.user, navigate, stockAccess]);
 
   useEffect(() => {
     const onPopState = () => {
@@ -401,7 +405,7 @@ export default function StandaloneApp() {
     });
     setShowAccount(false);
     setRoute("home");
-    setStockAccess(false);
+    setStockAccess(null);
     setAnnouncementSummary({ unreadCount: 0, latest: null });
     setAuth((current) => (current ? { ...current, user: null } : current));
   }
@@ -734,7 +738,7 @@ export default function StandaloneApp() {
   if (route === "home")
     page = <ActionCentre userName={currentUser.name} userRole={currentUser.role} readOnly={currentUser.role === "viewer"} onOpen={openTarget} onCountChange={setActionCount} announcementSummary={announcementSummary} onAnnouncements={() => navigate("announcements")} />;
   else if (route === "manage")
-    page = <ManageHub user={currentUser} stockAccess={stockAccess} activeSection={activeSection} onOpen={navigate} />;
+    page = <ManageHub user={currentUser} stockAccess={Boolean(stockAccess)} activeSection={activeSection} onOpen={navigate} />;
   else if (route === "exports")
     page = <ExportCentre currentYear={new Date().getFullYear()} presentation="page" onComplete={setNotice} />;
   else if (route === "submissions")
@@ -789,7 +793,7 @@ export default function StandaloneApp() {
         onNavigate={navigate}
         onAccount={openAccount}
         onLogout={logout}
-        stockAccess={stockAccess}
+        stockAccess={Boolean(stockAccess)}
         announcementCount={announcementSummary.unreadCount}
         onboardingCount={onboardingPendingCount}
         actionCount={actionCount}
