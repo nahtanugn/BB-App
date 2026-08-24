@@ -18,6 +18,9 @@ const allowedRoles = [
   "member",
 ];
 const allowedSquads = ["Alpha", "Bravo", "Charlie", "Delta"];
+const officerRanks = ["Staff Sergeant", "Warrant Officer", "Lieutenant", "Captain", "Honorary Captain", "Chaplain"];
+const officerProfileRoles = ["admin", "officer"];
+const spiritualStatuses = ["accepted_christ", "baptised", "non_believer"];
 
 function temporaryAccessExpiry(accessRole: string, value: unknown) {
   if (accessRole !== "temporary_admin") return null;
@@ -95,6 +98,8 @@ export async function GET(request: Request) {
         );
       const users = await runtime.DB.prepare(
         `SELECT users.id, users.email, users.name, users.role, users.squad,
+          users.officer_rank, users.gender, users.ethnicity, users.religion,
+          users.spiritual_status, users.officer_work_status,
           users.temporary_access_role, users.access_expires_at, users.active, users.created_at,
           users.account_status, users.must_change_password, users.onboarding_completed_at,
           (SELECT members.section FROM members
@@ -314,6 +319,13 @@ export async function POST(request: Request) {
       const role = allowedRoles.includes(requestedRole)
         ? requestedRole
         : "officer";
+      const hasOfficerProfile = officerProfileRoles.includes(role);
+      const officerRank = hasOfficerProfile && officerRanks.includes(String(body.officerRank ?? "")) ? String(body.officerRank) : "";
+      const gender = hasOfficerProfile && ["M", "F"].includes(String(body.gender ?? "").toUpperCase()) ? String(body.gender).toUpperCase() : "";
+      const ethnicity = hasOfficerProfile ? String(body.ethnicity ?? "").trim().slice(0, 60) : "";
+      const religion = hasOfficerProfile ? String(body.religion ?? "").trim().slice(0, 60) : "";
+      const spiritualStatus = hasOfficerProfile && spiritualStatuses.includes(String(body.spiritualStatus ?? "")) ? String(body.spiritualStatus) : "";
+      const officerWorkStatus = hasOfficerProfile && ["working", "studying"].includes(String(body.officerWorkStatus ?? "")) ? String(body.officerWorkStatus) : "";
       const temporaryAccessRole =
         role === "viewer"
           ? ""
@@ -358,14 +370,20 @@ export async function POST(request: Request) {
           { status: 400 },
         );
       const result = await runtime.DB.prepare(
-        `INSERT INTO users (email, name, role, squad, temporary_access_role, access_expires_at, password_hash, password_salt, active, account_status, must_change_password, created_at)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, 1, 'active', 1, ?)`,
+        `INSERT INTO users (email, name, role, squad, officer_rank, gender, ethnicity, religion, spiritual_status, officer_work_status, temporary_access_role, access_expires_at, password_hash, password_salt, active, account_status, must_change_password, created_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, 'active', 1, ?)`,
       )
         .bind(
           email,
           name,
           role,
           squad,
+          officerRank,
+          gender,
+          ethnicity,
+          religion,
+          spiritualStatus,
+          officerWorkStatus,
           temporaryAccessRole,
           accessExpiresAt,
           digest.hash,
@@ -478,6 +496,13 @@ export async function POST(request: Request) {
         .toLowerCase();
       const name = String(body.name ?? "").trim();
       const requestedRole = String(body.role ?? "");
+      const hasOfficerProfile = officerProfileRoles.includes(requestedRole);
+      const officerRank = hasOfficerProfile && officerRanks.includes(String(body.officerRank ?? "")) ? String(body.officerRank) : "";
+      const gender = hasOfficerProfile && ["M", "F"].includes(String(body.gender ?? "").toUpperCase()) ? String(body.gender).toUpperCase() : "";
+      const ethnicity = hasOfficerProfile ? String(body.ethnicity ?? "").trim().slice(0, 60) : "";
+      const religion = hasOfficerProfile ? String(body.religion ?? "").trim().slice(0, 60) : "";
+      const spiritualStatus = hasOfficerProfile && spiritualStatuses.includes(String(body.spiritualStatus ?? "")) ? String(body.spiritualStatus) : "";
+      const officerWorkStatus = hasOfficerProfile && ["working", "studying"].includes(String(body.officerWorkStatus ?? "")) ? String(body.officerWorkStatus) : "";
       const memberSection =
         String(body.memberSection ?? "senior") === "junior"
           ? "junior"
@@ -546,13 +571,19 @@ export async function POST(request: Request) {
           { status: 404 },
         );
       await runtime.DB.prepare(
-        "UPDATE users SET name = ?, email = ?, role = ?, squad = ?, temporary_access_role = ?, access_expires_at = ? WHERE id = ?",
+        "UPDATE users SET name = ?, email = ?, role = ?, squad = ?, officer_rank = ?, gender = ?, ethnicity = ?, religion = ?, spiritual_status = ?, officer_work_status = ?, temporary_access_role = ?, access_expires_at = ? WHERE id = ?",
       )
         .bind(
           name,
           email,
           requestedRole,
           squad,
+          officerRank,
+          gender,
+          ethnicity,
+          religion,
+          spiritualStatus,
+          officerWorkStatus,
           temporaryAccessRole,
           accessExpiresAt,
           targetId,

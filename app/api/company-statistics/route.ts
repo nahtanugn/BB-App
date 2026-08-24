@@ -3,7 +3,8 @@ import { getCurrentUser } from "../../../lib/auth";
 import { writeAuditEvent } from "../../../lib/audit";
 
 type Db = { id: number; reporting_year: number; status: string; locked_at: string | null; locked_by_user_id: number | null; captain_name: string; chaplain_name: string; submission_date: string; received_by: string; date_received: string; data_entry_name: string; remarks: string; notes: string; created_at: string; updated_at: string };
-type Member = { id: number; name: string; rank: string; section: string; gender: string; ethnicity: string; accepted_christ: number; baptised: number };
+type Member = { id: number; name: string; rank: string; section: string; gender: string; ethnicity: string; spiritual_status: string; accepted_christ: number; baptised: number };
+type Officer = { id: number; name: string; email: string; officer_rank: string; gender: string; ethnicity: string; spiritual_status: string; officer_work_status: string };
 type Status = { member_id: number; membership_status: string; category_override: string; gender_override: string; ethnicity_override: string };
 
 const staff = (role: string) => ["admin", "officer", "viewer"].includes(role);
@@ -17,6 +18,24 @@ function category(member: Member, override: string) {
   if (override) return override;
   if (member.section === "junior") return member.rank.toLowerCase() === "pre-junior" ? "Pre-Junior" : "Junior";
   return "Senior";
+}
+const ethnicityGroups = ["Chinese", "Indian", "Bumi", "Others"] as const;
+type EthnicityGroup = (typeof ethnicityGroups)[number] | "Unclassified";
+const bumiputeraEthnicities = new Set(["Malay", "Iban", "Bidayuh", "Melanau", "Orang Ulu", "Kadazan-Dusun", "Bajau", "Murut", "Other Bumiputera", "Bumiputera"]);
+function ethnicityGroup(value: string): EthnicityGroup {
+  const ethnicity = value.trim();
+  if (!ethnicity) return "Unclassified";
+  if (ethnicity === "Chinese" || ethnicity === "Indian") return ethnicity;
+  if (bumiputeraEthnicities.has(ethnicity)) return "Bumi";
+  return "Others";
+}
+function emptyEthnicityCounts() { return { Chinese: 0, Indian: 0, Bumi: 0, Others: 0, Unclassified: 0 }; }
+type SpiritualKey = "acceptedChrist" | "baptised" | "nonBeliever" | "unclassified";
+function spiritualKey(status: string, acceptedChrist = 0, baptised = 0): SpiritualKey {
+  if (status === "baptised" || baptised) return "baptised";
+  if (status === "accepted_christ" || acceptedChrist) return "acceptedChrist";
+  if (status === "non_believer") return "nonBeliever";
+  return "unclassified";
 }
 function countMap(rows: Member[], statuses: Map<number, Status>, statusName: string) {
   const result: Record<string, { M: number; F: number; unknown: number }> = {};
@@ -35,7 +54,8 @@ function countMap(rows: Member[], statuses: Map<number, Status>, statusName: str
 
 async function getData(year: number) {
   const record = await env.DB.prepare("SELECT * FROM company_statistics WHERE reporting_year = ? LIMIT 1").bind(year).first<Db>();
-  const members = (await env.DB.prepare("SELECT id,name,rank,section,COALESCE(gender,'') gender,COALESCE(ethnicity,'') ethnicity,COALESCE(accepted_christ,0) accepted_christ,COALESCE(baptised,0) baptised FROM members WHERE is_demo = 0 ORDER BY name").all<Member>()).results;
+  const members = (await env.DB.prepare("SELECT id,name,rank,section,COALESCE(gender,'') gender,COALESCE(ethnicity,'') ethnicity,COALESCE(spiritual_status,'') spiritual_status,COALESCE(accepted_christ,0) accepted_christ,COALESCE(baptised,0) baptised FROM members WHERE is_demo = 0 ORDER BY name").all<Member>()).results;
+  const officers = (await env.DB.prepare("SELECT id,name,email,COALESCE(officer_rank,'') officer_rank,COALESCE(gender,'') gender,COALESCE(ethnicity,'') ethnicity,COALESCE(spiritual_status,'') spiritual_status,COALESCE(officer_work_status,'') officer_work_status FROM users WHERE active = 1 AND TRIM(COALESCE(officer_rank,'')) != '' ORDER BY name COLLATE NOCASE").all<Officer>()).results;
   const statuses = new Map<number, Status>();
   if (record) for (const row of (await env.DB.prepare("SELECT member_id,membership_status,category_override,gender_override,ethnicity_override FROM company_statistics_member_status WHERE statistics_id = ?").bind(record.id).all<Status>()).results) statuses.set(row.member_id, row);
   let inputs = emptyPayload();
@@ -48,19 +68,36 @@ async function getData(year: number) {
     reEnrolled: countMap(members, statuses, "re_enrolled"),
     recruits: countMap(members, statuses, "recruit"),
   };
-  const ethnicity: Record<string, number> = {};
-  let acceptedChrist = 0; let baptised = 0;
+  const memberEthnicity = emptyEthnicityCounts();
+  const officerEthnicity = emptyEthnicityCounts();
+  const memberSpirituality = { acceptedChrist: 0, baptised: 0, nonBeliever: 0, unclassified: 0 };
+  const officerSpirituality = { acceptedChrist: 0, baptised: 0, nonBeliever: 0, unclassified: 0 };
   for (const member of members) {
-    const status = statuses.get(member.id); const key = status?.ethnicity_override || member.ethnicity || "Unclassified";
-    ethnicity[key] = (ethnicity[key] || 0) + 1;
-    acceptedChrist += Number(member.accepted_christ) ? 1 : 0; baptised += Number(member.baptised) ? 1 : 0;
+    const status = statuses.get(member.id);
+    memberEthnicity[ethnicityGroup(status?.ethnicity_override || member.ethnicity)] += 1;
+    memberSpirituality[spiritualKey(member.spiritual_status, member.accepted_christ, member.baptised)] += 1;
+  }
+  for (const officer of officers) {
+    officerEthnicity[ethnicityGroup(officer.ethnicity)] += 1;
+    officerSpirituality[spiritualKey(officer.spiritual_status)] += 1;
+  }
+  const ethnicityTotals = { ...emptyEthnicityCounts() };
+  for (const key of [...ethnicityGroups, "Unclassified"] as const) ethnicityTotals[key] = memberEthnicity[key] + officerEthnicity[key];
+  const officerCounts: Record<string, { M: number; F: number; unknown: number }> = {};
+  for (const officer of officers) {
+    officerCounts[officer.officer_rank] ??= { M: 0, F: 0, unknown: 0 };
+    if (officer.gender === "M") officerCounts[officer.officer_rank].M += 1;
+    else if (officer.gender === "F") officerCounts[officer.officer_rank].F += 1;
+    else officerCounts[officer.officer_rank].unknown += 1;
   }
   const attendance = await env.DB.prepare(`SELECT COUNT(*) AS sessions, SUM(CASE WHEN ar.status IN ('present','absent','excused') THEN 1 ELSE 0 END) AS marked
     FROM attendance_sessions s LEFT JOIN attendance_records ar ON ar.session_id = s.id
     WHERE substr(s.meeting_date,1,4) = ? AND s.meeting_date <= date('now')`).bind(String(year)).first<{ sessions: number; marked: number }>();
-  const calculated = { memberCount: members.length, counts, ethnicity, spirituality: { acceptedChrist, baptised }, attendance: { sessions: Number(attendance?.sessions || 0), marked: Number(attendance?.marked || 0) }, missingClassification: members.filter((member) => !member.gender || !member.ethnicity).map((member) => ({ id: member.id, name: member.name })), members };
+  const missingMembers = members.filter((member) => !member.gender || !member.ethnicity || !member.spiritual_status).map((member) => ({ id: member.id, name: member.name, section: "Member" }));
+  const missingOfficers = officers.filter((officer) => !officer.gender || !officer.ethnicity || !officer.spiritual_status || !officer.officer_work_status).map((officer) => ({ id: officer.id, name: officer.name, section: "Officer" }));
+  const calculated = { memberCount: members.length, officerCount: officers.length, totalMembership: members.length + officers.length, counts, officerCounts, ethnicity: { members: memberEthnicity, officers: officerEthnicity, totals: ethnicityTotals }, spirituality: { members: memberSpirituality, officers: officerSpirituality }, attendance: { sessions: Number(attendance?.sessions || 0), marked: Number(attendance?.marked || 0) }, missingClassification: [...missingMembers, ...missingOfficers], members, officers };
   const reviewed = inputs.classificationComplete === true;
-  const validation = { missingClassification: calculated.missingClassification.length, warnings: calculated.missingClassification.length && !reviewed ? ["Some members need gender and ethnicity classification before finalisation."] : [], canFinalize: calculated.missingClassification.length === 0 || reviewed };
+  const validation = { missingClassification: calculated.missingClassification.length, warnings: calculated.missingClassification.length && !reviewed ? ["Some members or officers need gender, ethnicity, spiritual status and work/study classification before finalisation."] : [], canFinalize: calculated.missingClassification.length === 0 || reviewed };
   return { year, record, inputs, calculated, validation, memberStatus: [...statuses.values()] };
 }
 

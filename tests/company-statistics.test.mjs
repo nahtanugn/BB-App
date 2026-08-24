@@ -34,10 +34,23 @@ test("company statistics uses the complete official officer-rank list", () => {
   assert.doesNotMatch(source, /warrantWorkingM/);
 });
 
-test("company statistics supports editable spiritual and ethnicity classifications", () => {
+test("company statistics links fixed Malaysian classifications to member and officer profiles", () => {
   const source = read("app/CompanyStatisticsCentre.tsx");
-  for (const classification of ["Accepted Christ", "Baptist", "Non-Believer"]) assert.match(source, new RegExp(classification));
-  assert.match(source, /New ethnicity category/);
-  assert.match(source, /Add ethnicity/);
-  assert.match(source, /removeInput\("ethnicity"/);
+  const route = read("app/api/company-statistics/route.ts");
+  for (const classification of ["Accepted Christ", "Baptised", "Non-Believer"]) assert.match(source, new RegExp(classification));
+  for (const ethnicity of ["Chinese", "Indian", "Bumi", "Others"]) assert.match(source, new RegExp(ethnicity));
+  assert.match(source, /Members Section/);
+  assert.match(source, /Officers Section/);
+  assert.match(route, /function ethnicityGroup/);
+  assert.match(route, /officer_rank/);
+  assert.doesNotMatch(source, /New ethnicity category/);
+  assert.doesNotMatch(source, /Add ethnicity/);
+});
+
+test("officer demographic profiles are additive and available in account management", () => {
+  const migration = read("drizzle/0035_demographic_profiles.sql");
+  const admin = read("app/AdminCentre.tsx");
+  for (const column of ["officer_rank", "gender", "ethnicity", "religion", "spiritual_status", "officer_work_status"]) assert.ok(migration.includes(`ADD COLUMN \`${column}\``));
+  assert.match(admin, /Officer Section details/);
+  for (const rank of ["Staff Sergeant", "Warrant Officer", "Lieutenant", "Captain", "Honorary Captain", "Chaplain"]) assert.match(admin, new RegExp(rank));
 });

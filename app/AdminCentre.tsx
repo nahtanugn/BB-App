@@ -13,6 +13,12 @@ type ManagedUser = {
   name: string;
   role: Role;
   squad: string;
+  officer_rank: string;
+  gender: string;
+  ethnicity: string;
+  religion: string;
+  spiritual_status: string;
+  officer_work_status: string;
   temporary_access_role: string;
   access_expires_at: string | null;
   active: number;
@@ -29,6 +35,9 @@ type PendingMember = {
 };
 type JuniorRankReview = { id: number; name: string; rank: string; squad: string; joined_at: string; email: string };
 type AdminTab = "accounts" | "access" | "onboarding" | "audit" | "schools" | "branding" | "junior-ranks";
+const officerRanks = ["Staff Sergeant", "Warrant Officer", "Lieutenant", "Captain", "Honorary Captain", "Chaplain"];
+const malaysiaEthnicities = ["Malay", "Chinese", "Indian", "Iban", "Bidayuh", "Melanau", "Orang Ulu", "Kadazan-Dusun", "Bajau", "Murut", "Other Bumiputera", "Others"];
+const religions = ["Christianity", "Islam", "Buddhism", "Hinduism", "Sikhism", "Taoism / Chinese Traditional Religion", "Traditional / Indigenous Beliefs", "Other", "No religion"];
 
 export default function AdminCentre({
   currentUser,
@@ -143,6 +152,12 @@ export default function AdminCentre({
         temporaryAccessRole: form.get("temporaryAccessRole"),
         accessExpiresOn: form.get("accessExpiresOn"),
         memberSection: form.get("memberSection"),
+        officerRank: form.get("officerRank"),
+        gender: form.get("gender"),
+        ethnicity: form.get("ethnicity"),
+        religion: form.get("religion"),
+        spiritualStatus: form.get("spiritualStatus"),
+        officerWorkStatus: form.get("officerWorkStatus"),
       }),
     });
     const result = (await response.json()) as { error?: string };
@@ -175,6 +190,12 @@ export default function AdminCentre({
         temporaryAccessRole: editingUser.id === currentUser.id ? editingUser.temporary_access_role : form.get("temporaryAccessRole"),
         accessExpiresOn: form.get("accessExpiresOn"),
         memberSection: form.get("memberSection"),
+        officerRank: form.get("officerRank"),
+        gender: form.get("gender"),
+        ethnicity: form.get("ethnicity"),
+        religion: form.get("religion"),
+        spiritualStatus: form.get("spiritualStatus"),
+        officerWorkStatus: form.get("officerWorkStatus"),
       }),
     });
     const result = (await response.json()) as { error?: string };
@@ -395,6 +416,14 @@ export default function AdminCentre({
                   <label>Normal role<select name="role" value={editingUser.role} disabled={editingUser.id === currentUser.id} onChange={(event) => setEditingUser({ ...editingUser, role: event.target.value as Role })}><option value="admin">Administrator</option><option value="officer">Officer</option><option value="nco">NCO</option><option value="squad_leader">Squad Leader</option><option value="viewer">Viewer · full read-only access</option><option value="member">Member</option></select></label>
                   {["nco", "squad_leader", "member"].includes(editingUser.role) && <label>Assigned squad<select name="squad" defaultValue={editingUser.squad || "Alpha"}><option>Alpha</option><option>Bravo</option><option>Charlie</option><option>Delta</option></select></label>}
                   {editingUser.role === "member" && <label>Member section<select name="memberSection" defaultValue={editingUser.member_section ?? "senior"}><option value="senior">Senior</option><option value="junior">Junior</option></select></label>}
+                  {["admin", "officer"].includes(editingUser.role) && <div className="account-form-group"><p>Officer Section details</p><div className="account-field-grid">
+                    <label>Officer rank<select name="officerRank" defaultValue={editingUser.officer_rank || ""}><option value="">Not included in Officer Section</option>{officerRanks.map((rank) => <option key={rank}>{rank}</option>)}</select></label>
+                    <label>Work or study status<select name="officerWorkStatus" defaultValue={editingUser.officer_work_status || ""}><option value="">Select status</option><option value="working">Working</option><option value="studying">Studying</option></select></label>
+                    <label>Gender<select name="gender" defaultValue={editingUser.gender || ""}><option value="">Select gender</option><option value="M">Male (M)</option><option value="F">Female (F)</option></select></label>
+                    <label>Ethnicity (race)<select name="ethnicity" defaultValue={editingUser.ethnicity || ""}><option value="">Select ethnicity</option>{editingUser.ethnicity && !malaysiaEthnicities.includes(editingUser.ethnicity) && <option value={editingUser.ethnicity}>{editingUser.ethnicity} (existing)</option>}{malaysiaEthnicities.map((value) => <option key={value}>{value}</option>)}</select></label>
+                    <label>Religion<select name="religion" defaultValue={editingUser.religion || ""}><option value="">Select religion</option>{editingUser.religion && !religions.includes(editingUser.religion) && <option value={editingUser.religion}>{editingUser.religion} (existing)</option>}{religions.map((value) => <option key={value}>{value}</option>)}</select></label>
+                    <label>Spiritual status<select name="spiritualStatus" defaultValue={editingUser.spiritual_status || ""}><option value="">Select spiritual status</option><option value="accepted_christ">Accepted Christ</option><option value="baptised">Baptised</option><option value="non_believer">Non-Believer</option></select></label>
+                  </div><small>Choose an officer rank to include this account in the annual Officer Section statistics.</small></div>}
                   <label>Temporary access<select name="temporaryAccessRole" value={editingUser.temporary_access_role} disabled={editingUser.id === currentUser.id} onChange={(event) => setEditingUser({ ...editingUser, temporary_access_role: event.target.value, access_expires_at: event.target.value ? editingUser.access_expires_at : null })}><option value="">None</option><option value="temporary_admin">Temporary Admin</option></select></label>
                   {editingUser.temporary_access_role === "temporary_admin" && <label>Access expires on<input name="accessExpiresOn" type="date" required defaultValue={editingUser.access_expires_at?.slice(0, 10) ?? ""} /><small>Access ends at midnight Malaysia time.</small></label>}
                   <button className="primary" disabled={busy}>{busy ? "Saving…" : "Save account changes"}</button>
@@ -419,6 +448,14 @@ export default function AdminCentre({
                     </div>
                     {["nco", "squad_leader", "member"].includes(newRole) && <label>Assigned squad<select name="squad" defaultValue={pendingAccountMember?.squad ?? "Alpha"}><option>Alpha</option><option>Bravo</option><option>Charlie</option><option>Delta</option></select></label>}
                     {newRole === "member" && <label>Member section<select name="memberSection" defaultValue={pendingAccountMember?.section ?? "senior"}><option value="senior">Senior</option><option value="junior">Junior</option></select></label>}
+                    {["admin", "officer"].includes(newRole) && <div className="account-form-group"><p>Officer Section details</p><div className="account-field-grid">
+                      <label>Officer rank<select name="officerRank" defaultValue=""><option value="">Complete later</option>{officerRanks.map((rank) => <option key={rank}>{rank}</option>)}</select></label>
+                      <label>Work or study status<select name="officerWorkStatus" defaultValue=""><option value="">Select status</option><option value="working">Working</option><option value="studying">Studying</option></select></label>
+                      <label>Gender<select name="gender" defaultValue=""><option value="">Select gender</option><option value="M">Male (M)</option><option value="F">Female (F)</option></select></label>
+                      <label>Ethnicity (race)<select name="ethnicity" defaultValue=""><option value="">Select ethnicity</option>{malaysiaEthnicities.map((value) => <option key={value}>{value}</option>)}</select></label>
+                      <label>Religion<select name="religion" defaultValue=""><option value="">Select religion</option>{religions.map((value) => <option key={value}>{value}</option>)}</select></label>
+                      <label>Spiritual status<select name="spiritualStatus" defaultValue=""><option value="">Select spiritual status</option><option value="accepted_christ">Accepted Christ</option><option value="baptised">Baptised</option><option value="non_believer">Non-Believer</option></select></label>
+                    </div></div>}
                     {newTemporaryAccess === "temporary_admin" && <label>Access expires on<input name="accessExpiresOn" type="date" required /></label>}
                   </div>
                   <button className="primary" disabled={busy}>{busy ? "Creating…" : "Create account"}</button>

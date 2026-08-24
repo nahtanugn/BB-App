@@ -54,8 +54,13 @@ export async function ensureAuthSchema() {
       emergency_contact_number TEXT NOT NULL DEFAULT '',
       email TEXT NOT NULL DEFAULT '',
       parents_name TEXT NOT NULL DEFAULT '',
+      gender TEXT NOT NULL DEFAULT '',
       ethnicity TEXT NOT NULL DEFAULT '',
       religion TEXT NOT NULL DEFAULT '',
+      spiritual_status TEXT NOT NULL DEFAULT '',
+      accepted_christ INTEGER NOT NULL DEFAULT 0,
+      baptised INTEGER NOT NULL DEFAULT 0,
+      officer_work_status TEXT NOT NULL DEFAULT '',
       is_demo INTEGER NOT NULL DEFAULT 0,
       created_at TEXT NOT NULL
     )`),
@@ -65,6 +70,12 @@ export async function ensureAuthSchema() {
       name TEXT NOT NULL,
       role TEXT NOT NULL DEFAULT 'officer',
       squad TEXT NOT NULL DEFAULT '',
+      officer_rank TEXT NOT NULL DEFAULT '',
+      gender TEXT NOT NULL DEFAULT '',
+      ethnicity TEXT NOT NULL DEFAULT '',
+      religion TEXT NOT NULL DEFAULT '',
+      spiritual_status TEXT NOT NULL DEFAULT '',
+      officer_work_status TEXT NOT NULL DEFAULT '',
       temporary_access_role TEXT NOT NULL DEFAULT '',
       access_expires_at TEXT,
       password_hash TEXT NOT NULL,
@@ -151,11 +162,18 @@ export async function ensureAuthSchema() {
     runtime.DB.prepare("CREATE INDEX IF NOT EXISTS idx_onboarding_audit_created ON onboarding_audit_log(created_at)"),
   ]);
   const memberColumns = await runtime.DB.prepare("PRAGMA table_info(members)").all<{ name: string }>();
-  if (!memberColumns.results.some((column) => column.name === "ethnicity")) {
-    await runtime.DB.prepare("ALTER TABLE members ADD COLUMN ethnicity TEXT NOT NULL DEFAULT ''").run();
-  }
-  if (!memberColumns.results.some((column) => column.name === "religion")) {
-    await runtime.DB.prepare("ALTER TABLE members ADD COLUMN religion TEXT NOT NULL DEFAULT ''").run();
+  for (const [column, statement] of [
+    ["gender", "ALTER TABLE members ADD COLUMN gender TEXT NOT NULL DEFAULT ''"],
+    ["ethnicity", "ALTER TABLE members ADD COLUMN ethnicity TEXT NOT NULL DEFAULT ''"],
+    ["religion", "ALTER TABLE members ADD COLUMN religion TEXT NOT NULL DEFAULT ''"],
+    ["spiritual_status", "ALTER TABLE members ADD COLUMN spiritual_status TEXT NOT NULL DEFAULT ''"],
+    ["accepted_christ", "ALTER TABLE members ADD COLUMN accepted_christ INTEGER NOT NULL DEFAULT 0"],
+    ["baptised", "ALTER TABLE members ADD COLUMN baptised INTEGER NOT NULL DEFAULT 0"],
+    ["officer_work_status", "ALTER TABLE members ADD COLUMN officer_work_status TEXT NOT NULL DEFAULT ''"],
+  ]) {
+    if (!memberColumns.results.some((item) => item.name === column)) {
+      await runtime.DB.prepare(statement).run();
+    }
   }
   const userColumns = await runtime.DB.prepare("PRAGMA table_info(users)").all<{ name: string }>();
   if (!userColumns.results.some((column) => column.name === "squad")) {
@@ -168,6 +186,18 @@ export async function ensureAuthSchema() {
     await runtime.DB.prepare(
       "ALTER TABLE users ADD COLUMN temporary_access_role TEXT NOT NULL DEFAULT ''",
     ).run();
+  }
+  for (const [column, statement] of [
+    ["officer_rank", "ALTER TABLE users ADD COLUMN officer_rank TEXT NOT NULL DEFAULT ''"],
+    ["gender", "ALTER TABLE users ADD COLUMN gender TEXT NOT NULL DEFAULT ''"],
+    ["ethnicity", "ALTER TABLE users ADD COLUMN ethnicity TEXT NOT NULL DEFAULT ''"],
+    ["religion", "ALTER TABLE users ADD COLUMN religion TEXT NOT NULL DEFAULT ''"],
+    ["spiritual_status", "ALTER TABLE users ADD COLUMN spiritual_status TEXT NOT NULL DEFAULT ''"],
+    ["officer_work_status", "ALTER TABLE users ADD COLUMN officer_work_status TEXT NOT NULL DEFAULT ''"],
+  ]) {
+    if (!userColumns.results.some((item) => item.name === column)) {
+      await runtime.DB.prepare(statement).run();
+    }
   }
   const onboardingColumns = [
     ["account_status", "ALTER TABLE users ADD COLUMN account_status TEXT NOT NULL DEFAULT 'active'"],

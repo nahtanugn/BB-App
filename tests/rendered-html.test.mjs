@@ -270,7 +270,7 @@ test("ships the Malaysia Senior Section catalogue, role-based portals and instal
   );
   assert.match(
     authRoute,
-    /UPDATE users SET name = \?, email = \?, role = \?, squad = \?, temporary_access_role = \?, access_expires_at = \?/,
+    /UPDATE users SET name = \?, email = \?, role = \?, squad = \?, officer_rank = \?, gender = \?, ethnicity = \?, religion = \?, spiritual_status = \?, officer_work_status = \?, temporary_access_role = \?, access_expires_at = \?/,
   );
   assert.match(resourcesRoute, /user\.role === "member"/);
   assert.match(resourcesRoute, /user\.role === "nco"/);

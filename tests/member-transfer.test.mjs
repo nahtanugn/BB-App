@@ -13,7 +13,17 @@ test("member profiles collect and display ethnicity", () => {
   assert.match(tracker, /<select\s+name="ethnicity"/);
   for (const ethnicity of ["Chinese", "Malay", "Iban", "Bidayuh", "Melanau", "Indian", "Orang Ulu", "Others"]) assert.match(tracker, new RegExp(ethnicity));
   assert.match(route, /\["Ethnicity", ethnicity\]/);
-  assert.match(route, /parents_name, ethnicity, religion, is_demo/);
+  assert.match(route, /parents_name, gender, ethnicity, religion, spiritual_status, accepted_christ, baptised, is_demo/);
+});
+
+test("member profiles collect gender and linked spiritual status classifications", () => {
+  const tracker = read("app/AwardTracker.tsx");
+  const route = read("app/api/tracker/route.ts");
+  assert.match(tracker, /<select\s+name="gender"/);
+  assert.match(tracker, /<select\s+name="spiritualStatus"/);
+  for (const status of ["Accepted Christ", "Baptised", "Non-Believer"]) assert.match(tracker, new RegExp(status));
+  assert.match(route, /\["Gender", gender\]/);
+  assert.match(route, /\["Spiritual Status", spiritualStatus\]/);
 });
 
 test("member profiles collect and display religion separately", () => {
@@ -24,7 +34,7 @@ test("member profiles collect and display religion separately", () => {
   assert.match(tracker, /<select\s+name="religion"/);
   for (const religion of ["Christianity", "Islam", "Buddhism", "Hinduism", "Sikhism", "No religion"]) assert.match(tracker, new RegExp(religion));
   assert.match(route, /\["Religion", religion\]/);
-  assert.match(route, /ethnicity, religion, is_demo/);
+  assert.match(route, /ethnicity, religion, spiritual_status/);
   assert.match(migration, /ADD COLUMN `religion` text NOT NULL DEFAULT ''/);
 });
 
