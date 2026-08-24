@@ -62,7 +62,7 @@ function countMap(rows: Member[], statuses: Map<number, Status>, statusName: str
 
 async function getData(year: number) {
   const record = await env.DB.prepare("SELECT * FROM company_statistics WHERE reporting_year = ? LIMIT 1").bind(year).first<Db>();
-  const members = (await env.DB.prepare("SELECT id,name,rank,section,joined_year,COALESCE(gender,'') gender,COALESCE(ethnicity,'') ethnicity,COALESCE(spiritual_status,'') spiritual_status,COALESCE(accepted_christ,0) accepted_christ,COALESCE(baptised,0) baptised FROM members WHERE is_demo = 0 ORDER BY name").all<Member>()).results;
+  const members = (await env.DB.prepare("SELECT id,name,rank,section,joined_year,COALESCE(gender,'') gender,COALESCE(ethnicity,'') ethnicity,COALESCE(spiritual_status,'') spiritual_status,COALESCE(accepted_christ,0) accepted_christ,COALESCE(baptised,0) baptised FROM members WHERE is_demo = 0 AND section IN ('senior', 'junior') ORDER BY name").all<Member>()).results;
   const officers = (await env.DB.prepare("SELECT id,name,email,COALESCE(officer_rank,'') officer_rank,COALESCE(gender,'') gender,COALESCE(ethnicity,'') ethnicity,COALESCE(spiritual_status,'') spiritual_status,COALESCE(officer_work_status,'') officer_work_status FROM users WHERE active = 1 AND TRIM(COALESCE(officer_rank,'')) != '' ORDER BY name COLLATE NOCASE").all<Officer>()).results;
   const associates = (await env.DB.prepare("SELECT classification,gender,work_status FROM associates_and_alumni WHERE active = 1 ORDER BY name COLLATE NOCASE").all<Associate>()).results;
   const statuses = new Map<number, Status>();

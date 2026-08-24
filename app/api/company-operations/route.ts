@@ -56,7 +56,7 @@ export async function GET(request: Request) {
   const url = new URL(request.url); const workspace = url.searchParams.get("module") ?? "parades";
   if (!allowedModules.has(workspace)) return Response.json({ error: "Unknown operations module" }, { status: 400 });
   const own = await linkedMember(runtime.DB, user);
-  const allMembers = await runtime.DB.prepare("SELECT id, name, rank, section, squad, email, band_member FROM members ORDER BY name").all<{ id: number; name: string; rank: string; section: string; squad: string; email: string; band_member: number }>();
+  const allMembers = await runtime.DB.prepare("SELECT id, name, rank, section, squad, email, band_member FROM members WHERE section IN ('senior', 'junior') ORDER BY name").all<{ id: number; name: string; rank: string; section: string; squad: string; email: string; band_member: number }>();
   const members = allMembers.results.filter((member) => canViewMemberScope(user, member));
   const events = await runtime.DB.prepare("SELECT id, title, event_date, section, audience, attendance_session_id FROM company_events WHERE cancelled_at IS NULL ORDER BY event_date DESC LIMIT 100").all();
   const visibleEvents = (events.results as Array<{ section: string; audience: string }>).filter((event) => {

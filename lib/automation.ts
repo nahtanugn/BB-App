@@ -365,9 +365,9 @@ async function collectCandidates(db: D1Database, now: Date) {
   if (enabled("data_quality")) {
     const recipients = await roleIds(db, configuredRoles(rules, "data_quality", ["admin", "officer"]));
     const localYear = kuchingParts(now).year;
-    const incomplete = await db.prepare(`SELECT id FROM members WHERE TRIM(name) = '' OR TRIM(joined_at) = ''
+    const incomplete = await db.prepare(`SELECT id FROM members WHERE section IN ('senior', 'junior') AND (TRIM(name) = '' OR TRIM(joined_at) = ''
       OR TRIM(school) = '' OR TRIM(contact_number) = '' OR TRIM(emergency_contact_number) = ''
-      OR TRIM(email) = '' OR TRIM(parents_name) = ''`).all<{ id: number }>();
+      OR TRIM(email) = '' OR TRIM(parents_name) = '')`).all<{ id: number }>();
     for (const row of incomplete.results)
       candidates.push({
         ruleKey: "data_quality", sourceType: "member", sourceId: String(row.id),
@@ -375,7 +375,7 @@ async function collectCandidates(db: D1Database, now: Date) {
         description: "Required member information needs attention.",
         targetUrl: "/?open=members",
       });
-    const duplicates = await db.prepare(`SELECT LOWER(email) AS email FROM members WHERE TRIM(email) != ''
+    const duplicates = await db.prepare(`SELECT LOWER(email) AS email FROM members WHERE section IN ('senior', 'junior') AND TRIM(email) != ''
       GROUP BY LOWER(email) HAVING COUNT(*) > 1`).all<{ email: string }>();
     for (const row of duplicates.results)
       candidates.push({
@@ -397,8 +397,8 @@ async function collectCandidates(db: D1Database, now: Date) {
         targetUrl: "/?open=admin", priority: "important",
       });
     const invalidYears = await db.prepare(`SELECT id FROM members
-      WHERE LENGTH(TRIM(joined_at)) != 4 OR CAST(joined_at AS INTEGER) < 1950
-        OR CAST(joined_at AS INTEGER) > ?`).bind(localYear).all<{ id: number }>();
+      WHERE section IN ('senior', 'junior') AND (LENGTH(TRIM(joined_at)) != 4 OR CAST(joined_at AS INTEGER) < 1950
+        OR CAST(joined_at AS INTEGER) > ?)`).bind(localYear).all<{ id: number }>();
     for (const row of invalidYears.results)
       candidates.push({
         ruleKey: "data_quality", sourceType: "invalid_joining_year", sourceId: String(row.id),
@@ -407,7 +407,7 @@ async function collectCandidates(db: D1Database, now: Date) {
         targetUrl: "/?open=members",
       });
     const noAttendance = await db.prepare(`SELECT members.id FROM members
-      WHERE NOT EXISTS (
+      WHERE members.section IN ('senior', 'junior') AND NOT EXISTS (
         SELECT 1 FROM attendance_records WHERE attendance_records.member_id = members.id
       )`).all<{ id: number }>();
     for (const row of noAttendance.results)
@@ -418,7 +418,7 @@ async function collectCandidates(db: D1Database, now: Date) {
         targetUrl: "/?open=attendance",
       });
     const noSubscription = await db.prepare(`SELECT members.id FROM members
-      WHERE NOT EXISTS (
+      WHERE members.section IN ('senior', 'junior') AND NOT EXISTS (
         SELECT 1 FROM member_subscriptions
         WHERE member_subscriptions.member_id = members.id AND member_subscriptions.year = ?
       )`).bind(localYear).all<{ id: number }>();
@@ -441,11 +441,11 @@ async function collectCandidates(db: D1Database, now: Date) {
     const rows = bandOnly
       ? await db.prepare(`SELECT members.id, members.email FROM members
           LEFT JOIN band_subscriptions subscriptions ON subscriptions.member_id = members.id AND subscriptions.year = ?
-          WHERE members.band_member = 1 AND COALESCE(subscriptions.status, 'unpaid') = 'unpaid'`)
+          WHERE members.section IN ('senior', 'junior') AND members.band_member = 1 AND COALESCE(subscriptions.status, 'unpaid') = 'unpaid'`)
           .bind(local.year).all<{ id: number; email: string }>()
       : await db.prepare(`SELECT members.id, members.email FROM members
           LEFT JOIN member_subscriptions subscriptions ON subscriptions.member_id = members.id AND subscriptions.year = ?
-          WHERE COALESCE(subscriptions.paid, 0) = 0`)
+          WHERE members.section IN ('senior', 'junior') AND COALESCE(subscriptions.paid, 0) = 0`)
           .bind(local.year).all<{ id: number; email: string }>();
     const staffRecipients = await roleIds(db, configuredRoles(rules, key, ["admin", "officer"]));
     for (const row of rows.results) {
@@ -506,10 +506,10 @@ async function yearlyUpkeep(db: D1Database, now: Date) {
   const timestamp = now.toISOString();
   await db.batch([
     db.prepare(`INSERT INTO member_subscriptions (member_id, year, paid, updated_at, updated_by)
-      SELECT id, ?, 0, ?, 'automation' FROM members WHERE 1 = 1
+      SELECT id, ?, 0, ?, 'automation' FROM members WHERE section IN ('senior', 'junior')
       ON CONFLICT(member_id, year) DO NOTHING`).bind(local.year, timestamp),
     db.prepare(`INSERT INTO band_subscriptions (member_id, year, status, updated_at, updated_by)
-      SELECT id, ?, 'unpaid', ?, 'automation' FROM members WHERE band_member = 1
+      SELECT id, ?, 'unpaid', ?, 'automation' FROM members WHERE section IN ('senior', 'junior') AND band_member = 1
       ON CONFLICT(member_id, year) DO NOTHING`).bind(local.year, timestamp),
   ]);
 }

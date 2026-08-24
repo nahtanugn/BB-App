@@ -120,12 +120,12 @@ export async function GET(request: Request) {
         SUM(CASE WHEN r.status IN ('absent', 'excused') THEN 1 ELSE 0 END) AS recorded
         FROM attendance_sessions s LEFT JOIN attendance_records r ON r.session_id = s.id
         WHERE s.meeting_date <= date('now') GROUP BY s.section`).all(),
-      runtime.DB.prepare("SELECT m.section, ma.status, COUNT(*) AS total FROM member_awards ma JOIN members m ON m.id = ma.member_id GROUP BY m.section, ma.status").all(),
-      runtime.DB.prepare("SELECT m.section, ms.paid, COUNT(*) AS total FROM member_subscriptions ms JOIN members m ON m.id = ms.member_id GROUP BY m.section, ms.paid").all(),
+      runtime.DB.prepare("SELECT m.section, ma.status, COUNT(*) AS total FROM member_awards ma JOIN members m ON m.id = ma.member_id WHERE m.section IN ('senior', 'junior') GROUP BY m.section, ma.status").all(),
+      runtime.DB.prepare("SELECT m.section, ms.paid, COUNT(*) AS total FROM member_subscriptions ms JOIN members m ON m.id = ms.member_id WHERE m.section IN ('senior', 'junior') GROUP BY m.section, ms.paid").all(),
       runtime.DB.prepare(`SELECT stock_type, COUNT(*) AS items, SUM(CASE WHEN condition != 'defective' AND quantity <= reorder_level THEN 1 ELSE 0 END) AS low_stock FROM (SELECT i.stock_type, i.condition, i.reorder_level, COALESCE(SUM(t.quantity_delta), 0) AS quantity FROM stock_items i LEFT JOIN stock_transactions t ON t.item_id = i.id WHERE i.active = 1 GROUP BY i.id) GROUP BY stock_type`).all(),
       runtime.DB.prepare(`SELECT strftime('%Y-%m', s.meeting_date) AS month, SUM(CASE WHEN r.status = 'present' THEN 1 ELSE 0 END) AS present, SUM(CASE WHEN r.status IN ('present','absent','excused') THEN 1 ELSE 0 END) AS recorded FROM attendance_sessions s LEFT JOIN attendance_records r ON r.session_id = s.id WHERE s.meeting_date <= date('now') GROUP BY month ORDER BY month`).all(),
-      runtime.DB.prepare("SELECT substr(joined_at, 1, 4) AS joined_year, COUNT(*) AS total, COUNT(*) AS retained FROM members GROUP BY substr(joined_at, 1, 4) ORDER BY joined_year").all(),
-      runtime.DB.prepare("SELECT section, squad, COUNT(*) AS members, ROUND(AVG(CASE WHEN joined_at != '' THEN CAST(strftime('%Y','now') AS INTEGER) - CAST(substr(joined_at, 1, 4) AS INTEGER) ELSE 0 END), 1) AS average_service_years FROM members GROUP BY section, squad ORDER BY section, squad").all(),
+      runtime.DB.prepare("SELECT substr(joined_at, 1, 4) AS joined_year, COUNT(*) AS total, COUNT(*) AS retained FROM members WHERE section IN ('senior', 'junior') GROUP BY substr(joined_at, 1, 4) ORDER BY joined_year").all(),
+      runtime.DB.prepare("SELECT section, squad, COUNT(*) AS members, ROUND(AVG(CASE WHEN joined_at != '' THEN CAST(strftime('%Y','now') AS INTEGER) - CAST(substr(joined_at, 1, 4) AS INTEGER) ELSE 0 END), 1) AS average_service_years FROM members WHERE section IN ('senior', 'junior') GROUP BY section, squad ORDER BY section, squad").all(),
     ]);
     return Response.json({ attendance: attendance.results, awards: awards.results, subscriptions: subscriptions.results, stock: stock.results, attendanceTrend: attendanceTrend.results, memberTrend: memberTrend.results, retention: memberTrend.results, squadComparison: squadComparison.results });
   }

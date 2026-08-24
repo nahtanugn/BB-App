@@ -69,7 +69,7 @@ export async function GET(request: Request) {
           .all()
       : { results: [] };
     const members = await runtime.DB.prepare(
-      "SELECT id, name, section, squad FROM members ORDER BY name COLLATE NOCASE",
+      "SELECT id, name, section, squad FROM members WHERE section IN ('senior', 'junior') ORDER BY name COLLATE NOCASE",
     ).all();
     const response: Record<string, unknown> = {
       permissions,

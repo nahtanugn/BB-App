@@ -835,7 +835,7 @@ export async function GET(request: Request) {
         } });
       }
       const [members, meetings, completeRegisters, submissions] = await Promise.all([
-        db.prepare("SELECT COUNT(*) AS total FROM members").first<{ total: number }>(),
+        db.prepare("SELECT COUNT(*) AS total FROM members WHERE section IN ('senior', 'junior')").first<{ total: number }>(),
         db.prepare("SELECT COUNT(*) AS total FROM attendance_sessions WHERE meeting_date <= date('now') AND substr(meeting_date, 1, 4) = strftime('%Y', 'now')").first<{ total: number }>(),
         db.prepare(`SELECT COUNT(*) AS total FROM attendance_sessions s
           WHERE s.meeting_date <= date('now') AND substr(s.meeting_date, 1, 4) = strftime('%Y', 'now')
