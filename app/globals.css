@@ -3874,3 +3874,27 @@ button:disabled { opacity: .62; cursor: wait; }
     min-height: 52px !important;
   }
 }
+.official-stats-form { margin-bottom: 16px; overflow: hidden; }
+.official-stats-heading { display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; padding: 18px 20px 10px; }
+.official-stats-heading h2 { margin: 0; text-align: center; font-family: Georgia, serif; font-size: 18px; }
+.official-stats-heading p { display: flex; align-items: center; gap: 8px; margin: 0; color: var(--muted); font-size: 11px; }
+.official-stats-heading strong { min-width: 110px; padding: 7px 9px; border: 1px solid var(--line); border-radius: 8px; color: var(--navy); }
+.official-member-table, .official-officer-table { min-width: 860px; }
+.official-member-table th, .official-member-table td, .official-officer-table th, .official-officer-table td { border: 1px solid #c5d1df; }
+.official-member-table tbody td { background: #f7eafb; }
+.official-total-membership { display: flex; justify-content: space-between; gap: 12px; margin: 0; padding: 12px 16px; background: #e7f6fa; color: var(--navy); font-size: 12px; }
+.annual-classification-list { display: grid; max-height: 520px; overflow-y: auto; border: 1px solid var(--line); border-radius: 12px; }
+.annual-classification-list article { display: grid; grid-template-columns: minmax(150px, 1fr) minmax(145px, .75fr) minmax(170px, .9fr); align-items: end; gap: 10px; padding: 12px; border-bottom: 1px solid var(--line); }
+.annual-classification-list article:last-child { border-bottom: 0; }
+.annual-classification-list article > strong { align-self: center; }
+.annual-classification-list label { display: grid; gap: 5px; color: var(--muted); font-size: 10px; font-weight: 800; }
+.annual-classification-list select { width: 100%; min-width: 0; min-height: 40px; }
+.stats-warning-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+@media (max-width: 720px) {
+  .official-stats-heading { align-items: stretch; flex-direction: column; }
+  .official-stats-heading h2 { text-align: left; }
+  .official-stats-heading p { justify-content: space-between; }
+  .annual-classification-list article { grid-template-columns: 1fr; align-items: stretch; }
+  .stats-warning-actions { display: grid; grid-template-columns: 1fr; }
+  .stats-warning-actions .secondary-button { width: 100%; }
+}

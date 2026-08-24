@@ -31,7 +31,12 @@ test("company statistics uses the complete official officer-rank list", () => {
   assert.match(source, /Female \(F\)/);
   for (const rank of ["Staff Sergeant", "Warrant Officer", "Lieutenant", "Captain", "Honorary Captain", "Chaplain"]) assert.match(source, new RegExp(rank));
   assert.doesNotMatch(source, /M means Male and F means Female/);
-  assert.doesNotMatch(source, /warrantWorkingM/);
+  assert.match(source, /\(A\) Members re-enrolled/);
+  assert.match(source, /\(B\) Recruits/);
+  assert.match(source, /Sub Total \(A\+B\)/);
+  assert.match(source, /Warrant Officers/);
+  assert.match(source, /TOTAL MEMBERSHIP as at/);
+  assert.match(source, /Associate Members (?:&amp;|and) Alumni/);
 });
 
 test("company statistics links fixed Malaysian classifications to member and officer profiles", () => {
