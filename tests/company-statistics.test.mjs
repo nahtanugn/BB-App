@@ -18,6 +18,8 @@ test("company statistics route enforces roles, locks final years, and excludes f
   assert.match(route, /s\.meeting_date <= date\('now'\)/);
   assert.match(route, /action === "reopen"/);
   assert.match(route, /COUNT\(DISTINCT s\.id\) AS sessions/);
+  assert.match(route, /substr\(joined_at,1,4\) joined_year/);
+  assert.doesNotMatch(route, /section,joined_year,/);
   assert.match(route, /Associate Member and Alumni totals are temporarily unavailable/);
 });
 

@@ -65,9 +65,9 @@ async function getData(year: number) {
   const dataWarnings: string[] = [];
   let members: Member[];
   try {
-    members = (await env.DB.prepare("SELECT id,name,rank,section,joined_year,COALESCE(gender,'') gender,COALESCE(ethnicity,'') ethnicity,COALESCE(spiritual_status,'') spiritual_status,COALESCE(accepted_christ,0) accepted_christ,COALESCE(baptised,0) baptised FROM members WHERE is_demo = 0 AND section IN ('senior', 'junior') ORDER BY name").all<Member>()).results;
+    members = (await env.DB.prepare("SELECT id,name,rank,section,substr(joined_at,1,4) joined_year,COALESCE(gender,'') gender,COALESCE(ethnicity,'') ethnicity,COALESCE(spiritual_status,'') spiritual_status,COALESCE(accepted_christ,0) accepted_christ,COALESCE(baptised,0) baptised FROM members WHERE is_demo = 0 AND section IN ('senior', 'junior') ORDER BY name").all<Member>()).results;
   } catch {
-    members = (await env.DB.prepare("SELECT id,name,rank,section,joined_year,'M' gender,'' ethnicity,'' spiritual_status,0 accepted_christ,0 baptised FROM members WHERE section IN ('senior', 'junior') ORDER BY name").all<Member>()).results;
+    members = (await env.DB.prepare("SELECT id,name,rank,section,substr(joined_at,1,4) joined_year,'M' gender,'' ethnicity,'' spiritual_status,0 accepted_christ,0 baptised FROM members WHERE section IN ('senior', 'junior') ORDER BY name").all<Member>()).results;
     dataWarnings.push("Member demographic fields are not available yet. Apply the latest database migrations before finalising.");
   }
   let officers: Officer[] = [];
