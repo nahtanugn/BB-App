@@ -27,6 +27,8 @@ test("Associate Members and Alumni have a dedicated read-only-aware People page"
   assert.match(page, /role === "viewer"/);
   assert.match(page, /Religion \(optional\)/);
   assert.match(page, /Spiritual status \(optional\)/);
+  assert.match(page, /Reason \(required\)/);
+  assert.doesNotMatch(page, /disabled=\{busy \|\| !transfer\.sourceId \|\| !transfer\.reason\.trim\(\)\}/);
   assert.match(styles, /\.primary-button/);
   assert.match(styles, /\.secondary-button/);
   assert.match(styles, /@media \(max-width: 1120px\)[\s\S]*\.associate-section-page \.category-page-header/);
