@@ -5,6 +5,7 @@ import { writeAuditEvent } from "../../../lib/audit";
 type Db = { id: number; reporting_year: number; status: string; locked_at: string | null; locked_by_user_id: number | null; captain_name: string; chaplain_name: string; submission_date: string; received_by: string; date_received: string; data_entry_name: string; remarks: string; notes: string; created_at: string; updated_at: string };
 type Member = { id: number; name: string; rank: string; section: string; gender: string; ethnicity: string; spiritual_status: string; accepted_christ: number; baptised: number };
 type Officer = { id: number; name: string; email: string; officer_rank: string; gender: string; ethnicity: string; spiritual_status: string; officer_work_status: string };
+type Associate = { classification: string; gender: string; work_status: string };
 type Status = { member_id: number; membership_status: string; category_override: string; gender_override: string; ethnicity_override: string };
 
 const staff = (role: string) => ["admin", "officer", "viewer"].includes(role);
@@ -30,6 +31,7 @@ function ethnicityGroup(value: string): EthnicityGroup {
   return "Others";
 }
 function emptyEthnicityCounts() { return { Chinese: 0, Indian: 0, Bumi: 0, Others: 0, Unclassified: 0 }; }
+function emptyAnnualCounts() { return { workingM: 0, workingF: 0, studyingM: 0, studyingF: 0 }; }
 type SpiritualKey = "acceptedChrist" | "baptised" | "nonBeliever" | "unclassified";
 function spiritualKey(status: string, acceptedChrist = 0, baptised = 0): SpiritualKey {
   if (status === "baptised" || baptised) return "baptised";
@@ -56,6 +58,7 @@ async function getData(year: number) {
   const record = await env.DB.prepare("SELECT * FROM company_statistics WHERE reporting_year = ? LIMIT 1").bind(year).first<Db>();
   const members = (await env.DB.prepare("SELECT id,name,rank,section,COALESCE(gender,'') gender,COALESCE(ethnicity,'') ethnicity,COALESCE(spiritual_status,'') spiritual_status,COALESCE(accepted_christ,0) accepted_christ,COALESCE(baptised,0) baptised FROM members WHERE is_demo = 0 ORDER BY name").all<Member>()).results;
   const officers = (await env.DB.prepare("SELECT id,name,email,COALESCE(officer_rank,'') officer_rank,COALESCE(gender,'') gender,COALESCE(ethnicity,'') ethnicity,COALESCE(spiritual_status,'') spiritual_status,COALESCE(officer_work_status,'') officer_work_status FROM users WHERE active = 1 AND TRIM(COALESCE(officer_rank,'')) != '' ORDER BY name COLLATE NOCASE").all<Officer>()).results;
+  const associates = (await env.DB.prepare("SELECT classification,gender,work_status FROM associates_and_alumni WHERE active = 1 ORDER BY name COLLATE NOCASE").all<Associate>()).results;
   const statuses = new Map<number, Status>();
   if (record) for (const row of (await env.DB.prepare("SELECT member_id,membership_status,category_override,gender_override,ethnicity_override FROM company_statistics_member_status WHERE statistics_id = ?").bind(record.id).all<Status>()).results) statuses.set(row.member_id, row);
   let inputs = emptyPayload();
@@ -90,12 +93,19 @@ async function getData(year: number) {
     else if (officer.gender === "F") officerCounts[officer.officer_rank].F += 1;
     else officerCounts[officer.officer_rank].unknown += 1;
   }
+  const otherCounts = { associateMembers: emptyAnnualCounts(), alumni: emptyAnnualCounts() };
+  for (const person of associates) {
+    const group = person.classification === "alumni" ? otherCounts.alumni : otherCounts.associateMembers;
+    const work = person.work_status === "studying" ? "studying" : "working";
+    const gender = person.gender === "F" ? "F" : "M";
+    group[`${work}${gender}` as keyof typeof group] += 1;
+  }
   const attendance = await env.DB.prepare(`SELECT COUNT(*) AS sessions, SUM(CASE WHEN ar.status IN ('present','absent','excused') THEN 1 ELSE 0 END) AS marked
     FROM attendance_sessions s LEFT JOIN attendance_records ar ON ar.session_id = s.id
     WHERE substr(s.meeting_date,1,4) = ? AND s.meeting_date <= date('now')`).bind(String(year)).first<{ sessions: number; marked: number }>();
   const missingMembers = members.filter((member) => !member.gender || !member.ethnicity).map((member) => ({ id: member.id, name: member.name, section: "Member" }));
   const missingOfficers = officers.filter((officer) => !officer.gender || !officer.ethnicity || !officer.officer_work_status).map((officer) => ({ id: officer.id, name: officer.name, section: "Officer" }));
-  const calculated = { memberCount: members.length, officerCount: officers.length, totalMembership: members.length + officers.length, counts, officerCounts, ethnicity: { members: memberEthnicity, officers: officerEthnicity, totals: ethnicityTotals }, spirituality: { members: memberSpirituality, officers: officerSpirituality }, attendance: { sessions: Number(attendance?.sessions || 0), marked: Number(attendance?.marked || 0) }, missingClassification: [...missingMembers, ...missingOfficers], members, officers };
+  const calculated = { memberCount: members.length, officerCount: officers.length, totalMembership: members.length + officers.length, counts, officerCounts, otherCounts, ethnicity: { members: memberEthnicity, officers: officerEthnicity, totals: ethnicityTotals }, spirituality: { members: memberSpirituality, officers: officerSpirituality }, attendance: { sessions: Number(attendance?.sessions || 0), marked: Number(attendance?.marked || 0) }, missingClassification: [...missingMembers, ...missingOfficers], members, officers };
   const reviewed = inputs.classificationComplete === true;
   const validation = { missingClassification: calculated.missingClassification.length, warnings: calculated.missingClassification.length && !reviewed ? ["Some members or officers need gender, ethnicity and work/study classification before finalisation."] : [], canFinalize: calculated.missingClassification.length === 0 || reviewed };
   return { year, record, inputs, calculated, validation, memberStatus: [...statuses.values()] };

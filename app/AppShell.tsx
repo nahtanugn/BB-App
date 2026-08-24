@@ -13,6 +13,7 @@ export type AppRoute =
   | "awards"
   | "members"
   | "officers"
+  | "associates"
   | "attendance"
   | "subscriptions"
   | "submissions"
@@ -62,6 +63,7 @@ const routeHub: Record<AppRoute, AppHub> = {
   awards: "people",
   members: "people",
   officers: "people",
+  associates: "people",
   attendance: "people",
   subscriptions: "people",
   journey: "people",
@@ -164,7 +166,10 @@ export default function AppShell({
         { route: "subscriptions", category: "People & Progress", label: "Subscriptions", description: "Yearly payment status", icon: "◇" },
       );
       if (["admin", "officer", "viewer"].includes(user.role))
-        values.push({ route: "officers", category: "People & Progress", label: "Officers", description: "Officer Section and statistics details", icon: "♜" });
+        values.push(
+          { route: "officers", category: "People & Progress", label: "Officers", description: "Officer Section and statistics details", icon: "♜" },
+          { route: "associates", category: "People & Progress", label: "Associates & Alumni", description: "Associate Members, Instructors, Helpers and Alumni", icon: "♧" },
+        );
     } else {
       values.push(
         { route: "awards", category: "People & Progress", label: "My progress", description: "My attendance and awards", icon: "▦" },
@@ -243,7 +248,7 @@ export default function AppShell({
   const orderedItems = (routes: AppRoute[]) => routes.map((itemRoute) => items.find((item) => item.route === itemRoute)).filter((item): item is NavItem => Boolean(item));
   const hubItems = {
     home: items.filter((item) => hubForRoute(item.route) === "home"),
-    people: orderedItems(["members", "officers", "awards", "attendance", "subscriptions", "leave", "promotion", "service", "journey"]),
+    people: orderedItems(["members", "officers", "associates", "awards", "attendance", "subscriptions", "leave", "promotion", "service", "journey"]),
     programme: orderedItems(["events", "parades", "duties", "committees", "band", "resources", "announcements"]),
     manage: items.filter((item) => hubForRoute(item.route) === "manage"),
   } satisfies Record<AppHub, NavItem[]>;

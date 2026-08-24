@@ -78,6 +78,21 @@ export const companyStatisticsAudit = sqliteTable("company_statistics_audit", {
   createdAt: text("created_at").notNull(),
 });
 
+export const associatesAndAlumni = sqliteTable("associates_and_alumni", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  name: text("name").notNull(),
+  classification: text("classification").notNull().default("associate_member"),
+  gender: text("gender").notNull().default("M"),
+  workStatus: text("work_status").notNull().default("working"),
+  ethnicity: text("ethnicity").notNull().default(""),
+  religion: text("religion").notNull().default(""),
+  spiritualStatus: text("spiritual_status").notNull().default(""),
+  notes: text("notes").notNull().default(""),
+  active: integer("active", { mode: "boolean" }).notNull().default(true),
+  createdAt: text("created_at").notNull(),
+  updatedAt: text("updated_at").notNull(),
+}, (table) => [index("associates_alumni_active_idx").on(table.active, table.classification)]);
+
 export const awardDefinitions = sqliteTable("award_definitions", {
   code: text("code").primaryKey(),
   name: text("name").notNull(),
