@@ -23,6 +23,7 @@ import ExportCentre from "./ExportCentre";
 import ManagedSchoolSelect from "./ManagedSchoolSelect";
 import PublicInformation from "./PublicInformation";
 import CompanyStatisticsCentre from "./CompanyStatisticsCentre";
+import OfficerSection from "./OfficerSection";
 import CompanyOperationsCentre, { type OperationsModule } from "./CompanyOperationsCentre";
 import { brandingLogoStyle, useBranding } from "./BrandingContext";
 
@@ -152,6 +153,7 @@ export default function StandaloneApp() {
         ["member", "nco", "squad_leader"].includes(auth.user.role)) ||
       (requested === "stock" && stockAccess) ||
       (["members", "attendance", "subscriptions"].includes(requested) && staff) ||
+      (requested === "officers" && ["admin", "officer", "viewer"].includes(auth.user.role)) ||
       (requested === "awards" && (staff || auth.user.role === "member")) ||
       (requested === "submissions" &&
         activeSection !== "junior" &&
@@ -252,6 +254,7 @@ export default function StandaloneApp() {
         onboarding: "onboarding",
         attendance: "attendance",
         members: "members",
+        officers: "officers",
         stock: "stock",
         events: "events",
         journey: "journey",
@@ -719,6 +722,7 @@ export default function StandaloneApp() {
       onboarding: "onboarding",
       attendance: "attendance",
       members: "members",
+      officers: "officers",
       stock: "stock",
       events: "events",
       journey: "journey",
@@ -748,6 +752,8 @@ export default function StandaloneApp() {
     page = <ExportCentre currentYear={new Date().getFullYear()} presentation="page" onComplete={setNotice} />;
   else if (route === "company-statistics" && ["admin", "officer", "viewer"].includes(currentUser.role))
     page = <CompanyStatisticsCentre user={currentUser} currentYear={new Date().getFullYear()} />;
+  else if (route === "officers" && ["admin", "officer", "viewer"].includes(currentUser.role))
+    page = <OfficerSection role={currentUser.role} />;
   else if (route === "submissions")
     page = <SubmissionsPage user={currentUser} initialSection={submissionSection} onLogout={logout} onBack={() => navigate("home")} />;
   else if (route === "stock")
