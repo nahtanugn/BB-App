@@ -19,6 +19,7 @@ test("Associate Members and Alumni have a dedicated read-only-aware People page"
   const shell = read("app/AppShell.tsx");
   const standalone = read("app/StandaloneApp.tsx");
   const page = read("app/AssociatesAlumniSection.tsx");
+  const styles = read("app/globals.css");
   assert.match(shell, /route: "associates"/);
   assert.match(shell, /Associates & Alumni/);
   assert.match(standalone, /<AssociatesAlumniSection role=\{currentUser\.role\}/);
@@ -26,6 +27,9 @@ test("Associate Members and Alumni have a dedicated read-only-aware People page"
   assert.match(page, /role === "viewer"/);
   assert.match(page, /Religion \(optional\)/);
   assert.match(page, /Spiritual status \(optional\)/);
+  assert.match(styles, /\.primary-button/);
+  assert.match(styles, /\.secondary-button/);
+  assert.match(styles, /@media \(max-width: 1120px\)[\s\S]*\.associate-section-page \.category-page-header/);
 });
 
 test("Company Statistics links active directory records and preserves annual adjustments", () => {
