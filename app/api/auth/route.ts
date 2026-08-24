@@ -67,8 +67,8 @@ async function createOrLinkMemberProfile(
   }
   await runtime.DB.prepare(
     `INSERT INTO members
-    (name, rank, squad, section, joined_at, service_years, school, contact_number, emergency_contact_number, email, parents_name, is_demo, created_at)
-    VALUES (?, ?, ?, ?, ?, 0, '', '', '', ?, '', 0, ?)`,
+    (name, rank, squad, section, joined_at, service_years, school, contact_number, emergency_contact_number, email, parents_name, gender, is_demo, created_at)
+    VALUES (?, ?, ?, ?, ?, 0, '', '', '', ?, '', 'M', 0, ?)`,
   )
     .bind(
       name,

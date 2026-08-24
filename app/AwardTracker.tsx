@@ -3196,7 +3196,7 @@ export default function AwardTracker({
                 <select
                   name="gender"
                   required={!overrideMemberDetails}
-                  defaultValue={editingMember?.gender ?? ""}
+                  defaultValue={editingMember?.gender || "M"}
                 >
                   <option value="">Select gender</option>
                   <option value="M">Male (M)</option>

@@ -24,7 +24,7 @@ export const members = sqliteTable("members", {
     .default(""),
   email: text("email").notNull().default(""),
   parentsName: text("parents_name").notNull().default(""),
-  gender: text("gender").notNull().default(""),
+  gender: text("gender").notNull().default("M"),
   ethnicity: text("ethnicity").notNull().default(""),
   religion: text("religion").notNull().default(""),
   spiritualStatus: text("spiritual_status").notNull().default(""),

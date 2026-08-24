@@ -479,9 +479,9 @@ export async function POST(request: Request) {
         const result = await runtime.DB.prepare(
           `INSERT INTO members
             (name, rank, squad, section, joined_at, service_years, school,
-             contact_number, emergency_contact_number, email, parents_name,
+            contact_number, emergency_contact_number, email, parents_name, gender,
              is_demo, created_at)
-          VALUES (?, ?, ?, ?, ?, 0, ?, ?, ?, ?, ?, 0, ?)`,
+          VALUES (?, ?, ?, ?, ?, 0, ?, ?, ?, ?, ?, 'M', 0, ?)`,
         ).bind(
           registration.name, section === "junior" ? "Pre-Junior" : "Private", squad, section, registration.joined_year,
           registration.school, registration.contact_number,

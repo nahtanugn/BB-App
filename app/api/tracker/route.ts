@@ -462,7 +462,7 @@ async function initializeSchema() {
       emergency_contact_number TEXT NOT NULL DEFAULT '',
       email TEXT NOT NULL DEFAULT '',
       parents_name TEXT NOT NULL DEFAULT '',
-      gender TEXT NOT NULL DEFAULT '',
+      gender TEXT NOT NULL DEFAULT 'M',
       ethnicity TEXT NOT NULL DEFAULT '',
       religion TEXT NOT NULL DEFAULT '',
       spiritual_status TEXT NOT NULL DEFAULT '',
@@ -598,7 +598,7 @@ async function initializeSchema() {
     ],
     [
       "gender",
-      "ALTER TABLE members ADD COLUMN gender TEXT NOT NULL DEFAULT ''",
+      "ALTER TABLE members ADD COLUMN gender TEXT NOT NULL DEFAULT 'M'",
     ],
     [
       "spiritual_status",
@@ -1063,7 +1063,7 @@ export async function POST(request: Request) {
         .trim()
         .toLowerCase();
       const parentsName = String(body.parentsName ?? "").trim();
-      const gender = String(body.gender ?? "").trim().toUpperCase();
+      const gender = String(body.gender ?? "").trim().toUpperCase() || "M";
       const ethnicity = String(body.ethnicity ?? "").trim();
       const religion = String(body.religion ?? "").trim();
       const spiritualStatus = String(body.spiritualStatus ?? "").trim();
@@ -1163,7 +1163,7 @@ export async function POST(request: Request) {
         .trim()
         .toLowerCase();
       const parentsName = String(body.parentsName ?? "").trim();
-      const gender = String(body.gender ?? "").trim().toUpperCase();
+      const gender = String(body.gender ?? "").trim().toUpperCase() || "M";
       const ethnicity = String(body.ethnicity ?? "").trim();
       const religion = String(body.religion ?? "").trim();
       const spiritualStatus = String(body.spiritualStatus ?? "").trim();
