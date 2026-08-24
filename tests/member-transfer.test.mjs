@@ -23,7 +23,9 @@ test("member profiles collect gender and linked spiritual status classifications
   assert.match(tracker, /<select\s+name="spiritualStatus"/);
   for (const status of ["Accepted Christ", "Baptised", "Non-Believer"]) assert.match(tracker, new RegExp(status));
   assert.match(route, /\["Gender", gender\]/);
-  assert.match(route, /\["Spiritual Status", spiritualStatus\]/);
+  assert.match(tracker, /Spiritual status \(optional\)/);
+  assert.match(tracker, /<option value="">Not recorded<\/option>/);
+  assert.doesNotMatch(route, /\["Spiritual Status", spiritualStatus\]/);
 });
 
 test("member profiles collect and display religion separately", () => {

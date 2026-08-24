@@ -190,7 +190,7 @@ function serviceYearsFromJoined(value: string) {
 }
 
 function memberCompleteness(member: Member) {
-  const fields: Array<[string, string]> = [["School", member.school], ["Contact number", member.contact_number], ["Emergency contact", member.emergency_contact_number], ["Email", member.email], ["Parents' name", member.parents_name], ["Gender", member.gender], ["Ethnicity", member.ethnicity], ["Religion", member.religion], ["Spiritual status", member.spiritual_status]];
+  const fields: Array<[string, string]> = [["School", member.school], ["Contact number", member.contact_number], ["Emergency contact", member.emergency_contact_number], ["Email", member.email], ["Parents' name", member.parents_name], ["Gender", member.gender], ["Ethnicity", member.ethnicity], ["Religion", member.religion]];
   const missing = fields.filter(([, value]) => !value.trim()).map(([label]) => label);
   return { percent: Math.round(((fields.length - missing.length) / fields.length) * 100), missing };
 }
@@ -3236,13 +3236,12 @@ export default function AwardTracker({
                 </select>
               </label>
               <label>
-                Spiritual status
+                Spiritual status (optional)
                 <select
                   name="spiritualStatus"
-                  required={!overrideMemberDetails}
                   defaultValue={editingMember?.spiritual_status || (editingMember?.baptised ? "baptised" : editingMember?.accepted_christ ? "accepted_christ" : "")}
                 >
-                  <option value="">Select spiritual status</option>
+                  <option value="">Not recorded</option>
                   <option value="accepted_christ">Accepted Christ</option>
                   <option value="baptised">Baptised</option>
                   <option value="non_believer">Non-Believer</option>

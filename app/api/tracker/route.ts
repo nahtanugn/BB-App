@@ -1110,7 +1110,6 @@ export async function POST(request: Request) {
         ["Gender", gender],
         ["Ethnicity", ethnicity],
         ["Religion", religion],
-        ["Spiritual Status", spiritualStatus],
       ].filter(([, value]) => !value);
       if (missingDetails.length && !overrideRequiredDetails)
         return Response.json(
@@ -1216,7 +1215,6 @@ export async function POST(request: Request) {
         ["Gender", gender],
         ["Ethnicity", ethnicity],
         ["Religion", religion],
-        ["Spiritual Status", spiritualStatus],
       ].filter(([, value]) => !value);
       if (missingDetails.length && !overrideRequiredDetails)
         return Response.json(
