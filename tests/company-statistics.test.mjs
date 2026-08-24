@@ -66,6 +66,8 @@ test("company statistics is reachable from Manage and the shared shell", () => {
 
 test("company statistics uses the complete official officer-rank list", () => {
   const source = read("app/CompanyStatisticsCentre.tsx");
+  const route = read("app/api/company-statistics/route.ts");
+  const pdf = read("app/lib/company-statistics-pdf.ts");
   assert.match(source, /Male \(M\)/);
   assert.match(source, /Female \(F\)/);
   for (const rank of ["Staff Sergeant", "Warrant Officer", "Lieutenant", "Captain", "Honorary Captain", "Chaplain"]) assert.match(source, new RegExp(rank));
@@ -73,7 +75,11 @@ test("company statistics uses the complete official officer-rank list", () => {
   assert.match(source, /\(A\) Members re-enrolled/);
   assert.match(source, /\(B\) Recruits/);
   assert.match(source, /Sub Total \(A\+B\)/);
-  assert.match(source, /Warrant Officers/);
+  assert.doesNotMatch(source, /Warrant Officers/);
+  assert.match(source, /Officer working M/);
+  assert.match(source, /Officer studying F/);
+  assert.doesNotMatch(route, /warrantWorking|warrantStudying/);
+  assert.doesNotMatch(pdf, /WO working|WO studying/);
   assert.match(source, /TOTAL MEMBERSHIP as at/);
   assert.match(source, /Associate Members (?:&amp;|and) Alumni/);
 });
