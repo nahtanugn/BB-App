@@ -11,16 +11,21 @@ test("company statistics has additive annual snapshot tables and member classifi
   for (const column of ["gender", "ethnicity", "accepted_christ", "baptised", "officer_work_status"]) assert.ok(migration.includes(`ADD COLUMN \`${column}\``));
 });
 
-test("company statistics route enforces roles, locks final years, and excludes future attendance", () => {
+test("company statistics is read-only, linked to profiles, and excludes future attendance", () => {
   const route = read("app/api/company-statistics/route.ts");
-  assert.match(route, /Only Administrators and Officers may edit annual statistics/);
-  assert.match(route, /row\.status === "final"/);
+  const source = read("app/CompanyStatisticsCentre.tsx");
+  assert.match(route, /Company Statistics is read-only/);
+  assert.doesNotMatch(route, /company_statistics_member_status WHERE/);
+  assert.doesNotMatch(route, /category_override/);
   assert.match(route, /s\.meeting_date <= date\('now'\)/);
-  assert.match(route, /action === "reopen"/);
   assert.match(route, /COUNT\(DISTINCT s\.id\) AS sessions/);
   assert.match(route, /substr\(joined_at,1,4\) joined_year/);
   assert.doesNotMatch(route, /section,joined_year,/);
   assert.match(route, /Associate Member and Alumni totals are temporarily unavailable/);
+  assert.match(source, /Figures cannot be edited here/);
+  assert.doesNotMatch(source, /Save draft/);
+  assert.doesNotMatch(source, /Finalise year/);
+  assert.doesNotMatch(source, /annualAdjustment/);
 });
 
 test("company statistics loading failures resolve to a retryable error state", () => {

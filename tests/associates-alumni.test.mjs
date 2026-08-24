@@ -34,13 +34,15 @@ test("Associate Members and Alumni have a dedicated read-only-aware People page"
   assert.match(styles, /@media \(max-width: 1120px\)[\s\S]*\.associate-section-page \.category-page-header/);
 });
 
-test("Company Statistics links active directory records and preserves annual adjustments", () => {
+test("Company Statistics shows read-only totals linked to active directory records", () => {
   const api = read("app/api/company-statistics/route.ts");
   const page = read("app/CompanyStatisticsCentre.tsx");
   assert.match(api, /FROM associates_and_alumni WHERE active = 1/);
   assert.match(api, /person\.classification === "alumni"/);
   assert.match(api, /otherCounts/);
   assert.match(page, /open=associates/);
-  assert.match(page, /linked ·/);
-  assert.match(page, /Annual adjustment/);
+  assert.match(page, /stats-linked-row/);
+  assert.match(page, /linked total/);
+  assert.doesNotMatch(page, /Annual adjustment/);
+  assert.doesNotMatch(page, /stats-number/);
 });
