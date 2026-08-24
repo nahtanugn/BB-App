@@ -79,8 +79,10 @@ test("company statistics uses the complete official officer-rank list", () => {
   assert.match(source, /Officer working M/);
   assert.match(source, /Officer studying F/);
   assert.match(route, /warrantWorking|warrantStudying/);
-  assert.match(pdf, /WO working M/);
-  assert.match(pdf, /WO studying F/);
+  assert.match(pdf, /drawOfficerTable/);
+  assert.match(pdf, /Warrant Officer/);
+  assert.match(pdf, /Officer \(Lieutenant and above\)/);
+  assert.match(pdf, /\["Working", "Studying"\]/);
   assert.match(source, /TOTAL MEMBERSHIP as at/);
   assert.match(source, /Associate Members (?:&amp;|and) Alumni/);
 });

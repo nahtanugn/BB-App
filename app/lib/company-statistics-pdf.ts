@@ -85,6 +85,48 @@ function drawLabelValue(page: PDFPage, label: string, value: string, x: number, 
   drawTextInCell(page, value || " ", x + labelWidth, y, width - labelWidth, 20, regular, 7.1, "left");
 }
 
+function drawOfficerTable(page: PDFPage, x: number, top: number, contentWidth: number, values: number[], regular: PDFFont, bold: PDFFont) {
+  const firstWidth = 136;
+  const leafWidth = (contentWidth - firstWidth) / 12;
+  const headerRowHeight = 12;
+  const headerHeight = headerRowHeight * 3;
+  const dataHeight = 19;
+  const headerBottom = top - headerHeight;
+  const cell = (label: string, cellX: number, cellY: number, width: number, height: number, fill = paleBlue, align: "left" | "center" = "center") => {
+    page.drawRectangle({ x: cellX, y: cellY, width, height, color: fill, borderColor: line, borderWidth: 0.7 });
+    drawTextInCell(page, label, cellX, cellY, width, height, bold, 6.2, align);
+  };
+
+  cell("(C) Officers", x, headerBottom, firstWidth, headerHeight, paleBlue, "left");
+  let currentX = x + firstWidth;
+  const drawGenderPair = (group: string, columns: number, subgroups?: string[]) => {
+    cell(group, currentX, top - headerRowHeight, leafWidth * columns, headerRowHeight);
+    if (subgroups) {
+      subgroups.forEach((subgroup) => {
+        cell(subgroup, currentX, top - headerRowHeight * 2, leafWidth * 2, headerRowHeight);
+        cell("M", currentX, headerBottom, leafWidth, headerRowHeight);
+        cell("F", currentX + leafWidth, headerBottom, leafWidth, headerRowHeight);
+        currentX += leafWidth * 2;
+      });
+    } else {
+      cell("M", currentX, headerBottom, leafWidth, headerRowHeight * 2);
+      cell("F", currentX + leafWidth, headerBottom, leafWidth, headerRowHeight * 2);
+      currentX += leafWidth * 2;
+    }
+  };
+  drawGenderPair("SSgt", 2);
+  drawGenderPair("Warrant Officer", 4, ["Working", "Studying"]);
+  drawGenderPair("Officer (Lieutenant and above)", 4, ["Working", "Studying"]);
+  drawGenderPair("Total", 2);
+
+  const dataY = headerBottom - dataHeight;
+  cell("Count", x, dataY, firstWidth, dataHeight, white, "left");
+  values.forEach((value, index) => {
+    page.drawRectangle({ x: x + firstWidth + leafWidth * index, y: dataY, width: leafWidth, height: dataHeight, color: white, borderColor: line, borderWidth: 0.7 });
+    drawTextInCell(page, value, x + firstWidth + leafWidth * index, dataY, leafWidth, dataHeight, regular, 7.1);
+  });
+}
+
 export async function generateCompanyStatisticsPdf(input: CompanyStatisticsPdfInput) {
   const document = await PDFDocument.create();
   document.setTitle(`Company Statistics ${input.year}`);
@@ -106,14 +148,12 @@ export async function generateCompanyStatisticsPdf(input: CompanyStatisticsPdfIn
   const membershipWidths = [172, ...Array(10).fill((contentWidth - 172) / 10)];
   drawTable(page, { x: margin, top: 495, widths: membershipWidths, headers: membershipHeaders, rows: input.membershipRows, regular, bold, headerHeight: 26, rowHeight: 20, bodyFill: palePurple, firstColumnBold: true });
 
-  const officerHeaders = ["(C) Officers", "SSgt M", "SSgt F", "WO working M", "WO working F", "WO studying M", "WO studying F", "Officer working M", "Officer working F", "Officer studying M", "Officer studying F", "Total M", "Total F"];
-  const officerWidths = [136, ...Array(12).fill((contentWidth - 136) / 12)];
-  drawTable(page, { x: margin, top: 400, widths: officerWidths, headers: officerHeaders, rows: [["Count", ...input.officerValues]], regular, bold, headerHeight: 30, rowHeight: 20, firstColumnBold: true });
+  drawOfficerTable(page, margin, 400, contentWidth, input.officerValues, regular, bold);
 
-  page.drawRectangle({ x: margin, y: 330, width: 256, height: 22, color: paleCyan, borderColor: line, borderWidth: 0.7 });
-  page.drawText(`TOTAL MEMBERSHIP AS AT ${input.year} (A+B+C)`, { x: margin + 6, y: 337, size: 7.2, font: bold, color: ink });
-  page.drawRectangle({ x: margin + 256, y: 330, width: 38, height: 22, color: white, borderColor: line, borderWidth: 0.7 });
-  drawTextInCell(page, input.totalMembership, margin + 256, 330, 38, 22, bold, 8);
+  page.drawRectangle({ x: margin, y: 315, width: 256, height: 22, color: paleCyan, borderColor: line, borderWidth: 0.7 });
+  page.drawText(`TOTAL MEMBERSHIP AS AT ${input.year} (A+B+C)`, { x: margin + 6, y: 322, size: 7.2, font: bold, color: ink });
+  page.drawRectangle({ x: margin + 256, y: 315, width: 38, height: 22, color: white, borderColor: line, borderWidth: 0.7 });
+  drawTextInCell(page, input.totalMembership, margin + 256, 315, 38, 22, bold, 8);
 
   const gap = 24;
   const columnWidth = (contentWidth - gap) / 2;
