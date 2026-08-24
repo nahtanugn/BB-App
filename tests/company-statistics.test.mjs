@@ -43,6 +43,21 @@ test("company statistics separates the working screen into clear report stages",
   assert.match(styles, /@media \(max-width: 720px\)[^{]*\{[^}]*\.company-statistics-page/s);
 });
 
+test("company statistics exports a dedicated official report with a useful filename", () => {
+  const source = read("app/CompanyStatisticsCentre.tsx");
+  const pdf = read("app/lib/company-statistics-pdf.ts");
+  assert.match(source, /const title = `Company Statistics \$\{year\}`/);
+  assert.match(source, /popup\.document\.title = title/);
+  assert.match(source, /link\.download = `Company Statistics \$\{year\}\.pdf`/);
+  assert.match(source, /generateCompanyStatisticsPdf/);
+  assert.match(pdf, /document\.addPage\(\[841\.89, 595\.28\]\)/);
+  assert.match(pdf, /ASSOCIATE MEMBERS AND ALUMNI/);
+  assert.match(pdf, /FOR OFFICER USE ONLY/);
+  assert.match(source, /Associate Members and Alumni/);
+  assert.match(source, /For Officer Use Only/);
+  assert.doesNotMatch(source, /cloneNode\(true\)/);
+});
+
 test("company statistics is reachable from Manage and the shared shell", () => {
   assert.match(read("app/ManageHub.tsx"), /company-statistics/);
   assert.match(read("app/AppShell.tsx"), /Company Statistics/);
