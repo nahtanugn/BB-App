@@ -3789,6 +3789,17 @@ button:disabled { opacity: .62; cursor: wait; }
 }
 
 @media (max-width: 760px) {
+  /* iOS Safari automatically zooms focused controls whose rendered text is
+     smaller than 16px. Keep every keyboard-entry control at the native-safe
+     size so forms remain at the user's chosen page zoom while typing. */
+  :is(
+    input:not([type="checkbox"]):not([type="radio"]):not([type="hidden"]):not([type="color"]),
+    select,
+    textarea
+  ) {
+    font-size: 16px !important;
+  }
+
   .unified-app-content :is(
     input:not([type="checkbox"]):not([type="radio"]):not([type="hidden"]):not([type="file"]):not([type="color"]),
     select,

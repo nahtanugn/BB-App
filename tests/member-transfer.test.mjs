@@ -54,5 +54,7 @@ test("shared form controls use an explicit consistent size in Safari and mobile"
   assert.match(css, /Final shared form-control sizing/);
   assert.match(css, /height: 48px !important/);
   assert.match(css, /height: 52px !important/);
+  assert.match(css, /iOS Safari automatically zooms focused controls/);
+  assert.match(css, /font-size: 16px !important/);
   assert.match(css, /\.school-dropdown-trigger/);
 });
