@@ -109,7 +109,7 @@ async function getData(year: number) {
   const ethnicityTotals = { ...emptyEthnicityCounts() };
   for (const key of [...ethnicityGroups, "Unclassified"] as const) ethnicityTotals[key] = memberEthnicity[key] + officerEthnicity[key];
   const officerCounts: Record<string, { M: number; F: number; unknown: number }> = {};
-  const officerFormCounts = { ssgtM: 0, ssgtF: 0, officerWorkingM: 0, officerWorkingF: 0, officerStudyingM: 0, officerStudyingF: 0, totalM: 0, totalF: 0 };
+  const officerFormCounts = { ssgtM: 0, ssgtF: 0, warrantWorkingM: 0, warrantWorkingF: 0, warrantStudyingM: 0, warrantStudyingF: 0, officerWorkingM: 0, officerWorkingF: 0, officerStudyingM: 0, officerStudyingF: 0, totalM: 0, totalF: 0 };
   for (const officer of officers) {
     officerCounts[officer.officer_rank] ??= { M: 0, F: 0, unknown: 0 };
     if (officer.gender === "M") officerCounts[officer.officer_rank].M += 1;
@@ -119,7 +119,10 @@ async function getData(year: number) {
     officerFormCounts[officer.gender === "M" ? "totalM" : "totalF"] += 1;
     const gender = officer.gender;
     if (officer.officer_rank === "Staff Sergeant") officerFormCounts[gender === "M" ? "ssgtM" : "ssgtF"] += 1;
-    else {
+    else if (officer.officer_rank === "Warrant Officer") {
+      const work = officer.officer_work_status === "studying" ? "Studying" : "Working";
+      officerFormCounts[`warrant${work}${gender}` as keyof typeof officerFormCounts] += 1;
+    } else {
       const work = officer.officer_work_status === "studying" ? "Studying" : "Working";
       officerFormCounts[`officer${work}${gender}` as keyof typeof officerFormCounts] += 1;
     }

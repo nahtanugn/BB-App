@@ -106,8 +106,8 @@ export async function generateCompanyStatisticsPdf(input: CompanyStatisticsPdfIn
   const membershipWidths = [172, ...Array(10).fill((contentWidth - 172) / 10)];
   drawTable(page, { x: margin, top: 495, widths: membershipWidths, headers: membershipHeaders, rows: input.membershipRows, regular, bold, headerHeight: 26, rowHeight: 20, bodyFill: palePurple, firstColumnBold: true });
 
-  const officerHeaders = ["(C) Officers", "SSgt M", "SSgt F", "Officer working M", "Officer working F", "Officer studying M", "Officer studying F", "Total M", "Total F"];
-  const officerWidths = [172, ...Array(8).fill((contentWidth - 172) / 8)];
+  const officerHeaders = ["(C) Officers", "SSgt M", "SSgt F", "WO working M", "WO working F", "WO studying M", "WO studying F", "Officer working M", "Officer working F", "Officer studying M", "Officer studying F", "Total M", "Total F"];
+  const officerWidths = [136, ...Array(12).fill((contentWidth - 136) / 12)];
   drawTable(page, { x: margin, top: 400, widths: officerWidths, headers: officerHeaders, rows: [["Count", ...input.officerValues]], regular, bold, headerHeight: 30, rowHeight: 20, firstColumnBold: true });
 
   page.drawRectangle({ x: margin, y: 330, width: 256, height: 22, color: paleCyan, borderColor: line, borderWidth: 0.7 });
