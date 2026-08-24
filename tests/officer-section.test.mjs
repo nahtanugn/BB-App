@@ -21,6 +21,8 @@ test("Officer Section stores statistics classifications on existing accounts", (
   assert.match(api, /officer_profile_updated/);
   for (const field of ["officer_rank", "gender", "ethnicity", "religion", "spiritual_status", "officer_work_status"]) assert.match(api, new RegExp(field));
   for (const rank of ["Staff Sergeant", "Warrant Officer", "Lieutenant", "Captain", "Honorary Captain", "Chaplain"]) assert.match(page, new RegExp(rank));
+  assert.match(page, /Religion \(optional\)/);
   assert.match(page, /Spiritual status \(optional\)/);
+  assert.doesNotMatch(api, /Select the officer's religion/);
   assert.match(page, /role === "viewer"/);
 });

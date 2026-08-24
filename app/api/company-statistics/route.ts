@@ -93,11 +93,11 @@ async function getData(year: number) {
   const attendance = await env.DB.prepare(`SELECT COUNT(*) AS sessions, SUM(CASE WHEN ar.status IN ('present','absent','excused') THEN 1 ELSE 0 END) AS marked
     FROM attendance_sessions s LEFT JOIN attendance_records ar ON ar.session_id = s.id
     WHERE substr(s.meeting_date,1,4) = ? AND s.meeting_date <= date('now')`).bind(String(year)).first<{ sessions: number; marked: number }>();
-  const missingMembers = members.filter((member) => !member.gender || !member.ethnicity || !member.spiritual_status).map((member) => ({ id: member.id, name: member.name, section: "Member" }));
-  const missingOfficers = officers.filter((officer) => !officer.gender || !officer.ethnicity || !officer.spiritual_status || !officer.officer_work_status).map((officer) => ({ id: officer.id, name: officer.name, section: "Officer" }));
+  const missingMembers = members.filter((member) => !member.gender || !member.ethnicity).map((member) => ({ id: member.id, name: member.name, section: "Member" }));
+  const missingOfficers = officers.filter((officer) => !officer.gender || !officer.ethnicity || !officer.officer_work_status).map((officer) => ({ id: officer.id, name: officer.name, section: "Officer" }));
   const calculated = { memberCount: members.length, officerCount: officers.length, totalMembership: members.length + officers.length, counts, officerCounts, ethnicity: { members: memberEthnicity, officers: officerEthnicity, totals: ethnicityTotals }, spirituality: { members: memberSpirituality, officers: officerSpirituality }, attendance: { sessions: Number(attendance?.sessions || 0), marked: Number(attendance?.marked || 0) }, missingClassification: [...missingMembers, ...missingOfficers], members, officers };
   const reviewed = inputs.classificationComplete === true;
-  const validation = { missingClassification: calculated.missingClassification.length, warnings: calculated.missingClassification.length && !reviewed ? ["Some members or officers need gender, ethnicity, spiritual status and work/study classification before finalisation."] : [], canFinalize: calculated.missingClassification.length === 0 || reviewed };
+  const validation = { missingClassification: calculated.missingClassification.length, warnings: calculated.missingClassification.length && !reviewed ? ["Some members or officers need gender, ethnicity and work/study classification before finalisation."] : [], canFinalize: calculated.missingClassification.length === 0 || reviewed };
   return { year, record, inputs, calculated, validation, memberStatus: [...statuses.values()] };
 }
 

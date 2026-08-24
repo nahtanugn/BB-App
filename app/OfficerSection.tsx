@@ -21,7 +21,7 @@ const malaysiaEthnicities = ["Malay", "Chinese", "Indian", "Iban", "Bidayuh", "M
 const religions = ["Christianity", "Islam", "Buddhism", "Hinduism", "Sikhism", "Taoism / Chinese Traditional Religion", "Traditional / Indigenous Beliefs", "Other", "No religion"];
 
 function profileStatus(officer: Officer) {
-  const fields = [officer.officer_rank, officer.gender, officer.ethnicity, officer.religion, officer.officer_work_status];
+  const fields = [officer.officer_rank, officer.gender, officer.ethnicity, officer.officer_work_status];
   const complete = fields.filter(Boolean).length;
   return { complete: complete === fields.length, percent: Math.round((complete / fields.length) * 100) };
 }
@@ -135,7 +135,7 @@ export default function OfficerSection({ role }: { role: string }) {
             <label>Officer rank<select name="officerRank" required defaultValue={editing.officer_rank}><option value="">Select rank</option>{officerRanks.map((rank) => <option key={rank}>{rank}</option>)}</select></label>
             <label>Gender<select name="gender" required defaultValue={editing.gender}><option value="">Select gender</option><option value="M">Male (M)</option><option value="F">Female (F)</option></select></label>
             <label>Ethnicity (race)<select name="ethnicity" required defaultValue={editing.ethnicity}><option value="">Select ethnicity</option>{editing.ethnicity && !malaysiaEthnicities.includes(editing.ethnicity) && <option>{editing.ethnicity}</option>}{malaysiaEthnicities.map((value) => <option key={value}>{value}</option>)}</select></label>
-            <label>Religion<select name="religion" required defaultValue={editing.religion}><option value="">Select religion</option>{editing.religion && !religions.includes(editing.religion) && <option>{editing.religion}</option>}{religions.map((value) => <option key={value}>{value}</option>)}</select></label>
+            <label>Religion (optional)<select name="religion" defaultValue={editing.religion}><option value="">Not recorded</option>{editing.religion && !religions.includes(editing.religion) && <option>{editing.religion}</option>}{religions.map((value) => <option key={value}>{value}</option>)}</select></label>
             <label>Working or studying<select name="officerWorkStatus" required defaultValue={editing.officer_work_status}><option value="">Select status</option><option value="working">Working</option><option value="studying">Studying</option></select></label>
             <label>Spiritual status (optional)<select name="spiritualStatus" defaultValue={editing.spiritual_status}><option value="">Not recorded</option><option value="accepted_christ">Accepted Christ</option><option value="baptised">Baptised</option><option value="non_believer">Non-Believer</option></select></label>
           </div>

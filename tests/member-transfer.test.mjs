@@ -35,7 +35,7 @@ test("member profiles collect and display religion separately", () => {
   assert.match(tracker, /standardReligions/);
   assert.match(tracker, /<select\s+name="religion"/);
   for (const religion of ["Christianity", "Islam", "Buddhism", "Hinduism", "Sikhism", "No religion"]) assert.match(tracker, new RegExp(religion));
-  assert.match(route, /\["Religion", religion\]/);
+  assert.doesNotMatch(route, /\["Religion", religion\]/);
   assert.match(route, /ethnicity, religion, spiritual_status/);
   assert.match(migration, /ADD COLUMN `religion` text NOT NULL DEFAULT ''/);
 });

@@ -190,7 +190,7 @@ function serviceYearsFromJoined(value: string) {
 }
 
 function memberCompleteness(member: Member) {
-  const fields: Array<[string, string]> = [["School", member.school], ["Contact number", member.contact_number], ["Emergency contact", member.emergency_contact_number], ["Email", member.email], ["Parents' name", member.parents_name], ["Gender", member.gender], ["Ethnicity", member.ethnicity], ["Religion", member.religion]];
+  const fields: Array<[string, string]> = [["School", member.school], ["Contact number", member.contact_number], ["Emergency contact", member.emergency_contact_number], ["Email", member.email], ["Parents' name", member.parents_name], ["Gender", member.gender], ["Ethnicity", member.ethnicity]];
   const missing = fields.filter(([, value]) => !value.trim()).map(([label]) => label);
   return { percent: Math.round(((fields.length - missing.length) / fields.length) * 100), missing };
 }
@@ -3220,13 +3220,12 @@ export default function AwardTracker({
                 </select>
               </label>
               <label>
-                Religion
+                Religion (optional)
                 <select
                   name="religion"
-                  required={!overrideMemberDetails}
                   defaultValue={editingMember?.religion ?? ""}
                 >
-                  <option value="">Select religion</option>
+                  <option value="">Not recorded</option>
                   {editingMember?.religion && !standardReligions.includes(editingMember.religion) && (
                     <option value={editingMember.religion}>{editingMember.religion} (existing)</option>
                   )}

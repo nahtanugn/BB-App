@@ -59,7 +59,6 @@ export async function POST(request: Request) {
     if (!genders.includes(gender))
       return Response.json({ error: "Select Male or Female" }, { status: 400 });
     if (!ethnicity) return Response.json({ error: "Select the officer's ethnicity" }, { status: 400 });
-    if (!religion) return Response.json({ error: "Select the officer's religion" }, { status: 400 });
     if (!spiritualStatuses.includes(spiritualStatus))
       return Response.json({ error: "Select a valid spiritual status" }, { status: 400 });
     if (!workStatuses.includes(officerWorkStatus))

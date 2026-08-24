@@ -47,6 +47,15 @@ test("company statistics links fixed Malaysian classifications to member and off
   assert.doesNotMatch(source, /Add ethnicity/);
 });
 
+test("religion and spiritual status remain optional classifications", () => {
+  const route = read("app/api/company-statistics/route.ts");
+  const tracker = read("app/AwardTracker.tsx");
+  assert.doesNotMatch(route, /!member\.spiritual_status/);
+  assert.doesNotMatch(route, /!officer\.spiritual_status/);
+  assert.match(tracker, /Religion \(optional\)/);
+  assert.match(tracker, /Spiritual status \(optional\)/);
+});
+
 test("officer demographic profiles are additive and available in account management", () => {
   const migration = read("drizzle/0035_demographic_profiles.sql");
   const admin = read("app/AdminCentre.tsx");
