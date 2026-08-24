@@ -31,6 +31,18 @@ test("company statistics loading failures resolve to a retryable error state", (
   assert.match(source, />Try again</);
 });
 
+test("company statistics separates the working screen into clear report stages", () => {
+  const source = read("app/CompanyStatisticsCentre.tsx");
+  const styles = read("app/globals.css");
+  for (const section of ["official-report", "data-review", "sign-off"]) {
+    assert.match(source, new RegExp(`id=\"${section}\"`));
+    assert.match(source, new RegExp(`href=\"#${section}\"`));
+  }
+  assert.match(styles, /\.stats-work-nav/);
+  assert.match(styles, /\.stats-page-section-heading/);
+  assert.match(styles, /@media \(max-width: 720px\)[^{]*\{[^}]*\.company-statistics-page/s);
+});
+
 test("company statistics is reachable from Manage and the shared shell", () => {
   assert.match(read("app/ManageHub.tsx"), /company-statistics/);
   assert.match(read("app/AppShell.tsx"), /Company Statistics/);
