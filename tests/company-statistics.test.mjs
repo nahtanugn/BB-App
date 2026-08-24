@@ -17,6 +17,16 @@ test("company statistics route enforces roles, locks final years, and excludes f
   assert.match(route, /row\.status === "final"/);
   assert.match(route, /s\.meeting_date <= date\('now'\)/);
   assert.match(route, /action === "reopen"/);
+  assert.match(route, /COUNT\(DISTINCT s\.id\) AS sessions/);
+  assert.match(route, /Associate Member and Alumni totals are temporarily unavailable/);
+});
+
+test("company statistics loading failures resolve to a retryable error state", () => {
+  const source = read("app/CompanyStatisticsCentre.tsx");
+  assert.match(source, /setLoading\(false\)/);
+  assert.match(source, /controller\.abort\(\)/);
+  assert.match(source, /Statistics could not be loaded/);
+  assert.match(source, />Try again</);
 });
 
 test("company statistics is reachable from Manage and the shared shell", () => {

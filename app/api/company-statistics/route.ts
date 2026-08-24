@@ -62,9 +62,26 @@ function countMap(rows: Member[], statuses: Map<number, Status>, statusName: str
 
 async function getData(year: number) {
   const record = await env.DB.prepare("SELECT * FROM company_statistics WHERE reporting_year = ? LIMIT 1").bind(year).first<Db>();
-  const members = (await env.DB.prepare("SELECT id,name,rank,section,joined_year,COALESCE(gender,'') gender,COALESCE(ethnicity,'') ethnicity,COALESCE(spiritual_status,'') spiritual_status,COALESCE(accepted_christ,0) accepted_christ,COALESCE(baptised,0) baptised FROM members WHERE is_demo = 0 AND section IN ('senior', 'junior') ORDER BY name").all<Member>()).results;
-  const officers = (await env.DB.prepare("SELECT id,name,email,COALESCE(officer_rank,'') officer_rank,COALESCE(gender,'') gender,COALESCE(ethnicity,'') ethnicity,COALESCE(spiritual_status,'') spiritual_status,COALESCE(officer_work_status,'') officer_work_status FROM users WHERE active = 1 AND TRIM(COALESCE(officer_rank,'')) != '' ORDER BY name COLLATE NOCASE").all<Officer>()).results;
-  const associates = (await env.DB.prepare("SELECT classification,gender,work_status FROM associates_and_alumni WHERE active = 1 ORDER BY name COLLATE NOCASE").all<Associate>()).results;
+  const dataWarnings: string[] = [];
+  let members: Member[];
+  try {
+    members = (await env.DB.prepare("SELECT id,name,rank,section,joined_year,COALESCE(gender,'') gender,COALESCE(ethnicity,'') ethnicity,COALESCE(spiritual_status,'') spiritual_status,COALESCE(accepted_christ,0) accepted_christ,COALESCE(baptised,0) baptised FROM members WHERE is_demo = 0 AND section IN ('senior', 'junior') ORDER BY name").all<Member>()).results;
+  } catch {
+    members = (await env.DB.prepare("SELECT id,name,rank,section,joined_year,'M' gender,'' ethnicity,'' spiritual_status,0 accepted_christ,0 baptised FROM members WHERE section IN ('senior', 'junior') ORDER BY name").all<Member>()).results;
+    dataWarnings.push("Member demographic fields are not available yet. Apply the latest database migrations before finalising.");
+  }
+  let officers: Officer[] = [];
+  try {
+    officers = (await env.DB.prepare("SELECT id,name,email,COALESCE(officer_rank,'') officer_rank,COALESCE(gender,'') gender,COALESCE(ethnicity,'') ethnicity,COALESCE(spiritual_status,'') spiritual_status,COALESCE(officer_work_status,'') officer_work_status FROM users WHERE active = 1 AND TRIM(COALESCE(officer_rank,'')) != '' ORDER BY name COLLATE NOCASE").all<Officer>()).results;
+  } catch {
+    dataWarnings.push("Officer classifications could not be loaded. Apply the latest database migrations before finalising.");
+  }
+  let associates: Associate[] = [];
+  try {
+    associates = (await env.DB.prepare("SELECT classification,gender,work_status FROM associates_and_alumni WHERE active = 1 ORDER BY name COLLATE NOCASE").all<Associate>()).results;
+  } catch {
+    dataWarnings.push("Associate Member and Alumni totals are temporarily unavailable.");
+  }
   const statuses = new Map<number, Status>();
   if (record) for (const row of (await env.DB.prepare("SELECT member_id,membership_status,category_override,gender_override,ethnicity_override FROM company_statistics_member_status WHERE statistics_id = ?").bind(record.id).all<Status>()).results) statuses.set(row.member_id, row);
   let inputs = emptyPayload();
@@ -117,15 +134,21 @@ async function getData(year: number) {
     const gender = person.gender === "F" ? "F" : "M";
     group[`${work}${gender}` as keyof typeof group] += 1;
   }
-  const attendance = await env.DB.prepare(`SELECT COUNT(*) AS sessions, SUM(CASE WHEN ar.status IN ('present','absent','excused') THEN 1 ELSE 0 END) AS marked
-    FROM attendance_sessions s LEFT JOIN attendance_records ar ON ar.session_id = s.id
-    WHERE substr(s.meeting_date,1,4) = ? AND s.meeting_date <= date('now')`).bind(String(year)).first<{ sessions: number; marked: number }>();
+  let attendance: { sessions: number; marked: number } | null = null;
+  try {
+    attendance = await env.DB.prepare(`SELECT COUNT(DISTINCT s.id) AS sessions, SUM(CASE WHEN ar.status IN ('present','absent','excused') THEN 1 ELSE 0 END) AS marked
+      FROM attendance_sessions s LEFT JOIN attendance_records ar ON ar.session_id = s.id
+      WHERE substr(s.meeting_date,1,4) = ? AND s.meeting_date <= date('now')`).bind(String(year)).first<{ sessions: number; marked: number }>();
+  } catch {
+    dataWarnings.push("Attendance summary is temporarily unavailable.");
+  }
   const missingMembers = members.filter((member) => !member.gender || !member.ethnicity).map((member) => ({ id: member.id, name: member.name, section: "Member" }));
   const missingOfficers = officers.filter((officer) => !officer.gender || !officer.ethnicity || !officer.officer_work_status).map((officer) => ({ id: officer.id, name: officer.name, section: "Officer" }));
   const memberStatus = members.map((member) => { const status = statuses.get(member.id); return { member_id: member.id, name: member.name, membership_status: annualStatus(member, status, year), category_override: status?.category_override || "", gender_override: status?.gender_override || "", ethnicity_override: status?.ethnicity_override || "", inferred: !status }; });
   const calculated = { memberCount: members.length, officerCount: officers.length, totalMembership: members.length + officers.length, counts, officerCounts, officerFormCounts, otherCounts, ethnicity: { members: memberEthnicity, officers: officerEthnicity, totals: ethnicityTotals }, spirituality: { members: memberSpirituality, officers: officerSpirituality }, attendance: { sessions: Number(attendance?.sessions || 0), marked: Number(attendance?.marked || 0) }, missingClassification: [...missingMembers, ...missingOfficers], members, officers };
   const reviewed = inputs.classificationComplete === true;
-  const validation = { missingClassification: calculated.missingClassification.length, warnings: calculated.missingClassification.length && !reviewed ? ["Some members or officers need gender, ethnicity and work/study classification before finalisation."] : [], canFinalize: calculated.missingClassification.length === 0 || reviewed };
+  const classificationWarnings = calculated.missingClassification.length && !reviewed ? ["Some members or officers need gender, ethnicity and work/study classification before finalisation."] : [];
+  const validation = { missingClassification: calculated.missingClassification.length, warnings: [...dataWarnings, ...classificationWarnings], canFinalize: dataWarnings.length === 0 && (calculated.missingClassification.length === 0 || reviewed) };
   return { year, record, inputs, calculated, validation, memberStatus };
 }
 
