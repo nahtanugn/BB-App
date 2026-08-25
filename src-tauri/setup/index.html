@@ -48,6 +48,8 @@
       .tutorial-list ol { margin: 0; padding-left: 22px; color: #475569; font-size: 14px; line-height: 1.55; }
       .tutorial-list li + li { margin-top: 6px; }
       .hint { margin: 11px 0 0; font-size: 14px; }
+      .link-status { min-height: 22px; margin: 10px 0 0; color: #475569; font-size: 14px; font-weight: 700; }
+      .link-status.error { color: #b42318; }
       .error { min-height: 24px; color: #b42318; font-size: 14px; font-weight: 700; }
       .saved { padding: 18px; border-radius: 16px; background: #f3f7fb; overflow-wrap: anywhere; }
       [hidden] { display: none !important; }
@@ -135,6 +137,7 @@
               <h2>Deploy the company app</h2>
               <p>Open the guided Cloudflare installer, sign in and allow it to create a company copy of BB App.</p>
               <a class="button" id="deploy" href="https://deploy.workers.cloudflare.com/?url=https://github.com/nahtanugn/BB-App" target="_blank" rel="noreferrer">Open Cloudflare setup</a>
+              <p class="link-status" id="deploy-status" role="status" aria-live="polite"></p>
             </div>
           </li>
           <li>
@@ -204,6 +207,7 @@
       const input = document.querySelector("#url");
       const error = document.querySelector("#error");
       const savedUrl = document.querySelector("#saved-url");
+      const deployStatus = document.querySelector("#deploy-status");
       let timer;
 
       function show(view) {
@@ -218,6 +222,25 @@
         return candidate.toString();
       }
       function openApp(value) { window.location.replace(value); }
+      async function openExternalLink(anchor) {
+        const value = anchor.href;
+        try {
+          if (window.__TAURI__?.opener?.openUrl) {
+            await window.__TAURI__.opener.openUrl(value);
+            if (anchor.id === "deploy") deployStatus.textContent = "Cloudflare setup opened in your browser.";
+            return;
+          }
+          const opened = window.open(value, "_blank", "noopener,noreferrer");
+          if (!opened) window.location.assign(value);
+        } catch (reason) {
+          if (anchor.id === "deploy") {
+            deployStatus.textContent = "The browser could not be opened. Copy this link instead: " + value;
+            deployStatus.classList.add("error");
+          } else {
+            window.location.assign(value);
+          }
+        }
+      }
       function showOpening(value) {
         show(opening); savedUrl.textContent = value;
         timer = window.setTimeout(() => openApp(value), 2600);
@@ -225,6 +248,10 @@
       document.querySelector("#start-new").addEventListener("click", () => show(newCompany));
       document.querySelector("#start-existing").addEventListener("click", () => { show(setup); input.focus(); });
       document.querySelector("#open-tutorial").addEventListener("click", () => show(tutorial));
+      document.querySelectorAll("a[target='_blank']").forEach(anchor => anchor.addEventListener("click", event => {
+        event.preventDefault();
+        openExternalLink(anchor);
+      }));
       document.querySelector("#new-ready").addEventListener("click", () => { show(setup); input.focus(); });
       document.querySelectorAll(".back").forEach(button => button.addEventListener("click", () => show(choice)));
       document.querySelector("#form").addEventListener("submit", event => {

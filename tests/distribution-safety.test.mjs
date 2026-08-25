@@ -19,8 +19,11 @@ test("the distribution contains generic deployment configuration and no tracked 
   const deploymentConfig = await readFile(new URL("../scripts/create-wrangler-config.mjs", import.meta.url), "utf8");
   const desktop = await readFile(new URL("../.github/workflows/desktop-release.yml", import.meta.url), "utf8");
   const tauri = await readFile(new URL("../src-tauri/tauri.conf.json", import.meta.url), "utf8");
+  const tauriCargo = await readFile(new URL("../src-tauri/Cargo.toml", import.meta.url), "utf8");
+  const tauriSource = await readFile(new URL("../src-tauri/src/lib.rs", import.meta.url), "utf8");
+  const tauriCapability = await readFile(new URL("../src-tauri/capabilities/main.json", import.meta.url), "utf8");
   const setup = await readFile(new URL("../src-tauri/setup/index.html", import.meta.url), "utf8");
-  const source = `${config}\n${migrations}\n${oneClick}\n${packageJson}\n${readme}\n${deploy}\n${deploymentConfig}\n${desktop}\n${tauri}\n${setup}`;
+  const source = `${config}\n${migrations}\n${oneClick}\n${packageJson}\n${readme}\n${deploy}\n${deploymentConfig}\n${desktop}\n${tauri}\n${tauriCargo}\n${tauriSource}\n${tauriCapability}\n${setup}`;
   const legacyCompanyName = "11" + "KCHBB";
   const legacyDomain = "app." + "11kchbb.workers.dev";
 
@@ -44,6 +47,11 @@ test("the distribution contains generic deployment configuration and no tracked 
   assert.doesNotMatch(desktop, /vars\.APP_URL|DESKTOP_APP_NAME|DESKTOP_PUBLISHER/);
   assert.match(desktop, /BB-App-Base/);
   assert.match(tauri, /"frontendDist": "setup"/);
+  assert.match(tauri, /"withGlobalTauri": true/);
+  assert.match(tauriCargo, /tauri-plugin-opener = "2"/);
+  assert.match(tauriSource, /tauri_plugin_opener::init/);
+  assert.match(tauriCapability, /opener:allow-open-url/);
+  assert.match(tauriCapability, /deploy\.workers\.cloudflare\.com/);
   assert.match(setup, /bb-company-app-url/);
   assert.match(setup, /Company app address/);
   assert.match(setup, /Set up a new company/);
@@ -53,5 +61,6 @@ test("the distribution contains generic deployment configuration and no tracked 
   assert.match(setup, /ADMIN_EMAIL/);
   assert.match(setup, /SETUP_TOKEN/);
   assert.match(setup, /deploy\.workers\.cloudflare\.com/);
+  assert.match(setup, /window\.__TAURI__\?\.opener\?\.openUrl/);
   assert.match(setup, /empty, private BB App/);
 });
