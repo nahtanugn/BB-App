@@ -42,6 +42,11 @@
       .step-content .button { width: auto; min-height: 48px; margin: 14px 0 0; padding-inline: 22px; }
       code { padding: 2px 6px; border-radius: 6px; color: #08345f; background: #e5f1fc; font: 700 .9em ui-monospace, SFMono-Regular, Menlo, monospace; overflow-wrap: anywhere; }
       .notice { margin: 20px 0 0; padding: 14px 16px; border-left: 4px solid #e4b634; border-radius: 10px; color: #475569; background: #fff9e9; font-size: 14px; line-height: 1.5; }
+      .tutorial-list { display: grid; gap: 12px; margin: 24px 0; }
+      .tutorial-list article { padding: 18px; border: 1px solid #d8e3ee; border-radius: 16px; background: #f8fbfe; }
+      .tutorial-list h2 { margin: 0 0 8px; color: #08345f; font-size: 18px; }
+      .tutorial-list ol { margin: 0; padding-left: 22px; color: #475569; font-size: 14px; line-height: 1.55; }
+      .tutorial-list li + li { margin-top: 6px; }
       .hint { margin: 11px 0 0; font-size: 14px; }
       .error { min-height: 24px; color: #b42318; font-size: 14px; font-weight: 700; }
       .saved { padding: 18px; border-radius: 16px; background: #f3f7fb; overflow-wrap: anywhere; }
@@ -78,6 +83,35 @@
             <button type="button" class="secondary" id="start-existing">Enter app address</button>
           </article>
         </div>
+        <button type="button" class="tertiary" id="open-tutorial">Help &amp; tutorials</button>
+      </section>
+
+      <section id="tutorial" hidden>
+        <h1>Getting started</h1>
+        <p>Choose the guide that matches what you are trying to do.</p>
+        <div class="tutorial-list">
+          <article>
+            <h2>Officer or Member joining an existing company</h2>
+            <ol>
+              <li>Ask the company administrator for the BB App web address and your account details.</li>
+              <li>Choose “Connect an existing company” and enter the address once.</li>
+              <li>Sign in with your own email and temporary password.</li>
+              <li>Change the temporary password and complete the onboarding checklist.</li>
+              <li>Open Help &amp; tutorials from the signed-in app whenever you need role-specific guidance.</li>
+            </ol>
+          </article>
+          <article>
+            <h2>Administrator creating a new company</h2>
+            <ol>
+              <li>Return to the welcome screen and choose “Set up a new company.”</li>
+              <li>Follow the six-step administrator guide to create the Cloudflare app and private database.</li>
+              <li>Create the first administrator, apply company branding and then create user accounts.</li>
+              <li>Share the company app address with Officers and Members; never share the private setup code.</li>
+            </ol>
+          </article>
+        </div>
+        <a class="button secondary" href="https://github.com/nahtanugn/BB-App/raw/main/tutorial-output/BB-App-User-Guide.pptx" target="_blank" rel="noreferrer">Download tutorial slides</a>
+        <button type="button" class="tertiary back">Back</button>
       </section>
 
       <section id="new-company" hidden>
@@ -164,6 +198,7 @@
       const key = "bb-company-app-url";
       const choice = document.querySelector("#choice");
       const newCompany = document.querySelector("#new-company");
+      const tutorial = document.querySelector("#tutorial");
       const setup = document.querySelector("#setup");
       const opening = document.querySelector("#opening");
       const input = document.querySelector("#url");
@@ -172,7 +207,7 @@
       let timer;
 
       function show(view) {
-        [choice, newCompany, setup, opening].forEach(section => { section.hidden = section !== view; });
+        [choice, newCompany, tutorial, setup, opening].forEach(section => { section.hidden = section !== view; });
       }
 
       function normalise(value) {
@@ -189,6 +224,7 @@
       }
       document.querySelector("#start-new").addEventListener("click", () => show(newCompany));
       document.querySelector("#start-existing").addEventListener("click", () => { show(setup); input.focus(); });
+      document.querySelector("#open-tutorial").addEventListener("click", () => show(tutorial));
       document.querySelector("#new-ready").addEventListener("click", () => { show(setup); input.focus(); });
       document.querySelectorAll(".back").forEach(button => button.addEventListener("click", () => show(choice)));
       document.querySelector("#form").addEventListener("submit", event => {

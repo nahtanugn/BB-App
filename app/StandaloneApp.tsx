@@ -26,6 +26,7 @@ import CompanyStatisticsCentre from "./CompanyStatisticsCentre";
 import OfficerSection from "./OfficerSection";
 import AssociatesAlumniSection from "./AssociatesAlumniSection";
 import CompanyOperationsCentre, { type OperationsModule } from "./CompanyOperationsCentre";
+import HelpCentre from "./HelpCentre";
 import { brandingLogoStyle, useBranding } from "./BrandingContext";
 
 type User = {
@@ -144,7 +145,7 @@ export default function StandaloneApp() {
       ["nco", "squad_leader"].includes(auth.user.role) ||
       hasCustomTrackerAccess;
     const allowed =
-      ["home", "manage"].includes(requested) ||
+      ["home", "manage", "help"].includes(requested) ||
       ["resources", "uniforms", "announcements"].includes(requested) ||
       requested === "events" ||
       (["parades", "duties", "committees", "promotion", "service", "leave", "band"].includes(requested) &&
@@ -276,6 +277,7 @@ export default function StandaloneApp() {
         promotion: "promotion",
         service: "service",
         band: "band",
+        help: "help",
       };
       navigate(aliases[target] ?? target, true);
     }, 0);
@@ -741,6 +743,7 @@ export default function StandaloneApp() {
       promotion: "promotion",
       service: "service",
       band: "band",
+      help: "help",
       manage: "manage",
       home: "home",
     };
@@ -776,6 +779,8 @@ export default function StandaloneApp() {
     page = <AutomationCentre readOnly={currentUser.role === "viewer"} />;
   else if (route === "resources")
     page = <ResourceLibrary user={currentUser} />;
+  else if (route === "help")
+    page = <HelpCentre />;
   else if (route === "awards" && currentUser.role === "member")
     page = <main className="member-progress-page"><MemberProgress user={currentUser} /></main>;
   else if (route === "events")

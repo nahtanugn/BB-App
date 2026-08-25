@@ -32,7 +32,8 @@ export type AppRoute =
   | "leave"
   | "promotion"
   | "service"
-  | "band";
+  | "band"
+  | "help";
 
 export type ShellUser = {
   name: string;
@@ -86,6 +87,7 @@ const routeHub: Record<AppRoute, AppHub> = {
   automation: "manage",
   exports: "manage",
   "company-statistics": "manage",
+  help: "home",
 };
 
 export function hubForRoute(route: AppRoute): AppHub {
@@ -298,6 +300,9 @@ export default function AppShell({
           ))}
         </nav>
         <div className="unified-user">
+          <button type="button" className="unified-help" onClick={() => navigate("help")}>
+            <span aria-hidden="true">?</span><div><strong>Help &amp; tutorials</strong><small>Guides for every role</small></div>
+          </button>
           <button type="button" className="unified-notifications" onClick={onNotifications}>
             <span aria-hidden="true">♢</span><div><strong>Notifications</strong><small>{notificationCount ? `${notificationCount} unread` : "No unread updates"}</small></div>{notificationCount > 0 && <b>{notificationCount > 99 ? "99+" : notificationCount}</b>}
           </button>
@@ -368,6 +373,9 @@ export default function AppShell({
               <button ref={closeButton} type="button" onClick={() => setMoreOpen(false)} aria-label="Close navigation">×</button>
             </header>
             <div className="unified-more-list">
+              <button type="button" onClick={() => navigate("help")}>
+                <span aria-hidden="true">?</span><div><strong>Help &amp; tutorials</strong><small>Learn common tasks step by step</small></div><b>›</b>
+              </button>
               <button type="button" onClick={() => { setMoreOpen(false); onNotifications(); }}>
                 <span aria-hidden="true">♢</span><div><strong>Notifications</strong><small>{notificationCount ? `${notificationCount} unread updates` : "You’re all caught up"}</small></div>{notificationCount ? <b>{notificationCount}</b> : <b>›</b>}
               </button>

@@ -49,6 +49,7 @@ test("the distribution contains generic deployment configuration and no tracked 
   assert.match(setup, /Set up a new company/);
   assert.match(setup, /Connect an existing company/);
   assert.match(setup, /Administrator setup guide/);
+  assert.match(setup, /Help &amp; tutorials/);
   assert.match(setup, /ADMIN_EMAIL/);
   assert.match(setup, /SETUP_TOKEN/);
   assert.match(setup, /deploy\.workers\.cloudflare\.com/);
