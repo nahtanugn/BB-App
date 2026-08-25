@@ -11,8 +11,8 @@
         background: #eef4f9;
       }
       * { box-sizing: border-box; }
-      body { margin: 0; min-height: 100vh; display: grid; place-items: center; padding: 24px; }
-      main { width: min(100%, 620px); background: #fff; border: 1px solid #d8e3ee; border-radius: 28px; padding: clamp(28px, 7vw, 52px); box-shadow: 0 24px 70px rgba(8,52,95,.12); }
+      body { margin: 0; min-height: 100vh; padding: 24px; }
+      main { width: min(100%, 680px); margin: 0 auto; background: #fff; border: 1px solid #d8e3ee; border-radius: 28px; padding: clamp(28px, 7vw, 52px); box-shadow: 0 24px 70px rgba(8,52,95,.12); }
       .brand { display: flex; align-items: center; gap: 18px; margin-bottom: 38px; }
       .logo { width: 72px; height: 72px; padding: 5px; flex: 0 0 auto; object-fit: contain; border: 1px solid #d8e3ee; border-radius: 18px; background: #fff; }
       .eyebrow { margin: 0 0 6px; color: #1674d1; font-size: 12px; font-weight: 800; letter-spacing: .16em; text-transform: uppercase; }
@@ -21,13 +21,39 @@
       label { display: block; margin: 28px 0 9px; color: #08345f; font-weight: 750; }
       input { width: 100%; min-height: 58px; padding: 0 17px; border: 1px solid #b9c9d8; border-radius: 14px; color: #102a43; background: #fff; font: inherit; }
       input:focus { outline: 3px solid rgba(22,116,209,.22); border-color: #1674d1; }
-      button { width: 100%; min-height: 58px; margin-top: 18px; border: 0; border-radius: 14px; color: #fff; background: #1674d1; font: inherit; font-weight: 800; cursor: pointer; }
+      button, .button { width: 100%; min-height: 58px; margin-top: 18px; border: 0; border-radius: 14px; color: #fff; background: #1674d1; font: inherit; font-weight: 800; cursor: pointer; text-decoration: none; display: inline-flex; align-items: center; justify-content: center; text-align: center; padding: 12px 18px; }
       button:hover { background: #0d63b8; }
-      button.secondary { color: #08345f; background: #eaf3fc; }
+      button.secondary, .button.secondary { color: #08345f; background: #eaf3fc; }
+      button.tertiary { min-height: 48px; color: #1674d1; background: transparent; border: 1px solid #cbd9e6; }
+      .choice-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-top: 28px; }
+      .choice { min-width: 0; padding: 22px; border: 1px solid #d8e3ee; border-radius: 18px; background: #f8fbfe; }
+      .choice:first-child { border-color: #b8d7f4; background: #f1f8ff; }
+      .choice h2 { margin: 0 0 8px; color: #08345f; font-size: 20px; }
+      .choice p { margin: 0; font-size: 15px; line-height: 1.5; }
+      .choice button { margin-top: 18px; }
+      .steps { margin: 24px 0; padding: 0; list-style: none; counter-reset: setup-step; display: grid; gap: 12px; }
+      .steps > li { counter-increment: setup-step; display: grid; grid-template-columns: 38px minmax(0, 1fr); gap: 14px; align-items: start; padding: 17px; border: 1px solid #d8e3ee; border-radius: 16px; background: #f8fbfe; color: #475569; line-height: 1.5; }
+      .steps > li::before { content: counter(setup-step); width: 36px; height: 36px; display: grid; place-items: center; border-radius: 999px; background: #08345f; color: #fff; font-weight: 800; }
+      .step-content { min-width: 0; }
+      .step-content h2 { margin: 2px 0 6px; color: #08345f; font-size: 18px; }
+      .step-content p { margin: 0; font-size: 15px; line-height: 1.5; }
+      .step-content ul { margin: 10px 0 0; padding-left: 20px; }
+      .step-content li { margin: 5px 0; font-size: 14px; }
+      .step-content .button { width: auto; min-height: 48px; margin: 14px 0 0; padding-inline: 22px; }
+      code { padding: 2px 6px; border-radius: 6px; color: #08345f; background: #e5f1fc; font: 700 .9em ui-monospace, SFMono-Regular, Menlo, monospace; overflow-wrap: anywhere; }
+      .notice { margin: 20px 0 0; padding: 14px 16px; border-left: 4px solid #e4b634; border-radius: 10px; color: #475569; background: #fff9e9; font-size: 14px; line-height: 1.5; }
       .hint { margin: 11px 0 0; font-size: 14px; }
       .error { min-height: 24px; color: #b42318; font-size: 14px; font-weight: 700; }
       .saved { padding: 18px; border-radius: 16px; background: #f3f7fb; overflow-wrap: anywhere; }
       [hidden] { display: none !important; }
+      @media (max-width: 620px) {
+        body { padding: 12px; }
+        main { margin: 0 auto; border-radius: 22px; padding: 26px 20px; }
+        .brand { margin-bottom: 28px; }
+        .logo { width: 60px; height: 60px; }
+        .choice-grid { grid-template-columns: 1fr; }
+        input, button, .button { font-size: 16px; }
+      }
     </style>
   </head>
   <body>
@@ -37,9 +63,85 @@
         <div><p class="eyebrow">Base desktop app</p><strong>BB App</strong></div>
       </div>
 
-      <section id="setup">
+      <section id="choice">
         <h1>Connect your company</h1>
-        <p>Enter the web address supplied by your company administrator. The desktop app does not contain or copy company records.</p>
+        <p>Choose the option that matches your company. A new company can create its own empty, private BB App first.</p>
+        <div class="choice-grid">
+          <article class="choice">
+            <h2>Set up a new company</h2>
+            <p>Use this if your company does not have a BB App address or any records yet.</p>
+            <button type="button" id="start-new">Start new setup</button>
+          </article>
+          <article class="choice">
+            <h2>Connect an existing company</h2>
+            <p>Use the web address supplied by your company administrator.</p>
+            <button type="button" class="secondary" id="start-existing">Enter app address</button>
+          </article>
+        </div>
+      </section>
+
+      <section id="new-company" hidden>
+        <h1>Administrator setup guide</h1>
+        <p>Follow these steps once for your company. Cloudflare will create an empty, private BB App and a unique web address—no records are copied from another company.</p>
+        <ol class="steps">
+          <li>
+            <div class="step-content">
+              <h2>Prepare the company accounts</h2>
+              <p>Use accounts controlled by the company, not a member’s temporary personal account.</p>
+              <ul>
+                <li>A verified Cloudflare account.</li>
+                <li>A GitHub account or organisation to own the app source.</li>
+                <li>The email address of the first administrator.</li>
+                <li>A private setup code containing at least 16 characters.</li>
+              </ul>
+            </div>
+          </li>
+          <li>
+            <div class="step-content">
+              <h2>Deploy the company app</h2>
+              <p>Open the guided Cloudflare installer, sign in and allow it to create a company copy of BB App.</p>
+              <a class="button" id="deploy" href="https://deploy.workers.cloudflare.com/?url=https://github.com/nahtanugn/BB-App" target="_blank" rel="noreferrer">Open Cloudflare setup</a>
+            </div>
+          </li>
+          <li>
+            <div class="step-content">
+              <h2>Complete the deployment settings</h2>
+              <ul>
+                <li>Choose a unique Worker name using letters, numbers and hyphens.</li>
+                <li>Keep the D1 database binding named <code>DB</code>.</li>
+                <li>Set <code>ADMIN_EMAIL</code> to the first administrator’s exact email.</li>
+                <li>Set <code>SETUP_TOKEN</code> to the private setup code prepared earlier.</li>
+                <li>Start deployment and wait for the build to finish successfully.</li>
+              </ul>
+            </div>
+          </li>
+          <li>
+            <div class="step-content">
+              <h2>Connect this desktop app</h2>
+              <p>Copy the new <strong>workers.dev</strong> address shown by Cloudflare, then return here and enter it.</p>
+              <button type="button" class="secondary" id="new-ready">Enter my new app address</button>
+            </div>
+          </li>
+          <li>
+            <div class="step-content">
+              <h2>Create the first administrator</h2>
+              <p>On the new app, choose first-time setup. Enter the authorised email and the same private setup code, then create a strong administrator password.</p>
+            </div>
+          </li>
+          <li>
+            <div class="step-content">
+              <h2>Finish company setup</h2>
+              <p>Complete onboarding, set the company name and logo under App branding, then create Officer and Member accounts. Share the company app address with users so they can choose “Connect an existing company.”</p>
+            </div>
+          </li>
+        </ol>
+        <button type="button" class="tertiary back">Back</button>
+        <p class="notice">Administrator setup only. Never share the setup code or administrator password with ordinary users, and never commit them to GitHub.</p>
+      </section>
+
+      <section id="setup" hidden>
+        <h1>Connect an existing company</h1>
+        <p>Enter the company’s BB App web address. The desktop app displays the shared online system but does not copy company records onto this device.</p>
         <form id="form">
           <label for="url">Company app address</label>
           <input id="url" name="url" type="url" inputmode="url" autocomplete="url" placeholder="https://your-company.workers.dev" required />
@@ -47,6 +149,7 @@
           <p class="error" id="error" role="alert"></p>
           <button type="submit">Save and open company app</button>
         </form>
+        <button type="button" class="tertiary back">Back</button>
       </section>
 
       <section id="opening" hidden>
@@ -59,12 +162,18 @@
     </main>
     <script>
       const key = "bb-company-app-url";
+      const choice = document.querySelector("#choice");
+      const newCompany = document.querySelector("#new-company");
       const setup = document.querySelector("#setup");
       const opening = document.querySelector("#opening");
       const input = document.querySelector("#url");
       const error = document.querySelector("#error");
       const savedUrl = document.querySelector("#saved-url");
       let timer;
+
+      function show(view) {
+        [choice, newCompany, setup, opening].forEach(section => { section.hidden = section !== view; });
+      }
 
       function normalise(value) {
         const candidate = new URL(value.trim());
@@ -75,9 +184,13 @@
       }
       function openApp(value) { window.location.replace(value); }
       function showOpening(value) {
-        setup.hidden = true; opening.hidden = false; savedUrl.textContent = value;
+        show(opening); savedUrl.textContent = value;
         timer = window.setTimeout(() => openApp(value), 2600);
       }
+      document.querySelector("#start-new").addEventListener("click", () => show(newCompany));
+      document.querySelector("#start-existing").addEventListener("click", () => { show(setup); input.focus(); });
+      document.querySelector("#new-ready").addEventListener("click", () => { show(setup); input.focus(); });
+      document.querySelectorAll(".back").forEach(button => button.addEventListener("click", () => show(choice)));
       document.querySelector("#form").addEventListener("submit", event => {
         event.preventDefault(); error.textContent = "";
         try { const value = normalise(input.value); localStorage.setItem(key, value); showOpening(value); }
@@ -86,7 +199,7 @@
       document.querySelector("#open").addEventListener("click", () => openApp(localStorage.getItem(key)));
       document.querySelector("#change").addEventListener("click", () => {
         window.clearTimeout(timer); const value = localStorage.getItem(key) || ""; localStorage.removeItem(key);
-        opening.hidden = true; setup.hidden = false; input.value = value; input.focus();
+        show(setup); input.value = value; input.focus();
       });
       const existing = localStorage.getItem(key);
       if (existing) showOpening(existing);

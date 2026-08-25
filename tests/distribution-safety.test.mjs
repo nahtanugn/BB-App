@@ -46,4 +46,11 @@ test("the distribution contains generic deployment configuration and no tracked 
   assert.match(tauri, /"frontendDist": "setup"/);
   assert.match(setup, /bb-company-app-url/);
   assert.match(setup, /Company app address/);
+  assert.match(setup, /Set up a new company/);
+  assert.match(setup, /Connect an existing company/);
+  assert.match(setup, /Administrator setup guide/);
+  assert.match(setup, /ADMIN_EMAIL/);
+  assert.match(setup, /SETUP_TOKEN/);
+  assert.match(setup, /deploy\.workers\.cloudflare\.com/);
+  assert.match(setup, /empty, private BB App/);
 });
