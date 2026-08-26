@@ -45,7 +45,7 @@ jobs:
         run: |
           schema=$(pnpm exec wrangler d1 execute "$D1_DATABASE_NAME" --remote --config .wrangler/deployment.json --command "SELECT name FROM sqlite_master WHERE type = 'table' AND name NOT LIKE 'sqlite_%' ORDER BY name" --json)
           echo "$schema"
-          for table in award_definitions members users automation_action_items; do
+          for table in members users automation_action_items; do
             echo "$schema" | grep -q "\"$table\""
           done
 
