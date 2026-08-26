@@ -28,9 +28,21 @@ jobs:
       - uses: actions/configure-pages@v5
       - name: Prepare setup guide
         run: |
-          mkdir -p .pages
-          cp -R docs/setup/. .pages/
-          cp public/default-bb-logo.png .pages/default-bb-logo.png
+          mkdir -p .pages/setup
+          cp -R docs/setup/. .pages/setup/
+          cp public/default-bb-logo.png .pages/setup/default-bb-logo.png
+          cat > .pages/index.html <<'HTML'
+          <!doctype html>
+          <html lang="en">
+          <head>
+            <meta charset="utf-8">
+            <meta name="viewport" content="width=device-width,initial-scale=1">
+            <meta http-equiv="refresh" content="0;url=./setup/">
+            <title>BB App Company Setup</title>
+          </head>
+          <body><p><a href="./setup/">Open the BB App company setup guide</a></p></body>
+          </html>
+          HTML
       - uses: actions/upload-pages-artifact@v3
         with:
           path: .pages
