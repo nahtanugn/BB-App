@@ -61,6 +61,8 @@ jobs:
           test -n "$D1_DATABASE_ID"
           node scripts/create-wrangler-config.mjs
       - run: pnpm build
+      - name: Bind verified production database to built Worker
+        run: node scripts/configure-built-worker.mjs
       - name: Apply additive migrations
         run: pnpm exec wrangler d1 migrations apply "$D1_DATABASE_NAME" --remote --config .wrangler/deployment.json
         env:
