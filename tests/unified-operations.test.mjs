@@ -145,7 +145,7 @@ test("automation is durable, deduplicated, permission-aware and decision-safe", 
   assert.match(health, /SELECT 1 AS healthy/);
   assert.doesNotMatch(health, /COUNT\(/);
   assert.match(workflow, /environment: production/);
-  assert.match(workflow, /d1 migrations apply/);
+  assert.match(workflow, /d1 execute[\s\S]*0039_automated_bb_guide\.sql/);
   assert.match(recovery, /time travel/i);
   assert.match(recovery, /Do not copy it into[\s\S]*GitHub artifacts/i);
 });
