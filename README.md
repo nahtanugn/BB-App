@@ -2,6 +2,8 @@
 
 [![Deploy to Cloudflare](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https://github.com/nahtanugn/BB-App)
 
+[Open the multilingual guided company setup](https://nahtanugn.github.io/BB-App/setup/)
+
 A reusable, open-source, mobile-first company management app for Boys' Brigade Junior and Senior Sections. Each deployment has its own Cloudflare Worker, D1 database, users and branding.
 
 This repository contains application source, additive database migrations, tests and deployment templates only. It does not contain a production database, member records, passwords, API tokens or private documents.
@@ -21,7 +23,7 @@ This repository contains application source, additive database migrations, tests
 
 ## Create a company deployment
 
-The recommended installation is the **Deploy to Cloudflare** button above. It creates a copy of BB App in the company's GitHub account, provisions a private D1 database, applies the database migrations and publishes the app through Cloudflare Workers.
+The recommended installation is the **multilingual guided company setup** above. It explains and checks each stage, then uses the Deploy to Cloudflare button to create a copy of BB App in the company's GitHub account, provision a private D1 database, apply the database migrations and publish the app through Cloudflare Workers.
 
 1. Sign in to the company's Cloudflare and GitHub accounts.
 2. Select **Deploy to Cloudflare** above.

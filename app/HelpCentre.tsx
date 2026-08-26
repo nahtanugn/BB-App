@@ -62,8 +62,16 @@ export default function HelpCentre() {
           <h1>Learn BB App</h1>
           <p>Short, role-based guides for connecting, signing in and completing common work safely.</p>
         </div>
-        <a className="secondary-button" href="https://github.com/nahtanugn/BB-App/raw/main/tutorial-output/BB-App-User-Guide.pptx" target="_blank" rel="noreferrer">Download slides</a>
+        <div className="help-header-actions">
+          <a className="primary-button" href="https://nahtanugn.github.io/BB-App/setup/" target="_blank" rel="noreferrer">New company setup</a>
+          <a className="secondary-button" href="https://github.com/nahtanugn/BB-App/raw/main/tutorial-output/BB-App-User-Guide.pptx" target="_blank" rel="noreferrer">Download slides</a>
+        </div>
       </header>
+
+      <section className="help-guide-callout panel">
+        <div><p className="eyebrow">BB GUIDE</p><h2>Help that follows the page you are using</h2><p>Choose <strong>Help me</strong> in the app navigation for instructions in English, 中文 or Bahasa Malaysia. The guide explains your permitted actions and remembers your progress.</p></div>
+        <a className="secondary-button" href="https://nahtanugn.github.io/BB-App/setup/" target="_blank" rel="noreferrer">Open setup guide</a>
+      </section>
 
       <section className="help-start panel">
         <div><span aria-hidden="true">1</span><div><strong>Connect</strong><small>Use the company address supplied by an administrator.</small></div></div>

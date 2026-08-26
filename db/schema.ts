@@ -205,6 +205,20 @@ export const users = sqliteTable("users", {
   createdAt: text("created_at").notNull(),
 });
 
+export const bbGuidePreferences = sqliteTable("bb_guide_preferences", {
+  userId: integer("user_id").primaryKey().references(() => users.id, { onDelete: "cascade" }),
+  language: text("language").notNull().default("en"),
+  updatedAt: text("updated_at").notNull(),
+});
+
+export const bbGuideProgress = sqliteTable("bb_guide_progress", {
+  userId: integer("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  guideKey: text("guide_key").notNull(),
+  completedStep: integer("completed_step").notNull().default(0),
+  completedAt: text("completed_at"),
+  updatedAt: text("updated_at").notNull(),
+}, (table) => [primaryKey({ columns: [table.userId, table.guideKey] })]);
+
 export const registrationDetails = sqliteTable("registration_details", {
   userId: integer("user_id").primaryKey().references(() => users.id, { onDelete: "cascade" }),
   section: text("section").notNull(),

@@ -1,0 +1,39 @@
+name: Publish setup guide
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "docs/setup/**"
+      - ".github/workflows/pages-setup-guide.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/configure-pages@v5
+      - name: Prepare setup guide
+        run: |
+          mkdir -p .pages
+          cp -R docs/setup/. .pages/
+          cp public/default-bb-logo.png .pages/default-bb-logo.png
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: .pages
+      - name: Deploy setup guide
+        id: deployment
+        uses: actions/deploy-pages@v4

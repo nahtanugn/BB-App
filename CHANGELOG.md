@@ -6,6 +6,13 @@ All notable changes to BB Company App are recorded here.
 
 ### Added
 
+- Multilingual BB Guide in English, Mandarin Chinese and Bahasa Malaysia, with
+  page-aware instructions, role explanations and per-account progress.
+- Public GitHub Pages setup assistant for new companies, including privacy-safe
+  Worker and D1 availability checks and an eight-step one-click deployment path.
+- Guided Action Centre reminders for incomplete branding, the first Officer
+  account and the school directory.
+
 - Company operations workspaces for Parade Planning, Duty Rosters, Event
   Committees, Leave Requests, Promotion Readiness, Service Hours, Band Centre
   and Emergency Roll Call.

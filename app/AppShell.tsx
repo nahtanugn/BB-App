@@ -106,6 +106,7 @@ export default function AppShell({
   actionCount = 0,
   notificationCount = 0,
   onNotifications,
+  onHelp,
   activeSection,
   onSectionChange,
   children,
@@ -121,6 +122,7 @@ export default function AppShell({
   actionCount?: number;
   notificationCount?: number;
   onNotifications: () => void;
+  onHelp: () => void;
   activeSection?: "senior" | "junior";
   onSectionChange?: (section: "senior" | "junior") => void;
   children: ReactNode;
@@ -300,8 +302,8 @@ export default function AppShell({
           ))}
         </nav>
         <div className="unified-user">
-          <button type="button" className="unified-help" onClick={() => navigate("help")}>
-            <span aria-hidden="true">?</span><div><strong>Help &amp; tutorials</strong><small>Guides for every role</small></div>
+          <button type="button" className="unified-help" onClick={onHelp}>
+            <span aria-hidden="true">?</span><div><strong>Help me</strong><small>Page-aware BB Guide</small></div>
           </button>
           <button type="button" className="unified-notifications" onClick={onNotifications}>
             <span aria-hidden="true">♢</span><div><strong>Notifications</strong><small>{notificationCount ? `${notificationCount} unread` : "No unread updates"}</small></div>{notificationCount > 0 && <b>{notificationCount > 99 ? "99+" : notificationCount}</b>}
@@ -358,6 +360,10 @@ export default function AppShell({
         </button>
       </nav>
 
+      <button type="button" className="bb-guide-launcher" onClick={onHelp} aria-label="Open BB Guide">
+        <span aria-hidden="true">?</span><strong>Help me</strong>
+      </button>
+
       {moreOpen && (
         <div className="unified-more-backdrop" role="presentation" onMouseDown={() => setMoreOpen(false)}>
           <section
@@ -373,8 +379,8 @@ export default function AppShell({
               <button ref={closeButton} type="button" onClick={() => setMoreOpen(false)} aria-label="Close navigation">×</button>
             </header>
             <div className="unified-more-list">
-              <button type="button" onClick={() => navigate("help")}>
-                <span aria-hidden="true">?</span><div><strong>Help &amp; tutorials</strong><small>Learn common tasks step by step</small></div><b>›</b>
+              <button type="button" onClick={() => { setMoreOpen(false); onHelp(); }}>
+                <span aria-hidden="true">?</span><div><strong>Help me</strong><small>Page-aware guidance for this task</small></div><b>›</b>
               </button>
               <button type="button" onClick={() => { setMoreOpen(false); onNotifications(); }}>
                 <span aria-hidden="true">♢</span><div><strong>Notifications</strong><small>{notificationCount ? `${notificationCount} unread updates` : "You’re all caught up"}</small></div>{notificationCount ? <b>{notificationCount}</b> : <b>›</b>}

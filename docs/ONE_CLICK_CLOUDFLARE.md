@@ -2,6 +2,8 @@
 
 This method gives each Boys' Brigade company an independent BB App, database, address and GitHub repository. No member data is copied from another company.
 
+For the easiest route, open the [multilingual BB Guide setup assistant](https://nahtanugn.github.io/BB-App/setup/). It remembers progress only in the current browser, checks the finished app without reading company records, and never asks for passwords, tokens or the private setup code.
+
 ## Before starting
 
 Use accounts owned by the company wherever possible:

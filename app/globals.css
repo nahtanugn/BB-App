@@ -42,6 +42,47 @@ button:focus-visible, input:focus-visible, select:focus-visible { outline: 3px s
 .branding-settings .operations-field-grid > label { align-content: start; }
 .branding-settings input[type="file"] { min-height: 52px; padding: 10px 12px; overflow: hidden; }
 .branding-install-note { margin: 0; padding: 12px 14px; border-radius: 12px; background: #eef5fc; color: #526b83; font-size: 11px; line-height: 1.55; }
+
+/* Automated BB Guide */
+.bb-guide-launcher { display: none; }
+.bb-guide-backdrop { position: fixed; inset: 0; z-index: 1200; display: flex; justify-content: flex-end; background: rgba(8, 35, 63, .52); backdrop-filter: blur(5px); }
+.bb-guide-panel { width: min(100%, 460px); height: 100%; display: flex; flex-direction: column; color: var(--navy); background: #fff; box-shadow: -24px 0 70px rgba(8, 35, 63, .2); }
+.bb-guide-panel > header { min-height: 112px; padding: 24px 26px; display: flex; align-items: center; justify-content: space-between; gap: 18px; border-bottom: 1px solid var(--line); }
+.bb-guide-panel > header h2 { margin: 4px 0 0; font-size: 32px; }
+.bb-guide-panel > header button { width: 48px; height: 48px; flex: 0 0 48px; border: 0; border-radius: 14px; color: var(--muted); background: #f1f4f7; font-size: 26px; cursor: pointer; }
+.bb-guide-scroll { min-height: 0; padding: 22px 26px calc(32px + env(safe-area-inset-bottom)); overflow-y: auto; overscroll-behavior: contain; }
+.bb-guide-language { margin: 0 0 20px; display: grid; grid-template-columns: minmax(0, 1fr) 190px; align-items: center; gap: 14px; font-weight: 750; }
+.bb-guide-language select { width: 100%; min-height: 48px; }
+.bb-guide-intro, .bb-guide-access, .bb-guide-recommendation, .bb-guide-steps { margin-top: 16px; padding: 20px; border: 1px solid var(--line); border-radius: 18px; background: #fff; }
+.bb-guide-intro { background: linear-gradient(135deg, #f3f8fd, #fffbea); }
+.bb-guide-intro h3 { margin: 5px 0 8px; font-family: Georgia, serif; font-size: 25px; }
+.bb-guide-intro p:last-child, .bb-guide-access p, .bb-guide-recommendation p { margin: 7px 0 0; color: var(--muted); line-height: 1.55; }
+.bb-guide-access { border-left: 4px solid #2d7fd3; }
+.bb-guide-recommendation { border-left: 4px solid var(--gold); }
+.bb-guide-recommendation .secondary-button { margin-top: 14px; }
+.bb-guide-progress > div { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.bb-guide-progress progress { width: 100%; height: 8px; margin-top: 12px; accent-color: #1674d1; }
+.bb-guide-steps ol { margin: 18px 0 0; padding: 0; display: grid; gap: 14px; list-style: none; }
+.bb-guide-steps li { display: grid; grid-template-columns: 34px minmax(0, 1fr); gap: 12px; align-items: start; }
+.bb-guide-steps li > span { width: 34px; height: 34px; display: grid; place-items: center; border: 1px solid #cbd9e6; border-radius: 50%; color: #567086; font-weight: 800; background: #fff; }
+.bb-guide-steps li.current > span { color: #fff; border-color: #1674d1; background: #1674d1; }
+.bb-guide-steps li.done > span { color: #0b6c4a; border-color: #a9dfca; background: #eaf8f1; }
+.bb-guide-steps li p { margin: 5px 0 8px; line-height: 1.45; }
+.bb-guide-steps li button { min-height: 40px; padding: 8px 12px; border: 1px solid #b9cce0; border-radius: 10px; color: #1269c7; background: #f3f8fd; font-weight: 750; cursor: pointer; }
+.bb-guide-steps li small { color: #0b6c4a; font-weight: 750; }
+.bb-guide-tutorials { width: 100%; min-height: 52px; margin-top: 18px; padding: 0 16px; display: flex; align-items: center; justify-content: space-between; border: 1px solid var(--line); border-radius: 14px; color: var(--navy); background: #f7f9fb; font-weight: 800; cursor: pointer; }
+.bb-guide-loading { min-height: 240px; display: grid; place-content: center; justify-items: center; color: var(--muted); }
+.bb-guide-loading span { width: 32px; height: 32px; border: 3px solid #d8e3ee; border-top-color: #1674d1; border-radius: 50%; animation: spin .8s linear infinite; }
+
+@media (max-width: 760px) {
+  .bb-guide-launcher { position: fixed; z-index: 850; right: 14px; bottom: calc(82px + env(safe-area-inset-bottom)); min-height: 46px; padding: 0 15px 0 10px; display: flex; align-items: center; gap: 8px; border: 0; border-radius: 999px; color: #fff; background: #0b3b68; box-shadow: 0 10px 28px rgba(8, 52, 95, .24); }
+  .bb-guide-launcher span { width: 28px; height: 28px; display: grid; place-items: center; border-radius: 50%; color: #0b3b68; background: #fff; font-weight: 900; }
+  .bb-guide-panel { width: 100%; padding-top: env(safe-area-inset-top); }
+  .bb-guide-panel > header { min-height: 92px; padding: 18px 20px; }
+  .bb-guide-panel > header h2 { font-size: 28px; }
+  .bb-guide-scroll { padding: 18px 18px calc(28px + env(safe-area-inset-bottom)); }
+  .bb-guide-language { grid-template-columns: 1fr; gap: 7px; }
+}
 .auth-brand .brand-mark { width: 56px; height: 56px; border-radius: 14px; }
 .brand strong, .brand span { display: block; }
 .brand strong { font-size: 16px; letter-spacing: -.2px; }
@@ -3759,6 +3800,12 @@ button:disabled { opacity: .62; cursor: wait; }
 .help-centre-page { width: min(100%, 1180px); margin: 0 auto; padding: 22px 24px 48px; }
 .help-centre-page > .category-page-header { margin-bottom: 18px; }
 .help-centre-page > .category-page-header .secondary-button { text-decoration: none; }
+.help-header-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 9px; }
+.help-header-actions a { min-height: 44px; text-decoration: none; }
+.help-guide-callout { margin-bottom: 18px; padding: 20px; display: flex; align-items: center; justify-content: space-between; gap: 20px; border-left: 5px solid var(--gold); }
+.help-guide-callout h2 { margin: 0 0 7px; color: var(--navy); font: 700 23px/1.1 Georgia, serif; }
+.help-guide-callout p:not(.eyebrow) { max-width: 720px; margin: 0; color: var(--muted); font-size: 12px; line-height: 1.55; }
+.help-guide-callout .secondary-button { flex: 0 0 auto; min-height: 44px; text-decoration: none; }
 .help-start { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0; margin-bottom: 18px; overflow: hidden; }
 .help-start > div { min-width: 0; min-height: 108px; padding: 20px; display: grid; grid-template-columns: 42px minmax(0, 1fr); gap: 13px; align-items: center; }
 .help-start > div + div { border-left: 1px solid var(--line); }
@@ -3785,6 +3832,10 @@ button:disabled { opacity: .62; cursor: wait; }
 
 @media (max-width: 720px) {
   .help-centre-page { padding: 12px 12px calc(100px + env(safe-area-inset-bottom)); }
+  .help-header-actions { display: grid; grid-template-columns: 1fr; width: 100%; }
+  .help-header-actions a { width: 100%; }
+  .help-guide-callout { align-items: stretch; flex-direction: column; padding: 17px; }
+  .help-guide-callout .secondary-button { width: 100%; }
   .help-start { grid-template-columns: 1fr; }
   .help-start > div { min-height: 88px; padding: 15px; }
   .help-start > div + div { border-left: 0; border-top: 1px solid var(--line); }

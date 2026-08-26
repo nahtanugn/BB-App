@@ -13,11 +13,14 @@ test("tutorials are available before connection and to every signed-in role", ()
   assert.match(launcher, /Help &amp; tutorials/);
   assert.match(launcher, /Officer or Member joining an existing company/);
   assert.match(launcher, /Administrator creating a new company/);
-  assert.match(shell, /navigate\("help"\)/);
-  assert.match(shell, /Learn common tasks step by step/);
+  assert.match(shell, /onHelp/);
+  assert.match(shell, /Page-aware BB Guide/);
   assert.match(app, /\["home", "manage", "help"\]/);
   assert.match(app, /<HelpCentre \/>/);
   for (const roleGuide of ["First sign-in", "Member essentials", "Squad management", "Company administration", "Stock and uniform requests"])
     assert.match(help, new RegExp(roleGuide));
   assert.match(help, /BB-App-User-Guide\.pptx/);
+  assert.match(help, /New company setup/);
+  assert.match(help, /Help me/);
+  assert.match(help, /English, 中文 or Bahasa Malaysia/);
 });

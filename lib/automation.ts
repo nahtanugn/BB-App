@@ -4,8 +4,10 @@ import {
   activeUserIdsForRolesOrPermission,
   createNotifications,
 } from "./notifications";
+import { ensureBrandingSchema } from "./branding";
 
 export const AUTOMATION_RULES = [
+  ["guided_setup", "Company setup guide", ["admin"]],
   ["award_reviews", "Award reviews", ["admin", "officer"]],
   ["access_reviews", "Registrations and corrections", ["admin", "officer"]],
   ["incomplete_onboarding", "Incomplete onboarding", ["admin"]],
@@ -191,6 +193,41 @@ async function collectCandidates(db: D1Database, now: Date) {
   const candidates: Candidate[] = [];
   const rules = await enabledRules(db);
   const enabled = (key: RuleKey) => Boolean(rules.get(key)?.enabled);
+
+  if (enabled("guided_setup")) {
+    const recipients = await roleIds(db, configuredRoles(rules, "guided_setup", ["admin"]));
+    await ensureBrandingSchema(db);
+    const branding = await db.prepare("SELECT company_name FROM app_branding WHERE id = 1")
+      .first<{ company_name: string }>();
+    if (!branding?.company_name || branding.company_name === "Your BB Company")
+      candidates.push({
+        ruleKey: "guided_setup", sourceType: "company_setup", sourceId: "branding",
+        recipientUserIds: recipients, title: "Finish company branding",
+        description: "Add the company name and logo before inviting users.",
+        targetUrl: "/?open=admin&guide=setup", priority: "important",
+      });
+    const officer = await db.prepare(`SELECT id FROM users WHERE active = 1 AND account_status = 'active'
+      AND role = 'officer' LIMIT 1`).first<{ id: number }>();
+    if (!officer)
+      candidates.push({
+        ruleKey: "guided_setup", sourceType: "company_setup", sourceId: "first_officer",
+        recipientUserIds: recipients, title: "Create the first Officer account",
+        description: "Add an Officer account so company administration is not dependent on one person.",
+        targetUrl: "/?open=admin&guide=setup", priority: "important",
+      });
+    const schoolTable = await db.prepare("SELECT name FROM sqlite_master WHERE type = 'table' AND name = 'school_directory'")
+      .first<{ name: string }>();
+    const school = schoolTable
+      ? await db.prepare("SELECT id FROM school_directory WHERE active = 1 LIMIT 1").first<{ id: number }>()
+      : null;
+    if (!school)
+      candidates.push({
+        ruleKey: "guided_setup", sourceType: "company_setup", sourceId: "school_directory",
+        recipientUserIds: recipients, title: "Prepare the school directory",
+        description: "Add the schools used by the company before registering members.",
+        targetUrl: "/?open=admin&guide=setup",
+      });
+  }
 
   if (enabled("award_reviews")) {
     const recipients = await activeUserIdsForRolesOrPermission(

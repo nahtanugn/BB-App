@@ -26,6 +26,7 @@ type TrackerSummary = {
 };
 
 const ruleLabels: Record<string, string> = {
+  guided_setup: "Setup guide",
   award_reviews: "Awards",
   access_reviews: "Access",
   incomplete_onboarding: "Onboarding",

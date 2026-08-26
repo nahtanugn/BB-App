@@ -27,6 +27,7 @@ import OfficerSection from "./OfficerSection";
 import AssociatesAlumniSection from "./AssociatesAlumniSection";
 import CompanyOperationsCentre, { type OperationsModule } from "./CompanyOperationsCentre";
 import HelpCentre from "./HelpCentre";
+import BBGuidePanel from "./BBGuidePanel";
 import { brandingLogoStyle, useBranding } from "./BrandingContext";
 
 type User = {
@@ -79,6 +80,7 @@ export default function StandaloneApp() {
   const [notice, setNotice] = useState("");
   const [busy, setBusy] = useState(false);
   const [showAccount, setShowAccount] = useState(false);
+  const [guideOpen, setGuideOpen] = useState(false);
   const [route, setRoute] = useState<AppRoute>("home");
   const [requestingAccess, setRequestingAccess] = useState(false);
   const [showPublicInformation, setShowPublicInformation] = useState(() => typeof window !== "undefined" && new URL(window.location.href).searchParams.get("public") === "1");
@@ -251,6 +253,7 @@ export default function StandaloneApp() {
     if (!target) return;
     if (target === "stock" && stockAccess === null) return;
     const timer = window.setTimeout(() => {
+      const shouldOpenGuide = new URL(window.location.href).searchParams.has("guide");
       const aliases: Record<string, AppRoute> = {
         "uniform-requests": "uniforms",
         submissions: "submissions",
@@ -280,6 +283,7 @@ export default function StandaloneApp() {
         help: "help",
       };
       navigate(aliases[target] ?? target, true);
+      if (shouldOpenGuide) setGuideOpen(true);
     }, 0);
     return () => window.clearTimeout(timer);
   }, [auth?.user, navigate, stockAccess]);
@@ -720,7 +724,8 @@ export default function StandaloneApp() {
     subscriptions: "subscriptions",
   };
   const openTarget = (targetUrl: string) => {
-    const target = new URL(targetUrl, window.location.origin).searchParams.get("open");
+    const targetUrlObject = new URL(targetUrl, window.location.origin);
+    const target = targetUrlObject.searchParams.get("open");
     const aliases: Record<string, AppRoute> = {
       "uniform-requests": "uniforms",
       submissions: "submissions",
@@ -748,6 +753,7 @@ export default function StandaloneApp() {
       home: "home",
     };
     navigate(aliases[target ?? ""] ?? "home");
+    if (targetUrlObject.searchParams.has("guide")) setGuideOpen(true);
   };
 
   let page: ReactNode;
@@ -823,11 +829,19 @@ export default function StandaloneApp() {
         actionCount={actionCount}
         notificationCount={notificationCount}
         onNotifications={openNotifications}
+        onHelp={() => setGuideOpen(true)}
         activeSection={isStaff ? activeSection : undefined}
         onSectionChange={isStaff ? switchActiveSection : undefined}
       >
         {page}
       </AppShell>
+      <BBGuidePanel
+        open={guideOpen}
+        route={route}
+        onClose={() => setGuideOpen(false)}
+        onNavigate={(next) => navigate(next)}
+        onTutorials={() => { setGuideOpen(false); navigate("help"); }}
+      />
       {showAccount && (
         <div
           className="modal-backdrop"
