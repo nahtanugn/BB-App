@@ -3574,6 +3574,20 @@ button:disabled { opacity: .62; cursor: wait; }
   white-space: nowrap;
 }
 
+.unified-app-content .attendance-leave-note {
+  box-sizing: border-box;
+  width: 100%;
+  margin: 0;
+  padding: 10px 20px;
+  border-bottom: 1px solid #efd99b;
+  background: var(--gold-soft);
+  color: #76540d;
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+}
+
 .unified-app-content .submission-portal-toolbar :is(input, select) {
   min-height: 42px;
   height: 42px;
@@ -3635,6 +3649,10 @@ button:disabled { opacity: .62; cursor: wait; }
   .unified-app-content .attendance-controls .primary {
     min-height: 46px;
     height: 46px;
+  }
+
+  .unified-app-content .attendance-leave-note {
+    padding: 10px 16px;
   }
 
   .unified-app-content .submission-portal-toolbar :is(input, select) {

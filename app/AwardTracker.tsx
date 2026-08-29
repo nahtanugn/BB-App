@@ -2525,7 +2525,9 @@ export default function AwardTracker({
                     </label>}
                     {canManageAttendance && <button type="button" className="primary" disabled={saving === "attendance-all" || !attendanceMembers.length} onClick={markAllPresent}>{saving === "attendance-all" ? "Saving…" : "Mark all present"}</button>}
                   </div>
-                  <p className="attendance-leave-note">Before leaving, check the summary above. Yellow means one or more member details are still missing.</p>
+                  <p className="attendance-leave-note">
+                    Review the summary before leaving. Yellow means attendance is incomplete.
+                  </p>
                   <div className="attendance-rows">
                     {attendanceMembers.map((member) => {
                       const key = `attendance-${activeSession.id}-${member.id}`;
