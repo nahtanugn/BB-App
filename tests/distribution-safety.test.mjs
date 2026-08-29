@@ -9,6 +9,8 @@ test("the distribution contains generic deployment configuration and no tracked 
   const tracked = execFileSync("git", ["ls-files"], { cwd: root, encoding: "utf8" }).trim().split("\n");
   const forbiddenExtensions = /\.(?:db|sqlite|sqlite3|csv|xlsx|xls|heic)$/i;
   assert.deepEqual(tracked.filter((name) => forbiddenExtensions.test(name)), []);
+  const legacyFileBranding = new RegExp("11" + "kchbb|11th[-_ ]?" + "kuching", "i");
+  assert.deepEqual(tracked.filter((name) => legacyFileBranding.test(name)), []);
 
   const config = await readFile(new URL("../vite.config.ts", import.meta.url), "utf8");
   const migrations = await readFile(new URL("../wrangler.migrations.jsonc", import.meta.url), "utf8");
@@ -25,7 +27,7 @@ test("the distribution contains generic deployment configuration and no tracked 
   const setup = await readFile(new URL("../src-tauri/setup/index.html", import.meta.url), "utf8");
   const source = `${config}\n${migrations}\n${oneClick}\n${packageJson}\n${readme}\n${deploy}\n${deploymentConfig}\n${desktop}\n${tauri}\n${tauriCargo}\n${tauriSource}\n${tauriCapability}\n${setup}`;
   const legacyCompanyName = "11" + "KCHBB";
-  const legacyDomain = "app." + "11kchbb.workers.dev";
+  const legacyDomain = "app." + "11" + "kchbb.workers.dev";
 
   assert.doesNotMatch(source, new RegExp(legacyCompanyName, "i"));
   assert.doesNotMatch(source, new RegExp(legacyDomain.replaceAll(".", "\\."), "i"));
