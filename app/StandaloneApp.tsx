@@ -13,6 +13,7 @@ import StockCentre from "./StockCentre";
 import SubmissionsPage from "./SubmissionsPage";
 import UniformRequests from "./UniformRequests";
 import OnboardingFlow from "./OnboardingFlow";
+import AdministratorSetupFlow from "./AdministratorSetupFlow";
 import OnboardingCentre from "./OnboardingCentre";
 import MemberProgress from "./MemberProgress";
 import EventCentre from "./EventCentre";
@@ -54,6 +55,7 @@ type User = {
   privacy_notice_version: number;
   current_privacy_version: number;
   onboarding_required: boolean;
+  is_initial_administrator: boolean;
 };
 type ManagedUser = User & {
   active: number;
@@ -713,6 +715,8 @@ export default function StandaloneApp() {
       </main>
     );
 
+  if (auth.user.onboarding_required && auth.user.is_initial_administrator && !auth.user.onboarding_completed_at)
+    return <AdministratorSetupFlow userName={auth.user.name} onComplete={refreshAuth} onLogout={logout} />;
   if (auth.user.onboarding_required)
     return <OnboardingFlow user={auth.user} onComplete={refreshAuth} onLogout={logout} />;
   const currentUser = auth.user;

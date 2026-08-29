@@ -117,12 +117,23 @@ async function finalizeOnboarding(userId: number) {
     (state.role !== "member" || state.profile_confirmed_at) &&
     state.tour_completed_at &&
     state.privacy_notice_version >= state.current_privacy_version
-  )
+  ) {
+    if (state.role === "admin") {
+      const first = await runtime.DB.prepare("SELECT MIN(id) AS id FROM users").first<{ id: number }>();
+      if (Number(first?.id) === userId) {
+        const brandingTable = await runtime.DB.prepare("SELECT name FROM sqlite_master WHERE type = 'table' AND name = 'app_branding'").first();
+        const branding = brandingTable
+          ? await runtime.DB.prepare("SELECT company_name FROM app_branding WHERE id = 1").first<{ company_name: string }>()
+          : null;
+        if (!branding?.company_name || branding.company_name === "Your BB Company") return;
+      }
+    }
     await runtime.DB.prepare(
       "UPDATE users SET onboarding_completed_at = COALESCE(onboarding_completed_at, ?) WHERE id = ?",
     )
       .bind(new Date().toISOString(), userId)
       .run();
+  }
 }
 
 function roleChecklist(role: string, section: string) {

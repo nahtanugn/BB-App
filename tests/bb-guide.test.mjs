@@ -12,20 +12,53 @@ test("publishes a privacy-safe multilingual company setup guide", async () => {
     read("README.md"),
   ]);
 
-  assert.match(wizard, /Set up your company/);
-  assert.match(wizard, /设置您的连队/);
-  assert.match(wizard, /Sediakan aplikasi kompeni/);
-  assert.match(wizard, /max="8"/);
-  assert.match(wizard, /localStorage/);
+  assert.match(wizard, /Set up BB App in three stages/);
+  assert.match(wizard, /三个阶段设置 BB App/);
+  assert.match(wizard, /Sediakan BB App dalam tiga peringkat/);
+  assert.match(wizard, /Deploy company app/);
+  assert.match(wizard, /Create administrator/);
+  assert.match(wizard, /Finish company setup/);
+  assert.match(wizard, /sessionStorage/);
+  assert.match(wizard, /crypto\.getRandomValues/);
+  assert.match(wizard, /type="password" readonly/);
+  assert.match(wizard, /clearCode/);
   assert.match(wizard, /\/api\/setup-status/);
-  assert.doesNotMatch(wizard, /type=["']password["']/);
-  assert.doesNotMatch(wizard, /name=["'](?:token|secret|password)/i);
+  assert.doesNotMatch(wizard, /[?&](?:token|secret|password)=/i);
+  assert.doesNotMatch(wizard, /localStorage\.setItem\([^)]*(?:code|token|secret)/i);
   assert.match(setupStatus, /setupRequired/);
   assert.match(setupStatus, /database: "available"/);
+  assert.match(setupStatus, /readiness/);
   assert.doesNotMatch(setupStatus, /adminEmail|memberCount|userCount/);
   assert.match(workflow, /actions\/deploy-pages@v4/);
   assert.match(workflow, /default-bb-logo\.png/);
   assert.match(readme, /multilingual guided company setup/);
+});
+
+test("gives only the first administrator a dedicated non-blocking setup checklist", async () => {
+  const [flow, summary, shell, onboarding, styles] = await Promise.all([
+    read("app/AdministratorSetupFlow.tsx"),
+    read("app/api/company-setup/route.ts"),
+    read("app/StandaloneApp.tsx"),
+    read("app/api/onboarding/route.ts"),
+    read("app/globals.css"),
+  ]);
+
+  assert.match(shell, /is_initial_administrator/);
+  assert.match(shell, /AdministratorSetupFlow/);
+  assert.match(summary, /Administrator access required/);
+  assert.match(summary, /schoolCount/);
+  assert.match(summary, /officerCount/);
+  assert.match(summary, /requiredComplete/);
+  assert.match(flow, /Confirm privacy/);
+  assert.match(flow, /Company name/);
+  assert.match(flow, /Company logo.*Optional/s);
+  assert.match(flow, /School directory/);
+  assert.match(flow, /First Officer/);
+  assert.match(flow, /Share the company address/);
+  assert.match(flow, /Finish and open BB App/);
+  assert.match(onboarding, /Your BB Company/);
+  assert.match(styles, /administrator-setup-options/);
+  assert.match(styles, /@media \(max-width: 760px\)/);
 });
 
 test("provides authenticated page-aware guidance and saved account progress", async () => {

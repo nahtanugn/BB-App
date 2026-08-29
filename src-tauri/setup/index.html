@@ -77,7 +77,7 @@
           <article class="choice">
             <h2>Set up a new company</h2>
             <p>Use this if your company does not have a BB App address or any records yet.</p>
-            <button type="button" id="start-new">Start new setup</button>
+            <a class="button" id="start-new" href="https://nahtanugn.github.io/BB-App/setup/" target="_blank" rel="noreferrer">Start guided setup</a>
           </article>
           <article class="choice">
             <h2>Connect an existing company</h2>
@@ -106,7 +106,7 @@
             <h2>Administrator creating a new company</h2>
             <ol>
               <li>Return to the welcome screen and choose “Set up a new company.”</li>
-              <li>Follow the six-step administrator guide to create the Cloudflare app and private database.</li>
+              <li>Follow the three-stage guide to deploy the company app and create its first administrator.</li>
               <li>Create the first administrator, apply company branding and then create user accounts.</li>
               <li>Share the company app address with Officers and Members; never share the private setup code.</li>
             </ol>
@@ -114,67 +114,6 @@
         </div>
         <a class="button secondary" href="https://github.com/nahtanugn/BB-App/raw/main/tutorial-output/BB-App-User-Guide.pptx" target="_blank" rel="noreferrer">Download tutorial slides</a>
         <button type="button" class="tertiary back">Back</button>
-      </section>
-
-      <section id="new-company" hidden>
-        <h1>Administrator setup guide</h1>
-        <p>Follow these steps once for your company. Cloudflare will create an empty, private BB App and a unique web address—no records are copied from another company.</p>
-        <ol class="steps">
-          <li>
-            <div class="step-content">
-              <h2>Prepare the company accounts</h2>
-              <p>Use accounts controlled by the company, not a member’s temporary personal account.</p>
-              <ul>
-                <li>A verified Cloudflare account.</li>
-                <li>A GitHub account or organisation to own the app source.</li>
-                <li>The email address of the first administrator.</li>
-                <li>A private setup code containing at least 16 characters.</li>
-              </ul>
-            </div>
-          </li>
-          <li>
-            <div class="step-content">
-              <h2>Deploy the company app</h2>
-              <p>Open the multilingual guided setup for step-by-step checks, or open Cloudflare directly.</p>
-              <a class="button secondary" href="https://nahtanugn.github.io/BB-App/setup/" target="_blank" rel="noreferrer">Open guided company setup</a>
-              <a class="button" id="deploy" href="https://deploy.workers.cloudflare.com/?url=https://github.com/nahtanugn/BB-App" target="_blank" rel="noreferrer">Open Cloudflare setup</a>
-              <p class="link-status" id="deploy-status" role="status" aria-live="polite"></p>
-            </div>
-          </li>
-          <li>
-            <div class="step-content">
-              <h2>Complete the deployment settings</h2>
-              <ul>
-                <li>Choose a unique Worker name using letters, numbers and hyphens.</li>
-                <li>Keep the D1 database binding named <code>DB</code>.</li>
-                <li>Set <code>ADMIN_EMAIL</code> to the first administrator’s exact email.</li>
-                <li>Set <code>SETUP_TOKEN</code> to the private setup code prepared earlier.</li>
-                <li>Start deployment and wait for the build to finish successfully.</li>
-              </ul>
-            </div>
-          </li>
-          <li>
-            <div class="step-content">
-              <h2>Connect this desktop app</h2>
-              <p>Copy the new <strong>workers.dev</strong> address shown by Cloudflare, then return here and enter it.</p>
-              <button type="button" class="secondary" id="new-ready">Enter my new app address</button>
-            </div>
-          </li>
-          <li>
-            <div class="step-content">
-              <h2>Create the first administrator</h2>
-              <p>On the new app, choose first-time setup. Enter the authorised email and the same private setup code, then create a strong administrator password.</p>
-            </div>
-          </li>
-          <li>
-            <div class="step-content">
-              <h2>Finish company setup</h2>
-              <p>Complete onboarding, set the company name and logo under App branding, then create Officer and Member accounts. Share the company app address with users so they can choose “Connect an existing company.”</p>
-            </div>
-          </li>
-        </ol>
-        <button type="button" class="tertiary back">Back</button>
-        <p class="notice">Administrator setup only. Never share the setup code or administrator password with ordinary users, and never commit them to GitHub.</p>
       </section>
 
       <section id="setup" hidden>
@@ -201,18 +140,16 @@
     <script>
       const key = "bb-company-app-url";
       const choice = document.querySelector("#choice");
-      const newCompany = document.querySelector("#new-company");
       const tutorial = document.querySelector("#tutorial");
       const setup = document.querySelector("#setup");
       const opening = document.querySelector("#opening");
       const input = document.querySelector("#url");
       const error = document.querySelector("#error");
       const savedUrl = document.querySelector("#saved-url");
-      const deployStatus = document.querySelector("#deploy-status");
       let timer;
 
       function show(view) {
-        [choice, newCompany, tutorial, setup, opening].forEach(section => { section.hidden = section !== view; });
+        [choice, tutorial, setup, opening].forEach(section => { section.hidden = section !== view; });
       }
 
       function normalise(value) {
@@ -228,32 +165,24 @@
         try {
           if (window.__TAURI__?.opener?.openUrl) {
             await window.__TAURI__.opener.openUrl(value);
-            if (anchor.id === "deploy") deployStatus.textContent = "Cloudflare setup opened in your browser.";
             return;
           }
           const opened = window.open(value, "_blank", "noopener,noreferrer");
           if (!opened) window.location.assign(value);
         } catch (reason) {
-          if (anchor.id === "deploy") {
-            deployStatus.textContent = "The browser could not be opened. Copy this link instead: " + value;
-            deployStatus.classList.add("error");
-          } else {
-            window.location.assign(value);
-          }
+          window.location.assign(value);
         }
       }
       function showOpening(value) {
         show(opening); savedUrl.textContent = value;
         timer = window.setTimeout(() => openApp(value), 2600);
       }
-      document.querySelector("#start-new").addEventListener("click", () => show(newCompany));
       document.querySelector("#start-existing").addEventListener("click", () => { show(setup); input.focus(); });
       document.querySelector("#open-tutorial").addEventListener("click", () => show(tutorial));
       document.querySelectorAll("a[target='_blank']").forEach(anchor => anchor.addEventListener("click", event => {
         event.preventDefault();
         openExternalLink(anchor);
       }));
-      document.querySelector("#new-ready").addEventListener("click", () => { show(setup); input.focus(); });
       document.querySelectorAll(".back").forEach(button => button.addEventListener("click", () => show(choice)));
       document.querySelector("#form").addEventListener("submit", event => {
         event.preventDefault(); error.textContent = "";

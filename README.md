@@ -23,18 +23,13 @@ This repository contains application source, additive database migrations, tests
 
 ## Create a company deployment
 
-The recommended installation is the **multilingual guided company setup** above. It explains and checks each stage, then uses the Deploy to Cloudflare button to create a copy of BB App in the company's GitHub account, provision a private D1 database, apply the database migrations and publish the app through Cloudflare Workers.
+The recommended installation is the **multilingual guided company setup** above. It reduces setup to three stages:
 
-1. Sign in to the company's Cloudflare and GitHub accounts.
-2. Select **Deploy to Cloudflare** above.
-3. Authorise Cloudflare to create a new GitHub repository.
-4. Choose a unique Worker name, such as `1st-kuching-bb-app`.
-5. Replace `admin@example.com` with the first administrator's real email address.
-6. Enter a private one-time setup code with at least 16 characters.
-7. Select **Deploy** and wait for the build to finish.
-8. Open the new `workers.dev` address shown by Cloudflare.
-9. Create the administrator using the same email and one-time setup code.
-10. Open **Manage → Accounts and roles → App branding** to set the company name and logo.
+1. **Deploy company app** — enter the first administrator email, copy the locally generated setup code and open Cloudflare deployment.
+2. **Create administrator** — paste the new `workers.dev` address, let the guide check the app and database, then create the first administrator.
+3. **Finish company setup** — accept the privacy notice, enter the required company name and take the short tour. The standard BB logo remains unless an optional company logo is uploaded.
+
+The guide keeps the setup code only in the current browser session and clears it after the first administrator is detected. Schools, a first Officer and sharing the company address are recommended next steps, but they do not block normal access.
 
 See [One-click Cloudflare installation](docs/ONE_CLICK_CLOUDFLARE.md) for troubleshooting and handover instructions. Never commit setup codes, passwords, production exports or Cloudflare tokens to GitHub.
 

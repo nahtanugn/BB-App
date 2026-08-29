@@ -24,6 +24,7 @@ export type AppUser = {
   privacy_notice_version: number;
   current_privacy_version: number;
   onboarding_required: boolean;
+  is_initial_administrator: boolean;
 };
 
 type RuntimeEnv = {
@@ -356,6 +357,7 @@ export async function getCurrentUser(request: Request): Promise<AppUser | null> 
       END AS temporary_access_role,
       users.access_expires_at,
       users.account_status, users.must_change_password,
+      CASE WHEN users.role = 'admin' AND users.id = (SELECT MIN(id) FROM users) THEN 1 ELSE 0 END AS is_initial_administrator,
       users.onboarding_completed_at, users.profile_confirmed_at, users.tour_completed_at,
       users.privacy_notice_version,
       COALESCE((SELECT version FROM app_settings WHERE setting_key = 'privacy_notice'), 1) AS current_privacy_version
@@ -367,6 +369,7 @@ export async function getCurrentUser(request: Request): Promise<AppUser | null> 
   if (!user) return null;
   const withOnboarding = {
     ...user,
+    is_initial_administrator: Boolean(user.is_initial_administrator),
     onboarding_required: Boolean(
       user.must_change_password ||
       !user.onboarding_completed_at ||

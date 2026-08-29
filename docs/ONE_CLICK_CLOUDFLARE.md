@@ -2,7 +2,7 @@
 
 This method gives each Boys' Brigade company an independent BB App, database, address and GitHub repository. No member data is copied from another company.
 
-For the easiest route, open the [multilingual BB Guide setup assistant](https://nahtanugn.github.io/BB-App/setup/). It remembers progress only in the current browser, checks the finished app without reading company records, and never asks for passwords, tokens or the private setup code.
+For the easiest route, open the [multilingual BB Guide setup assistant](https://nahtanugn.github.io/BB-App/setup/). It generates the private setup code locally, keeps it only in the current browser session, and checks the finished app without reading company records.
 
 ## Before starting
 
@@ -11,33 +11,32 @@ Use accounts owned by the company wherever possible:
 - A Cloudflare account with a verified email address.
 - A GitHub account or organisation that will own the copied source repository.
 - The email address of the first BB App administrator.
-- A new private setup code containing at least 16 characters.
+- The first administrator's email address. The guide generates the private setup code.
 
-The setup code is not the administrator's password. It is used only to protect creation of the first administrator account.
+The setup code is not the administrator's password. It protects creation of the first administrator account, never appears in a URL or network request from the guide, and is cleared after the administrator is detected.
 
-## Deploy
+## Stage 1 — Deploy company app
 
-1. Open the [BB App repository](https://github.com/nahtanugn/BB-App).
-2. Select **Deploy to Cloudflare**.
-3. Sign in to Cloudflare if requested.
-4. Connect the company GitHub account and allow Cloudflare to create a repository copy.
-5. Enter a unique Worker name. Use letters, numbers and hyphens only.
-6. Keep the D1 binding named `DB`. Cloudflare creates the database automatically.
-7. Set `ADMIN_EMAIL` to the exact email that will create the first administrator.
-8. Enter the private `SETUP_TOKEN`. Store it securely until setup is complete.
-9. Confirm the build command `pnpm run build` and deploy command `pnpm run deploy` if Cloudflare displays them.
-10. Select **Deploy**. The initial build may take several minutes because it also creates the database tables.
+1. In the guide, enter the first administrator email.
+2. Copy the email and generated setup code using their Copy buttons.
+3. Select **Open Cloudflare deployment**, sign in if requested and connect the company GitHub account.
+4. Enter a unique Worker name. In the optional technical settings, keep the database binding named `DB`, set `ADMIN_EMAIL` to the copied email and set `SETUP_TOKEN` to the copied code.
+5. Start deployment and wait for the build to finish.
 
-## Create the first administrator
+## Stage 2 — Create administrator
 
-1. Open the `workers.dev` address shown after deployment.
-2. Enter the administrator's name.
-3. Confirm the pre-authorised administrator email.
-4. Choose a strong password.
-5. Enter the same one-time setup code.
-6. Select **Create administrator** once and wait for the success message.
-7. Complete the onboarding and privacy steps.
-8. Open **Manage → Accounts and roles → App branding** and upload the company's name and logo.
+1. Paste the new `workers.dev` address into the guide and select **Check deployment**.
+2. If the database is still building, wait and check again. If it is unavailable, review the Cloudflare build and `DB` binding.
+3. When ready, copy the setup code and open the company app.
+4. Enter the administrator's name, pre-authorised email, chosen password and one-time setup code.
+5. Select **Create administrator** once.
+
+## Stage 3 — Finish company setup
+
+1. Return to the guide and confirm that the administrator was created. The guide checks the public setup state and clears its saved setup code.
+2. Open BB App, accept the privacy notice and enter the required company name.
+3. Complete the short app tour. The standard BB logo remains unless an optional company logo is uploaded.
+4. Add schools, create the first Officer and share the company address now or later. These recommended tasks do not block access and remain visible in the Action Centre.
 
 After the administrator exists, the setup endpoint refuses to create another first administrator. The company can remove or replace the `SETUP_TOKEN` in **Cloudflare → Workers & Pages → BB App → Settings → Variables and Secrets**.
 

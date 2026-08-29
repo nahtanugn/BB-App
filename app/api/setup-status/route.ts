@@ -27,11 +27,13 @@ export async function GET(request: Request) {
       : null;
     return Response.json({
       status: "ok",
+      app: "available",
       database: "available",
       setupRequired: !Number(count?.total ?? 0),
+      readiness: !Number(count?.total ?? 0) ? "administrator_required" : "configured",
     }, { headers: headers(request) });
   } catch {
-    return Response.json({ status: "unavailable", database: "unavailable", setupRequired: null }, {
+    return Response.json({ status: "unavailable", app: "available", database: "unavailable", setupRequired: null, readiness: "database_unavailable" }, {
       status: 503,
       headers: headers(request),
     });

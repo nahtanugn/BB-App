@@ -55,7 +55,11 @@ export default function AdminCentre({
   const [pendingAccountMember, setPendingAccountMember] = useState<PendingMember | null>(null);
   const [newRole, setNewRole] = useState<Role>("officer");
   const [newTemporaryAccess, setNewTemporaryAccess] = useState("");
-  const [tab, setTab] = useState<AdminTab>(currentUser.role === "officer" ? "junior-ranks" : "accounts");
+  const [tab, setTab] = useState<AdminTab>(() => {
+    if (currentUser.role === "officer") return "junior-ranks";
+    const requested = typeof window === "undefined" ? "" : new URL(window.location.href).searchParams.get("setup");
+    return requested === "schools" || requested === "branding" ? requested : "accounts";
+  });
   const [schools, setSchools] = useState<Array<{ id: number; name: string }>>([]);
   const [newSchool, setNewSchool] = useState("");
   const [juniorRankReviews, setJuniorRankReviews] = useState<JuniorRankReview[]>([]);
