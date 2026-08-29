@@ -21,14 +21,31 @@ If the wrong company address was saved, reopen the desktop app and choose
 
 ## Unsigned-app notice
 
-Version 1.1.0 is distributed without paid Apple or Microsoft code-signing
-certificates. Download only from the official project or your organisation's
-approved GitHub repository.
+The current desktop release is distributed without paid Apple or Microsoft
+code-signing certificates. Download only from the official project or your
+organisation's approved GitHub repository.
 
 ### macOS
 
-If macOS blocks the first launch, open **System Settings → Privacy & Security**,
-confirm that the app came from the official release, then choose **Open Anyway**.
+The macOS DMG is not Apple-signed or notarized. Gatekeeper may report that
+**“BB App.app is damaged and can’t be opened.”** This message can appear even
+when the download is intact, and **Open Anyway** may not be available.
+
+1. Confirm that the DMG came from the official BB App GitHub release.
+2. Drag **BB App** into the **Applications** folder and eject the DMG.
+3. Open **Terminal** from Applications → Utilities.
+4. Paste this exact command and press Return:
+
+   ```bash
+   xattr -dr com.apple.quarantine "/Applications/BB App.app"
+   ```
+
+5. Open BB App from the Applications folder.
+
+This command removes the download quarantine only from the named BB App
+installation. Do not use it on applications obtained from an untrusted source.
+Apple signing and notarization are required to remove this manual step for all
+users.
 
 ### Windows
 

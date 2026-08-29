@@ -65,6 +65,15 @@ Every company should use a separate Cloudflare account or separate Worker and D1
 
 Official GitHub Releases contain only the generic base desktop app. On first launch, users enter their organisation's deployed app address. The installers do not carry a database, credentials, company branding or a fixed production URL. See [Desktop installation](docs/DESKTOP_INSTALLATION.md).
 
+> [!WARNING]
+> **Mac users:** the current DMG is not Apple-signed or notarized. After dragging **BB App** into **Applications**, macOS may report that the app is damaged and may not show **Open Anyway**. Download only from this official repository, then run the following command in Terminal before opening the app:
+>
+> ```bash
+> xattr -dr com.apple.quarantine "/Applications/BB App.app"
+> ```
+>
+> This command removes the download quarantine only from the named BB App installation. See the [complete desktop installation instructions](docs/DESKTOP_INSTALLATION.md#macos).
+
 Companies that want their own branded installers may fork the repository and use `scripts/configure-desktop.mjs` in a separate release workflow. Company-specific installers should be published from that company's fork, not from this base repository.
 
 ## Tutorial

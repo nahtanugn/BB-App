@@ -87,7 +87,17 @@ jobs:
 
             On first launch, enter the web address supplied by your company administrator. The installer contains no company-specific branding, live database, member records, credentials or deployment address.
 
-            These installers are unsigned. Your operating system may display a security warning during installation.
+            ## Important notice for Mac users
+
+            The macOS DMGs are not Apple-signed or notarized. After dragging **BB App** into **Applications**, macOS may say that the app is damaged and may not show **Open Anyway**. Confirm that the DMG came from this official release, then open Terminal and run:
+
+            ```bash
+            xattr -dr com.apple.quarantine "/Applications/BB App.app"
+            ```
+
+            Then open BB App from Applications. This command removes the download quarantine only from this BB App installation. Do not use it for software obtained from an untrusted source.
+
+            Windows installers are also unsigned and Microsoft Defender SmartScreen may display a warning.
           releaseDraft: false
           prerelease: false
           generateReleaseNotes: true
