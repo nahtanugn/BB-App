@@ -63,8 +63,10 @@ jobs:
       - run: pnpm build
       - name: Bind verified production database to built Worker
         run: node scripts/configure-built-worker.mjs
-      - name: Apply BB Guide additive schema
-        run: pnpm exec wrangler d1 execute "$D1_DATABASE_NAME" --remote --config .wrangler/deployment.json --file drizzle/0039_automated_bb_guide.sql
+      - name: Apply latest additive schemas
+        run: |
+          pnpm exec wrangler d1 execute "$D1_DATABASE_NAME" --remote --config .wrangler/deployment.json --file drizzle/0039_automated_bb_guide.sql
+          pnpm exec wrangler d1 execute "$D1_DATABASE_NAME" --remote --config .wrangler/deployment.json --file drizzle/0040_free_device_notifications.sql
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}

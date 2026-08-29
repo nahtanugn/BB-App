@@ -1,4 +1,4 @@
-const CACHE = "company-app-v5";
+const CACHE = "company-app-v6";
 
 self.addEventListener("install", () => {
   self.skipWaiting();
@@ -35,7 +35,7 @@ self.addEventListener("fetch", (event) => {
             </head>
             <body>
               <main>
-                <div class="mark">11</div>
+                <div class="mark">BB</div>
                 <h1>You’re offline</h1>
                 <p>Reconnect to the internet, then try opening the app again.</p>
                 <button onclick="location.reload()">Try again</button>
@@ -55,15 +55,24 @@ self.addEventListener("push", (event) => {
   } catch {
     message = { title: "Company app", body: "You have a new notification." };
   }
-  event.waitUntil(
-    self.registration.showNotification(message.title || "Company app", {
+  const tasks = [
+    self.registration.showNotification(message.title || "BB App", {
       body: message.body || "Open the app to view this update.",
       icon: "/api/branding?logo=1",
       badge: "/api/branding?logo=1",
       tag: message.tag || "bb-company-app-update",
       data: { url: message.url || "/" },
     }),
-  );
+  ];
+  const badgeCount = Number(message.badgeCount);
+  if (Number.isFinite(badgeCount) && "setAppBadge" in self.navigator) {
+    tasks.push(
+      badgeCount > 0
+        ? self.navigator.setAppBadge(badgeCount)
+        : self.navigator.clearAppBadge(),
+    );
+  }
+  event.waitUntil(Promise.all(tasks));
 });
 
 self.addEventListener("notificationclick", (event) => {

@@ -22,7 +22,7 @@
       }
     ],
     "security": {
-      "capabilities": [],
+      "capabilities": ["main-capability", "remote-badge"],
       "csp": null
     }
   },

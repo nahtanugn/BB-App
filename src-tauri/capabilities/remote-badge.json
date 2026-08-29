@@ -1,0 +1,16 @@
+{
+  "$schema": "../gen/schemas/desktop-schema.json",
+  "identifier": "remote-badge",
+  "description": "Allows a connected BB App deployment to update only the installed desktop app's unread badge.",
+  "windows": ["main"],
+  "remote": {
+    "urls": [
+      "https://*",
+      "http://localhost:*",
+      "http://127.0.0.1:*"
+    ]
+  },
+  "permissions": [
+    "core:window:allow-set-badge-count"
+  ]
+}

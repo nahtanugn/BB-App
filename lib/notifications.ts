@@ -11,6 +11,12 @@ type RuntimeEnv = {
   VAPID_SUBJECT?: string;
 };
 
+type VapidKeys = {
+  publicKey: string;
+  privateKey: string;
+  subject: string;
+};
+
 type NotificationInput = {
   recipientUserIds: number[];
   type: "award" | "admin" | "request" | "announcement" | "system";
@@ -22,6 +28,7 @@ type NotificationInput = {
 
 const runtime = env as unknown as RuntimeEnv;
 let schemaReady = false;
+let generatedVapidKeys: Promise<VapidKeys> | null = null;
 
 export async function ensureNotificationSchema() {
   if (schemaReady) return;
@@ -60,6 +67,12 @@ export async function ensureNotificationSchema() {
       updated_at TEXT NOT NULL,
       FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
     )`),
+    runtime.DB.prepare(`CREATE TABLE IF NOT EXISTS push_configuration (
+      id INTEGER PRIMARY KEY CHECK (id = 1),
+      public_key TEXT NOT NULL,
+      private_key TEXT NOT NULL,
+      created_at TEXT NOT NULL
+    )`),
     runtime.DB.prepare(
       "CREATE INDEX IF NOT EXISTS idx_notifications_user_unread ON notifications(recipient_user_id, read_at, created_at)",
     ),
@@ -68,6 +81,84 @@ export async function ensureNotificationSchema() {
     ),
   ]);
   schemaReady = true;
+}
+
+function base64Url(bytes: ArrayBuffer) {
+  const value = String.fromCharCode(...new Uint8Array(bytes));
+  return btoa(value).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/g, "");
+}
+
+async function loadVapidKeys(): Promise<VapidKeys> {
+  if (runtime.VAPID_PUBLIC_KEY && runtime.VAPID_PRIVATE_KEY) {
+    return {
+      publicKey: runtime.VAPID_PUBLIC_KEY,
+      privateKey: runtime.VAPID_PRIVATE_KEY,
+      subject: runtime.VAPID_SUBJECT ?? "https://github.com/nahtanugn/BB-App",
+    };
+  }
+  await ensureNotificationSchema();
+  generatedVapidKeys ??= (async () => {
+    const existing = await runtime.DB.prepare(
+      "SELECT public_key, private_key FROM push_configuration WHERE id = 1",
+    ).first<{ public_key: string; private_key: string }>();
+    if (existing) {
+      return {
+        publicKey: existing.public_key,
+        privateKey: existing.private_key,
+        subject: runtime.VAPID_SUBJECT ?? "https://github.com/nahtanugn/BB-App",
+      };
+    }
+
+    const keyPair = (await crypto.subtle.generateKey(
+      { name: "ECDSA", namedCurve: "P-256" },
+      true,
+      ["sign", "verify"],
+    )) as CryptoKeyPair;
+    const publicKey = base64Url(await crypto.subtle.exportKey("raw", keyPair.publicKey));
+    const privateJwk = await crypto.subtle.exportKey("jwk", keyPair.privateKey);
+    if (!privateJwk.d) throw new Error("Unable to create the device notification key");
+    await runtime.DB.prepare(
+      `INSERT OR IGNORE INTO push_configuration
+       (id, public_key, private_key, created_at) VALUES (1, ?, ?, ?)`,
+    )
+      .bind(publicKey, privateJwk.d, new Date().toISOString())
+      .run();
+    const stored = await runtime.DB.prepare(
+      "SELECT public_key, private_key FROM push_configuration WHERE id = 1",
+    ).first<{ public_key: string; private_key: string }>();
+    return {
+      publicKey: stored?.public_key ?? publicKey,
+      privateKey: stored?.private_key ?? privateJwk.d,
+      subject: runtime.VAPID_SUBJECT ?? "https://github.com/nahtanugn/BB-App",
+    };
+  })();
+  try {
+    return await generatedVapidKeys;
+  } catch (error) {
+    generatedVapidKeys = null;
+    throw error;
+  }
+}
+
+async function unreadNotificationCount(userId: number) {
+  const row = await runtime.DB.prepare(
+    `WITH ranked AS (
+       SELECT read_at,
+         ROW_NUMBER() OVER (
+           PARTITION BY recipient_user_id, type, title, body, target_url
+           ORDER BY created_at DESC, id DESC
+         ) AS duplicate_rank
+       FROM notifications
+       WHERE recipient_user_id = ?
+         AND target_url != '/?open=attendance'
+         AND title != 'Attendance is incomplete'
+     )
+     SELECT COUNT(*) AS total FROM ranked
+     WHERE duplicate_rank = 1 AND read_at IS NULL`,
+  )
+    .bind(userId)
+    .first<{ total: number }>();
+  return Number(row?.total ?? 0);
 }
 
 function preferenceColumn(type: NotificationInput["type"]) {
@@ -80,7 +171,7 @@ async function sendPush(
   userId: number,
   notification: Omit<NotificationInput, "recipientUserIds">,
 ) {
-  if (!runtime.VAPID_PUBLIC_KEY || !runtime.VAPID_PRIVATE_KEY) return;
+  const vapid = await loadVapidKeys();
   const column = preferenceColumn(notification.type);
   const preference = await runtime.DB.prepare(
     `SELECT push_enabled, ${column} AS category_enabled
@@ -95,6 +186,7 @@ async function sendPush(
   )
     .bind(userId)
     .all<{ id: number; endpoint: string; p256dh: string; auth: string }>();
+  const badgeCount = await unreadNotificationCount(userId);
   await Promise.all(
     subscriptions.results.map(async (row) => {
       try {
@@ -110,15 +202,15 @@ async function sendPush(
               body: notification.body,
               url: notification.targetUrl ?? "/",
               tag: notification.entityKey,
+              badgeCount,
             }),
             options: { ttl: 60 * 60 * 12, urgency: "normal" },
           },
           subscription,
           {
-            publicKey: runtime.VAPID_PUBLIC_KEY,
-            privateKey: runtime.VAPID_PRIVATE_KEY,
-            subject:
-              runtime.VAPID_SUBJECT ?? "mailto:admin@example.com",
+            publicKey: vapid.publicKey,
+            privateKey: vapid.privateKey,
+            subject: vapid.subject,
           },
         );
         const response = await fetch(row.endpoint, payload);
@@ -227,6 +319,6 @@ export async function activeUserIdForEmail(email: string) {
   return row?.id ?? null;
 }
 
-export function vapidPublicKey() {
-  return runtime.VAPID_PUBLIC_KEY ?? "";
+export async function vapidPublicKey() {
+  return (await loadVapidKeys()).publicKey;
 }

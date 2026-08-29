@@ -24,6 +24,9 @@ test("implements durable, role-targeted and optional device notifications", asyn
   assert.match(delivery, /account_status = 'active'/);
   assert.match(delivery, /ON CONFLICT\(recipient_user_id, entity_key\) DO NOTHING/);
   assert.match(delivery, /Never fail or duplicate the primary workflow/);
+  assert.match(delivery, /CREATE TABLE IF NOT EXISTS push_configuration/);
+  assert.match(delivery, /crypto\.subtle\.generateKey/);
+  assert.match(delivery, /badgeCount/);
   assert.match(submissions, /Award submission awaiting review/);
   assert.match(submissions, /Award application approved/);
   assert.match(onboarding, /Member access request/);
@@ -31,6 +34,9 @@ test("implements durable, role-targeted and optional device notifications", asyn
   assert.match(uniforms, /stock\.manage_uniform_requests/);
   assert.match(ui, /Notification\.requestPermission/);
   assert.match(ui, /On iPhone, add the app to your Home Screen first/);
+  assert.match(ui, /syncApplicationBadge/);
+  assert.match(ui, /setBadgeCount/);
   assert.match(worker, /showNotification/);
+  assert.match(worker, /setAppBadge/);
   assert.doesNotMatch(worker, /evidence_url|contact_number|parents_name/);
 });

@@ -28,6 +28,40 @@ type NotificationResponse = {
   preferences: Preferences;
 };
 
+type BadgeNavigator = Navigator & {
+  setAppBadge?: (count?: number) => Promise<void>;
+  clearAppBadge?: () => Promise<void>;
+};
+
+type TauriBadgeApi = {
+  window?: {
+    getCurrentWindow?: () => {
+      setBadgeCount?: (count?: number) => Promise<void>;
+    };
+  };
+};
+
+async function syncApplicationBadge(count: number) {
+  const safeCount = Math.max(0, Math.floor(Number(count) || 0));
+  const badgeNavigator = navigator as BadgeNavigator;
+  try {
+    if (safeCount > 0 && badgeNavigator.setAppBadge)
+      await badgeNavigator.setAppBadge(safeCount);
+    else if (!safeCount && badgeNavigator.clearAppBadge)
+      await badgeNavigator.clearAppBadge();
+  } catch {
+    // Not every installed browser exposes operating-system app badges.
+  }
+  try {
+    const tauri = (window as unknown as { __TAURI__?: TauriBadgeApi }).__TAURI__;
+    const desktopWindow = tauri?.window?.getCurrentWindow?.();
+    if (desktopWindow?.setBadgeCount)
+      await desktopWindow.setBadgeCount(safeCount || undefined);
+  } catch {
+    // The web deployment continues to work when the native desktop API is absent.
+  }
+}
+
 function applicationServerKey(value: string) {
   const padding = "=".repeat((4 - (value.length % 4)) % 4);
   const base64 = (value + padding).replace(/-/g, "+").replace(/_/g, "/");
@@ -59,13 +93,18 @@ export default function NotificationCentre({ children }: { children?: (controls:
 
   const refresh = useCallback(async () => {
     const response = await fetch("/api/notifications", { cache: "no-store" });
-    if (response.status === 401) return setData(null);
+    if (response.status === 401) {
+      setData(null);
+      void syncApplicationBadge(0);
+      return;
+    }
     const result = (await response.json()) as NotificationResponse & {
       error?: string;
     };
     if (!response.ok)
       throw new Error(result.error ?? "Unable to load notifications");
     setData(result);
+    void syncApplicationBadge(result.unreadCount);
   }, []);
 
   useEffect(() => {
@@ -97,6 +136,7 @@ export default function NotificationCentre({ children }: { children?: (controls:
   async function openItem(item: NotificationItem) {
     if (!item.read_at) {
       await post({ action: "mark_read", id: item.id }).catch(() => undefined);
+      void syncApplicationBadge(Math.max(0, (data?.unreadCount ?? 1) - 1));
     }
     window.location.assign(item.target_url || "/");
   }

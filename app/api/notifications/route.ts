@@ -66,11 +66,12 @@ export async function GET(request: Request) {
     )
       .bind(user.id)
       .first();
+    const publicKey = await vapidPublicKey();
     return Response.json({
       notifications: notifications.results,
       unreadCount: Number(unread?.total ?? 0),
-      vapidPublicKey: vapidPublicKey(),
-      pushConfigured: Boolean(vapidPublicKey()),
+      vapidPublicKey: publicKey,
+      pushConfigured: Boolean(publicKey),
       hasActiveSubscription: Boolean(subscription),
       preferences: {
         pushEnabled: Boolean(preferences?.push_enabled ?? 1),
