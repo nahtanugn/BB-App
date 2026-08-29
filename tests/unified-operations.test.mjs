@@ -52,6 +52,8 @@ test("every portal uses one URL-aware, role-aware application shell", async () =
   assert.match(standalone, /popstate/);
   assert.match(standalone, /bb-company-app-active-section/);
   assert.match(standalone, /selectedSection=\{activeSection\}/);
+  assert.match(standalone, /resources: "resources"/);
+  assert.match(standalone, /announcements: "announcements"/);
   assert.match(manage, /activeSection !== "junior"/);
   assert.match(standalone, /new URL\(window\.location\.href\)\.searchParams/);
   for (const page of [submissions, resources, stock, uniforms, admin, onboarding])

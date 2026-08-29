@@ -728,8 +728,13 @@ export default function StandaloneApp() {
     const target = targetUrlObject.searchParams.get("open");
     const aliases: Record<string, AppRoute> = {
       "uniform-requests": "uniforms",
+      uniforms: "uniforms",
       submissions: "submissions",
+      resources: "resources",
+      announcements: "announcements",
       onboarding: "onboarding",
+      automation: "automation",
+      awards: "awards",
       attendance: "attendance",
       members: "members",
       officers: "officers",
