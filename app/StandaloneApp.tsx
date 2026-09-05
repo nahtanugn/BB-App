@@ -143,7 +143,7 @@ export default function StandaloneApp() {
 
   const navigate = useCallback((next: AppRoute, replace = false) => {
     if (!auth?.user) return;
-    const requested: AppRoute = ["operations", "company-overview"].includes(next) ? "home" : next;
+    const requested: AppRoute = next === "company-overview" ? "home" : next;
     const operational =
       ["admin", "officer", "viewer"].includes(auth.user.role) ||
       hasTemporaryAdminAccess;
@@ -155,7 +155,7 @@ export default function StandaloneApp() {
       ["home", "manage", "help"].includes(requested) ||
       ["resources", "uniforms", "announcements"].includes(requested) ||
       requested === "events" ||
-      (["parades", "duties", "committees", "promotion", "service", "leave", "band"].includes(requested) &&
+      (["operations", "parades", "duties", "committees", "promotion", "service", "leave", "band"].includes(requested) &&
         (staff || ["member", "nco", "squad_leader"].includes(auth.user.role) ||
           auth.user.custom_permissions.some((permission) => ["programme.", "leave.", "promotion.", "service.", "band."].some((prefix) => permission.startsWith(prefix))))) ||
       (requested === "journey" &&
@@ -277,7 +277,7 @@ export default function StandaloneApp() {
         subscriptions: "subscriptions",
         home: "home",
         admin: "admin",
-        operations: "home",
+        operations: "operations",
         "company-overview": "home",
         manage: "manage",
         exports: "exports",
