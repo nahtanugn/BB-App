@@ -937,6 +937,7 @@ h2 { color: var(--navy); }
   }
 }
 
+
 /* Responsive command-centre redesign */
 :root {
   --navy: #082f56;
@@ -4214,6 +4215,7 @@ button:disabled { opacity: .62; cursor: wait; }
   .stats-warning-actions { display: grid; grid-template-columns: 1fr; }
   .stats-warning-actions .secondary-button { width: 100%; }
 }
+.storage-usage-page { width: min(1260px, calc(100% - 44px)); margin: 0 auto; padding: 42px 0 80px; }
  .storage-usage-grid { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:1rem; margin:1.5rem 0; }
 .storage-usage-card { min-height:11rem; }
 .storage-usage-card > strong { display:block; font-size:2rem; color:var(--navy,#0b3158); margin:.5rem 0 1rem; }
@@ -4225,4 +4227,31 @@ button:disabled { opacity: .62; cursor: wait; }
 .storage-policy { max-width:60rem; }
 .storage-policy li { margin:.45rem 0; }
 @media (max-width:900px) { .storage-usage-grid { grid-template-columns:repeat(2,minmax(0,1fr)); } }
+@media (max-width:720px) { .storage-usage-page { width: calc(100% - 24px); padding: 24px 0 100px; } }
 @media (max-width:520px) { .storage-usage-grid { grid-template-columns:1fr; } }
+
+/* Consistent form controls across every page and subpage. */
+label > input:not([type="checkbox"]):not([type="radio"]),
+label > select,
+label > textarea,
+form input:not([type="checkbox"]):not([type="radio"]),
+form select,
+form textarea { box-sizing: border-box; width: 100%; max-width: 100%; }
+label > input:not([type="checkbox"]):not([type="radio"]),
+label > select,
+form input:not([type="checkbox"]):not([type="radio"]),
+form select { min-height: 48px; height: 48px; }
+label > textarea,
+form textarea { min-height: 112px; line-height: 1.45; }
+form > label:not(.checkbox-row),
+form .form-row > label:not(.checkbox-row),
+form .form-grid > label:not(.checkbox-row),
+form .operations-field-grid > label:not(.checkbox-row) { min-width: 0; display: grid; align-content: start; gap: 7px; }
+form input[type="file"] { height: auto; min-height: 48px; }
+/* Search fields are compact controls, not full-size form fields. */
+form :is(.search, .resource-search, .stock-search, .admin-search) input {
+  height: auto;
+  min-height: 0;
+  border: 0;
+  border-radius: 0;
+}
