@@ -1921,6 +1921,7 @@ h1 { font-size: clamp(30px, 3.1vw, 46px); line-height: 1; letter-spacing: -1.5px
 @media (max-width: 600px) { .event-audience-options { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); } .event-audience-options button { width: 100%; } }
 .operations-section-intro { padding: 14px 18px; border: 1px solid #dce7f0; border-radius: 12px; background: #f7fbff; color: var(--muted); font-size: 11px; line-height: 1.5; }
 .operations-section-intro p { margin: 0; }
+.operations-combined { grid-template-columns: 1fr; }
 .operations-combined-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; align-items: start; }
 .operations-combined-grid > div { min-width: 0; }
 .operations-combined-heading { margin: 4px 0 10px; color: var(--navy); font: 700 24px/1.1 Georgia, serif; }
