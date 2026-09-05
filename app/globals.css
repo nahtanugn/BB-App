@@ -42,6 +42,19 @@ button:focus-visible, input:focus-visible, select:focus-visible { outline: 3px s
 .branding-settings .operations-field-grid > label { align-content: start; }
 .branding-settings input[type="file"] { min-height: 52px; padding: 10px 12px; overflow: hidden; }
 .branding-install-note { margin: 0; padding: 12px 14px; border-radius: 12px; background: #eef5fc; color: #526b83; font-size: 11px; line-height: 1.55; }
+.helper-text,
+.branding-install-note,
+.preview-help,
+.form-helper,
+.custom-role-section-heading p:not(.eyebrow),
+.manage-group .panel-heading p:not(.eyebrow),
+.manage-tool-list button small,
+.operations-form label small,
+.branding-settings header > p:not(.eyebrow),
+.account-modal .role-form-heading + p,
+.account-modal label > small { display: none !important; }
+.unified-app-shell nav button small,
+.unified-help small { display: none !important; }
 
 /* Automated BB Guide */
 .bb-guide-launcher { display: none; }

@@ -1088,7 +1088,7 @@ export default function StandaloneApp() {
                             Temporary Admin · operational access
                           </option>
                         </select>
-                        <small>
+                        <small className="helper-text">
                           This is additional access and does not change the
                           account’s normal role.
                         </small>
@@ -1260,7 +1260,7 @@ export default function StandaloneApp() {
                           Temporary Admin · operational access
                         </option>
                       </select>
-                      <small>
+                      <small className="helper-text">
                         Optional additional access. The normal role above is
                         retained.
                       </small>

@@ -98,7 +98,7 @@ export default function MemberProgress({ user }: { user: User }) {
             <h3>
               {attendance.present} of {attendance.total} meetings
             </h3>
-            <small>Percentage is based on all recorded meetings.</small>
+            <small className="helper-text">Percentage is based on all recorded meetings.</small>
           </div>
         </article>
         <article className="panel personal-award-total">

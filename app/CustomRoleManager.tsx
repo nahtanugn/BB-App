@@ -248,7 +248,7 @@ export default function CustomRoleManager({
                 <span className="role-color" style={{ backgroundColor: role.color }} />
                 <div className="role-list-copy">
                   <strong>{role.name}</strong>
-                  <small>{role.description || "No description provided"}</small>
+                  <small className="helper-text">{role.description || "No description provided"}</small>
                   <span>{(() => { try { return `${(JSON.parse(role.permissions) as string[]).length} permissions`; } catch { return "0 permissions"; } })()}</span>
                 </div>
                 {!readOnly && <div className="role-card-actions"><button className="text-button" disabled={busy} onClick={() => setEditing(role)}>Edit</button><button className="danger-link" disabled={busy} onClick={() => deleteRole(role)}>Delete</button></div>}
@@ -260,14 +260,14 @@ export default function CustomRoleManager({
             <div className="role-form-heading"><div><p className="eyebrow">{editing ? "EDIT ROLE" : "NEW ROLE"}</p><h3>{editing ? editing.name : "Role details"}</h3></div>{editing && <button type="button" className="text-button" onClick={() => setEditing(null)}>Cancel</button>}</div>
             <div className="role-form-fields">
               <label>Role name<input name="name" required defaultValue={editing?.name ?? ""} placeholder="e.g. Quartermaster" /></label>
-              <label className="role-colour-field">Role colour<span><input name="color" type="color" defaultValue={editing?.color ?? "#2878d4"} /><small>Used to identify this role</small></span></label>
+              <label className="role-colour-field">Role colour<span><input name="color" type="color" defaultValue={editing?.color ?? "#2878d4"} /><small className="helper-text">Used to identify this role</small></span></label>
             </div>
             <label>Description<input name="description" defaultValue={editing?.description ?? ""} placeholder="What this role is responsible for" /></label>
             <fieldset className="permission-grid">
               <legend>Choose permissions</legend>
               {permissionGroups.map((group) => (
                 <section className="permission-group" key={group.title}>
-                  <div><strong>{group.title}</strong><small>{group.description}</small></div>
+                  <div><strong>{group.title}</strong><small className="helper-text">{group.description}</small></div>
                   <div>{group.options.map(([value, label]) => <label key={`${editing?.id ?? "new"}-${value}`}><input type="checkbox" name="permissions" value={value} defaultChecked={editingPermissions.includes(value)} /><span>{label}</span></label>)}</div>
                 </section>
               ))}
@@ -288,7 +288,7 @@ export default function CustomRoleManager({
             <div className="role-form-heading"><div><p className="eyebrow">NEW ASSIGNMENT</p><h3>Grant additional access</h3></div></div>
             <label>Account<select name="userId" required defaultValue=""><option value="" disabled>Select an account</option>{users.map((user) => <option value={user.id} key={user.id}>{user.name} · {user.email}</option>)}</select></label>
             <label>Custom role<select name="roleId" required defaultValue=""><option value="" disabled>Select a role</option>{roles.map((role) => <option value={role.id} key={role.id}>{role.name}</option>)}</select></label>
-            <label>Expiry date <span className="optional-label">Optional</span><input name="expiresOn" type="date" /><small>Leave blank to keep this access active until it is removed.</small></label>
+            <label>Expiry date <span className="optional-label">Optional</span><input name="expiresOn" type="date" /><small className="helper-text">Leave blank to keep this access active until it is removed.</small></label>
             <button className="primary" disabled={busy || !roles.length}>{busy ? "Assigning…" : "Assign role"}</button>
           </form>}
         </section>
