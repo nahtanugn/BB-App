@@ -1241,6 +1241,9 @@ h1 { font-size: clamp(30px, 3.1vw, 46px); line-height: 1; letter-spacing: -1.5px
 .account-modal .role-card-actions { width: 100%; padding-left: 24px; }
 .account-modal .role-form input,
 .account-modal .role-form select { min-width: 0; max-width: 100%; }
+.account-modal .role-colour-field > span { display: grid; grid-template-columns: 52px minmax(0, 1fr); align-items: center; gap: 10px; }
+.account-modal .role-colour-field input[type="color"] { width: 52px !important; height: 38px; min-width: 52px; max-width: 52px; padding: 0; }
+.account-modal .role-colour-field small { min-width: 0; white-space: normal; }
 .modal-heading {
   min-height: 88px;
   padding: 21px 24px;
