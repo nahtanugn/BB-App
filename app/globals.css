@@ -3827,6 +3827,7 @@ button:disabled { opacity: .62; cursor: wait; }
 .operations-header { margin: 0; }
 .operations-scope { align-self: center; padding: 10px 14px; border: 1px solid #cfe0f1; border-radius: 999px; background: #edf5fd; color: var(--navy); font-size: 12px; font-weight: 800; }
 .operations-layout { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: start; gap: 18px; }
+.operations-centre .operations-layout.operations-combined { grid-template-columns: 1fr; }
 .operations-layout > .wide, .operations-layout > .operations-mini-grid, .operations-layout > .operations-summary { grid-column: 1 / -1; }
 .operations-form, .operations-list, .readiness-list { min-width: 0; padding: 24px; border-radius: 22px; }
 .operations-form { display: grid; gap: 16px; }
