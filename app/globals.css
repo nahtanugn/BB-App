@@ -55,6 +55,15 @@ button:focus-visible, input:focus-visible, select:focus-visible { outline: 3px s
 .account-modal label > small { display: none !important; }
 .unified-app-shell nav button small,
 .unified-help small { display: none !important; }
+.run-sheet-form { grid-column: 1 / -1; }
+.run-sheet-heading { display:flex; align-items:center; justify-content:space-between; gap:16px; margin:24px 0 12px; padding-top:18px; border-top:1px solid var(--line); }
+.run-sheet-heading h3 { margin:0; color:var(--navy); font-family:Georgia,serif; font-size:22px; }
+.run-sheet-items { display:grid; gap:12px; margin-bottom:18px; }
+.run-sheet-item { border:1px solid var(--line); border-radius:14px; padding:14px; background:#fbfdff; }
+.run-sheet-item-top { display:flex; align-items:center; justify-content:space-between; margin-bottom:10px; }
+.run-sheet-item-top strong { display:grid; place-items:center; width:26px; height:26px; border-radius:50%; background:#e8f2ff; color:var(--blue); font-size:13px; }
+.run-sheet-item .operations-field-grid { margin:0; }
+@media (max-width: 720px) { .run-sheet-heading { align-items:flex-start; flex-direction:column; } }
 
 /* Automated BB Guide */
 .bb-guide-launcher { display: none; }
