@@ -31,6 +31,9 @@
       },
       "SETUP_TOKEN": {
         "description": "Create a private one-time setup code with at least 16 characters. The first administrator enters it once, and it must not be shared publicly."
+      },
+      "DOCUMENTS": {
+        "description": "A private R2 bucket stores official forms, photos, signatures and completed application files."
       }
     }
   },

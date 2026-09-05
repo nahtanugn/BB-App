@@ -153,6 +153,10 @@ export default function AwardSubmissions({
   }, [search, statusFilter, submissions]);
 
   function selectAward(code: string) {
+    if (code === "presidents_award") {
+      window.location.assign("/?open=presidents-badge");
+      return;
+    }
     setAwardCode(code);
     const award = awards.find((item) => item.code === code);
     if (level === "advanced" && award && !award.advanced_available)

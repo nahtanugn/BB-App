@@ -43,6 +43,8 @@ next-env.d.ts
 /dist/
 /.wrangler/
 /outputs/
+/output/
+/tmp/
 /work/
 /src-tauri/target/
 
@@ -60,3 +62,14 @@ next-env.d.ts
 /exports/
 /uploads/
 /private-documents/
+tutorial-output/*
+!tutorial-output/BB-App-Tutorial.mp4
+!tutorial-output/BB-App-User-Guide.pptx
+tutorial-output/*.inspect.ndjson
+tutorial-output/assets/
+tutorial-output/audio/
+tutorial-output/rendered/
+tutorial-output/*-preview*.png
+tutorial-output/deck-montage.webp
+tutorial-output/montage.png
+tutorial-output/tutorial-silent.mp4

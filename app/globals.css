@@ -210,6 +210,11 @@ h2 { color: var(--navy); }
 .status-select { min-width: 108px; min-height: 30px; padding: 5px 8px; border: 1px solid var(--line); border-radius: 8px; background: white; color: #6f7b88; font-size: 8px; font-weight: 750; cursor: pointer; }
 .status-select:hover:not(:disabled) { box-shadow: 0 4px 10px rgba(0,0,0,.06); }
 .status-select:disabled { cursor: not-allowed; opacity: .72; }
+.award-status-control { display: grid; justify-items: center; gap: 7px; }
+.award-date-control { display: grid; gap: 3px; width: 108px; text-align: left; }
+.award-date-control span { color: var(--muted); font-size: 7px; font-weight: 750; letter-spacing: .04em; text-transform: uppercase; }
+.award-date-control input { width: 100%; min-height: 30px; padding: 4px 6px; border: 1px solid var(--line); border-radius: 8px; background: white; color: var(--navy); font-size: 8px; font-weight: 700; }
+.award-date-control input:disabled { opacity: .72; }
 .service-count-control { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-width: 104px; }
 .service-count-control button { width: 27px; height: 27px; padding: 0; border: 1px solid var(--line); border-radius: 50%; background: white; color: var(--navy); font-weight: 800; cursor: pointer; }
 .service-count-control button:disabled { cursor: not-allowed; opacity: .35; }
@@ -1137,6 +1142,9 @@ h1 { font-size: clamp(30px, 3.1vw, 46px); line-height: 1; letter-spacing: -1.5px
 .award-matrix tbody tr:nth-child(even) td,
 .award-matrix tbody tr:nth-child(even) th { background-color: #fbfdff; }
 .status-select { min-height: 40px; padding-inline: 10px; border-radius: 10px; font-size: 11px; }
+.award-date-control { width: 118px; }
+.award-date-control span { font-size: 8px; }
+.award-date-control input { min-height: 38px; border-radius: 10px; font-size: 10px; }
 .service-count-control button { width: 36px; height: 36px; }
 
 .member-grid { gap: 18px; }
@@ -1896,6 +1904,20 @@ h1 { font-size: clamp(30px, 3.1vw, 46px); line-height: 1; letter-spacing: -1.5px
 .event-register-toggle small { color: #607a94; font-size: 9px; font-weight: 600; }
 .event-form > .primary { margin: 0 20px 20px; }
 .event-form-close { display: none; }
+.event-attendee-picker { display: grid; gap: 12px; }
+.event-member-options { max-height: 280px; overflow: auto; border: 1px solid #dce4ec; border-radius: 12px; padding: 12px; display: grid; gap: 10px; }
+.event-member-options label { display: flex; align-items: center; gap: 12px; padding: 8px; font-size: 14px; }
+.event-member-options input[type=checkbox] { width: 20px; min-height: 20px; height: 20px; flex: 0 0 20px; }
+.event-member-options small { display: block; color: var(--muted); margin-top: 4px; }
+.event-management-actions, .event-editor-actions { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+.event-management-actions { margin-top: 14px; padding-top: 12px; border-top: 1px solid #e4ebf2; }
+.event-editor-actions { padding: 16px 22px; border-top: 1px solid #e4ebf2; }
+.event-management-actions button, .event-editor-actions button:not(.primary) { min-height: 44px; padding: 10px 18px; border: 1px solid #ccdbea; border-radius: 10px; background: #f6f9fd; color: var(--navy); font-size: 14px; font-weight: 700; cursor: pointer; }
+.event-management-actions .event-delete-button { color: #b42332; background: #fff6f6; border-color: #edc9cf; }
+.event-management-actions button:hover, .event-editor-actions button:not(.primary):hover { background: #eaf1f8; }
+.event-management-actions button:focus-visible, .event-editor-actions button:focus-visible { outline: 3px solid var(--blue); outline-offset: 3px; }
+.event-management-actions button:disabled { opacity: .5; cursor: wait; }
+.event-body { min-width: 0; overflow-wrap: anywhere; }
 .event-timeline { display: grid; gap: 13px; }
 .event-card { padding: 18px; display: grid; grid-template-columns: 70px minmax(0, 1fr) auto; gap: 18px; align-items: center; }
 .event-card time { min-height: 70px; display: grid; place-content: center; border-radius: 15px; background: var(--navy); color: white; text-align: center; }
@@ -3791,10 +3813,12 @@ button:disabled { opacity: .62; cursor: wait; }
 .operations-form, .operations-list, .readiness-list { min-width: 0; padding: 24px; border-radius: 22px; }
 .operations-form { display: grid; gap: 16px; }
 .operations-form > div:first-child h2, .operations-form > h2, .operations-section-heading h2 { margin: 3px 0 0; color: var(--navy); font-family: Georgia, serif; font-size: clamp(22px, 2vw, 30px); font-weight: 500; }
-.operations-form label { min-width: 0; display: grid; gap: 7px; color: var(--navy); font-size: 12px; font-weight: 800; }
+.operations-form label { min-width: 0; display: grid; align-content: start; gap: 7px; color: var(--navy); font-size: 12px; font-weight: 800; }
 .operations-form label small { color: var(--muted); font-size: 10px; font-weight: 600; }
 .operations-form input, .operations-form select, .operations-form textarea, .operations-list details select, .operations-list details input { width: 100%; min-width: 0; min-height: 48px; box-sizing: border-box; padding: 11px 13px; border: 1px solid #cad9e8; border-radius: 12px; background: #fff; color: var(--ink); font: inherit; font-weight: 600; }
 .operations-form textarea { min-height: 96px; resize: vertical; }
+.operations-centre .operations-form input:not([type="checkbox"]):not([type="radio"]), .operations-centre .operations-form select { height: 52px; min-height: 52px; padding: 12px 14px; border-radius: 12px; font-size: 16px; line-height: 1.4; }
+.operations-centre .operations-form input[type="datetime-local"] { display: block; max-width: 100%; }
 .operations-form .primary, .operations-form .danger-button { justify-self: start; min-height: 48px; padding: 0 24px; }
 .operations-form.compact { align-content: start; }
 .operations-callout { min-width: 0; padding: 24px; display: flex; align-items: center; justify-content: space-between; gap: 20px; border-radius: 22px; }
@@ -3907,6 +3931,81 @@ button:disabled { opacity: .62; cursor: wait; }
   .help-guide-list ol { padding: 14px 20px 18px 40px; }
   .help-guide-list li { font-size: 13px; }
   .help-safety { align-items: start; }
+}
+
+/* President's Badge uses the same shared field height while keeping the
+   sensitive, multi-stage workflow visually separate from the award matrix. */
+.presidents-badge-page { display: grid; gap: 20px; padding: 24px; max-width: 1500px; margin: 0 auto; }
+.presidents-hero { display: flex; align-items: flex-start; justify-content: space-between; gap: 20px; padding: clamp(24px, 4vw, 48px); border: 1px solid var(--line); border-radius: 24px; background: linear-gradient(135deg, #fff 0%, #f4f9ff 100%); box-shadow: var(--shadow); }
+.presidents-hero h1 { margin: 6px 0; color: var(--navy); font-family: Georgia, serif; font-size: clamp(32px, 4vw, 54px); line-height: 1.04; }
+.presidents-hero p { margin: 4px 0 0; color: var(--muted); }
+.presidents-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; align-items: start; }
+.presidents-card { min-width: 0; padding: 24px; border: 1px solid var(--line); border-radius: 20px; background: #fff; box-shadow: 0 12px 32px rgba(13,52,88,.06); }
+.presidents-card-wide { grid-column: 1 / -1; }
+.presidents-card h2 { margin: 0 0 8px; color: var(--navy); font-family: Georgia, serif; font-size: 28px; }
+.presidents-card h3 { color: var(--navy); }
+.card-heading { display:flex; align-items:flex-start; justify-content:space-between; gap:16px; }
+.card-heading .eyebrow { margin:0 0 6px; }
+.preview-help { margin:0 0 16px; color:var(--muted); }
+.official-preview { border:1px solid #b9c9d9; border-radius:12px; padding:18px; background:#f7fafc; color:var(--navy); }
+.preview-brand { display:flex; justify-content:space-between; gap:12px; padding-bottom:12px; border-bottom:2px solid #173c63; font-size:12px; font-weight:800; letter-spacing:.08em; }
+.preview-grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:12px; margin-top:14px; }
+.preview-grid div { display:grid; gap:4px; min-width:0; }
+.preview-grid small, .preview-awards-title { color:var(--muted); font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.05em; }
+.preview-grid strong { overflow-wrap:anywhere; }
+.preview-awards { margin-top:16px; padding-top:14px; border-top:1px solid #cbd9e8; }
+.preview-award-list { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:7px 18px; margin-top:9px; }
+.preview-award-list div { display:flex; justify-content:space-between; gap:10px; border-bottom:1px solid #e1e8ef; padding:5px 0; }
+.preview-award-list span { min-width:0; overflow-wrap:anywhere; }
+.preview-award-list small { color:var(--muted); }
+.preview-award-list time { flex:0 0 auto; color:var(--navy); font-weight:700; }
+.presidents-card form, .assessment-card { display: grid; gap: 14px; margin-top: 18px; }
+.presidents-card label, .assessment-card label { display: grid; gap: 7px; color: var(--navy); font-weight: 750; }
+.presidents-card :is(input,select,textarea), .assessment-card :is(input,select,textarea) { width: 100%; box-sizing: border-box; border: 1px solid #cbd9e8; border-radius: 12px; padding: 12px 14px; color: var(--ink); background: #fff; font: inherit; }
+.presidents-card textarea, .assessment-card textarea { min-height: 100px; resize: vertical; }
+.presidents-card .check-row, .assessment-card .check-row { display: flex; align-items: center; gap: 10px; font-weight: 650; }
+.presidents-card .check-row input, .assessment-card .check-row input { width: 20px; height: 20px; flex: 0 0 auto; }
+.form-grid { grid-template-columns: repeat(2,minmax(0,1fr)); }
+.form-grid .span-all { grid-column: 1 / -1; }
+.status-chip { display: inline-flex; width: fit-content; align-items: center; padding: 7px 11px; border-radius: 999px; background: #e9f2fb; color: #244b72; font-size: 12px; font-weight: 850; text-transform: capitalize; }
+.status-approved { background: #daf6e9; color: #08775d; }
+.status-returned, .status-rejected { background: #fff0f0; color: #b93942; }
+.status-requested, .status-assessments_pending { background: #fff3ca; color: #8c5e00; }
+.eligibility-list { display: grid; gap: 8px; margin: 18px 0 0; padding: 0; list-style: none; }
+.eligibility-list li { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 10px; background: #f6f8fb; }
+.eligibility-list li span { display: inline-grid; place-items: center; width: 24px; height: 24px; border-radius: 50%; font-weight: 900; }
+.eligibility-list .met span { background: #daf6e9; color: #08775d; }
+.eligibility-list .missing span { background: #fff0d2; color: #8c5e00; }
+.assessment-grid { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 14px; margin-top: 16px; }
+.assessment-grid article { display: grid; align-content: start; gap: 12px; padding: 18px; border: 1px solid var(--line); border-radius: 16px; background: #f9fbfd; }
+.captain-ratings { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 12px; }
+.segmented { display: grid; grid-template-columns: 1fr 1fr; padding: 4px; border-radius: 12px; background: #e9eff6; }
+.segmented button { min-height: 40px; border: 0; border-radius: 9px; background: transparent; color: var(--muted); font-weight: 800; }
+.segmented button.active { background: #fff; color: var(--navy); box-shadow: 0 2px 9px rgba(13,52,88,.12); }
+.invite-box { display: flex; align-items: end; gap: 10px; margin-top: 16px; padding: 14px; border-radius: 14px; background: #eef7ff; }
+.invite-box label { flex: 1; }
+.application-list { display: grid; gap: 10px; margin-top: 16px; }
+.application-list > button { display: flex; align-items: center; justify-content: space-between; gap: 16px; width: 100%; padding: 16px; border: 1px solid var(--line); border-radius: 14px; background: #fff; text-align: left; cursor: pointer; }
+.application-list > button:hover { border-color: var(--blue); background: #f7fbff; }
+.application-list > button span:first-child { display: grid; gap: 4px; min-width: 0; }
+.application-list small { color: var(--muted); }
+.hash-code { display: block; max-width: 100%; padding: 10px; border-radius: 10px; overflow-wrap: anywhere; background: #f1f4f8; color: #52657c; font-size: 11px; }
+.button-row { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 16px; }
+.public-assessment { min-height: 100vh; display: grid; place-items: center; padding: 24px; background: #eef4f9; }
+.assessment-card { width: min(720px,100%); padding: clamp(24px,5vw,52px); border: 1px solid #d5e1ec; border-radius: 28px; background: #fff; box-shadow: 0 22px 60px rgba(13,52,88,.13); }
+.assessment-card h1 { margin: 0; color: var(--navy); font-family: Georgia,serif; font-size: clamp(34px,6vw,58px); }
+.assessment-card fieldset { display: grid; gap: 12px; padding: 18px; border: 1px solid var(--line); border-radius: 15px; }
+.assessment-card legend { padding: 0 8px; color: var(--navy); font-weight: 850; }
+.complete-text { color: #08775d; font-weight: 800; }
+.warning-text { color: #8c5e00; font-weight: 800; }
+
+@media (max-width: 800px) {
+  .presidents-badge-page { padding: 14px; }
+  .presidents-hero { flex-direction: column; border-radius: 18px; }
+  .presidents-grid, .form-grid, .assessment-grid, .captain-ratings, .preview-grid, .preview-award-list { grid-template-columns: 1fr; }
+  .presidents-card-wide, .form-grid .span-all { grid-column: auto; }
+  .invite-box { align-items: stretch; flex-direction: column; }
+  .application-list > button { align-items: flex-start; flex-direction: column; }
 }
 .company-statistics-page > .category-page-header h1 { font-size: clamp(40px, 4vw, 58px); line-height: .98; }
 .stats-year { display: grid; gap: 6px; color: var(--muted); font-size: 11px; font-weight: 800; }
@@ -4115,3 +4214,15 @@ button:disabled { opacity: .62; cursor: wait; }
   .stats-warning-actions { display: grid; grid-template-columns: 1fr; }
   .stats-warning-actions .secondary-button { width: 100%; }
 }
+ .storage-usage-grid { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:1rem; margin:1.5rem 0; }
+.storage-usage-card { min-height:11rem; }
+.storage-usage-card > strong { display:block; font-size:2rem; color:var(--navy,#0b3158); margin:.5rem 0 1rem; }
+.storage-meter { height:.55rem; border-radius:99px; background:#e7edf4; overflow:hidden; margin-bottom:.8rem; }
+.storage-meter span { display:block; height:100%; border-radius:inherit; background:#2d8a67; }
+.storage-usage-card.medium .storage-meter span { background:#d59a18; }
+.storage-usage-card.high .storage-meter span,.storage-usage-card.critical .storage-meter span { background:#c74a45; }
+.storage-usage-card small { color:#64748b; line-height:1.4; }
+.storage-policy { max-width:60rem; }
+.storage-policy li { margin:.45rem 0; }
+@media (max-width:900px) { .storage-usage-grid { grid-template-columns:repeat(2,minmax(0,1fr)); } }
+@media (max-width:520px) { .storage-usage-grid { grid-template-columns:1fr; } }

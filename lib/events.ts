@@ -45,6 +45,10 @@ export async function ensureEventSchema() {
   if (!eventColumns.results.some((column) => column.name === "audience"))
     await runtime.DB.prepare("ALTER TABLE company_events ADD COLUMN audience TEXT NOT NULL DEFAULT 'section_members'").run();
   const sessionColumns = await runtime.DB.prepare("PRAGMA table_info(attendance_sessions)").all<{ name: string }>();
+  for (const [table, columns] of [["company_events", eventColumns], ["attendance_sessions", sessionColumns]] as const) {
+    if (!columns.results.some((column) => column.name === "selected_member_ids"))
+      await runtime.DB.prepare(`ALTER TABLE ${table} ADD COLUMN selected_member_ids TEXT NOT NULL DEFAULT '[]'`).run();
+  }
   if (!sessionColumns.results.some((column) => column.name === "audience"))
     await runtime.DB.prepare("ALTER TABLE attendance_sessions ADD COLUMN audience TEXT NOT NULL DEFAULT 'section_members'").run();
 }

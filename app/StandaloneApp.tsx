@@ -29,6 +29,9 @@ import AssociatesAlumniSection from "./AssociatesAlumniSection";
 import CompanyOperationsCentre, { type OperationsModule } from "./CompanyOperationsCentre";
 import HelpCentre from "./HelpCentre";
 import BBGuidePanel from "./BBGuidePanel";
+import PresidentsBadgeCentre from "./PresidentsBadgeCentre";
+import JuniorGoldCentre from "./JuniorGoldCentre";
+import StorageUsageCentre from "./StorageUsageCentre";
 import { brandingLogoStyle, useBranding } from "./BrandingContext";
 
 type User = {
@@ -173,7 +176,11 @@ export default function StandaloneApp() {
       (requested === "admin" && ["admin", "officer", "viewer"].includes(auth.user.role)) ||
       (requested === "automation" && ["admin", "viewer"].includes(auth.user.role)) ||
       (requested === "exports" && (operational || auth.user.custom_permissions.includes("exports.full"))) ||
-      (requested === "company-statistics" && ["admin", "officer", "viewer"].includes(auth.user.role));
+      (requested === "company-statistics" && ["admin", "officer", "viewer"].includes(auth.user.role)) ||
+      (requested === "junior-gold" && ["admin", "officer", "viewer", "nco", "squad_leader", "member"].includes(auth.user.role)) ||
+      (requested === "presidents-badge" && ["admin", "officer", "viewer", "nco", "squad_leader", "member"].includes(auth.user.role)) ||
+      (requested === "storage-usage" && ["admin", "officer", "viewer"].includes(auth.user.role));
+
 
     const safeRoute = allowed ? requested : "home";
     setRoute(safeRoute);
@@ -275,6 +282,9 @@ export default function StandaloneApp() {
         manage: "manage",
         exports: "exports",
         "company-statistics": "company-statistics",
+        "junior-gold": "junior-gold",
+        "presidents-badge": "presidents-badge",
+        "storage-usage": "storage-usage",
         parades: "parades",
         duties: "duties",
         committees: "committees",
@@ -750,6 +760,8 @@ export default function StandaloneApp() {
       admin: "admin",
       exports: "exports",
       "company-statistics": "company-statistics",
+      "junior-gold": "junior-gold",
+      "presidents-badge": "presidents-badge",
       parades: "parades",
       duties: "duties",
       committees: "committees",
@@ -758,6 +770,7 @@ export default function StandaloneApp() {
       service: "service",
       band: "band",
       help: "help",
+      "storage-usage": "storage-usage",
       manage: "manage",
       home: "home",
     };
@@ -774,12 +787,18 @@ export default function StandaloneApp() {
     page = <ExportCentre currentYear={new Date().getFullYear()} presentation="page" onComplete={setNotice} />;
   else if (route === "company-statistics" && ["admin", "officer", "viewer"].includes(currentUser.role))
     page = <CompanyStatisticsCentre user={currentUser} currentYear={new Date().getFullYear()} />;
+  else if (route === "storage-usage" && ["admin", "officer", "viewer"].includes(currentUser.role))
+    page = <StorageUsageCentre />;
   else if (route === "officers" && ["admin", "officer", "viewer"].includes(currentUser.role))
     page = <OfficerSection role={currentUser.role} />;
   else if (route === "associates" && ["admin", "officer", "viewer"].includes(currentUser.role))
     page = <AssociatesAlumniSection role={currentUser.role} />;
   else if (route === "submissions")
     page = <SubmissionsPage user={currentUser} initialSection={submissionSection} onLogout={logout} onBack={() => navigate("home")} />;
+  else if (route === "presidents-badge")
+    page = <PresidentsBadgeCentre />;
+  else if (route === "junior-gold")
+    page = <JuniorGoldCentre activeSection={activeSection} />;
   else if (route === "stock")
     page = <StockCentre userName={currentUser.name} onLogout={logout} onBack={() => navigate("home")} />;
   else if (route === "uniforms")

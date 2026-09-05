@@ -30,7 +30,13 @@ export const members = sqliteTable("members", {
   spiritualStatus: text("spiritual_status").notNull().default(""),
   acceptedChrist: integer("accepted_christ", { mode: "boolean" }).notNull().default(false),
   baptised: integer("baptised", { mode: "boolean" }).notNull().default(false),
+  nric: text("nric").notNull().default(""),
+  birthDate: text("birth_date").notNull().default(""),
+  passportPhotoObjectKey: text("passport_photo_object_key").notNull().default(""),
+  sensitiveVerifiedAt: text("sensitive_verified_at"),
+  sensitiveVerifiedByUserId: integer("sensitive_verified_by_user_id"),
   officerWorkStatus: text("officer_work_status").notNull().default(""),
+  contactNumber: text("contact_number").notNull().default(""),
   isDemo: integer("is_demo", { mode: "boolean" }).notNull().default(false),
   createdAt: text("created_at").notNull(),
 });
@@ -607,4 +613,44 @@ export const memberGoals = sqliteTable("member_goals", {
   createdByUserId: integer("created_by_user_id").notNull(),
   createdAt: text("created_at").notNull(),
   completedAt: text("completed_at"),
+});
+
+export const presidentsBadgeTemplates = sqliteTable("presidents_badge_templates", {
+  id: integer("id").primaryKey({ autoIncrement: true }), layoutProfile: text("layout_profile").notNull(), formCode: text("form_code").notNull(), objectKey: text("object_key").notNull().unique(), sha256: text("sha256").notNull(), fileSize: integer("file_size").notNull(), pageCount: integer("page_count").notNull(), active: integer("active", { mode: "boolean" }).notNull().default(true), uploadedByUserId: integer("uploaded_by_user_id").notNull().references(() => users.id), createdAt: text("created_at").notNull(),
+}, (table) => [uniqueIndex("presidents_badge_templates_profile_hash_idx").on(table.layoutProfile, table.sha256)]);
+
+export const presidentsBadgeApplications = sqliteTable("presidents_badge_applications", {
+  id: integer("id").primaryKey({ autoIncrement: true }), memberId: integer("member_id").notNull().references(() => members.id), status: text("status").notNull().default("requested"), applicationYear: integer("application_year").notNull(), excoMeetingDate: text("exco_meeting_date").notNull().default(""), ownerUserId: integer("owner_user_id"), awardsOfficerUserId: integer("awards_officer_user_id"), captainUserId: integer("captain_user_id"), templateId: integer("template_id").references(() => presidentsBadgeTemplates.id), includeCompanyStamp: integer("include_company_stamp", { mode: "boolean" }).notNull().default(false), notes: text("notes").notNull().default(""), createdByUserId: integer("created_by_user_id").notNull(), createdAt: text("created_at").notNull(), updatedAt: text("updated_at").notNull(), finalisedAt: text("finalised_at"), submittedAt: text("submitted_at"), closedAt: text("closed_at"),
+}, (table) => [index("presidents_badge_applications_member_idx").on(table.memberId, table.status)]);
+
+export const presidentsBadgeAssessments = sqliteTable("presidents_badge_assessments", {
+  id: integer("id").primaryKey({ autoIncrement: true }), applicationId: integer("application_id").notNull().references(() => presidentsBadgeApplications.id, { onDelete: "cascade" }), assessorType: text("assessor_type").notNull(), completionMode: text("completion_mode").notNull().default("web"), assessorName: text("assessor_name").notNull().default(""), assessorRelationship: text("assessor_relationship").notNull().default(""), ratingsJson: text("ratings_json").notNull().default("{}"), reasonsJson: text("reasons_json").notNull().default("[]"), remarks: text("remarks").notNull().default(""), signatureObjectKey: text("signature_object_key").notNull().default(""), status: text("status").notNull().default("pending"), submittedAt: text("submitted_at"), updatedAt: text("updated_at").notNull(),
+}, (table) => [uniqueIndex("presidents_badge_assessment_type_idx").on(table.applicationId, table.assessorType)]);
+
+export const presidentsBadgeAssessmentInvitations = sqliteTable("presidents_badge_assessment_invitations", {
+  id: integer("id").primaryKey({ autoIncrement: true }), assessmentId: integer("assessment_id").notNull().references(() => presidentsBadgeAssessments.id, { onDelete: "cascade" }), tokenHash: text("token_hash").notNull().unique(), expiresAt: text("expires_at").notNull(), revokedAt: text("revoked_at"), lastAccessedAt: text("last_accessed_at"), createdByUserId: integer("created_by_user_id").notNull(), createdAt: text("created_at").notNull(),
+});
+
+export const presidentsBadgeVersions = sqliteTable("presidents_badge_versions", {
+  id: integer("id").primaryKey({ autoIncrement: true }), applicationId: integer("application_id").notNull().references(() => presidentsBadgeApplications.id, { onDelete: "cascade" }), versionNumber: integer("version_number").notNull(), objectKey: text("object_key").notNull().unique(), sha256: text("sha256").notNull(), inputSnapshotJson: text("input_snapshot_json").notNull(), createdByUserId: integer("created_by_user_id").notNull(), createdAt: text("created_at").notNull(), supersededAt: text("superseded_at"),
+}, (table) => [uniqueIndex("presidents_badge_version_number_idx").on(table.applicationId, table.versionNumber)]);
+
+export const presidentsBadgeOutcomes = sqliteTable("presidents_badge_outcomes", {
+  id: integer("id").primaryKey({ autoIncrement: true }), applicationId: integer("application_id").notNull().references(() => presidentsBadgeApplications.id, { onDelete: "cascade" }), outcome: text("outcome").notNull(), outcomeDate: text("outcome_date").notNull(), reference: text("reference").notNull().default(""), returnedDocumentObjectKey: text("returned_document_object_key").notNull().default(""), confirmedExternalDecision: integer("confirmed_external_decision", { mode: "boolean" }).notNull().default(false), notes: text("notes").notNull().default(""), recordedByUserId: integer("recorded_by_user_id").notNull(), createdAt: text("created_at").notNull(),
+});
+
+export const memberCampHistory = sqliteTable("member_camp_history", {
+  id: integer("id").primaryKey({ autoIncrement: true }), memberId: integer("member_id").notNull().references(() => members.id, { onDelete: "cascade" }), campYear: integer("camp_year").notNull(), campLevel: text("camp_level").notNull(), description: text("description").notNull().default(""), createdAt: text("created_at").notNull(),
+}, (table) => [index("member_camp_history_member_idx").on(table.memberId, table.campYear)]);
+
+export const presidentsBadgeSettings = sqliteTable("presidents_badge_settings", {
+  id: integer("id").primaryKey(), companyNumber: text("company_number").notNull().default(""), officialCompanyName: text("official_company_name").notNull().default(""), malaysianState: text("malaysian_state").notNull().default(""), companyStampObjectKey: text("company_stamp_object_key").notNull().default(""), updatedByUserId: integer("updated_by_user_id"), updatedAt: text("updated_at").notNull(),
+});
+
+export const companyAnnualCompliance = sqliteTable("company_annual_compliance", {
+  id: integer("id").primaryKey({ autoIncrement: true }), reportingYear: integer("reporting_year").notNull().unique(), brigadeDuesDate: text("brigade_dues_date").notNull().default(""), rosReturnDate: text("ros_return_date").notNull().default(""), statisticsReturnDate: text("statistics_return_date").notNull().default(""), updatedByUserId: integer("updated_by_user_id").notNull(), updatedAt: text("updated_at").notNull(),
+});
+
+export const staffSignatureProfiles = sqliteTable("staff_signature_profiles", {
+  userId: integer("user_id").primaryKey().references(() => users.id, { onDelete: "cascade" }), objectKey: text("object_key").notNull(), sha256: text("sha256").notNull(), updatedAt: text("updated_at").notNull(),
 });

@@ -42,6 +42,8 @@ type Candidate = {
 };
 
 export async function ensureAutomationSchema(db: D1Database) {
+  const { ensureEventSchema } = await import("./events");
+  await ensureEventSchema();
   await db.batch([
     db.prepare(`CREATE TABLE IF NOT EXISTS automation_rules (
       rule_key TEXT PRIMARY KEY,
@@ -304,11 +306,12 @@ async function collectCandidates(db: D1Database, now: Date) {
     const cutoff = new Date(now.getTime() - 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
     const rows = await db.prepare(`SELECT sessions.id, sessions.section, members.squad, COUNT(*) AS missing
       FROM attendance_sessions sessions
-      JOIN members ON members.section = sessions.section
+      JOIN members ON (members.section = sessions.section OR sessions.section = 'all')
       LEFT JOIN users ON LOWER(users.email) = LOWER(members.email)
       LEFT JOIN attendance_records records ON records.session_id = sessions.id AND records.member_id = members.id
       WHERE sessions.meeting_date <= ? AND (records.status IS NULL OR records.status = 'unmarked')
         AND (sessions.audience != 'nco_council' OR users.role IN ('nco', 'squad_leader'))
+        AND (sessions.audience != 'selected_members' OR members.id IN (SELECT value FROM json_each(sessions.selected_member_ids)))
       GROUP BY sessions.id, sessions.section, members.squad`).bind(cutoff).all<{
         id: number; section: string; squad: string; missing: number;
       }>();
@@ -341,8 +344,9 @@ async function collectCandidates(db: D1Database, now: Date) {
       const recipients = await db.prepare(`SELECT users.id FROM users JOIN members
         ON LOWER(members.email) = LOWER(users.email)
         WHERE users.active = 1 AND users.account_status = 'active' AND members.section IN (?, ?)
-          AND (? != 'nco_council' OR users.role IN ('nco', 'squad_leader'))`)
-        .bind(row.section === "all" ? "senior" : row.section, row.section === "all" ? "junior" : row.section, row.audience ?? "section_members")
+          AND (? != 'nco_council' OR users.role IN ('nco', 'squad_leader'))
+          AND EXISTS (SELECT 1 FROM company_events e WHERE e.id=? AND (e.audience != 'selected_members' OR members.id IN (SELECT value FROM json_each(e.selected_member_ids))))`)
+        .bind(row.section === "all" ? "senior" : row.section, row.section === "all" ? "junior" : row.section, row.audience ?? "section_members", row.id)
         .all<{ id: number }>();
       candidates.push({
         ruleKey: "event_reminders", sourceType: "company_event", sourceId: String(row.id),

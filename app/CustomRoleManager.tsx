@@ -115,6 +115,16 @@ const permissionGroups = [
       ["band.manage_programme", "Manage rehearsals, performances and assessments"],
     ],
   },
+  {
+    title: "President’s Badge",
+    description: "Sensitive application preparation, endorsement and external outcomes",
+    options: [
+      ["presidents_badge.manage", "Prepare applications"],
+      ["presidents_badge.endorse", "Complete Captain endorsement"],
+      ["presidents_badge.outcome", "Record BBM outcomes"],
+      ["presidents_badge.view_sensitive", "View another member’s sensitive application files"],
+    ],
+  },
 ] as const;
 
 export default function CustomRoleManager({

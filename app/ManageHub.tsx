@@ -91,6 +91,7 @@ export default function ManageHub({
     ...(["admin", "viewer"].includes(user.role) ? [{ route: "automation" as const, label: "Automation", description: "Rules, reminders and run history", icon: "↻" }] : []),
     ...(mayExport ? [{ route: "exports" as const, label: "Export Centre", description: "School reports and secure backups", icon: "↓" }] : []),
     ...(["admin", "officer", "viewer"].includes(user.role) ? [{ route: "company-statistics" as const, label: "Company Statistics", description: "Annual form and locked snapshots", icon: "▤" }] : []),
+    ...(["admin", "officer", "viewer"].includes(user.role) ? [{ route: "storage-usage" as const, label: "Storage & usage", description: "D1 and private document safeguards", icon: "◫" }] : []),
   ];
   const groups = [
     { title: "Requests", description: "Applications and items waiting for action", tools: requestTools },
@@ -98,6 +99,10 @@ export default function ManageHub({
     { title: "Administration", description: "Accounts, data and company controls", tools: adminTools },
   ].filter((group) => group.tools.length);
   const countFor = (route: AppRoute) => route === "submissions" ? (workCounts.award_reviews ?? 0) : route === "uniforms" ? (workCounts.uniform_requests ?? 0) : route === "stock" ? (workCounts.low_stock ?? 0) : route === "onboarding" ? (workCounts.incomplete_onboarding ?? 0) + (workCounts.data_quality ?? 0) : 0;
+  const openTool = (route: AppRoute) => {
+    if (route === "storage-usage" || route === "presidents-badge") { window.location.assign(`/?open=${route}&section=${activeSection}`); return; }
+    onOpen(route);
+  };
 
   return <main className="manage-hub-page">
     <header className="category-page-header"><div><p className="eyebrow">MANAGE</p><h1>{staff ? "Manage" : "My requests"}</h1><p>{staff ? "Requests, stock and administration are grouped by purpose." : "Submit requests and follow their progress from one place."}</p></div></header>
@@ -108,7 +113,7 @@ export default function ManageHub({
         <div className="manage-tool-list">
           {group.tools.map((tool) => {
             const count = countFor(tool.route);
-            return <button type="button" onClick={() => onOpen(tool.route)} key={tool.route}>
+            return <button type="button" onClick={() => openTool(tool.route)} key={tool.route}>
             <span aria-hidden="true">{tool.icon}</span><div><strong>{tool.label}</strong><small>{tool.description}</small></div>{count > 0 && <em aria-label={`${count} pending`}>{count}</em>}<b>›</b>
           </button>;
           })}

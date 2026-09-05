@@ -26,6 +26,9 @@ type Member = {
   spiritual_status: string;
   accepted_christ: number;
   baptised: number;
+  nric: string;
+  birth_date: string;
+  passport_photo_object_key: string;
   is_demo: number;
   account_role?: string;
 };
@@ -43,6 +46,7 @@ type Progress = {
   award_code: string;
   level: string;
   status: Status;
+  awarded_at?: string | null;
 };
 
 type Status =
@@ -57,7 +61,8 @@ type AttendanceSession = {
   meeting_date: string;
   title: string;
   created_at: string;
-  audience?: "section_members" | "nco_council";
+  audience?: "section_members" | "nco_council" | "selected_members";
+  selected_member_ids?: string;
 };
 type AttendanceRecord = {
   session_id: number;
@@ -124,6 +129,11 @@ const statusLabel: Record<Status, string> = {
   verified: "Verified",
   awarded: "Awarded",
 };
+
+function localDateValue(date = new Date()) {
+  const local = new Date(date.getTime() - date.getTimezoneOffset() * 60_000);
+  return local.toISOString().slice(0, 10);
+}
 const attendanceOrder: AttendanceStatus[] = [
   "unmarked",
   "present",
@@ -543,9 +553,10 @@ export default function AwardTracker({
         members = members.filter((member) => `${member.name} ${member.rank} ${member.squad}`.toLowerCase().includes(term));
       if (activeSession?.audience === "nco_council")
         members = members.filter((member) => ["nco", "squad_leader"].includes(member.account_role ?? ""));
+      if (activeSession?.audience === "selected_members") members = members.filter(member => JSON.parse(activeSession.selected_member_ids || "[]").includes(member.id));
       return members;
     },
-    [activeSession?.audience, attendanceQuery, attendanceSquad, filteredMembers, isNco, isSquadLeader, squadAttendanceMembers],
+    [activeSession, attendanceQuery, attendanceSquad, filteredMembers, isNco, isSquadLeader, squadAttendanceMembers],
   );
   const activeAttendanceUnmarked = activeSession
     ? attendanceMembers.filter(
@@ -703,6 +714,12 @@ export default function AwardTracker({
     next: Status,
   ) {
     const key = `${memberId}:${awardCode}:${level}`;
+    const current = data?.progress.find(
+      (item) =>
+        item.member_id === memberId &&
+        item.award_code === awardCode &&
+        item.level === level,
+    );
     setSaving(key);
     setActionError("");
     setData((existing) =>
@@ -719,6 +736,9 @@ export default function AwardTracker({
                 award_code: awardCode,
                 level,
                 status: next,
+                awarded_at:
+                  current?.awarded_at ??
+                  (next === "awarded" ? localDateValue() : null),
               },
             ],
           }
@@ -740,6 +760,50 @@ export default function AwardTracker({
       const result = (await response.json()) as { error?: string };
       await load();
       setActionError(result.error ?? "Unable to update the award");
+    }
+    setSaving("");
+  }
+
+  async function updateAwardDate(
+    memberId: number,
+    awardCode: string,
+    awardedAt: string,
+  ) {
+    const awardKey = `${memberId}:${awardCode}:${level}`;
+    const savingKey = `${awardKey}:date`;
+    setSaving(savingKey);
+    setNotice("");
+    setActionError("");
+    setData((existing) =>
+      existing
+        ? {
+            ...existing,
+            progress: existing.progress.map((item) =>
+              `${item.member_id}:${item.award_code}:${item.level}` === awardKey
+                ? { ...item, awarded_at: awardedAt }
+                : item,
+            ),
+          }
+        : existing,
+    );
+    const response = await fetch("/api/tracker", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        action: "update_award_date",
+        section,
+        memberId,
+        awardCode,
+        level,
+        awardedAt,
+      }),
+    });
+    if (!response.ok) {
+      const result = (await response.json()) as { error?: string };
+      await load();
+      setActionError(result.error ?? "Unable to update the award date");
+    } else {
+      setNotice("Date awarded saved");
     }
     setSaving("");
   }
@@ -810,6 +874,8 @@ export default function AwardTracker({
         ethnicity: form.get("ethnicity"),
         religion: form.get("religion"),
         spiritualStatus: form.get("spiritualStatus"),
+        nric: form.get("nric"),
+        birthDate: form.get("birthDate"),
         bandMember: form.get("bandMember") === "on",
         overrideRequiredDetails:
           canOverrideMemberDetails && overrideMemberDetails,
@@ -2143,7 +2209,7 @@ export default function AwardTracker({
                     ? "Use + or − to record how many One-Year Service Awards each member has"
                     : "Service award counts are shown in read-only mode"
                   : canManageAwards
-                    ? "Choose an award status from each dropdown"
+                    ? "Choose an award status from each dropdown. Awarded uses today’s date automatically, or enter the actual date below it."
                     : "Awards are shown in read-only mode"}
               </span>
               {category !== "Service" && <div>
@@ -2229,30 +2295,57 @@ export default function AwardTracker({
                           );
                         }
                         const key = `${member.id}:${award.code}:${level}`;
-                        const status =
-                          progressMap.get(key)?.status ?? "not_started";
+                        const progress = progressMap.get(key);
+                        const status = progress?.status ?? "not_started";
+                        const dateSavingKey = `${key}:date`;
                         return (
                           <td key={award.code}>
-                            <select
-                              disabled={!canManageAwards || saving === key}
-                              className={`status-select ${status}`}
-                              value={status}
-                              onChange={(event) =>
-                                updateAward(
-                                  member.id,
-                                  award.code,
-                                  event.target.value as Status,
-                                )
-                              }
-                              aria-label={`${member.name}, ${award.name}: ${statusLabel[status]}`}
-                              aria-busy={saving === key}
-                            >
-                              {statusOrder.map((option) => (
-                                <option key={option} value={option}>
-                                  {statusLabel[option]}
-                                </option>
-                              ))}
-                            </select>
+                            <div className="award-status-control">
+                              <select
+                                disabled={!canManageAwards || saving === key}
+                                className={`status-select ${status}`}
+                                value={status}
+                                onChange={(event) =>
+                                  updateAward(
+                                    member.id,
+                                    award.code,
+                                    event.target.value as Status,
+                                  )
+                                }
+                                aria-label={`${member.name}, ${award.name}: ${statusLabel[status]}`}
+                                aria-busy={saving === key}
+                              >
+                                {statusOrder.map((option) => (
+                                  <option key={option} value={option}>
+                                    {statusLabel[option]}
+                                  </option>
+                                ))}
+                              </select>
+                              {status === "awarded" && (
+                                <label className="award-date-control">
+                                  <span>Date awarded</span>
+                                  <input
+                                    type="date"
+                                    value={progress?.awarded_at ?? ""}
+                                    max={localDateValue()}
+                                    disabled={
+                                      !canManageAwards ||
+                                      saving === key ||
+                                      saving === dateSavingKey
+                                    }
+                                    onChange={(event) =>
+                                      updateAwardDate(
+                                        member.id,
+                                        award.code,
+                                        event.target.value,
+                                      )
+                                    }
+                                    aria-label={`${member.name}, ${award.name}: date awarded`}
+                                    aria-busy={saving === dateSavingKey}
+                                  />
+                                </label>
+                              )}
+                            </div>
                           </td>
                         );
                       })}
@@ -2848,6 +2941,18 @@ export default function AwardTracker({
                         <dd>{viewingMember.spiritual_status === "baptised" ? "Baptised" : viewingMember.spiritual_status === "accepted_christ" ? "Accepted Christ" : viewingMember.spiritual_status === "non_believer" ? "Non-Believer" : "Not recorded"}</dd>
                       </div>
                       <div>
+                        <dt>NRIC</dt>
+                        <dd>{viewingMember.nric ? `••••••${viewingMember.nric.slice(-4)}` : "Not recorded"}</dd>
+                      </div>
+                      <div>
+                        <dt>Birth date</dt>
+                        <dd>{viewingMember.birth_date || "Not recorded"}</dd>
+                      </div>
+                      <div>
+                        <dt>Passport photo</dt>
+                        <dd>{viewingMember.passport_photo_object_key ? "Stored privately" : "Not uploaded"}</dd>
+                      </div>
+                      <div>
                         <dt>Joined year</dt>
                         <dd>{joinedYear(viewingMember.joined_at)}</dd>
                       </div>
@@ -3248,6 +3353,17 @@ export default function AwardTracker({
                   <option value="non_believer">Non-Believer</option>
                 </select>
               </label>
+              <div className="form-row">
+                <label>
+                  NRIC (President’s Badge only)
+                  <input name="nric" maxLength={20} defaultValue={editingMember?.nric ?? ""} autoComplete="off" />
+                </label>
+                <label>
+                  Birth date (President’s Badge only)
+                  <input name="birthDate" type="date" defaultValue={editingMember?.birth_date ?? ""} />
+                </label>
+              </div>
+              <p className="form-helper">Passport photos are uploaded privately from the President’s Badge application. NRIC is masked everywhere else.</p>
               <label className="override-details band-member-field">
                 <input
                   name="bandMember"

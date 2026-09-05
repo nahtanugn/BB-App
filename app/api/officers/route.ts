@@ -7,9 +7,14 @@ const genders = ["M", "F"];
 const spiritualStatuses = ["", "accepted_christ", "baptised", "non_believer"];
 const workStatuses = ["working", "studying"];
 
+async function ensureContactNumber() {
+  try { await runtime.DB.prepare("ALTER TABLE users ADD COLUMN contact_number TEXT NOT NULL DEFAULT ''").run(); } catch { /* migration already applied */ }
+}
+
 export async function GET(request: Request) {
   try {
     await ensureAuthSchema();
+    await ensureContactNumber();
     const user = await getCurrentUser(request);
     if (!user || !["admin", "officer", "viewer"].includes(user.role))
       return Response.json({ error: "Officer Section access required" }, { status: 403 });
@@ -22,6 +27,7 @@ export async function GET(request: Request) {
         COALESCE(religion, '') AS religion,
         COALESCE(spiritual_status, '') AS spiritual_status,
         COALESCE(officer_work_status, '') AS officer_work_status
+        ,COALESCE(contact_number, '') AS contact_number
       FROM users
       WHERE active = 1 AND role IN ('admin', 'officer')
       ORDER BY name COLLATE NOCASE`,
@@ -36,6 +42,7 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   try {
     await ensureAuthSchema();
+    await ensureContactNumber();
     const user = await getCurrentUser(request);
     if (!user) return Response.json({ error: "Sign in required" }, { status: 401 });
     if (!["admin", "officer"].includes(user.role))
@@ -52,6 +59,7 @@ export async function POST(request: Request) {
     const religion = String(body.religion ?? "").trim().slice(0, 60);
     const spiritualStatus = String(body.spiritualStatus ?? "").trim();
     const officerWorkStatus = String(body.officerWorkStatus ?? "").trim();
+    const contactNumber = String(body.contactNumber ?? "").trim().slice(0, 30);
 
     if (!officerId) return Response.json({ error: "Select an officer" }, { status: 400 });
     if (!officerRanks.includes(officerRank))
@@ -73,11 +81,11 @@ export async function POST(request: Request) {
 
     await runtime.DB.prepare(
       `UPDATE users SET officer_rank = ?, gender = ?, ethnicity = ?, religion = ?,
-        spiritual_status = ?, officer_work_status = ?
+        spiritual_status = ?, officer_work_status = ?, contact_number = ?
       WHERE id = ? AND active = 1 AND role IN ('admin', 'officer')`,
-    ).bind(officerRank, gender, ethnicity, religion, spiritualStatus, officerWorkStatus, officerId).run();
+    ).bind(officerRank, gender, ethnicity, religion, spiritualStatus, officerWorkStatus, contactNumber, officerId).run();
 
-    const after = { officerRank, gender, ethnicity, religion, spiritualStatus, officerWorkStatus };
+    const after = { officerRank, gender, ethnicity, religion, spiritualStatus, officerWorkStatus, contactNumber };
     await writeAuditEvent({ actor: user, action: "officer_profile_updated", entityType: "officer_profile", entityId: officerId, before, after });
     return Response.json({ ok: true, message: "Officer details updated and linked to Company Statistics." });
   } catch (error) {

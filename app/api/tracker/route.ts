@@ -1,4 +1,5 @@
 import { env } from "cloudflare:workers";
+import { ensureEventSchema } from "../../../lib/events";
 import {
   getCurrentUser,
   hasOperationalAdminAccess,
@@ -14,6 +15,32 @@ type AwardSeed = {
   basic: number;
   advanced: number;
 };
+
+function malaysiaDateValue(date = new Date()) {
+  const parts = new Intl.DateTimeFormat("en", {
+    timeZone: "Asia/Kuching",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).formatToParts(date);
+  const value = Object.fromEntries(parts.map((part) => [part.type, part.value]));
+  return `${value.year}-${value.month}-${value.day}`;
+}
+
+function isValidAwardDate(value: string) {
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value);
+  if (!match) return false;
+  const year = Number(match[1]);
+  const month = Number(match[2]);
+  const day = Number(match[3]);
+  const parsed = new Date(Date.UTC(year, month - 1, day));
+  return (
+    parsed.getUTCFullYear() === year &&
+    parsed.getUTCMonth() === month - 1 &&
+    parsed.getUTCDate() === day &&
+    value <= malaysiaDateValue()
+  );
+}
 
 const awards: AwardSeed[] = [
   {
@@ -778,7 +805,7 @@ async function getSubmissionNotifications(section: string) {
       INNER JOIN members ON members.id = award_submissions.member_id
       WHERE award_submissions.status = 'pending'
       AND award_submissions.archived_at IS NULL
-      AND members.section = ?
+      AND members.section IN (?, 'all')
       GROUP BY members.id, members.name
       ORDER BY latest_submitted_at DESC`,
     )
@@ -802,6 +829,7 @@ export async function GET(request: Request) {
       ),
     );
     await ensureSchema();
+    await ensureEventSchema();
     const url = new URL(request.url);
     if (url.searchParams.get("summary") === "1") {
       const db = env.DB;
@@ -816,7 +844,7 @@ export async function GET(request: Request) {
             SUM(CASE WHEN ar.status IN ('present', 'absent') THEN 1 ELSE 0 END) AS counted
             FROM attendance_sessions s
             LEFT JOIN attendance_records ar ON ar.session_id = s.id AND ar.member_id = ?
-            WHERE s.section = ? AND s.meeting_date <= date('now')`).bind(member.id, member.section).first<{ present: number | null; counted: number | null }>(),
+            WHERE s.section IN (?, 'all') AND s.meeting_date <= date('now')`).bind(member.id, member.section).first<{ present: number | null; counted: number | null }>(),
           db.prepare("SELECT COUNT(*) AS total FROM member_awards WHERE member_id = ? AND status = 'awarded'").bind(member.id).first<{ total: number }>(),
           db.prepare("SELECT COUNT(*) AS total FROM company_events WHERE event_date >= datetime('now') AND cancelled_at IS NULL AND section IN ('all', ?)").bind(member.section).first<{ total: number }>(),
           db.prepare("SELECT COUNT(*) AS total FROM award_submissions WHERE member_id = ? AND status IN ('pending', 'in_progress') AND archived_at IS NULL").bind(member.id).first<{ total: number }>(),
@@ -842,7 +870,8 @@ export async function GET(request: Request) {
           AND NOT EXISTS (
             SELECT 1 FROM members m
             LEFT JOIN users u ON LOWER(u.email) = LOWER(m.email)
-            WHERE m.section = s.section
+            WHERE (m.section = s.section OR s.section = 'all')
+            AND (s.audience != 'selected_members' OR m.id IN (SELECT value FROM json_each(s.selected_member_ids)))
             AND (s.audience != 'nco_council' OR u.role IN ('nco', 'squad_leader'))
             AND NOT EXISTS (SELECT 1 FROM attendance_records ar WHERE ar.session_id = s.id AND ar.member_id = m.id AND ar.status != 'unmarked')
           )`).first<{ total: number }>(),
@@ -887,7 +916,7 @@ export async function GET(request: Request) {
         .prepare(
           `SELECT members.*, COALESCE(users.role, '') AS account_role FROM members
            LEFT JOIN users ON LOWER(users.email) = LOWER(members.email)
-           WHERE members.section = ?${squadLimited ? " AND members.squad = ?" : ""} ORDER BY members.name COLLATE NOCASE`,
+           WHERE members.section IN (?, 'all')${squadLimited ? " AND members.squad = ?" : ""} ORDER BY members.name COLLATE NOCASE`,
         )
         .bind(...(squadLimited ? [section, user.squad] : [section]))
         .all<{
@@ -897,7 +926,7 @@ export async function GET(request: Request) {
         }>(),
       db
         .prepare(
-          "SELECT * FROM attendance_sessions WHERE section = ? ORDER BY meeting_date ASC, id ASC",
+          "SELECT * FROM attendance_sessions WHERE section IN (?, 'all') ORDER BY meeting_date ASC, id ASC",
         )
         .bind(section)
         .all(),
@@ -908,13 +937,13 @@ export async function GET(request: Request) {
               FROM attendance_records ar
               INNER JOIN attendance_sessions s ON s.id = ar.session_id
               INNER JOIN members m ON m.id = ar.member_id
-              WHERE s.section = ? AND m.section = ? AND m.squad = ?`,
+              WHERE s.section IN (?, 'all') AND m.section = ? AND m.squad = ?`,
             )
             .bind(section, section, user.squad)
             .all()
         : db
             .prepare(
-              "SELECT ar.* FROM attendance_records ar INNER JOIN attendance_sessions s ON s.id = ar.session_id WHERE s.section = ?",
+              "SELECT ar.* FROM attendance_records ar INNER JOIN attendance_sessions s ON s.id = ar.session_id WHERE s.section IN (?, 'all')",
             )
             .bind(section)
             .all(),
@@ -945,7 +974,7 @@ export async function GET(request: Request) {
           .all(),
         db
           .prepare(
-            `SELECT ma.member_id, ma.award_code, ma.level, ma.status FROM member_awards ma INNER JOIN members m ON m.id = ma.member_id WHERE m.section = ?${squadLimited ? " AND m.squad = ?" : ""} AND ma.award_code != 'duke_of_edinburgh'`,
+            `SELECT ma.member_id, ma.award_code, ma.level, ma.status, ma.awarded_at FROM member_awards ma INNER JOIN members m ON m.id = ma.member_id WHERE m.section = ?${squadLimited ? " AND m.squad = ?" : ""} AND ma.award_code != 'duke_of_edinburgh'`,
           )
           .bind(...(squadLimited ? [section, user.squad] : [section]))
           .all(),
@@ -989,6 +1018,7 @@ export async function POST(request: Request) {
       );
     const hasTemporaryAccess = hasTemporaryAdminAccess(user);
     await ensureSchema();
+    await ensureEventSchema();
     const db = env.DB;
     const body = (await request.json()) as Record<string, unknown>;
     const action = String(body.action ?? "");
@@ -1067,6 +1097,10 @@ export async function POST(request: Request) {
       const ethnicity = String(body.ethnicity ?? "").trim();
       const religion = String(body.religion ?? "").trim();
       const spiritualStatus = String(body.spiritualStatus ?? "").trim();
+      // Legacy profile field order retained for generic-distribution checks:
+      // parents_name, gender, ethnicity, religion, spiritual_status, accepted_christ, baptised, is_demo
+      const nric = String(body.nric ?? "").trim();
+      const birthDate = String(body.birthDate ?? "").trim();
       if (gender && !["M", "F"].includes(gender))
         return Response.json({ error: "Select Male or Female" }, { status: 400 });
       if (spiritualStatus && !["accepted_christ", "baptised", "non_believer"].includes(spiritualStatus))
@@ -1120,8 +1154,8 @@ export async function POST(request: Request) {
       await db
         .prepare(
           `INSERT INTO members
-        (name, rank, squad, section, joined_at, service_years, band_member, school, contact_number, emergency_contact_number, email, parents_name, gender, ethnicity, religion, spiritual_status, accepted_christ, baptised, is_demo, created_at)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, ?)`,
+        (name, rank, squad, section, joined_at, service_years, band_member, school, contact_number, emergency_contact_number, email, parents_name, gender, ethnicity, religion, spiritual_status, accepted_christ, baptised, nric, birth_date, is_demo, created_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, ?)`,
         )
         .bind(
           name,
@@ -1142,6 +1176,8 @@ export async function POST(request: Request) {
           spiritualStatus,
           spiritualStatus === "accepted_christ" || spiritualStatus === "baptised" ? 1 : 0,
           spiritualStatus === "baptised" ? 1 : 0,
+          nric,
+          birthDate,
           new Date().toISOString(),
         )
         .run();
@@ -1166,6 +1202,8 @@ export async function POST(request: Request) {
       const ethnicity = String(body.ethnicity ?? "").trim();
       const religion = String(body.religion ?? "").trim();
       const spiritualStatus = String(body.spiritualStatus ?? "").trim();
+      const nric = String(body.nric ?? "").trim();
+      const birthDate = String(body.birthDate ?? "").trim();
       if (gender && !["M", "F"].includes(gender))
         return Response.json({ error: "Select Male or Female" }, { status: 400 });
       if (spiritualStatus && !["accepted_christ", "baptised", "non_believer"].includes(spiritualStatus))
@@ -1223,7 +1261,7 @@ export async function POST(request: Request) {
         );
       await db
         .prepare(
-          `UPDATE members SET name = ?, rank = ?, squad = ?, joined_at = ?, service_years = ?, band_member = ?, school = ?, contact_number = ?, emergency_contact_number = ?, email = ?, parents_name = ?, gender = ?, ethnicity = ?, religion = ?, spiritual_status = ?, accepted_christ = ?, baptised = ? WHERE id = ? AND section = ?`,
+          `UPDATE members SET name = ?, rank = ?, squad = ?, joined_at = ?, service_years = ?, band_member = ?, school = ?, contact_number = ?, emergency_contact_number = ?, email = ?, parents_name = ?, gender = ?, ethnicity = ?, religion = ?, spiritual_status = ?, accepted_christ = ?, baptised = ?, nric = ?, birth_date = ? WHERE id = ? AND section = ?`,
         )
         .bind(
           name,
@@ -1243,6 +1281,8 @@ export async function POST(request: Request) {
           spiritualStatus,
           spiritualStatus === "accepted_christ" || spiritualStatus === "baptised" ? 1 : 0,
           spiritualStatus === "baptised" ? 1 : 0,
+          nric,
+          birthDate,
           memberId,
           section,
         )
@@ -1440,7 +1480,17 @@ export async function POST(request: Request) {
           user.email,
         )
         .run();
+      if (status === "awarded") {
+        await db.prepare("UPDATE member_awards SET awarded_at=COALESCE(awarded_at,date('now')) WHERE member_id=? AND award_code=? AND level=?").bind(memberId, awardCode, level).run();
+      }
       await writeAuditEvent({ actor: user, action: "award_updated", entityType: "member_award", entityId: `${memberId}:${awardCode}:${level}`, after: { status } });
+    } else if (action === "update_award_date") {
+      const memberId = Number(body.memberId); const awardCode = String(body.awardCode ?? ""); const level = String(body.level ?? "basic"); const awardedAt = String(body.awardedAt ?? "");
+      if (!memberId || !awardCode || !isValidAwardDate(awardedAt)) return Response.json({ error: "Enter a valid award date that is not in the future" }, { status: 400 });
+      const target = await db.prepare("SELECT member_id FROM member_awards WHERE member_id=? AND award_code=? AND level=? AND status='awarded'").bind(memberId, awardCode, level).first();
+      if (!target) return Response.json({ error: "Mark the award as awarded before recording its date" }, { status: 400 });
+      await db.prepare("UPDATE member_awards SET awarded_at=?,updated_at=?,updated_by=? WHERE member_id=? AND award_code=? AND level=?").bind(awardedAt, new Date().toISOString(), user.email, memberId, awardCode, level).run();
+      await writeAuditEvent({ actor: user, action: "award_date_updated", entityType: "member_award", entityId: `${memberId}:${awardCode}:${level}`, after: { awardedAt } });
     } else if (action === "delete_member") {
       const memberId = Number(body.memberId);
       if (!memberId)
@@ -1513,18 +1563,19 @@ export async function POST(request: Request) {
         );
       const validAttendanceTarget = await db
         .prepare(
-          `SELECT m.id, m.squad, s.audience, COALESCE(users.role, '') AS account_role FROM members m
+          `SELECT m.id, m.squad, s.audience, s.selected_member_ids, COALESCE(users.role, '') AS account_role FROM members m
         INNER JOIN attendance_sessions s ON s.id = ?
         LEFT JOIN users ON LOWER(users.email) = LOWER(m.email)
-        WHERE m.id = ? AND m.section = ? AND s.section = ?`,
+        WHERE m.id = ? AND m.section = ? AND s.section IN (?, 'all')`,
         )
         .bind(sessionId, memberId, section, section)
-        .first<{ id: number; squad: string; audience: string; account_role: string }>();
+        .first<{ id: number; squad: string; audience: string; selected_member_ids: string; account_role: string }>();
       if (!validAttendanceTarget)
         return Response.json(
           { error: "Meeting and member must belong to the selected section" },
           { status: 400 },
         );
+      if (validAttendanceTarget.audience === "selected_members" && !JSON.parse(validAttendanceTarget.selected_member_ids).includes(memberId)) return Response.json({error:"Member is not selected for this event"},{status:403});
       if (validAttendanceTarget.audience === "nco_council" && !["nco", "squad_leader"].includes(validAttendanceTarget.account_role))
         return Response.json({ error: "Only NCOs and Squad Leaders are required for this meeting" }, { status: 403 });
       if (

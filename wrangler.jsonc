@@ -1,25 +1,35 @@
 {
-  "$schema": "./node_modules/wrangler/config-schema.json",
-  "name": "bb-app",
-  "main": "worker/index.ts",
-  "compatibility_date": "2026-08-23",
-  "compatibility_flags": ["nodejs_compat"],
-  "workers_dev": true,
-  "preview_urls": true,
-  "d1_databases": [
-    {
-      "binding": "DB",
-      "database_name": "bb-app-db",
-      "migrations_dir": "drizzle"
-    }
-  ],
-  "vars": {
-    "ADMIN_EMAIL": "admin@example.com"
-  },
-  "triggers": {
-    "crons": ["*/15 * * * *"]
-  },
-  "observability": {
-    "enabled": true
-  }
+	"$schema": "./node_modules/wrangler/config-schema.json",
+	"name": "bb-app",
+	"main": "worker/index.ts",
+	"compatibility_date": "2026-08-23",
+	"compatibility_flags": [
+		"nodejs_compat"
+	],
+	"workers_dev": true,
+	"preview_urls": true,
+	"d1_databases": [
+		{
+			"binding": "DB",
+			"database_name": "bb-app-db",
+			"migrations_dir": "drizzle"
+		}
+	],
+	"r2_buckets": [
+		{
+			"binding": "DOCUMENTS",
+			"bucket_name": "bb-app-private-documents"
+		}
+	],
+	"vars": {
+		"ADMIN_EMAIL": "admin@example.com"
+	},
+	"triggers": {
+		"crons": [
+			"*/15 * * * *"
+		]
+	},
+	"observability": {
+		"enabled": true
+	}
 }

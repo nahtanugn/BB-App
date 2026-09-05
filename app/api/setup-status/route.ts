@@ -31,6 +31,7 @@ export async function GET(request: Request) {
       database: "available",
       setupRequired: !Number(count?.total ?? 0),
       readiness: !Number(count?.total ?? 0) ? "administrator_required" : "configured",
+      privateDocuments: Boolean((env as unknown as { DOCUMENTS?: unknown }).DOCUMENTS),
     }, { headers: headers(request) });
   } catch {
     return Response.json({ status: "unavailable", app: "available", database: "unavailable", setupRequired: null, readiness: "database_unavailable" }, {

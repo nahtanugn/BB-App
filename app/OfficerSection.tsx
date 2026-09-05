@@ -14,6 +14,7 @@ type Officer = {
   religion: string;
   spiritual_status: string;
   officer_work_status: string;
+  contact_number: string;
 };
 
 const officerRanks = ["Staff Sergeant", "Warrant Officer", "Lieutenant", "Captain", "Honorary Captain", "Chaplain"];
@@ -83,6 +84,7 @@ export default function OfficerSection({ role }: { role: string }) {
           religion: form.get("religion"),
           spiritualStatus: form.get("spiritualStatus"),
           officerWorkStatus: form.get("officerWorkStatus"),
+          contactNumber: form.get("contactNumber"),
         }),
       });
       const result = await response.json() as { error?: string; message?: string };
@@ -121,7 +123,7 @@ export default function OfficerSection({ role }: { role: string }) {
         return <article className="officer-card panel" key={officer.id}>
           <div className="officer-card-heading"><span>{initials(officer.name)}</span><b className={status.complete ? "complete" : "incomplete"}>{status.percent}% complete</b></div>
           <div><h2>{officer.name}</h2><p>{officer.officer_rank || "Officer rank not set"} · {officer.officer_work_status ? officer.officer_work_status[0].toUpperCase() + officer.officer_work_status.slice(1) : "Work/study status not set"}</p></div>
-          <dl><div><dt>Gender</dt><dd>{officer.gender === "M" ? "Male" : officer.gender === "F" ? "Female" : "Not recorded"}</dd></div><div><dt>Ethnicity</dt><dd>{officer.ethnicity || "Not recorded"}</dd></div><div><dt>Religion</dt><dd>{officer.religion || "Not recorded"}</dd></div><div><dt>Spiritual status</dt><dd>{officer.spiritual_status === "accepted_christ" ? "Accepted Christ" : officer.spiritual_status === "baptised" ? "Baptised" : officer.spiritual_status === "non_believer" ? "Non-Believer" : "Not recorded (optional)"}</dd></div></dl>
+          <dl><div><dt>Gender</dt><dd>{officer.gender === "M" ? "Male" : officer.gender === "F" ? "Female" : "Not recorded"}</dd></div><div><dt>Contact number</dt><dd>{officer.contact_number || "Not recorded"}</dd></div><div><dt>Ethnicity</dt><dd>{officer.ethnicity || "Not recorded"}</dd></div><div><dt>Religion</dt><dd>{officer.religion || "Not recorded"}</dd></div><div><dt>Spiritual status</dt><dd>{officer.spiritual_status === "accepted_christ" ? "Accepted Christ" : officer.spiritual_status === "baptised" ? "Baptised" : officer.spiritual_status === "non_believer" ? "Non-Believer" : "Not recorded (optional)"}</dd></div></dl>
           {!readOnly && <button type="button" className="primary-button" onClick={() => { setEditing(officer); setError(""); }}>Edit officer details</button>}
         </article>;
       })}
@@ -137,6 +139,7 @@ export default function OfficerSection({ role }: { role: string }) {
             <label>Ethnicity (race)<select name="ethnicity" required defaultValue={editing.ethnicity}><option value="">Select ethnicity</option>{editing.ethnicity && !malaysiaEthnicities.includes(editing.ethnicity) && <option>{editing.ethnicity}</option>}{malaysiaEthnicities.map((value) => <option key={value}>{value}</option>)}</select></label>
             <label>Religion (optional)<select name="religion" defaultValue={editing.religion}><option value="">Not recorded</option>{editing.religion && !religions.includes(editing.religion) && <option>{editing.religion}</option>}{religions.map((value) => <option key={value}>{value}</option>)}</select></label>
             <label>Working or studying<select name="officerWorkStatus" required defaultValue={editing.officer_work_status}><option value="">Select status</option><option value="working">Working</option><option value="studying">Studying</option></select></label>
+            <label>Contact number<input name="contactNumber" type="tel" maxLength={30} defaultValue={editing.contact_number} /></label>
             <label>Spiritual status (optional)<select name="spiritualStatus" defaultValue={editing.spiritual_status}><option value="">Not recorded</option><option value="accepted_christ">Accepted Christ</option><option value="baptised">Baptised</option><option value="non_believer">Non-Believer</option></select></label>
           </div>
           {error && <p className="form-error" role="alert">{error}</p>}

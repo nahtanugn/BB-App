@@ -8,6 +8,8 @@ export type AppRoute =
   | "manage"
   | "exports"
   | "company-statistics"
+  | "junior-gold"
+  | "presidents-badge"
   | "operations"
   | "company-overview"
   | "awards"
@@ -33,7 +35,8 @@ export type AppRoute =
   | "promotion"
   | "service"
   | "band"
-  | "help";
+  | "help"
+  | "storage-usage";
 
 export type ShellUser = {
   name: string;
@@ -87,6 +90,9 @@ const routeHub: Record<AppRoute, AppHub> = {
   automation: "manage",
   exports: "manage",
   "company-statistics": "manage",
+  "storage-usage": "manage",
+  "junior-gold": "people",
+  "presidents-badge": "people",
   help: "home",
 };
 
@@ -181,6 +187,9 @@ export default function AppShell({
         { route: "uniforms", category: "Requests & Operations", label: "Requests", description: "Uniform and award requests", icon: "▤" },
       );
     }
+    values.push({ route: "junior-gold", category: "People & Progress", label: "Gold Award", description: "Official Junior Gold Award workflow", icon: "◆" });
+    if (user.member_section !== "junior" || staff)
+      values.push({ route: "presidents-badge", category: "People & Progress", label: "President’s Badge", description: "Official application workflow", icon: "★" });
     values.push({ route: "events", category: "Programme & Events", label: "Meetings and events", description: "Programme, RSVPs and registers", icon: "◫" });
     if (user.role === "member") values.push({ route: "duties", category: "Programme & Events", label: "My duties", description: "Assignments and availability", icon: "✓" });
     if (staff) values.push(
@@ -232,6 +241,8 @@ export default function AppShell({
       values.push({ route: "exports", category: "Administration", label: "Export Centre", description: "Reports and secure backups", icon: "↓" });
     if (["admin", "officer", "viewer"].includes(user.role))
       values.push({ route: "company-statistics", category: "Administration", label: "Company Statistics", description: "Annual form and snapshots", icon: "▤" });
+    if (["admin", "officer", "viewer"].includes(user.role))
+      values.push({ route: "storage-usage", category: "Administration", label: "Storage & usage", description: "D1 and private document safeguards", icon: "◫" });
     return values;
   }, [
     actionCount,
@@ -252,7 +263,7 @@ export default function AppShell({
   const orderedItems = (routes: AppRoute[]) => routes.map((itemRoute) => items.find((item) => item.route === itemRoute)).filter((item): item is NavItem => Boolean(item));
   const hubItems = {
     home: items.filter((item) => hubForRoute(item.route) === "home"),
-    people: orderedItems(["members", "officers", "associates", "awards", "attendance", "subscriptions", "leave", "promotion", "service", "journey"]),
+    people: orderedItems(["members", "officers", "associates", "awards", "junior-gold", "presidents-badge", "attendance", "subscriptions", "leave", "promotion", "service", "journey"]),
     programme: orderedItems(["events", "parades", "duties", "committees", "band", "resources", "announcements"]),
     manage: items.filter((item) => hubForRoute(item.route) === "manage"),
   } satisfies Record<AppHub, NavItem[]>;

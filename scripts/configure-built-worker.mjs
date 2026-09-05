@@ -17,6 +17,9 @@ if (!database) {
 config.name = process.env.WORKER_NAME;
 database.database_name = process.env.D1_DATABASE_NAME;
 database.database_id = process.env.D1_DATABASE_ID;
+if (process.env.R2_BUCKET_NAME) {
+  config.r2_buckets = [{ binding: "DOCUMENTS", bucket_name: process.env.R2_BUCKET_NAME }];
+}
 config.vars = {
   ...(config.vars ?? {}),
   ADMIN_EMAIL: process.env.ADMIN_EMAIL ?? config.vars?.ADMIN_EMAIL ?? "admin@example.com",

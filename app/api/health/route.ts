@@ -4,7 +4,7 @@ export async function GET() {
   try {
     await env.DB.prepare("SELECT 1 AS healthy").first();
     return Response.json(
-      { status: "ok", service: "bb-company-app", checkedAt: new Date().toISOString() },
+      { status: "ok", service: "bb-company-app", privateDocuments: Boolean((env as unknown as { DOCUMENTS?: unknown }).DOCUMENTS), checkedAt: new Date().toISOString() },
       { headers: { "Cache-Control": "no-store" } },
     );
   } catch {
