@@ -762,6 +762,7 @@ export default function StandaloneApp() {
       "company-statistics": "company-statistics",
       "junior-gold": "junior-gold",
       "presidents-badge": "presidents-badge",
+      operations: "operations",
       parades: "parades",
       duties: "duties",
       committees: "committees",
@@ -819,7 +820,7 @@ export default function StandaloneApp() {
     page = <main className="member-progress-page"><MemberProgress user={currentUser} /></main>;
   else if (route === "events")
     page = <EventCentre />;
-  else if (["parades", "duties", "committees", "leave", "promotion", "service", "band"].includes(route))
+  else if (["operations", "parades", "duties", "committees", "leave", "promotion", "service", "band"].includes(route))
     page = <CompanyOperationsCentre module={route as OperationsModule} activeSection={activeSection} />;
   else if (route === "journey" && ["member", "nco", "squad_leader"].includes(currentUser.role))
     page = <MemberJourney />;

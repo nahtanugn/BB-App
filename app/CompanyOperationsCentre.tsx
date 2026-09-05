@@ -3,13 +3,14 @@
 import { FormEvent, type ReactNode, useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 
-export type OperationsModule = "parades" | "duties" | "committees" | "leave" | "promotion" | "service" | "band";
+export type OperationsModule = "operations" | "parades" | "duties" | "committees" | "leave" | "promotion" | "service" | "band";
 type Row = Record<string, unknown>;
 type Member = { id: number; name: string; rank: string; section: string; squad: string; band_member?: number };
 type Event = { id: number; title: string; event_date: string; section: string };
 type Permissions = { readOnly: boolean; finalAuthority: boolean; squadManager: boolean; canReviewLeaveSquad: boolean; canApproveLeave: boolean; canVerifyServiceSquad: boolean; canApproveService: boolean; canManagePlans: boolean; canManageDuties: boolean; canManageCommittees: boolean; canReviewLeave: boolean; canManagePromotion: boolean; canReviewService: boolean; canViewBand: boolean; canManageBand: boolean; ownMemberId: number | null };
 
 const labels: Record<OperationsModule, { eyebrow: string; title: string; copy: string }> = {
+  operations: { eyebrow: "PROGRAMME OPERATIONS", title: "Parade & duty operations", copy: "Plan parades and assign duties together in one coordinated workspace." },
   parades: { eyebrow: "PROGRAMME OPERATIONS", title: "Parade planner", copy: "Build reusable programmes, prepare squad drafts and publish a locked company plan." },
   duties: { eyebrow: "PROGRAMME OPERATIONS", title: "Duty roster", copy: "Assign duties, cover substitutions and spot unfilled responsibilities early." },
   committees: { eyebrow: "EVENT DELIVERY", title: "Event committees", copy: "Keep committee roles, tasks, deadlines and progress together." },
@@ -37,6 +38,7 @@ export default function CompanyOperationsCentre({ module, activeSection }: { mod
   return <main className="operations-centre">
     <header className="category-page-header operations-header"><div><p className="eyebrow">{meta.eyebrow}</p><h1>{meta.title}</h1><p>{meta.copy}</p></div><span className="operations-scope">{activeSection === "senior" ? "Senior" : "Junior"} Section</span></header>
     {notice && <p className="form-success" role="status">{notice}</p>}{error && <p className="form-error" role="alert">{error}</p>}
+    {module === "operations" && <Operations data={data} permissions={permissions} activeSection={activeSection} busy={busy} submit={submit} post={post} memberOptions={memberOptions} eventOptions={eventOptions} />}
     {module === "parades" && <Parades data={data} permissions={permissions} activeSection={activeSection} busy={busy} submit={submit} post={post} eventOptions={eventOptions} />}
     {module === "duties" && <Duties data={data} permissions={permissions} activeSection={activeSection} busy={busy} submit={submit} post={post} memberOptions={memberOptions} eventOptions={eventOptions} />}
     {module === "committees" && <Committees data={data} permissions={permissions} activeSection={activeSection} busy={busy} submit={submit} post={post} memberOptions={memberOptions} eventOptions={eventOptions} />}
@@ -45,6 +47,16 @@ export default function CompanyOperationsCentre({ module, activeSection }: { mod
     {module === "service" && <Service data={data} permissions={permissions} busy={busy} submit={submit} post={post} memberOptions={memberOptions} />}
     {module === "band" && <Band data={data} permissions={permissions} busy={busy} submit={submit} post={post} memberOptions={memberOptions} />}
   </main>;
+}
+
+function Operations({ data, permissions, activeSection, busy, submit, post, memberOptions, eventOptions }: Shared) {
+  return <div className="operations-layout operations-combined">
+    <section className="operations-section-intro"><p>Use this shared workspace to prepare the parade programme and assign the people responsible for each duty.</p></section>
+    <div className="operations-combined-grid">
+      <div><h2 className="operations-combined-heading">Parade planner</h2><Parades data={data} permissions={permissions} activeSection={activeSection} busy={busy} submit={submit} post={post} eventOptions={eventOptions} /></div>
+      <div><h2 className="operations-combined-heading">Duty roster</h2><Duties data={data} permissions={permissions} activeSection={activeSection} busy={busy} submit={submit} memberOptions={memberOptions} eventOptions={eventOptions} /></div>
+    </div>
+  </div>;
 }
 
 type Shared = { data: Record<string, unknown>; permissions: Partial<Permissions>; busy: boolean; submit: (event: FormEvent<HTMLFormElement>, build: (form: FormData) => Record<string, unknown>) => Promise<void>; post: (payload: Record<string, unknown>, success?: string) => Promise<boolean>; memberOptions?: ReactNode; eventOptions?: ReactNode; activeSection?: "senior" | "junior" };

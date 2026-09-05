@@ -62,7 +62,7 @@ export type AppHub = "home" | "people" | "programme" | "manage";
 
 const routeHub: Record<AppRoute, AppHub> = {
   home: "home",
-  operations: "home",
+  operations: "programme",
   "company-overview": "home",
   awards: "people",
   members: "people",
@@ -193,8 +193,7 @@ export default function AppShell({
     values.push({ route: "events", category: "Programme & Events", label: "Meetings and events", description: "Programme, RSVPs and registers", icon: "◫" });
     if (user.role === "member") values.push({ route: "duties", category: "Programme & Events", label: "My duties", description: "Assignments and availability", icon: "✓" });
     if (staff) values.push(
-      { route: "parades", category: "Programme & Events", label: "Parade planner", description: "Templates and published programmes", icon: "▤" },
-      { route: "duties", category: "Programme & Events", label: "Duty roster", description: "Assignments and substitutions", icon: "✓" },
+      { route: "operations", category: "Programme & Events", label: "Parade & duties", description: "Plan parades and assign duties", icon: "▤" },
       { route: "committees", category: "Programme & Events", label: "Committees", description: "Event teams and tasks", icon: "◎" },
     );
     if (operational || user.custom_permissions.some((permission) => permission.startsWith("band.")))
@@ -264,7 +263,7 @@ export default function AppShell({
   const hubItems = {
     home: items.filter((item) => hubForRoute(item.route) === "home"),
     people: orderedItems(["members", "officers", "associates", "awards", "junior-gold", "presidents-badge", "attendance", "subscriptions", "leave", "promotion", "service", "journey"]),
-    programme: orderedItems(["events", "parades", "duties", "committees", "band", "resources", "announcements"]),
+    programme: orderedItems(["events", "operations", "parades", "duties", "committees", "band", "resources", "announcements"]),
     manage: items.filter((item) => hubForRoute(item.route) === "manage"),
   } satisfies Record<AppHub, NavItem[]>;
   const hubDefinitions: Array<{ hub: AppHub; label: string; memberLabel?: string; description: string; icon: string; route: AppRoute; badge?: number }> = [

@@ -6,7 +6,7 @@ import { activeUserIdForEmail, activeUserIdsForRolesOrPermission, createNotifica
 
 type RuntimeEnv = { DB: D1Database };
 const runtime = env as unknown as RuntimeEnv;
-const allowedModules = new Set(["parades", "duties", "committees", "leave", "promotion", "service", "band"]);
+const allowedModules = new Set(["operations", "parades", "duties", "committees", "leave", "promotion", "service", "band"]);
 const allowedSquads = new Set(["Alpha", "Bravo", "Charlie", "Delta"]);
 
 function jsonList(value: unknown) {
@@ -82,10 +82,15 @@ export async function GET(request: Request) {
     canManageBand: hasPermission(user, "band.manage_profiles") || hasPermission(user, "band.manage_instruments") || hasPermission(user, "band.manage_programme"),
     ownMemberId: own?.id ?? null,
   };
-  if (workspace === "parades") {
+  if (workspace === "operations" || workspace === "parades") {
     const templates = await runtime.DB.prepare("SELECT * FROM parade_templates ORDER BY updated_at DESC").all<{ section: string; squad: string }>();
     const plans = await runtime.DB.prepare("SELECT p.*, e.title AS event_title FROM parade_plans p LEFT JOIN company_events e ON e.id=p.event_id ORDER BY plan_date DESC").all<{ section: string; squad: string }>();
-    return Response.json({ module: workspace, permissions, members, events: visibleEvents, templates: scoped(user, templates.results), plans: scoped(user, plans.results) });
+    if (workspace === "parades") return Response.json({ module: workspace, permissions, members, events: visibleEvents, templates: scoped(user, templates.results), plans: scoped(user, plans.results) });
+    const dutyTypes = await runtime.DB.prepare("SELECT * FROM duty_types WHERE active=1 ORDER BY name").all();
+    const assignments = await runtime.DB.prepare(`SELECT d.*, dt.name AS duty_name, m.name AS member_name, e.title AS event_title
+      FROM duty_assignments d JOIN duty_types dt ON dt.id=d.duty_type_id LEFT JOIN members m ON m.id=d.member_id LEFT JOIN company_events e ON e.id=d.event_id ORDER BY d.starts_at DESC`).all<{ section: string; squad: string }>();
+    const visibleAssignments = user.role === "member" ? assignments.results.filter((assignment) => Number((assignment as { member_id: number | null }).member_id) === own?.id) : scoped(user, assignments.results);
+    return Response.json({ module: workspace, permissions, members, events: visibleEvents, templates: scoped(user, templates.results), plans: scoped(user, plans.results), dutyTypes: dutyTypes.results, assignments: visibleAssignments });
   }
   if (workspace === "duties") {
     const dutyTypes = await runtime.DB.prepare("SELECT * FROM duty_types WHERE active=1 ORDER BY name").all();
