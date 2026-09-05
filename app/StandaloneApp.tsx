@@ -899,7 +899,7 @@ export default function StandaloneApp() {
             <div className="account-content">
               <section>
                 <h3>Change my password</h3>
-                <form className="inline-form" onSubmit={changePassword}>
+                <form className="inline-form password-change-form" onSubmit={changePassword}>
                   <label>
                     Current password
                     <input name="currentPassword" type="password" required />
