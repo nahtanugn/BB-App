@@ -4,7 +4,9 @@ import { writeAuditEvent } from "../../../lib/audit";
 
 function standardizeSchoolName(value: string) {
   const canonical = value.trim().replace(/\s+/g, " ").toUpperCase().replaceAll("SJK(C)", "SJK (C)").replaceAll("SJK ( C )", "SJK (C)");
-  return canonical;
+  // Keep the common St Joseph private-school variants under one approved label.
+  const joseph = canonical.match(/^ST\.?\s+JOSEPH'?S?\s+PRIVATE\s+(PRIMARY|SECONDARY)\s+SCHOOL$/);
+  return joseph ? `ST JOSEPH'S PRIVATE ${joseph[1]} SCHOOL` : canonical;
 }
 
 async function ensureSchema() {
