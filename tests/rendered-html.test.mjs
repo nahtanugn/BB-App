@@ -333,7 +333,7 @@ test("ships the Malaysia Senior Section catalogue, role-based portals and instal
   assert.match(route, /Duke of Edinburgh Gold/);
   assert.match(route, /"White"/);
   assert.match(route, /WHERE section = \?/);
-  assert.match(route, /attendance_sessions WHERE section = \?/);
+  assert.match(route, /attendance_sessions WHERE section IN/);
   assert.doesNotMatch(resourceLibrary, /<AppNavigation/);
   assert.match(resourceLibrary, /branding\.companyName\.toUpperCase/);
   assert.match(resourceLibrary, /canManageResources/);

@@ -27,7 +27,7 @@ test("every portal uses one URL-aware, role-aware application shell", async () =
   assert.match(shell, /className="unified-more-menu"/);
   assert.match(shell, /aria-current=/);
   assert.match(shell, /aria-label="Mobile application navigation"/);
-  assert.match(shell, /type AppHub = "home" \| "people" \| "programme" \| "manage"/);
+  assert.match(shell, /type AppHub = "home" \| "people" \| "programme" \| "band" \| "manage"/);
   assert.match(shell, /hubForRoute/);
   assert.match(shell, /unified-context-nav/);
   assert.match(shell, /unified-context-select/);
@@ -46,7 +46,7 @@ test("every portal uses one URL-aware, role-aware application shell", async () =
   assert.match(shell, /"journey"/);
   assert.match(shell, /user\.member_section !== "junior"/);
   assert.match(standalone, /<AppShell/);
-  assert.match(standalone, /\["operations", "company-overview"\]\.includes\(next\) \? "home" : next/);
+  assert.match(standalone, /next === "company-overview" \? "home" : next/);
   assert.match(standalone, /<NotificationCentre>/);
   assert.match(standalone, /window\.history\[replace \? "replaceState" : "pushState"\]/);
   assert.match(standalone, /popstate/);

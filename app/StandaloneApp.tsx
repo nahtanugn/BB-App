@@ -202,7 +202,9 @@ export default function StandaloneApp() {
   }, [activeSection, auth, hasCustomTrackerAccess, hasTemporaryAdminAccess, stockAccess]);
 
   useEffect(() => {
-    if (auth?.user?.access_scope === "band_external" && route !== "band") navigate("band", true);
+    if (auth?.user?.access_scope !== "band_external" || route === "band") return;
+    const timer = window.setTimeout(() => navigate("band", true), 0);
+    return () => window.clearTimeout(timer);
   }, [auth?.user?.access_scope, navigate, route]);
 
   const switchActiveSection = useCallback((next: "senior" | "junior") => {
