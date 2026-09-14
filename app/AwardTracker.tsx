@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useEffect, useMemo, useState } from "react";
+import React, { FormEvent, useEffect, useMemo, useState } from "react";
 import AwardSubmissions from "./AwardSubmissions";
 import ExportCentre from "./ExportCentre";
 import { flushOfflineAttendance, queueOfflineAttendance } from "./offlineAttendance";
@@ -40,6 +40,10 @@ type Award = {
   basic_available: number;
   advanced_available: number;
 };
+type AwardPlacement = { side: "left" | "right"; order: number; group: string; source: string };
+type AwardRecommendation = { award_code: string; award_name: string; level: string; category: string; status: string; priority: number; reason: string };
+type MemberRecommendation = { member_id: number; member_name: string; recommendation: AwardRecommendation | null };
+type CompanyRecommendation = { award_code: string; award_name: string; level: string; category: string; eligible_members: number; close_members: number; score: number };
 
 type Progress = {
   member_id: number;
@@ -96,6 +100,10 @@ type TrackerData = {
   submissionNotifications: SubmissionNotification[];
   syllabus: string;
   section: "senior" | "junior";
+  awardPlacement?: Record<string, AwardPlacement>;
+  awardVisual?: { source: string; rankPlacement: string };
+  recommendations?: MemberRecommendation[];
+  companyRecommendations?: CompanyRecommendation[];
 };
 
 type TrackerCacheEntry = { data: TrackerData; updatedAt: number };
@@ -181,6 +189,23 @@ function initials(name: string) {
     .join("")
     .slice(0, 2)
     .toUpperCase();
+}
+
+function AwardArmletVisual({ member, awards, progress, placement }: { member: Member; awards: Award[]; progress: Progress[]; placement: Record<string, AwardPlacement> }) {
+  const earned = new Map(progress.filter((item) => item.member_id === member.id).map((item) => [`${item.award_code}:${item.level}`, item.status]));
+  const badge = (award: Award) => {
+    const status = earned.get(`${award.code}:advanced`) ?? earned.get(`${award.code}:basic`) ?? "not_started";
+    return <span className={`armlet-badge ${status}`} title={`${award.name}: ${statusLabel[status as Status]}`}>{award.name}</span>;
+  };
+  const right = awards.filter((award) => placement[award.code]?.side === "right").sort((a, b) => (placement[a.code]?.order ?? 0) - (placement[b.code]?.order ?? 0));
+  const left = awards.filter((award) => placement[award.code]?.side === "left").sort((a, b) => (placement[a.code]?.order ?? 0) - (placement[b.code]?.order ?? 0));
+  return <section className="award-armlet-visual" aria-label={`${member.name} award and rank visual`}>
+    <div className="uniform-figure" aria-hidden="true"><div className="uniform-head" /><div className="uniform-body"><span className="uniform-rank">{member.rank}</span><span className="uniform-sash" /></div></div>
+    <div className="armlet-column left"><h4>Left arm</h4><div className="armlet-badges">{left.map((award) => <React.Fragment key={award.code}>{badge(award)}</React.Fragment>)}</div></div>
+    <div className="armlet-column right"><h4>Right arm</h4><div className="armlet-badges">{right.map((award) => <React.Fragment key={award.code}>{badge(award)}</React.Fragment>)}</div></div>
+    <p className="armlet-caption">Rank: <strong>{member.rank}</strong> · muted badges are available or in progress.</p>
+    <div className="armlet-accessible"><strong>Badge list</strong>{[...left, ...right].map((award) => <span key={award.code}>{award.name} — {statusLabel[(earned.get(`${award.code}:advanced`) ?? earned.get(`${award.code}:basic`) ?? "not_started") as Status]}</span>)}</div>
+  </section>;
 }
 
 function joinedYear(value: string) {
@@ -1990,6 +2015,16 @@ export default function AwardTracker({
                 <div className="stat-icon">▤</div>
               </article>
             </section>
+            <section className="dashboard-grid award-insights">
+              <article className="panel award-recommendations">
+                <div className="panel-heading"><div><p className="eyebrow">NEXT AWARD</p><h2>Member recommendations</h2></div><button className="text-button" onClick={() => setView("members")}>View members →</button></div>
+                <div className="recommendation-list">{(data.recommendations ?? []).slice(0, 6).map((item) => <div className="recommendation-row" key={item.member_id}><div><strong>{item.member_name}</strong><small>{item.recommendation ? `${item.recommendation.award_name} · ${item.recommendation.level}` : "Pathway complete"}</small></div>{item.recommendation && <span className={`progress-status ${item.recommendation.status}`}>{item.recommendation.status.replace("_", " ")}</span>}</div>)}</div>
+              </article>
+              <article className="panel award-recommendations">
+                <div className="panel-heading"><div><p className="eyebrow">COMPANY PRIORITIES</p><h2>Top five next awards</h2></div></div>
+                <div className="recommendation-list">{(data.companyRecommendations ?? []).map((item) => <div className="recommendation-row" key={`${item.award_code}:${item.level}`}><div><strong>{item.award_name} · {item.level}</strong><small>{item.eligible_members} members ready · {item.close_members} already active</small></div><span className="recommendation-score">{item.score}</span></div>)}</div>
+              </article>
+            </section>
             <section
               className={`panel submission-alert-panel ${submissionPendingTotal ? "has-pending" : ""}`}
               aria-label="Award submission notifications"
@@ -3027,6 +3062,7 @@ export default function AwardTracker({
                         <h3>Awards with recorded progress</h3>
                       </div>
                     </div>
+                    <AwardArmletVisual member={viewingMember} awards={data.awards} progress={data.progress} placement={data.awardPlacement ?? {}} />
                     {awardRows.length || viewingMember.service_award_count ? (
                       <div className="member-profile-awards">
                         {viewingMember.service_award_count > 0 && (

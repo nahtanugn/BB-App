@@ -16,6 +16,59 @@ type AwardSeed = {
   advanced: number;
 };
 
+type AwardPlacement = {
+  side: "left" | "right";
+  order: number;
+  group: "target" | "proficiency" | "service" | "special";
+  source: string;
+};
+
+const handbookSource = "BB Malaysia Senior Member's Handbook · Aug 2024";
+const awardPlacement: Record<string, AwardPlacement> = {
+  target: { side: "right", order: 0, group: "target", source: handbookSource },
+  christian_education: { side: "right", order: 10, group: "proficiency", source: handbookSource },
+  drill: { side: "right", order: 20, group: "proficiency", source: handbookSource },
+  recruitment: { side: "right", order: 30, group: "proficiency", source: handbookSource },
+  arts: { side: "right", order: 40, group: "proficiency", source: handbookSource },
+  crafts: { side: "right", order: 50, group: "proficiency", source: handbookSource },
+  hobbies: { side: "right", order: 60, group: "proficiency", source: handbookSource },
+  bandsman: { side: "right", order: 70, group: "proficiency", source: handbookSource },
+  bugler: { side: "right", order: 80, group: "proficiency", source: handbookSource },
+  drummer: { side: "right", order: 90, group: "proficiency", source: handbookSource },
+  piper: { side: "right", order: 100, group: "proficiency", source: handbookSource },
+  communication: { side: "right", order: 110, group: "proficiency", source: handbookSource },
+  computer_knowledge: { side: "right", order: 120, group: "proficiency", source: handbookSource },
+  financial_stewardship: { side: "right", order: 130, group: "proficiency", source: handbookSource },
+  international_relations: { side: "right", order: 140, group: "proficiency", source: handbookSource },
+  nature_awareness: { side: "right", order: 150, group: "proficiency", source: handbookSource },
+  camping: { side: "right", order: 160, group: "proficiency", source: handbookSource },
+  expedition: { side: "right", order: 170, group: "proficiency", source: handbookSource },
+  water_adventure: { side: "right", order: 180, group: "proficiency", source: handbookSource },
+  citizenship: { side: "right", order: 190, group: "proficiency", source: handbookSource },
+  community_service: { side: "right", order: 200, group: "proficiency", source: handbookSource },
+  environmental_conservation: { side: "right", order: 210, group: "proficiency", source: handbookSource },
+  first_aid: { side: "right", order: 220, group: "proficiency", source: handbookSource },
+  fire_rescue: { side: "right", order: 230, group: "proficiency", source: handbookSource },
+  life_saving: { side: "right", order: 240, group: "proficiency", source: handbookSource },
+  safety: { side: "right", order: 250, group: "proficiency", source: handbookSource },
+  social_entrepreneurship: { side: "right", order: 260, group: "proficiency", source: handbookSource },
+  sustainability: { side: "right", order: 270, group: "proficiency", source: handbookSource },
+  athletics: { side: "right", order: 280, group: "proficiency", source: handbookSource },
+  gymnastics: { side: "right", order: 290, group: "proficiency", source: handbookSource },
+  physical_training: { side: "right", order: 300, group: "proficiency", source: handbookSource },
+  sports: { side: "right", order: 310, group: "proficiency", source: handbookSource },
+  swimming: { side: "right", order: 320, group: "proficiency", source: handbookSource },
+  one_year_service: { side: "left", order: 10, group: "service", source: handbookSource },
+  three_year_service: { side: "left", order: 20, group: "service", source: handbookSource },
+  long_year_service: { side: "left", order: 30, group: "service", source: handbookSource },
+  link_badge: { side: "left", order: 40, group: "service", source: handbookSource },
+  nco_proficiency: { side: "left", order: 50, group: "special", source: handbookSource },
+  scholastic: { side: "left", order: 60, group: "special", source: handbookSource },
+  duke_of_edinburgh: { side: "left", order: 70, group: "special", source: handbookSource },
+  presidents_award: { side: "left", order: 80, group: "special", source: handbookSource },
+  founders_award: { side: "left", order: 90, group: "special", source: handbookSource },
+};
+
 function malaysiaDateValue(date = new Date()) {
   const parts = new Intl.DateTimeFormat("en", {
     timeZone: "Asia/Kuching",
@@ -980,6 +1033,26 @@ export async function GET(request: Request) {
           .all(),
         getSubmissionNotifications(section),
       ]);
+    const progressRows = progressResult.results as Array<{ member_id: number; award_code: string; level: string; status: string }>;
+    const recommendations = members.map((member) => {
+      const candidates = (awardResult.results as Array<{ code: string; name: string; category: string; basic_available: number; advanced_available: number }>).flatMap((award) =>
+        (["basic", "advanced"] as const).filter((candidateLevel) => candidateLevel === "basic" ? award.basic_available : award.advanced_available).map((candidateLevel) => {
+          const row = progressRows.find((item) => item.member_id === Number(member.id) && item.award_code === award.code && item.level === candidateLevel);
+          const status = row?.status ?? "not_started";
+          if (status === "awarded") return null;
+          const priority = award.category === "Compulsory" ? 0 : status === "in_progress" ? 1 : status === "verified" || status === "submitted" ? 2 : 3;
+          return { award_code: award.code, award_name: award.name, level: candidateLevel, category: award.category, status, priority, reason: status === "not_started" ? "Next unfinished award in the pathway" : `Continue this ${status.replace("_", " ")} award` };
+        }).filter(Boolean),
+      );
+      return { member_id: Number(member.id), member_name: String(member.name), recommendation: candidates.sort((a, b) => (a!.priority - b!.priority) || a!.award_name.localeCompare(b!.award_name))[0] ?? null };
+    });
+    const companyRecommendations = (awardResult.results as Array<{ code: string; name: string; category: string; basic_available: number; advanced_available: number }>).flatMap((award) =>
+      (["basic", "advanced"] as const).filter((candidateLevel) => candidateLevel === "basic" ? award.basic_available : award.advanced_available).map((candidateLevel) => {
+        const eligible = recommendations.filter((item) => item.recommendation?.award_code === award.code && item.recommendation.level === candidateLevel);
+        const close = progressRows.filter((item) => item.award_code === award.code && item.level === candidateLevel && ["in_progress", "submitted", "verified"].includes(item.status)).length;
+        return { award_code: award.code, award_name: award.name, level: candidateLevel, category: award.category, eligible_members: eligible.length, close_members: close, score: eligible.length * 10 + close * 5 + (award.category === "Compulsory" ? 20 : 0) };
+      }),
+    ).sort((a, b) => b.score - a.score || a.award_name.localeCompare(b.award_name)).slice(0, 5);
     return Response.json({
       members,
       awards: awardResult.results,
@@ -989,6 +1062,10 @@ export async function GET(request: Request) {
       attendance: attendanceResult.results,
       subscriptions: subscriptionResult.results,
       bandSubscriptions: bandSubscriptionResult.results,
+      awardPlacement,
+      awardVisual: { source: handbookSource, rankPlacement: "right_arm" },
+      recommendations,
+      companyRecommendations,
       syllabus:
         section === "junior"
           ? "BB Malaysia Junior Section"
