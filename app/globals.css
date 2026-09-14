@@ -3906,6 +3906,7 @@ button:disabled { opacity: .62; cursor: wait; }
 .operations-field-grid .check-row { min-height: 48px; display: flex; align-items: center; gap: 10px; border: 1px solid #d7e2ec; border-radius: 12px; padding: 0 13px; }
 .operations-centre .operations-field-grid .check-row { height: 52px; min-height: 52px; align-self: end; box-sizing: border-box; white-space: nowrap; overflow: hidden; }
 .operations-centre .operations-field-grid .check-row input[type="checkbox"] { width: 22px; height: 22px; min-height: 22px; margin: 0; flex: 0 0 22px; }
+.operations-centre .operations-field-grid .check-row span { display: block; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .operations-centre .operations-field-grid > label:not(.check-row) { min-height: 84px; }
 .operations-field-grid .check-row input { width: 20px; min-height: 20px; }
 .operations-section-heading { min-height: 62px; display: flex; align-items: center; justify-content: space-between; gap: 14px; padding-bottom: 18px; border-bottom: 1px solid var(--line); }
