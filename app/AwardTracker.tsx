@@ -191,19 +191,24 @@ function initials(name: string) {
     .toUpperCase();
 }
 
-function AwardArmletVisual({ member, awards, progress, placement }: { member: Member; awards: Award[]; progress: Progress[]; placement: Record<string, AwardPlacement> }) {
+function AwardArmletVisual({ member, awards, progress, placement, recommendation }: { member: Member; awards: Award[]; progress: Progress[]; placement: Record<string, AwardPlacement>; recommendation?: AwardRecommendation | null }) {
   const earned = new Map(progress.filter((item) => item.member_id === member.id).map((item) => [`${item.award_code}:${item.level}`, item.status]));
   const badge = (award: Award) => {
     const status = earned.get(`${award.code}:advanced`) ?? earned.get(`${award.code}:basic`) ?? "not_started";
-    return <span className={`armlet-badge ${status}`} title={`${award.name}: ${statusLabel[status as Status]}`}>{award.name}</span>;
+    const isNext = recommendation?.award_code === award.code;
+    return <span className={`armlet-badge ${status}${isNext ? " next" : ""}`} title={`${award.name}: ${isNext ? "Recommended next" : statusLabel[status as Status]}`}><strong>{award.name}</strong><small>{isNext ? "Recommended next" : statusLabel[status as Status]}</small></span>;
   };
-  const right = awards.filter((award) => placement[award.code]?.side === "right").sort((a, b) => (placement[a.code]?.order ?? 0) - (placement[b.code]?.order ?? 0));
-  const left = awards.filter((award) => placement[award.code]?.side === "left").sort((a, b) => (placement[a.code]?.order ?? 0) - (placement[b.code]?.order ?? 0));
+  const isVisible = (award: Award) => {
+    const status = earned.get(`${award.code}:advanced`) ?? earned.get(`${award.code}:basic`) ?? "not_started";
+    return status !== "not_started" || recommendation?.award_code === award.code || (award.code === "one_year_service" && member.service_award_count > 0);
+  };
+  const right = awards.filter((award) => placement[award.code]?.side === "right" && isVisible(award)).sort((a, b) => (placement[a.code]?.order ?? 0) - (placement[b.code]?.order ?? 0));
+  const left = awards.filter((award) => placement[award.code]?.side === "left" && isVisible(award)).sort((a, b) => (placement[a.code]?.order ?? 0) - (placement[b.code]?.order ?? 0));
   return <section className="award-armlet-visual" aria-label={`${member.name} award and rank visual`}>
-    <div className="uniform-figure" aria-hidden="true"><div className="uniform-head" /><div className="uniform-body"><span className="uniform-rank">{member.rank}</span><span className="uniform-sash" /></div></div>
-    <div className="armlet-column left"><h4>Left arm</h4><div className="armlet-badges">{left.map((award) => <React.Fragment key={award.code}>{badge(award)}</React.Fragment>)}</div></div>
-    <div className="armlet-column right"><h4>Right arm</h4><div className="armlet-badges">{right.map((award) => <React.Fragment key={award.code}>{badge(award)}</React.Fragment>)}</div></div>
-    <p className="armlet-caption">Rank: <strong>{member.rank}</strong> · muted badges are available or in progress.</p>
+    <div className="uniform-figure" aria-hidden="true"><div className="uniform-head" /><div className="uniform-body"><span className="uniform-sash" /><span className="rank-chevrons">⌄<br/>⌄</span></div><strong>{member.rank}</strong></div>
+    <div className="armlet-column left"><h4>Left arm</h4><div className="armlet-badges">{left.length ? left.map((award) => <React.Fragment key={award.code}>{badge(award)}</React.Fragment>) : <p>No recorded awards</p>}</div></div>
+    <div className="armlet-column right"><h4>Right arm</h4><div className="armlet-badges">{right.length ? right.map((award) => <React.Fragment key={award.code}>{badge(award)}</React.Fragment>) : <p>No recorded awards</p>}</div></div>
+    <p className="armlet-caption">Showing earned, active and recommended awards only.</p>
     <div className="armlet-accessible"><strong>Badge list</strong>{[...left, ...right].map((award) => <span key={award.code}>{award.name} — {statusLabel[(earned.get(`${award.code}:advanced`) ?? earned.get(`${award.code}:basic`) ?? "not_started") as Status]}</span>)}</div>
   </section>;
 }
@@ -3070,7 +3075,7 @@ export default function AwardTracker({
                         <h3>Awards with recorded progress</h3>
                       </div>
                     </div>
-                    <AwardArmletVisual member={viewingMember} awards={data.awards} progress={data.progress} placement={data.awardPlacement ?? {}} />
+                    <AwardArmletVisual member={viewingMember} awards={data.awards} progress={data.progress} placement={data.awardPlacement ?? {}} recommendation={data.recommendations?.find((item) => item.member_id === viewingMember.id)?.recommendation} />
                     {awardRows.length || viewingMember.service_award_count ? (
                       <div className="member-profile-awards">
                         {viewingMember.service_award_count > 0 && (

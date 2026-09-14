@@ -122,20 +122,27 @@ button:focus-visible, input:focus-visible, select:focus-visible { outline: 3px s
 .priority-chips small { margin-top:3px; color:#71829b; font-size:9px; white-space:nowrap; }
 .member-next-award { display:block; max-width:210px; margin-top:4px; color:#54708d; font-size:9px; line-height:1.3; }
 .member-award-visual-link { margin-top:5px; padding:0; border:0; background:transparent; color:var(--blue); font:inherit; font-size:9px; font-weight:800; cursor:pointer; }
-.award-armlet-visual { display:grid; grid-template-columns:1fr 180px 1fr; gap:18px; align-items:start; margin:20px 0; padding:18px; border:1px solid #d7e2ef; border-radius:16px; background:linear-gradient(135deg,#f7fbff,#eef4fb); }
-.uniform-figure { min-height:210px; display:flex; flex-direction:column; align-items:center; justify-content:center; background:linear-gradient(#eef2f7 0 20%,#d8e0eb 20% 100%); border-radius:12px; position:relative; overflow:hidden; }
+.award-armlet-visual { display:grid; grid-template-columns:140px minmax(0,1fr) minmax(0,1fr); gap:16px; align-items:start; margin:20px 0; padding:18px; border:1px solid #d7e2ef; border-radius:16px; background:linear-gradient(135deg,#f7fbff,#eef4fb); overflow:hidden; }
+.uniform-figure { min-height:210px; padding:16px 10px 12px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:12px; background:linear-gradient(#eef2f7 0 20%,#d8e0eb 20% 100%); border-radius:12px; position:relative; overflow:hidden; }
+.uniform-figure > strong { max-width:100%; padding:6px 10px; border-radius:999px; background:#fff; color:#173b63; font-size:11px; line-height:1.2; text-align:center; overflow-wrap:anywhere; }
 .uniform-head { width:42px; height:42px; border-radius:50%; background:#d5a27f; border:4px solid #fff; }
 .uniform-body { width:92px; height:130px; border-radius:20px 20px 10px 10px; background:#173b63; position:relative; box-shadow:0 8px 0 #0e2c4b; }
-.uniform-rank { position:absolute; right:8px; top:42px; font-size:9px; color:#fff; writing-mode:vertical-rl; }
 .uniform-sash { position:absolute; width:9px; height:130px; left:42px; top:0; transform:rotate(-22deg); background:#d1a845; opacity:.85; }
+.rank-chevrons { position:absolute; right:12px; top:52px; color:#f1ca55; font-size:15px; font-weight:900; line-height:.6; text-align:center; transform:rotate(180deg); }
+.armlet-column { min-width:0; }
 .armlet-column h4 { margin:5px 0 10px; color:#173b63; text-transform:uppercase; letter-spacing:.12em; font-size:12px; }
-.armlet-badges { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px; }
-.armlet-badge { padding:8px 7px; border-radius:8px; background:#fff; border:1px solid #c9d7e8; color:#173b63; font-size:11px; line-height:1.15; min-height:34px; }
+.armlet-badges { display:grid; grid-template-columns:1fr; gap:8px; }
+.armlet-badges > p { margin:0; padding:16px 12px; border:1px dashed #c9d7e8; border-radius:10px; color:#71829b; font-size:11px; text-align:center; }
+.armlet-badge { min-width:0; min-height:48px; padding:9px 10px; display:grid; align-content:center; gap:3px; border-radius:9px; background:#fff; border:1px solid #c9d7e8; color:#173b63; line-height:1.2; overflow:hidden; }
+.armlet-badge strong { font-size:11px; overflow-wrap:anywhere; }
+.armlet-badge small { color:#71829b; font-size:9px; font-weight:650; }
 .armlet-badge.awarded { background:#dff5e8; border-color:#8bd2a7; }
 .armlet-badge.in_progress,.armlet-badge.submitted,.armlet-badge.verified { background:#fff3cf; border-color:#e8c45a; }
+.armlet-badge.next { background:#e8f2ff; border-color:#70aef0; box-shadow:inset 3px 0 0 #126bd6; }
 .armlet-caption { grid-column:1 / -1; margin:0; color:#6c7f99; font-size:12px; }
 .armlet-accessible { position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0 0 0 0); white-space:nowrap; }
-@media (max-width: 760px) { .award-planning-strip { grid-template-columns:1fr; gap:12px; } .award-armlet-visual { grid-template-columns:1fr 1fr; } .uniform-figure { grid-column:1 / -1; min-height:150px; } .armlet-caption { grid-column:1 / -1; } }
+@media (max-width: 760px) { .award-planning-strip { grid-template-columns:1fr; gap:12px; } .award-armlet-visual { grid-template-columns:1fr 1fr; } .uniform-figure { grid-column:1 / -1; min-height:180px; } .armlet-caption { grid-column:1 / -1; } }
+@media (max-width: 480px) { .award-armlet-visual { grid-template-columns:1fr; padding:14px; } .uniform-figure,.armlet-caption { grid-column:auto; } }
 .auth-brand .brand-mark { width: 56px; height: 56px; border-radius: 14px; }
 .brand strong, .brand span { display: block; }
 .brand strong { font-size: 16px; letter-spacing: -.2px; }

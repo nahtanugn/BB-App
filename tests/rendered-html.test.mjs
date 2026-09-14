@@ -404,7 +404,7 @@ test("ships the Malaysia Senior Section catalogue, role-based portals and instal
   assert.match(manifest, /display: "standalone"/);
   assert.match(manifest, /getBranding/);
   assert.match(manifest, /branding\.logoUrl/);
-  assert.match(serviceWorker, /company-app-v6/);
+  assert.match(serviceWorker, /company-app-v7/);
   assert.match(serviceWorker, /addEventListener\("push"/);
   assert.match(serviceWorker, /showNotification/);
   assert.match(serviceWorker, /setAppBadge/);
