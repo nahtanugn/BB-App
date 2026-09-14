@@ -267,16 +267,16 @@ export async function POST(request: Request) {
   if (action === "create_gb_band_member") {
     if (!hasPermission(user,"band.manage_profiles")) return Response.json({error:"Band profile permission required"},{status:403});
     const name = text(body.name,160); if (!name) return Response.json({error:"Enter a GB member name"},{status:400});
-    const result = await runtime.DB.prepare("INSERT INTO members (name,rank,section,squad,joined_at,service_years,band_member,school,contact_number,emergency_contact_number,email,parents_name,gender,ethnicity,religion,spiritual_status,accepted_christ,baptised,nric,birth_date,organisation,is_demo,created_at) VALUES (?,'GB Member','gb',?,date('now'),0,1,'',?,'','','','F','','','','',0,0,'','', 'GB',0,?)").bind(name,text(body.gbUnit,160),text(body.contactNumber,80),now).run();
+    const result = await runtime.DB.prepare("INSERT INTO members (name,rank,section,squad,joined_at,service_years,band_member,school,contact_number,emergency_contact_number,email,parents_name,gender,ethnicity,religion,spiritual_status,accepted_christ,baptised,nric,birth_date,organisation,is_demo,created_at) VALUES (?,'GB Member','gb','GB',date('now'),0,1,'',?,'','','','F','','','','',0,0,'','', 'GB',0,?)").bind(name,text(body.contactNumber,80),now).run();
     const id = Number(result.meta.last_row_id);
     await runtime.DB.prepare("INSERT INTO band_profiles (member_id,instrument_section,proficiency,position,active,notes,updated_by_user_id,updated_at) VALUES (?,?,?,?,1,?,?,?)").bind(id,text(body.instrumentSection,80),text(body.proficiency,80),text(body.position,80),text(body.notes),user.id,now).run();
-    await audit(user,"gb_band_member_created","gb_band_member",id,undefined,{name,gbUnit:body.gbUnit});
+    await audit(user,"gb_band_member_created","gb_band_member",id,undefined,{name,organisation:"GB"});
     return Response.json({ok:true,id,message:"GB band member added. No login was created."});
   }
   if (action === "update_gb_band_member") {
     if (!hasPermission(user,"band.manage_profiles")) return Response.json({error:"Band profile permission required"},{status:403});
     const id=number(body.memberId); const existing=await runtime.DB.prepare("SELECT id FROM members WHERE id=? AND COALESCE(organisation,'BB')='GB'").bind(id).first(); if(!existing)return Response.json({error:"GB band member not found"},{status:404});
-    await runtime.DB.prepare("UPDATE members SET name=?,squad=?,contact_number=?,emergency_contact_number=? WHERE id=?").bind(text(body.name,160),text(body.gbUnit,160),text(body.contactNumber,80),text(body.emergencyContactNumber,80),id).run();
+    await runtime.DB.prepare("UPDATE members SET name=?,squad='GB',contact_number=?,emergency_contact_number=? WHERE id=?").bind(text(body.name,160),text(body.contactNumber,80),text(body.emergencyContactNumber,80),id).run();
     await runtime.DB.prepare("UPDATE band_profiles SET instrument_section=?,proficiency=?,position=?,active=?,notes=?,updated_by_user_id=?,updated_at=? WHERE member_id=?").bind(text(body.instrumentSection,80),text(body.proficiency,80),text(body.position,80),body.active===false?0:1,text(body.notes),user.id,now,id).run();
     return Response.json({ok:true,message:"GB band member updated."});
   }
