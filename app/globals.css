@@ -4307,3 +4307,90 @@ form :is(.search, .resource-search, .stock-search, .admin-search) input {
   border: 0;
   border-radius: 0;
 }
+
+/* Final control normalization.
+   Keep every editable field aligned across the app.  This intentionally
+   excludes toggles, uploads, colour wells and compact search controls. */
+:where(.unified-app-content, .modal, .auth-card) form :is(
+  input:not([type="checkbox"]):not([type="radio"]):not([type="hidden"]):not([type="file"]):not([type="color"]):not([type="range"]),
+  select
+) {
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 100%;
+  height: 48px;
+  min-height: 48px;
+  padding: 0 14px;
+  border-radius: 11px;
+  line-height: 1.2;
+}
+
+:where(.unified-app-content, .modal, .auth-card) form textarea {
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 100%;
+  height: auto;
+  min-height: 112px;
+  padding: 12px 14px;
+  border-radius: 11px;
+  line-height: 1.45;
+  resize: vertical;
+}
+
+/* Account creation and edit forms should never create a third, clipped
+   column at intermediate widths. */
+.create-user-form,
+.admin-account-editor form,
+.edit-user-form {
+  min-width: 0;
+}
+.create-user-form,
+.admin-account-editor form {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-items: start;
+}
+.create-user-form > h3,
+.create-user-form > .account-section-heading,
+.create-user-form > button,
+.admin-account-editor form > button,
+.admin-account-editor form > .form-error,
+.admin-account-editor form > .form-success {
+  grid-column: 1 / -1;
+}
+.create-user-form > label,
+.admin-account-editor form > label,
+.edit-user-form .form-row > label {
+  min-width: 0;
+}
+
+/* Search inputs are deliberately compact and retain their own styling. */
+:where(.unified-app-content, .modal) form :is(.search, .resource-search, .stock-search, .admin-search) input {
+  height: auto;
+  min-height: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+}
+
+@media (max-width: 760px) {
+  .create-user-form,
+  .admin-account-editor form,
+  .edit-user-form .form-row {
+    grid-template-columns: 1fr;
+  }
+  .create-user-form > h3,
+  .create-user-form > .account-section-heading,
+  .create-user-form > button,
+  .admin-account-editor form > button,
+  .admin-account-editor form > .form-error,
+  .admin-account-editor form > .form-success {
+    grid-column: auto;
+  }
+  :where(.unified-app-content, .modal, .auth-card) form :is(
+    input:not([type="checkbox"]):not([type="radio"]):not([type="hidden"]):not([type="file"]):not([type="color"]):not([type="range"]),
+    select
+  ) {
+    height: 52px;
+    min-height: 52px;
+  }
+}
