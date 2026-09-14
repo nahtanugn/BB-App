@@ -139,10 +139,12 @@ button:focus-visible, input:focus-visible, select:focus-visible { outline: 3px s
 .armlet-badge.awarded { background:#dff5e8; border-color:#8bd2a7; }
 .armlet-badge.in_progress,.armlet-badge.submitted,.armlet-badge.verified { background:#fff3cf; border-color:#e8c45a; }
 .armlet-badge.next { background:#e8f2ff; border-color:#70aef0; box-shadow:inset 3px 0 0 #126bd6; }
-.armlet-caption { grid-column:1 / -1; margin:0; color:#6c7f99; font-size:12px; }
+.armlet-caption { grid-column:1 / -1; margin:0; display:flex; align-items:center; justify-content:space-between; gap:12px; color:#6c7f99; font-size:12px; }
+.armlet-more { min-height:34px; padding:0 12px; border:1px solid #b9d2ed; border-radius:8px; background:#fff; color:#126bd6; font:inherit; font-size:10px; font-weight:800; cursor:pointer; white-space:nowrap; }
+.armlet-more:hover { background:#e8f2ff; }
 .armlet-accessible { position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0 0 0 0); white-space:nowrap; }
 @media (max-width: 760px) { .award-planning-strip { grid-template-columns:1fr; gap:12px; } .award-armlet-visual { grid-template-columns:1fr 1fr; } .uniform-figure { grid-column:1 / -1; min-height:180px; } .armlet-caption { grid-column:1 / -1; } }
-@media (max-width: 480px) { .award-armlet-visual { grid-template-columns:1fr; padding:14px; } .uniform-figure,.armlet-caption { grid-column:auto; } }
+@media (max-width: 480px) { .award-armlet-visual { grid-template-columns:1fr; padding:14px; } .uniform-figure,.armlet-caption { grid-column:auto; } .armlet-caption { align-items:stretch; flex-direction:column; } }
 .auth-brand .brand-mark { width: 56px; height: 56px; border-radius: 14px; }
 .brand strong, .brand span { display: block; }
 .brand strong { font-size: 16px; letter-spacing: -.2px; }

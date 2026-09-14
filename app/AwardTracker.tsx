@@ -192,6 +192,7 @@ function initials(name: string) {
 }
 
 function AwardArmletVisual({ member, awards, progress, placement, recommendation }: { member: Member; awards: Award[]; progress: Progress[]; placement: Record<string, AwardPlacement>; recommendation?: AwardRecommendation | null }) {
+  const [showAll, setShowAll] = useState(false);
   const earned = new Map(progress.filter((item) => item.member_id === member.id).map((item) => [`${item.award_code}:${item.level}`, item.status]));
   const badge = (award: Award) => {
     const status = earned.get(`${award.code}:advanced`) ?? earned.get(`${award.code}:basic`) ?? "not_started";
@@ -204,11 +205,14 @@ function AwardArmletVisual({ member, awards, progress, placement, recommendation
   };
   const right = awards.filter((award) => placement[award.code]?.side === "right" && isVisible(award)).sort((a, b) => (placement[a.code]?.order ?? 0) - (placement[b.code]?.order ?? 0));
   const left = awards.filter((award) => placement[award.code]?.side === "left" && isVisible(award)).sort((a, b) => (placement[a.code]?.order ?? 0) - (placement[b.code]?.order ?? 0));
+  const displayedLeft = showAll ? left : left.slice(0, 5);
+  const displayedRight = showAll ? right : right.slice(0, 5);
+  const hiddenCount = Math.max(0, left.length - displayedLeft.length) + Math.max(0, right.length - displayedRight.length);
   return <section className="award-armlet-visual" aria-label={`${member.name} award and rank visual`}>
     <div className="uniform-figure" aria-hidden="true"><div className="uniform-head" /><div className="uniform-body"><span className="uniform-sash" /><span className="rank-chevrons">⌄<br/>⌄</span></div><strong>{member.rank}</strong></div>
-    <div className="armlet-column left"><h4>Left arm</h4><div className="armlet-badges">{left.length ? left.map((award) => <React.Fragment key={award.code}>{badge(award)}</React.Fragment>) : <p>No recorded awards</p>}</div></div>
-    <div className="armlet-column right"><h4>Right arm</h4><div className="armlet-badges">{right.length ? right.map((award) => <React.Fragment key={award.code}>{badge(award)}</React.Fragment>) : <p>No recorded awards</p>}</div></div>
-    <p className="armlet-caption">Showing earned, active and recommended awards only.</p>
+    <div className="armlet-column left"><h4>Left arm</h4><div className="armlet-badges">{displayedLeft.length ? displayedLeft.map((award) => <React.Fragment key={award.code}>{badge(award)}</React.Fragment>) : <p>No recorded awards</p>}</div></div>
+    <div className="armlet-column right"><h4>Right arm</h4><div className="armlet-badges">{displayedRight.length ? displayedRight.map((award) => <React.Fragment key={award.code}>{badge(award)}</React.Fragment>) : <p>No recorded awards</p>}</div></div>
+    <div className="armlet-caption"><span>Earned, active and recommended awards.</span>{(hiddenCount > 0 || showAll) && <button type="button" className="armlet-more" onClick={() => setShowAll((value) => !value)}>{showAll ? "Show key badges" : `Show all ${left.length + right.length} badges`}</button>}</div>
     <div className="armlet-accessible"><strong>Badge list</strong>{[...left, ...right].map((award) => <span key={award.code}>{award.name} — {statusLabel[(earned.get(`${award.code}:advanced`) ?? earned.get(`${award.code}:basic`) ?? "not_started") as Status]}</span>)}</div>
   </section>;
 }
