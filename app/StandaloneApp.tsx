@@ -89,6 +89,7 @@ export default function StandaloneApp() {
   const [guideOpen, setGuideOpen] = useState(false);
   const [route, setRoute] = useState<AppRoute>("home");
   const [requestingAccess, setRequestingAccess] = useState(false);
+  const [forceLogin, setForceLogin] = useState(false);
   const [showPublicInformation, setShowPublicInformation] = useState(() => typeof window !== "undefined" && new URL(window.location.href).searchParams.get("public") === "1");
   const [accessRequestNotice, setAccessRequestNotice] = useState("");
   const [onboardingPendingCount, setOnboardingPendingCount] = useState(0);
@@ -387,7 +388,7 @@ export default function StandaloneApp() {
   async function submitAuth(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const form = new FormData(event.currentTarget);
-    const action = auth?.setupRequired ? "setup" : "login";
+    const action = auth?.setupRequired && !forceLogin ? "setup" : "login";
     setBusy(true);
     setError("");
     const response = await fetch("/api/auth", {
@@ -656,20 +657,20 @@ export default function StandaloneApp() {
             </div>
           </div>
           <p className="eyebrow">
-            {auth.setupRequired ? "FIRST-TIME SETUP" : "ACCOUNT SIGN IN"}
+            {auth.setupRequired && !forceLogin ? "FIRST-TIME SETUP" : "ACCOUNT SIGN IN"}
           </p>
           <h1>
-            {auth.setupRequired
+            {auth.setupRequired && !forceLogin
               ? "Create your administrator account"
               : "Welcome back."}
           </h1>
           <p className="auth-copy">
-            {auth.setupRequired
+            {auth.setupRequired && !forceLogin
               ? "Use the one-time setup code supplied during deployment."
               : "Sign in to open the areas available to your account."}
           </p>
           {!requestingAccess ? <form onSubmit={submitAuth}>
-            {auth.setupRequired && (
+            {auth.setupRequired && !forceLogin && (
               <label>
                 Your name
                 <input name="name" required autoComplete="name" />
@@ -683,7 +684,7 @@ export default function StandaloneApp() {
                 required
                 autoComplete="email"
                 defaultValue={auth.adminEmail ?? ""}
-                readOnly={auth.setupRequired && Boolean(auth.adminEmail)}
+                readOnly={auth.setupRequired && !forceLogin && Boolean(auth.adminEmail)}
               />
             </label>
             <label>
@@ -694,11 +695,11 @@ export default function StandaloneApp() {
                 minLength={10}
                 required
                 autoComplete={
-                  auth.setupRequired ? "new-password" : "current-password"
+                  auth.setupRequired && !forceLogin ? "new-password" : "current-password"
                 }
               />
             </label>
-            {auth.setupRequired && (
+            {auth.setupRequired && !forceLogin && (
               <label>
                 One-time setup code
                 <input
@@ -714,7 +715,7 @@ export default function StandaloneApp() {
             <button className="primary auth-submit" disabled={busy}>
               {busy
                 ? "Please wait…"
-                : auth.setupRequired
+                : auth.setupRequired && !forceLogin
                   ? "Create administrator"
                   : "Sign in"}
             </button>
@@ -734,6 +735,11 @@ export default function StandaloneApp() {
               {error && <p className="form-error">{error}</p>}
               <button className="primary auth-submit" disabled={busy}>{busy ? "Submitting…" : "Submit access request"}</button>
             </form>
+          )}
+          {auth.setupRequired && !requestingAccess && (
+            <button type="button" className="text-button auth-mode-toggle" onClick={() => { setForceLogin((current) => !current); setError(""); }}>
+              {forceLogin ? "This is a new deployment — create the administrator" : "Already have an account? Sign in"}
+            </button>
           )}
           {!auth.setupRequired && !requestingAccess && <><button className="request-access-button" onClick={() => { setRequestingAccess(true); setError(""); setAccessRequestNotice(""); }}>Request member access</button><button type="button" className="text-button" onClick={() => { setShowPublicInformation(true); window.history.pushState({}, "", "/?public=1"); }}>Public information</button></>}
           <small>Private by default</small>
