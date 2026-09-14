@@ -91,7 +91,7 @@ export async function GET(request: Request) {
     ).first<{ total: number }>();
     const url = new URL(request.url);
     if (url.searchParams.get("users") === "1") {
-      if (!user || !["admin", "viewer"].includes(user.role))
+      if (!user || user.access_scope === "band_external" || !["admin", "viewer"].includes(user.role))
         return Response.json(
           { error: "Administrator or Viewer access required" },
           { status: 403 },
