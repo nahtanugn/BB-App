@@ -2186,6 +2186,17 @@ export default function AwardTracker({
         )}
 
         {view === "matrix" && (
+          <>
+          <section className="dashboard-grid award-insights matrix-insights">
+            <article className="panel award-recommendations">
+              <div className="panel-heading"><div><p className="eyebrow">NEXT AWARD</p><h2>Member recommendations</h2></div></div>
+              <div className="recommendation-list">{(data.recommendations ?? []).slice(0, 6).map((item) => <div className="recommendation-row" key={item.member_id}><div><strong>{item.member_name}</strong><small>{item.recommendation ? `${item.recommendation.award_name} · ${item.recommendation.level}` : "Pathway complete"}</small></div>{item.recommendation && <span className={`progress-status ${item.recommendation.status}`}>{item.recommendation.status.replace("_", " ")}</span>}</div>)}</div>
+            </article>
+            <article className="panel award-recommendations">
+              <div className="panel-heading"><div><p className="eyebrow">COMPANY PRIORITIES</p><h2>Top five next awards</h2></div></div>
+              <div className="recommendation-list">{(data.companyRecommendations ?? []).map((item) => <div className="recommendation-row" key={`${item.award_code}:${item.level}`}><div><strong>{item.award_name} · {item.level}</strong><small>{item.eligible_members} members ready · {item.close_members} already active</small></div><span className="recommendation-score">{item.score}</span></div>)}</div>
+            </article>
+          </section>
           <section className="panel matrix-panel">
             <div className="matrix-toolbar">
               <div className="category-tabs" role="tablist">
@@ -2390,6 +2401,7 @@ export default function AwardTracker({
               </table>
             </div>
           </section>
+          </>
         )}
 
         {view === "members" && (
