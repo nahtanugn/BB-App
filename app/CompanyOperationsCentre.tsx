@@ -35,7 +35,7 @@ export default function CompanyOperationsCentre({ module, activeSection }: { mod
   const memberOptions = <>{sectionMembers.map((member) => <option key={member.id} value={member.id}>{member.name} · {member.rank} · {member.squad}</option>)}</>;
   const eventOptions = <>{events.filter((event) => event.section === "all" || event.section === activeSection).map((event) => <option key={event.id} value={event.id}>{dateLabel(event.event_date)} · {event.title}</option>)}</>;
   const meta = labels[module];
-  return <main className="operations-centre">
+  return <main className={`operations-centre operations-${module}`}>
     <header className="category-page-header operations-header"><div><p className="eyebrow">{meta.eyebrow}</p><h1>{meta.title}</h1><p>{meta.copy}</p></div><span className="operations-scope">{activeSection === "senior" ? "Senior" : "Junior"} Section</span></header>
     {notice && <p className="form-success" role="status">{notice}</p>}{error && <p className="form-error" role="alert">{error}</p>}
     {module === "operations" && <Operations data={data} permissions={permissions} activeSection={activeSection} busy={busy} submit={submit} post={post} memberOptions={memberOptions} eventOptions={eventOptions} />}

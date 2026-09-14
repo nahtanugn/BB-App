@@ -4308,6 +4308,19 @@ form :is(.search, .resource-search, .stock-search, .admin-search) input {
   border-radius: 0;
 }
 
+/* Band Centre is a working register: keep the key lists visible while forms
+   remain available for quick updates, instead of forcing a long page scroll. */
+.operations-band .operations-layout { align-items: start; }
+.operations-band .operations-list { max-height: 560px; overflow-y: auto; scrollbar-gutter: stable; }
+.operations-band .operations-list .operations-section-heading { position: sticky; top: 0; z-index: 2; background: #fff; }
+.operations-band .operations-callout { position: sticky; top: 12px; z-index: 3; }
+.operations-band .operations-summary { position: sticky; bottom: 12px; z-index: 2; }
+.operations-band .operations-form { align-self: start; }
+@media (max-width: 900px) {
+  .operations-band .operations-callout,
+  .operations-band .operations-summary { position: static; }
+}
+
 /* Final control normalization.
    Keep every editable field aligned across the app.  This intentionally
    excludes toggles, uploads, colour wells and compact search controls. */
