@@ -58,7 +58,7 @@ type NavItem = {
   badge?: number;
 };
 
-export type AppHub = "home" | "people" | "programme" | "manage";
+export type AppHub = "home" | "people" | "programme" | "band" | "manage";
 
 const routeHub: Record<AppRoute, AppHub> = {
   home: "home",
@@ -78,7 +78,7 @@ const routeHub: Record<AppRoute, AppHub> = {
   parades: "programme",
   duties: "programme",
   committees: "programme",
-  band: "programme",
+  band: "band",
   resources: "programme",
   announcements: "programme",
   manage: "manage",
@@ -197,7 +197,7 @@ export default function AppShell({
       { route: "committees", category: "Programme & Events", label: "Committees", description: "Event teams and tasks", icon: "◎" },
     );
     if (operational || user.custom_permissions.some((permission) => permission.startsWith("band.")))
-      values.push({ route: "band", category: "Programme & Events", label: "Band Centre", description: "Members, instruments and programme", icon: "♫" });
+      values.push({ route: "band", category: "Programme & Events", label: "Band Centre", description: "Combined BB and GB band records", icon: "♫" });
     if (["member", "nco", "squad_leader"].includes(user.role) || operational || user.custom_permissions.some((permission) => permission.startsWith("leave.")))
       values.push({ route: "leave", category: "People & Progress", label: "Leave", description: "Event absence requests", icon: "↪" });
     if (staff) values.push(
@@ -263,13 +263,15 @@ export default function AppShell({
   const hubItems = {
     home: items.filter((item) => hubForRoute(item.route) === "home"),
     people: orderedItems(["members", "officers", "associates", "awards", "junior-gold", "presidents-badge", "attendance", "subscriptions", "leave", "promotion", "service", "journey"]),
-    programme: orderedItems(["events", "operations", "parades", "duties", "committees", "band", "resources", "announcements"]),
+    programme: orderedItems(["events", "operations", "parades", "duties", "committees", "resources", "announcements"]),
+    band: orderedItems(["band"]),
     manage: items.filter((item) => hubForRoute(item.route) === "manage"),
   } satisfies Record<AppHub, NavItem[]>;
   const hubDefinitions: Array<{ hub: AppHub; label: string; memberLabel?: string; description: string; icon: string; route: AppRoute; badge?: number }> = [
     { hub: "home", label: "Home", description: "Priorities and updates", icon: "⌂", route: "home", badge: actionCount },
     { hub: "people", label: "People", memberLabel: "Progress", description: staff ? "Members, awards and attendance" : "My progress", icon: "♙", route: staff ? "members" : "awards" },
     { hub: "programme", label: "Programme", description: "Meetings, resources and notices", icon: "◫", route: "events" },
+    ...(items.some((item) => item.route === "band") ? [{ hub: "band" as AppHub, label: "Band Centre", description: "Combined BB and GB band records", icon: "♫", route: "band" as AppRoute }] : []),
     { hub: "manage", label: staff ? "Manage" : "Requests", description: staff ? "Requests, stock and administration" : "My requests", icon: "◆", route: "manage" },
   ];
   const contextItems = activeHub === "people" || activeHub === "programme" ? hubItems[activeHub] : [];
@@ -339,7 +341,7 @@ export default function AppShell({
           <div className="unified-context-tabs" role="tablist" aria-label={`${activeHub} sections`}>
             {contextItems.map((item) => <button type="button" role="tab" aria-selected={route === item.route} className={route === item.route ? "active" : ""} onClick={() => navigate(item.route)} key={item.route}>{item.label}</button>)}
           </div>
-          <label className="unified-context-select"><span>{activeHub === "people" ? "People section" : "Programme section"}</span><select value={route} onChange={(event) => navigate(event.target.value as AppRoute)}>{contextItems.map((item) => <option value={item.route} key={item.route}>{item.label}</option>)}</select></label>
+          <label className="unified-context-select"><span>{activeHub === "people" ? "People section" : activeHub === "band" ? "Band section" : "Programme section"}</span><select value={route} onChange={(event) => navigate(event.target.value as AppRoute)}>{contextItems.map((item) => <option value={item.route} key={item.route}>{item.label}</option>)}</select></label>
         </div>}
         {activeHub === "manage" && route !== "manage" && <button type="button" className="unified-manage-return" onClick={() => navigate("manage")}>← Back to Manage</button>}
         {children}
