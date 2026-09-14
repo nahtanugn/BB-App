@@ -2187,15 +2187,9 @@ export default function AwardTracker({
 
         {view === "matrix" && (
           <>
-          <section className="dashboard-grid award-insights matrix-insights">
-            <article className="panel award-recommendations">
-              <div className="panel-heading"><div><p className="eyebrow">NEXT AWARD</p><h2>Member recommendations</h2></div></div>
-              <div className="recommendation-list">{(data.recommendations ?? []).slice(0, 6).map((item) => <div className="recommendation-row" key={item.member_id}><div><strong>{item.member_name}</strong><small>{item.recommendation ? `${item.recommendation.award_name} · ${item.recommendation.level}` : "Pathway complete"}</small></div>{item.recommendation && <span className={`progress-status ${item.recommendation.status}`}>{item.recommendation.status.replace("_", " ")}</span>}</div>)}</div>
-            </article>
-            <article className="panel award-recommendations">
-              <div className="panel-heading"><div><p className="eyebrow">COMPANY PRIORITIES</p><h2>Top five next awards</h2></div></div>
-              <div className="recommendation-list">{(data.companyRecommendations ?? []).map((item) => <div className="recommendation-row" key={`${item.award_code}:${item.level}`}><div><strong>{item.award_name} · {item.level}</strong><small>{item.eligible_members} members ready · {item.close_members} already active</small></div><span className="recommendation-score">{item.score}</span></div>)}</div>
-            </article>
+          <section className="panel award-planning-strip" aria-label="Company award priorities">
+            <div><p className="eyebrow">AWARD PLANNING</p><h2>Company priorities</h2></div>
+            <div className="priority-chips">{(data.companyRecommendations ?? []).map((item) => <span key={`${item.award_code}:${item.level}`}><strong>{item.award_name}</strong><small>{item.level} · {item.eligible_members} ready{item.close_members ? ` · ${item.close_members} active` : ""}</small></span>)}</div>
           </section>
           <section className="panel matrix-panel">
             <div className="matrix-toolbar">
@@ -2289,6 +2283,8 @@ export default function AwardTracker({
                           <div>
                             <strong>{member.name}</strong>
                             <span>{member.rank}</span>
+                            {(() => { const next = data.recommendations?.find((item) => item.member_id === member.id)?.recommendation; return next ? <small className="member-next-award">Next: {next.award_name} · {next.level}</small> : null; })()}
+                            <button type="button" className="member-award-visual-link" onClick={() => { setViewingMemberId(member.id); setMemberProfileTab("awards"); }}>View armlets</button>
                           </div>
                         </div>
                       </th>
