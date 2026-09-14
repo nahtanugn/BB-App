@@ -4351,10 +4351,17 @@ form :is(.search, .resource-search, .stock-search, .admin-search) input {
 }
 .create-user-form > h3,
 .create-user-form > .account-section-heading,
+.create-user-form > .form-row,
 .create-user-form > button,
 .admin-account-editor form > button,
 .admin-account-editor form > .form-error,
 .admin-account-editor form > .form-success {
+  grid-column: 1 / -1;
+}
+.create-user-form > .form-row {
+  min-width: 0;
+}
+.create-user-form > label {
   grid-column: 1 / -1;
 }
 .create-user-form > label,
@@ -4380,10 +4387,15 @@ form :is(.search, .resource-search, .stock-search, .admin-search) input {
   }
   .create-user-form > h3,
   .create-user-form > .account-section-heading,
+  .create-user-form > .form-row,
   .create-user-form > button,
   .admin-account-editor form > button,
   .admin-account-editor form > .form-error,
   .admin-account-editor form > .form-success {
+    grid-column: auto;
+  }
+  .create-user-form > .form-row,
+  .create-user-form > label {
     grid-column: auto;
   }
   :where(.unified-app-content, .modal, .auth-card) form :is(
