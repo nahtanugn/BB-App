@@ -49,6 +49,7 @@ type User = {
   member_section: string;
   temporary_access_role: string;
   access_expires_at: string | null;
+  access_scope: string;
   custom_permissions: string[];
   account_status: "pending" | "active" | "rejected";
   must_change_password: number;
@@ -144,6 +145,15 @@ export default function StandaloneApp() {
   const navigate = useCallback((next: AppRoute, replace = false) => {
     if (!auth?.user) return;
     const requested: AppRoute = next === "company-overview" ? "home" : next;
+    if (auth.user.access_scope === "band_external") {
+      const safeExternalRoute = requested === "band" || requested === "help" ? requested : "band";
+      setRoute(safeExternalRoute);
+      const params = new URLSearchParams();
+      if (safeExternalRoute !== "home") params.set("open", safeExternalRoute);
+      params.set("section", activeSection);
+      window.history[replace ? "replaceState" : "pushState"]({ route: safeExternalRoute }, "", `/?${params.toString()}`);
+      return;
+    }
     const operational =
       ["admin", "officer", "viewer"].includes(auth.user.role) ||
       hasTemporaryAdminAccess;
@@ -190,6 +200,10 @@ export default function StandaloneApp() {
     const url = `/?${params.toString()}`;
     window.history[replace ? "replaceState" : "pushState"]({ route: safeRoute }, "", url);
   }, [activeSection, auth, hasCustomTrackerAccess, hasTemporaryAdminAccess, stockAccess]);
+
+  useEffect(() => {
+    if (auth?.user?.access_scope === "band_external" && route !== "band") navigate("band", true);
+  }, [auth?.user?.access_scope, navigate, route]);
 
   const switchActiveSection = useCallback((next: "senior" | "junior") => {
     setActiveSection(next);

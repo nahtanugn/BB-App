@@ -18,6 +18,7 @@ export const OPERATIONS_PERMISSIONS = [
 ] as const;
 
 export function hasPermission(user: AppUser, permission: string) {
+  if (user.access_scope === "band_external") return permission.startsWith("band.");
   return user.role !== "viewer" &&
     (hasOperationalAdminAccess(user) || user.custom_permissions.includes(permission));
 }

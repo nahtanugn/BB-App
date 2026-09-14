@@ -162,14 +162,16 @@ export async function GET(request: Request) {
     const scopedInstruments = hasCompanyBandAccess ? instruments.results : (instruments.results as Array<{ current_holder_member_id: number | null; holder_name?: string }>).map((instrument) => instrument.current_holder_member_id == null || visibleBandMemberIds.has(instrument.current_holder_member_id) ? instrument : { ...instrument, holder_name: undefined });
     const gbMembers = await runtime.DB.prepare("SELECT id, name, rank, section, squad, email, band_member, organisation, contact_number, emergency_contact_number FROM members WHERE COALESCE(organisation,'BB')='GB' ORDER BY name").all();
     const bandParticipants = [...members.map((m) => ({ ...m, organisation: "BB" })), ...(gbMembers.results as Array<Record<string, unknown>>).filter((m) => Number(m.band_member) === 1).map((m) => ({ ...m, organisation: "GB" }))];
-    return Response.json({ module: workspace, permissions, members: members.filter((m) => m.band_member), bandParticipants, gbMembers: gbMembers.results, profiles: scopedProfiles, instruments: scopedInstruments, history: scopedHistory, rehearsals: rehearsals.results, performances: performances.results, assessments: scopedAssessments });
+    const safeParticipant = (participant: Record<string, unknown>) => ({ id: participant.id, name: participant.name, rank: participant.rank, section: participant.section, squad: participant.squad, band_member: participant.band_member, organisation: participant.organisation });
+    const external = user.access_scope === "band_external";
+    return Response.json({ module: workspace, permissions, members: (external ? bandParticipants : members.filter((m) => m.band_member)).map((m) => external ? safeParticipant(m as Record<string, unknown>) : m), bandParticipants: external ? bandParticipants.map((m) => safeParticipant(m as Record<string, unknown>)) : bandParticipants, gbMembers: external ? gbMembers.results.map((m) => safeParticipant(m as Record<string, unknown>)) : gbMembers.results, profiles: scopedProfiles, instruments: scopedInstruments, history: scopedHistory, rehearsals: rehearsals.results, performances: performances.results, assessments: scopedAssessments });
   }
   return Response.json({ error: "Unknown operations module" }, { status: 400 });
 }
 
 export async function POST(request: Request) {
   const user = await getCurrentUser(request); if (!user) return Response.json({ error: "Sign in required" }, { status: 401 });
-  if (user.role === "viewer") return Response.json({ error: "Viewer access is read-only" }, { status: 403 });
+  if (user.role === "viewer" && user.access_scope !== "band_external") return Response.json({ error: "Viewer access is read-only" }, { status: 403 });
   const body = await request.json() as Record<string, unknown>; const action = text(body.action, 80); const now = new Date().toISOString();
   const requestKey = text(request.headers.get("Idempotency-Key"), 120);
   if (requestKey) {

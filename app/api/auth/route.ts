@@ -100,7 +100,7 @@ export async function GET(request: Request) {
         `SELECT users.id, users.email, users.name, users.role, users.squad,
           users.officer_rank, users.gender, users.ethnicity, users.religion,
           users.spiritual_status, users.officer_work_status,
-          users.temporary_access_role, users.access_expires_at, users.active, users.created_at,
+          users.temporary_access_role, users.access_expires_at, users.access_scope, users.active, users.created_at,
           users.account_status, users.must_change_password, users.onboarding_completed_at,
           (SELECT members.section FROM members
             WHERE LOWER(members.email) = LOWER(users.email) LIMIT 1) AS member_section

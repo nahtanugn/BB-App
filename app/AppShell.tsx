@@ -46,6 +46,7 @@ export type ShellUser = {
   member_section: string;
   temporary_access_role: string;
   access_expires_at: string | null;
+  access_scope: string;
   custom_permissions: string[];
 };
 
@@ -158,6 +159,9 @@ export default function AppShell({
     );
 
   const items = useMemo(() => {
+    if (user.access_scope === "band_external") {
+      return [{ route: "band" as const, category: "Programme & Events" as const, label: "Band Centre", description: "Combined BB and GB band records", icon: "♫" }];
+    }
     const values: NavItem[] = [
       {
         route: "home",

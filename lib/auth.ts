@@ -15,6 +15,7 @@ export type AppUser = {
   member_section: string;
   temporary_access_role: string;
   access_expires_at: string | null;
+  access_scope: string;
   custom_permissions: string[];
   account_status: "pending" | "active" | "rejected";
   must_change_password: number;
@@ -79,6 +80,7 @@ export async function ensureAuthSchema() {
       officer_work_status TEXT NOT NULL DEFAULT '',
       temporary_access_role TEXT NOT NULL DEFAULT '',
       access_expires_at TEXT,
+      access_scope TEXT NOT NULL DEFAULT '',
       password_hash TEXT NOT NULL,
       password_salt TEXT NOT NULL,
       active INTEGER NOT NULL DEFAULT 1,
@@ -182,6 +184,9 @@ export async function ensureAuthSchema() {
   }
   if (!userColumns.results.some((column) => column.name === "access_expires_at")) {
     await runtime.DB.prepare("ALTER TABLE users ADD COLUMN access_expires_at TEXT").run();
+  }
+  if (!userColumns.results.some((column) => column.name === "access_scope")) {
+    await runtime.DB.prepare("ALTER TABLE users ADD COLUMN access_scope TEXT NOT NULL DEFAULT ''").run();
   }
   if (!userColumns.results.some((column) => column.name === "temporary_access_role")) {
     await runtime.DB.prepare(
@@ -356,6 +361,7 @@ export async function getCurrentUser(request: Request): Promise<AppUser | null> 
         ELSE ''
       END AS temporary_access_role,
       users.access_expires_at,
+      users.access_scope,
       users.account_status, users.must_change_password,
       CASE WHEN users.role = 'admin' AND users.id = (SELECT MIN(id) FROM users) THEN 1 ELSE 0 END AS is_initial_administrator,
       users.onboarding_completed_at, users.profile_confirmed_at, users.tour_completed_at,
@@ -367,6 +373,11 @@ export async function getCurrentUser(request: Request): Promise<AppUser | null> 
     .bind(now, tokenHash, now)
     .first<AppUser>();
   if (!user) return null;
+  if (user.access_scope === "band_external") {
+    const path = new URL(request.url).pathname;
+    const allowedPaths = ["/api/auth", "/api/company-operations", "/api/band-access", "/api/notifications", "/api/help", "/api/branding"];
+    if (!allowedPaths.some((allowed) => path === allowed || path.startsWith(`${allowed}/`))) return null;
+  }
   const withOnboarding = {
     ...user,
     is_initial_administrator: Boolean(user.is_initial_administrator),

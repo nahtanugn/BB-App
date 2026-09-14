@@ -200,6 +200,7 @@ export const users = sqliteTable("users", {
   officerWorkStatus: text("officer_work_status").notNull().default(""),
   temporaryAccessRole: text("temporary_access_role").notNull().default(""),
   accessExpiresAt: text("access_expires_at"),
+  accessScope: text("access_scope").notNull().default(""),
   passwordHash: text("password_hash").notNull(),
   passwordSalt: text("password_salt").notNull(),
   active: integer("active", { mode: "boolean" }).notNull().default(true),
