@@ -113,38 +113,67 @@ button:focus-visible, input:focus-visible, select:focus-visible { outline: 3px s
 .recommendation-row strong, .recommendation-row small { display:block; }
 .recommendation-row small { color:#71829b; margin-top:4px; }
 .recommendation-score { min-width:34px; height:34px; display:grid; place-items:center; border-radius:50%; background:#e8f1ff; color:#1169d8; font-weight:800; }
-.award-planning-strip { display:grid; grid-template-columns:auto minmax(0,1fr); align-items:center; gap:22px; padding:18px 20px; }
+.award-planning-strip { display:grid; grid-template-columns:auto minmax(260px,1fr); align-items:center; gap:18px 22px; padding:18px 20px; }
 .award-planning-strip h2 { margin:3px 0 0; color:var(--navy); font-family:Georgia,serif; font-size:22px; font-weight:500; white-space:nowrap; }
 .priority-chips { display:flex; gap:8px; overflow-x:auto; padding:2px; scrollbar-width:thin; }
 .priority-chips > span { min-width:155px; padding:10px 12px; border:1px solid #d7e2ef; border-radius:11px; background:#f8fbff; }
 .priority-chips strong,.priority-chips small { display:block; }
 .priority-chips strong { color:var(--navy); font-size:11px; }
 .priority-chips small { margin-top:3px; color:#71829b; font-size:9px; white-space:nowrap; }
+.company-badge-board { grid-column:1 / -1; min-width:0; padding-top:14px; border-top:1px solid #dce6f0; }
+.company-badge-board > strong { display:block; margin-bottom:10px; color:var(--navy); font-size:12px; }
+.company-badge-board > div { display:flex; gap:10px; overflow-x:auto; padding:3px 2px 8px; scrollbar-width:thin; }
+.company-badge-board span { position:relative; flex:0 0 58px; width:58px; height:58px; padding:7px; display:grid; place-items:center; border:1px solid #d5e1ed; border-radius:12px; background:#f7faff; }
+.company-badge-board span.advanced { background:#a91f2b; border-color:#7f1620; box-shadow:inset 0 0 0 4px #c73540; }
+.company-badge-board img { width:100%; height:100%; object-fit:contain; }
+.company-badge-board b { position:absolute; right:-4px; bottom:-4px; min-width:21px; height:21px; padding:0 5px; display:grid; place-items:center; border:2px solid #fff; border-radius:999px; color:#fff; background:#126bd6; font-size:9px; }
 .member-next-award { display:block; max-width:210px; margin-top:4px; color:#54708d; font-size:9px; line-height:1.3; }
 .member-award-visual-link { margin-top:5px; padding:0; border:0; background:transparent; color:var(--blue); font:inherit; font-size:9px; font-weight:800; cursor:pointer; }
-.award-armlet-visual { display:grid; grid-template-columns:140px minmax(0,1fr) minmax(0,1fr); gap:16px; align-items:start; margin:20px 0; padding:18px; border:1px solid #d7e2ef; border-radius:16px; background:linear-gradient(135deg,#f7fbff,#eef4fb); overflow:hidden; }
-.uniform-figure { min-height:210px; padding:16px 10px 12px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:12px; background:linear-gradient(#eef2f7 0 20%,#d8e0eb 20% 100%); border-radius:12px; position:relative; overflow:hidden; }
-.uniform-figure > strong { max-width:100%; padding:6px 10px; border-radius:999px; background:#fff; color:#173b63; font-size:11px; line-height:1.2; text-align:center; overflow-wrap:anywhere; }
-.uniform-head { width:42px; height:42px; border-radius:50%; background:#d5a27f; border:4px solid #fff; }
-.uniform-body { width:92px; height:130px; border-radius:20px 20px 10px 10px; background:#173b63; position:relative; box-shadow:0 8px 0 #0e2c4b; }
-.uniform-sash { position:absolute; width:9px; height:130px; left:42px; top:0; transform:rotate(-22deg); background:#d1a845; opacity:.85; }
-.rank-chevrons { position:absolute; right:12px; top:52px; color:#f1ca55; font-size:15px; font-weight:900; line-height:.6; text-align:center; transform:rotate(180deg); }
-.armlet-column { min-width:0; }
-.armlet-column h4 { margin:5px 0 10px; color:#173b63; text-transform:uppercase; letter-spacing:.12em; font-size:12px; }
-.armlet-badges { display:grid; grid-template-columns:1fr; gap:8px; }
-.armlet-badges > p { margin:0; padding:16px 12px; border:1px dashed #c9d7e8; border-radius:10px; color:#71829b; font-size:11px; text-align:center; }
-.armlet-badge { min-width:0; min-height:48px; padding:9px 10px; display:grid; align-content:center; gap:3px; border-radius:9px; background:#fff; border:1px solid #c9d7e8; color:#173b63; line-height:1.2; overflow:hidden; }
-.armlet-badge strong { font-size:11px; overflow-wrap:anywhere; }
-.armlet-badge small { color:#71829b; font-size:9px; font-weight:650; }
-.armlet-badge.awarded { background:#dff5e8; border-color:#8bd2a7; }
-.armlet-badge.in_progress,.armlet-badge.submitted,.armlet-badge.verified { background:#fff3cf; border-color:#e8c45a; }
-.armlet-badge.next { background:#e8f2ff; border-color:#70aef0; box-shadow:inset 3px 0 0 #126bd6; }
-.armlet-caption { grid-column:1 / -1; margin:0; display:flex; align-items:center; justify-content:space-between; gap:12px; color:#6c7f99; font-size:12px; }
-.armlet-more { min-height:34px; padding:0 12px; border:1px solid #b9d2ed; border-radius:8px; background:#fff; color:#126bd6; font:inherit; font-size:10px; font-weight:800; cursor:pointer; white-space:nowrap; }
-.armlet-more:hover { background:#e8f2ff; }
-.armlet-accessible { position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0 0 0 0); white-space:nowrap; }
-@media (max-width: 760px) { .award-planning-strip { grid-template-columns:1fr; gap:12px; } .award-armlet-visual { grid-template-columns:1fr 1fr; } .uniform-figure { grid-column:1 / -1; min-height:180px; } .armlet-caption { grid-column:1 / -1; } }
-@media (max-width: 480px) { .award-armlet-visual { grid-template-columns:1fr; padding:14px; } .uniform-figure,.armlet-caption { grid-column:auto; } .armlet-caption { align-items:stretch; flex-direction:column; } }
+.award-visual { min-width:0; margin:20px 0; display:grid; gap:18px; }
+.award-uniform-layout { min-width:0; display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:14px; }
+.uniform-placement-panel { min-width:0; overflow:hidden; border:1px solid #cedbea; border-radius:15px; background:#fff; }
+.uniform-placement-panel > header { padding:12px 14px; display:flex; align-items:center; justify-content:space-between; gap:10px; border-bottom:1px solid #dce6f0; }
+.uniform-placement-panel > header span { color:#126bd6; font-size:9px; font-weight:850; letter-spacing:.16em; text-transform:uppercase; }
+.uniform-placement-panel > header strong { color:#14395f; font-size:11px; }
+.uniform-fabric { min-height:190px; padding:18px; background:linear-gradient(145deg,#153f69,#0b2f53); }
+.left-arm-fabric { display:flex; flex-direction:column; align-items:center; gap:12px; }
+.uniform-badge-row { width:100%; display:flex; flex-wrap:wrap; justify-content:center; gap:10px; }
+.right-arm-fabric { display:grid; grid-template-columns:repeat(5,minmax(0,1fr)); align-content:start; gap:12px 8px; }
+.award-image-badge { position:relative; min-width:0; width:clamp(38px,6vw,58px); aspect-ratio:1; margin:auto; padding:4px; display:grid; place-items:center; border:0; border-radius:9px; background:rgba(255,255,255,.97); cursor:pointer; box-shadow:0 2px 7px rgba(0,0,0,.24); }
+.award-image-badge:hover,.award-image-badge:focus-visible { outline:3px solid #f2c84b; outline-offset:2px; transform:translateY(-1px); }
+.award-image-badge.advanced { padding:7px; background:#a8202c; box-shadow:inset 0 0 0 3px #ce3b46,0 2px 7px rgba(0,0,0,.28); }
+.award-image-badge img { width:100%; height:100%; object-fit:contain; }
+.award-image-badge > span { position:absolute; right:-6px; bottom:-6px; min-width:22px; height:22px; padding:0 5px; display:grid; place-items:center; border:2px solid #fff; border-radius:999px; color:#fff; background:#126bd6; font-size:9px; font-weight:850; }
+.right-arm-panel > small { display:block; padding:10px 14px; color:#6b7e96; font-size:9px; }
+.left-breast-badges { padding:11px 14px; display:flex; align-items:center; gap:10px; border-top:1px solid #dce6f0; overflow-x:auto; }
+.left-breast-badges > span { margin-right:auto; color:#6b7e96; font-size:9px; font-weight:800; text-transform:uppercase; }
+.award-collection { min-width:0; padding:16px; border:1px solid #d4e0ed; border-radius:15px; background:#f6f9fd; }
+.award-collection-heading { margin-bottom:14px; display:flex; align-items:center; justify-content:space-between; gap:12px; }
+.award-collection-heading h4 { margin:3px 0 0; color:#14395f; font-family:Georgia,serif; font-size:21px; font-weight:500; }
+.award-collection-heading > span { min-width:34px; height:34px; padding:0 8px; display:grid; place-items:center; border-radius:999px; color:#126bd6; background:#e4f0ff; font-size:11px; font-weight:850; }
+.award-collection-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(92px,1fr)); gap:10px; }
+.award-collection-item { min-width:0; min-height:126px; padding:12px 8px 9px; display:flex; flex-direction:column; align-items:center; gap:6px; border:1px solid #d5e1ed; border-radius:12px; background:#fff; text-align:center; }
+.award-collection-item strong { max-width:100%; color:#14395f; font-size:9px; line-height:1.25; overflow-wrap:anywhere; }
+.award-collection-item small { margin-top:auto; color:#72839a; font-size:8px; text-transform:uppercase; }
+.award-badge-detail { position:relative; padding:14px 44px 14px 14px; display:flex; align-items:center; gap:14px; border:1px solid #9fc5ef; border-radius:14px; background:#edf6ff; }
+.award-badge-detail-image { flex:0 0 70px; width:70px; height:70px; padding:7px; display:grid; place-items:center; border-radius:12px; background:#fff; }
+.award-badge-detail-image.advanced { background:#a8202c; box-shadow:inset 0 0 0 4px #ce3b46; }
+.award-badge-detail-image img { width:100%; height:100%; object-fit:contain; }
+.award-badge-detail strong,.award-badge-detail span,.award-badge-detail small { display:block; }
+.award-badge-detail strong { color:#14395f; font-size:14px; }
+.award-badge-detail span { margin-top:4px; color:#476985; font-size:10px; text-transform:capitalize; }
+.award-badge-detail small { margin-top:5px; color:#71829b; font-size:9px; }
+.award-badge-detail > button { position:absolute; right:10px; top:10px; width:30px; height:30px; border:0; border-radius:8px; color:#46627e; background:#dceafb; cursor:pointer; }
+.award-artwork-pending { padding:12px 14px; display:grid; gap:4px; border:1px dashed #d2a745; border-radius:12px; background:#fff9e8; }
+.award-artwork-pending strong { color:#6d5011; font-size:11px; }
+.award-artwork-pending span { color:#7c6a42; font-size:10px; line-height:1.45; }
+.award-accessible-list { border:1px solid #d5e1ed; border-radius:12px; background:#fff; overflow:hidden; }
+.award-accessible-list summary { padding:12px 14px; color:#126bd6; font-size:10px; font-weight:800; cursor:pointer; }
+.award-accessible-list table { width:100%; border-collapse:collapse; font-size:10px; }
+.award-accessible-list th,.award-accessible-list td { padding:9px 12px; border-top:1px solid #e2e9f1; text-align:left; }
+.award-visual-empty { min-height:110px; display:grid; place-items:center; border:1px dashed #c8d7e6; border-radius:14px; color:#71829b; background:#f8fbff; font-size:11px; }
+@media (max-width:760px) { .award-planning-strip { grid-template-columns:1fr; gap:12px; } .award-uniform-layout { grid-template-columns:1fr; } .uniform-fabric { min-height:170px; } }
+@media (max-width:480px) { .award-visual { gap:12px; } .uniform-fabric { padding:14px 10px; } .right-arm-fabric { gap:10px 5px; } .award-image-badge { width:clamp(34px,15vw,52px); } .award-collection-grid { grid-template-columns:repeat(3,minmax(0,1fr)); gap:7px; } .award-collection-item { min-height:116px; padding-inline:5px; } .award-badge-detail { align-items:flex-start; } }
 .auth-brand .brand-mark { width: 56px; height: 56px; border-radius: 14px; }
 .brand strong, .brand span { display: block; }
 .brand strong { font-size: 16px; letter-spacing: -.2px; }

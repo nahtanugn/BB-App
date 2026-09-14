@@ -40,7 +40,22 @@ type Award = {
   basic_available: number;
   advanced_available: number;
 };
-type AwardPlacement = { side: "left" | "right"; order: number; group: string; source: string };
+type AwardPlacement = { side: "left" | "right"; order: number; group: string; source: string; artwork_key?: string | null; artwork_src?: string | null; region?: string; row_group?: string; display_order?: number; advanced_backing?: boolean };
+type AwardBadgeLayoutItem = {
+  award_code: string;
+  award_name: string;
+  category: string;
+  level: "basic" | "advanced";
+  awarded_at: string | null;
+  quantity: number;
+  artwork_key: string | null;
+  artwork_src: string | null;
+  region: string | null;
+  row_group: string | null;
+  display_order: number;
+  advanced_backing: boolean;
+};
+type MemberAwardLayout = { uniform: AwardBadgeLayoutItem[]; collection: AwardBadgeLayoutItem[]; pending_artwork: AwardBadgeLayoutItem[] };
 type AwardRecommendation = { award_code: string; award_name: string; level: string; category: string; status: string; priority: number; reason: string };
 type MemberRecommendation = { member_id: number; member_name: string; recommendation: AwardRecommendation | null };
 type CompanyRecommendation = { award_code: string; award_name: string; level: string; category: string; eligible_members: number; close_members: number; score: number };
@@ -101,7 +116,8 @@ type TrackerData = {
   syllabus: string;
   section: "senior" | "junior";
   awardPlacement?: Record<string, AwardPlacement>;
-  awardVisual?: { source: string; rankPlacement: string };
+  awardLayouts?: Record<string, MemberAwardLayout>;
+  awardVisual?: { source: string; rankPlacement: string; artworkVersion?: string };
   recommendations?: MemberRecommendation[];
   companyRecommendations?: CompanyRecommendation[];
 };
@@ -191,29 +207,69 @@ function initials(name: string) {
     .toUpperCase();
 }
 
-function AwardArmletVisual({ member, awards, progress, placement, recommendation }: { member: Member; awards: Award[]; progress: Progress[]; placement: Record<string, AwardPlacement>; recommendation?: AwardRecommendation | null }) {
-  const [showAll, setShowAll] = useState(false);
-  const earned = new Map(progress.filter((item) => item.member_id === member.id).map((item) => [`${item.award_code}:${item.level}`, item.status]));
-  const badge = (award: Award) => {
-    const status = earned.get(`${award.code}:advanced`) ?? earned.get(`${award.code}:basic`) ?? "not_started";
-    const isNext = recommendation?.award_code === award.code;
-    return <span className={`armlet-badge ${status}${isNext ? " next" : ""}`} title={`${award.name}: ${isNext ? "Recommended next" : statusLabel[status as Status]}`}><strong>{award.name}</strong><small>{isNext ? "Recommended next" : statusLabel[status as Status]}</small></span>;
-  };
-  const isVisible = (award: Award) => {
-    const status = earned.get(`${award.code}:advanced`) ?? earned.get(`${award.code}:basic`) ?? "not_started";
-    return status !== "not_started" || recommendation?.award_code === award.code || (award.code === "one_year_service" && member.service_award_count > 0);
-  };
-  const right = awards.filter((award) => placement[award.code]?.side === "right" && isVisible(award)).sort((a, b) => (placement[a.code]?.order ?? 0) - (placement[b.code]?.order ?? 0));
-  const left = awards.filter((award) => placement[award.code]?.side === "left" && isVisible(award)).sort((a, b) => (placement[a.code]?.order ?? 0) - (placement[b.code]?.order ?? 0));
-  const displayedLeft = showAll ? left : left.slice(0, 5);
-  const displayedRight = showAll ? right : right.slice(0, 5);
-  const hiddenCount = Math.max(0, left.length - displayedLeft.length) + Math.max(0, right.length - displayedRight.length);
-  return <section className="award-armlet-visual" aria-label={`${member.name} award and rank visual`}>
-    <div className="uniform-figure" aria-hidden="true"><div className="uniform-head" /><div className="uniform-body"><span className="uniform-sash" /><span className="rank-chevrons">⌄<br/>⌄</span></div><strong>{member.rank}</strong></div>
-    <div className="armlet-column left"><h4>Left arm</h4><div className="armlet-badges">{displayedLeft.length ? displayedLeft.map((award) => <React.Fragment key={award.code}>{badge(award)}</React.Fragment>) : <p>No recorded awards</p>}</div></div>
-    <div className="armlet-column right"><h4>Right arm</h4><div className="armlet-badges">{displayedRight.length ? displayedRight.map((award) => <React.Fragment key={award.code}>{badge(award)}</React.Fragment>) : <p>No recorded awards</p>}</div></div>
-    <div className="armlet-caption"><span>Earned, active and recommended awards.</span>{(hiddenCount > 0 || showAll) && <button type="button" className="armlet-more" onClick={() => setShowAll((value) => !value)}>{showAll ? "Show key badges" : `Show all ${left.length + right.length} badges`}</button>}</div>
-    <div className="armlet-accessible"><strong>Badge list</strong>{[...left, ...right].map((award) => <span key={award.code}>{award.name} — {statusLabel[(earned.get(`${award.code}:advanced`) ?? earned.get(`${award.code}:basic`) ?? "not_started") as Status]}</span>)}</div>
+function AwardArmletVisual({ member, layout }: { member: Member; layout?: MemberAwardLayout }) {
+  const [selectedBadge, setSelectedBadge] = useState<AwardBadgeLayoutItem | null>(null);
+  const uniform = layout?.uniform ?? [];
+  const collection = layout?.collection ?? [];
+  const pendingArtwork = layout?.pending_artwork ?? [];
+  const rightArm = uniform.filter((badge) => badge.region === "right_arm");
+  const leftGroups = ["founder", "special_row", "scholastic", "service_upper", "service_lower"];
+  const leftBreast = uniform.filter((badge) => badge.region === "left_breast" || badge.region === "medal");
+  const expandedBadges = (badges: AwardBadgeLayoutItem[]) => badges.flatMap((badge) =>
+    Array.from({ length: Math.max(1, badge.quantity) }, (_, index) => ({ badge, instance: index })),
+  );
+  const badgeButton = (badge: AwardBadgeLayoutItem, instance = 0, showQuantity = false) => (
+    <button
+      type="button"
+      className={`award-image-badge${badge.advanced_backing ? " advanced" : ""}`}
+      key={`${badge.award_code}-${instance}`}
+      onClick={() => setSelectedBadge(badge)}
+      aria-label={`${badge.award_name}, ${badge.level}${badge.quantity > 1 ? `, ${badge.quantity} awarded` : ""}`}
+      title={badge.award_name}
+    >
+      <img src={badge.artwork_src ?? ""} alt="" />
+      {showQuantity && badge.quantity > 1 && <span>{badge.quantity}</span>}
+    </button>
+  );
+
+  return <section className="award-visual" aria-label={`${member.name} awarded badge visual`}>
+    {uniform.length ? (
+      <div className="award-uniform-layout">
+        <article className="uniform-placement-panel left-arm-panel">
+          <header><span>Left arm</span><strong>Service & special</strong></header>
+          <div className="uniform-fabric left-arm-fabric">
+            {leftGroups.map((group) => {
+              const badges = expandedBadges(uniform.filter((badge) => badge.region !== "right_arm" && badge.region !== "left_breast" && badge.region !== "medal" && badge.row_group === group));
+              return badges.length ? <div className={`uniform-badge-row ${group}`} key={group}>{badges.map(({ badge, instance }) => badgeButton(badge, instance))}</div> : null;
+            })}
+          </div>
+          {leftBreast.length > 0 && <div className="left-breast-badges"><span>Left breast</span>{expandedBadges(leftBreast).map(({ badge, instance }) => badgeButton(badge, instance))}</div>}
+        </article>
+        <article className="uniform-placement-panel right-arm-panel">
+          <header><span>Right arm</span><strong>Target & proficiency</strong></header>
+          <div className="uniform-fabric right-arm-fabric">{expandedBadges(rightArm).map(({ badge, instance }) => badgeButton(badge, instance))}</div>
+          <small>Target first, then alphabetical · maximum five per row</small>
+        </article>
+      </div>
+    ) : <div className="award-visual-empty">No awarded badges with artwork yet.</div>}
+
+    {collection.length > 0 && <div className="award-collection">
+      <div className="award-collection-heading"><div><p className="eyebrow">COLLECTION</p><h4>Awarded badges</h4></div><span>{collection.reduce((total, badge) => total + Math.max(1, badge.quantity), 0)}</span></div>
+      <div className="award-collection-grid">{collection.map((badge) => <div className="award-collection-item" key={badge.award_code}>{badgeButton(badge, 0, true)}<strong>{badge.award_name}</strong><small>{badge.level === "advanced" ? "Advanced" : "Basic"}</small></div>)}</div>
+    </div>}
+
+    {selectedBadge && <div className="award-badge-detail" role="status">
+      <div className={`award-badge-detail-image${selectedBadge.advanced_backing ? " advanced" : ""}`}><img src={selectedBadge.artwork_src ?? ""} alt="" /></div>
+      <div><strong>{selectedBadge.award_name}</strong><span>{selectedBadge.level === "advanced" ? "Advanced" : "Basic"} · {selectedBadge.category}</span><small>{selectedBadge.awarded_at ? `Awarded ${new Date(`${selectedBadge.awarded_at}T00:00:00`).toLocaleDateString("en-MY", { day: "numeric", month: "short", year: "numeric" })}` : selectedBadge.quantity > 1 ? `${selectedBadge.quantity} awarded` : "Awarded"}</small></div>
+      <button type="button" onClick={() => setSelectedBadge(null)} aria-label="Close badge details">×</button>
+    </div>}
+
+    {pendingArtwork.length > 0 && <div className="award-artwork-pending"><strong>Artwork pending</strong><span>{pendingArtwork.map((badge) => badge.award_name).join(", ")}</span></div>}
+
+    {(collection.length > 0 || pendingArtwork.length > 0) && <details className="award-accessible-list">
+      <summary>View awarded badges as a list</summary>
+      <div className="table-scroll"><table><thead><tr><th>Award</th><th>Level</th><th>Date</th><th>Artwork</th></tr></thead><tbody>{[...collection, ...pendingArtwork].map((badge) => <tr key={badge.award_code}><th>{badge.award_name}{badge.quantity > 1 ? ` × ${badge.quantity}` : ""}</th><td>{badge.level}</td><td>{badge.awarded_at ?? "—"}</td><td>{badge.artwork_src ? "Available" : "Pending"}</td></tr>)}</tbody></table></div>
+    </details>}
   </section>;
 }
 
@@ -632,6 +688,24 @@ export default function AwardTracker({
       ),
     [data, category, level],
   );
+
+  const companyBadgeCollection = useMemo(() => {
+    const badges = new Map<string, { badge: AwardBadgeLayoutItem; members: number }>();
+    for (const layout of Object.values(data?.awardLayouts ?? {})) {
+      for (const badge of layout.collection) {
+        const current = badges.get(badge.award_code);
+        if (current) current.members += 1;
+        else badges.set(badge.award_code, { badge, members: 1 });
+      }
+    }
+    return [...badges.values()].sort((a, b) =>
+      a.badge.award_code === "target"
+        ? -1
+        : b.badge.award_code === "target"
+          ? 1
+          : a.badge.award_name.localeCompare(b.badge.award_name),
+    );
+  }, [data?.awardLayouts]);
 
   function memberStats(member: Member) {
     const rows = (data?.progress ?? []).filter(
@@ -2199,6 +2273,13 @@ export default function AwardTracker({
           <section className="panel award-planning-strip" aria-label="Company award priorities">
             <div><p className="eyebrow">AWARD PLANNING</p><h2>Company priorities</h2></div>
             <div className="priority-chips">{(data.companyRecommendations ?? []).map((item) => <span key={`${item.award_code}:${item.level}`}><strong>{item.award_name}</strong><small>{item.level} · {item.eligible_members} ready{item.close_members ? ` · ${item.close_members} active` : ""}</small></span>)}</div>
+            <div className="company-badge-board" aria-label="Company awarded badge collection">
+              <strong>Awarded badge collection</strong>
+              <div>{companyBadgeCollection.map(({ badge, members }) => <span className={badge.advanced_backing ? "advanced" : ""} key={badge.award_code} title={`${badge.award_name}: ${members} member${members === 1 ? "" : "s"}`}>
+                <img src={badge.artwork_src ?? ""} alt={badge.award_name} />
+                <b>{members}</b>
+              </span>)}</div>
+            </div>
           </section>
           <section className="panel matrix-panel">
             <div className="matrix-toolbar">
@@ -3079,7 +3160,7 @@ export default function AwardTracker({
                         <h3>Awards with recorded progress</h3>
                       </div>
                     </div>
-                    <AwardArmletVisual member={viewingMember} awards={data.awards} progress={data.progress} placement={data.awardPlacement ?? {}} recommendation={data.recommendations?.find((item) => item.member_id === viewingMember.id)?.recommendation} />
+                    <AwardArmletVisual member={viewingMember} layout={data.awardLayouts?.[String(viewingMember.id)]} />
                     {awardRows.length || viewingMember.service_award_count ? (
                       <div className="member-profile-awards">
                         {viewingMember.service_award_count > 0 && (

@@ -415,3 +415,37 @@ test("ships the Malaysia Senior Section catalogue, role-based portals and instal
   assert.match(serviceWorker, /Try again/);
   assert.doesNotMatch(serviceWorker, /cache\.addAll\(SHELL\)/);
 });
+
+test("renders awarded records with supplied badge artwork and handbook placement", async () => {
+  const [tracker, route, metadata, styles, target, presidentsAward, serviceBadge, extractor] = await Promise.all([
+    readFile(new URL("../app/AwardTracker.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/api/tracker/route.ts", import.meta.url), "utf8"),
+    readFile(new URL("../lib/awardBadgeArtwork.ts", import.meta.url), "utf8"),
+    readFile(new URL("../app/globals.css", import.meta.url), "utf8"),
+    readFile(new URL("../public/award-badges/target.webp", import.meta.url)),
+    readFile(new URL("../public/award-badges/presidents_award.webp", import.meta.url)),
+    readFile(new URL("../public/award-badges/one_year_service.webp", import.meta.url)),
+    readFile(new URL("../scripts/extract-award-badges.py", import.meta.url), "utf8"),
+  ]);
+
+  assert.match(route, /row\.status !== "awarded"/);
+  assert.match(route, /existing\.level !== "advanced" && row\.level === "advanced"/);
+  assert.match(route, /awardLayouts/);
+  assert.match(route, /pending_artwork/);
+  assert.match(metadata, /const rightArmOrder = \[\s*"target",\s*"arts",\s*"athletics"/);
+  assert.match(metadata, /"scholastics_bronze"/);
+  assert.match(metadata, /"duke_of_edinburgh_bronze"/);
+  assert.match(metadata, /advanced_backing: region === "right_arm" && code !== "target"/);
+  assert.match(tracker, /className="award-collection-grid"/);
+  assert.match(tracker, /Artwork pending/);
+  assert.match(tracker, /View awarded badges as a list/);
+  assert.match(tracker, /className="company-badge-board"/);
+  assert.doesNotMatch(tracker, /uniform-figure|armlet-badge/);
+  assert.match(styles, /grid-template-columns:repeat\(5,minmax\(0,1fr\)\)/);
+  assert.match(styles, /\.award-image-badge\.advanced/);
+  assert.match(styles, /@media \(max-width:760px\)[\s\S]*?\.award-uniform-layout \{ grid-template-columns:1fr;/);
+  assert.ok(target.byteLength > 1000);
+  assert.ok(presidentsAward.byteLength > 1000);
+  assert.ok(serviceBadge.byteLength > 1000);
+  assert.doesNotMatch(extractor, /\/Users\/nathan/);
+});
