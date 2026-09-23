@@ -124,8 +124,10 @@ button:focus-visible, input:focus-visible, select:focus-visible { outline: 3px s
 .company-badge-board > strong { display:block; margin-bottom:10px; color:var(--navy); font-size:12px; }
 .company-badge-board > div { display:flex; gap:10px; overflow-x:auto; padding:3px 2px 8px; scrollbar-width:thin; }
 .company-badge-board span { position:relative; flex:0 0 58px; width:58px; height:58px; padding:7px; display:grid; place-items:center; border:1px solid #d5e1ed; border-radius:12px; background:#f7faff; }
-.company-badge-board span.advanced { background:#a91f2b; border-color:#7f1620; box-shadow:inset 0 0 0 4px #c73540; }
+.company-badge-board span.advanced { background:transparent; border-color:transparent; box-shadow:none; }
+.company-badge-board span.advanced::before { content:""; position:absolute; inset:5px; border:3px solid #e14a50; border-radius:50%; background:#b51f2b; box-shadow:inset 0 0 0 2px #8f1721; }
 .company-badge-board img { width:100%; height:100%; object-fit:contain; }
+.company-badge-board span.advanced img { position:relative; z-index:1; }
 .company-badge-board b { position:absolute; right:-4px; bottom:-4px; min-width:21px; height:21px; padding:0 5px; display:grid; place-items:center; border:2px solid #fff; border-radius:999px; color:#fff; background:#126bd6; font-size:9px; }
 .member-next-award { display:block; max-width:210px; margin-top:4px; color:#54708d; font-size:9px; line-height:1.3; }
 .member-award-visual-link { margin-top:5px; padding:0; border:0; background:transparent; color:var(--blue); font:inherit; font-size:9px; font-weight:800; cursor:pointer; }
@@ -141,8 +143,9 @@ button:focus-visible, input:focus-visible, select:focus-visible { outline: 3px s
 .right-arm-fabric { display:grid; grid-template-columns:repeat(5,minmax(0,1fr)); align-content:start; gap:12px 8px; }
 .award-image-badge { position:relative; min-width:0; width:clamp(38px,6vw,58px); aspect-ratio:1; margin:auto; padding:4px; display:grid; place-items:center; border:0; border-radius:9px; background:rgba(255,255,255,.97); cursor:pointer; box-shadow:0 2px 7px rgba(0,0,0,.24); }
 .award-image-badge:hover,.award-image-badge:focus-visible { outline:3px solid #f2c84b; outline-offset:2px; transform:translateY(-1px); }
-.award-image-badge.advanced { padding:7px; background:#a8202c; box-shadow:inset 0 0 0 3px #ce3b46,0 2px 7px rgba(0,0,0,.28); }
-.award-image-badge img { width:100%; height:100%; object-fit:contain; }
+.award-image-badge.advanced { padding:5px; background:transparent; box-shadow:none; }
+.award-image-badge.advanced::before { content:""; position:absolute; inset:3px; border:3px solid #e14a50; border-radius:50%; background:#b51f2b; box-shadow:inset 0 0 0 2px #8f1721; }
+.award-image-badge img { position:relative; z-index:1; width:100%; height:100%; object-fit:contain; }
 .award-image-badge > span { position:absolute; right:-6px; bottom:-6px; min-width:22px; height:22px; padding:0 5px; display:grid; place-items:center; border:2px solid #fff; border-radius:999px; color:#fff; background:#126bd6; font-size:9px; font-weight:850; }
 .right-arm-panel > small { display:block; padding:10px 14px; color:#6b7e96; font-size:9px; }
 .left-breast-badges { padding:11px 14px; display:flex; align-items:center; gap:10px; border-top:1px solid #dce6f0; overflow-x:auto; }
@@ -157,8 +160,9 @@ button:focus-visible, input:focus-visible, select:focus-visible { outline: 3px s
 .award-collection-item small { margin-top:auto; color:#72839a; font-size:8px; text-transform:uppercase; }
 .award-badge-detail { position:relative; padding:14px 44px 14px 14px; display:flex; align-items:center; gap:14px; border:1px solid #9fc5ef; border-radius:14px; background:#edf6ff; }
 .award-badge-detail-image { flex:0 0 70px; width:70px; height:70px; padding:7px; display:grid; place-items:center; border-radius:12px; background:#fff; }
-.award-badge-detail-image.advanced { background:#a8202c; box-shadow:inset 0 0 0 4px #ce3b46; }
-.award-badge-detail-image img { width:100%; height:100%; object-fit:contain; }
+.award-badge-detail-image.advanced { position:relative; background:transparent; }
+.award-badge-detail-image.advanced::before { content:""; position:absolute; inset:5px; border:4px solid #e14a50; border-radius:50%; background:#b51f2b; box-shadow:inset 0 0 0 2px #8f1721; }
+.award-badge-detail-image img { position:relative; z-index:1; width:100%; height:100%; object-fit:contain; }
 .award-badge-detail strong,.award-badge-detail span,.award-badge-detail small { display:block; }
 .award-badge-detail strong { color:#14395f; font-size:14px; }
 .award-badge-detail span { margin-top:4px; color:#476985; font-size:10px; text-transform:capitalize; }
