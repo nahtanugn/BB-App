@@ -142,6 +142,9 @@ button:focus-visible, input:focus-visible, select:focus-visible { outline: 3px s
 .uniform-badge-row { width:100%; display:grid; grid-template-columns:repeat(5,minmax(0,1fr)); justify-items:center; gap:10px; }
 .uniform-badge-row.special_row { display:flex; flex-wrap:wrap; justify-content:center; }
 .right-arm-fabric { display:grid; grid-template-columns:repeat(5,minmax(0,1fr)); align-content:start; gap:12px 8px; }
+.right-arm-rank { grid-column:1 / -1; min-height:38px; display:flex; align-items:center; justify-content:center; gap:9px; color:#fff; }
+.right-arm-rank svg { width:34px; height:auto; max-height:46px; overflow:visible; fill:#f5f7fa; filter:drop-shadow(0 1px 1px rgba(0,0,0,.5)); }
+.right-arm-rank span { padding:4px 8px; border:1px solid rgba(255,255,255,.45); border-radius:999px; color:#fff; background:rgba(4,22,40,.42); font-size:9px; font-weight:800; letter-spacing:.04em; }
 .award-image-badge { position:relative; min-width:0; width:clamp(38px,6vw,58px); aspect-ratio:1; margin:auto; padding:4px; display:grid; place-items:center; border:0; border-radius:9px; background:rgba(255,255,255,.97); cursor:pointer; box-shadow:0 2px 7px rgba(0,0,0,.24); }
 .award-image-badge:hover,.award-image-badge:focus-visible { outline:3px solid #f2c84b; outline-offset:2px; transform:translateY(-1px); }
 .award-image-badge.advanced { padding:5px; background:transparent; box-shadow:none; }

@@ -445,7 +445,12 @@ test("renders awarded records with supplied badge artwork and handbook placement
   assert.match(tracker, /View awarded badges as a list/);
   assert.match(tracker, /className="company-badge-board"/);
   assert.doesNotMatch(tracker, /uniform-figure|armlet-badge/);
+  assert.match(tracker, /function NcoRankInsignia/);
+  assert.match(tracker, /"Lance Corporal": 1[\s\S]*?Corporal: 2[\s\S]*?Sergeant: 3[\s\S]*?"Staff Sergeant": 4/);
+  assert.match(tracker, /<NcoRankInsignia rank=\{member\.rank\} \/>/);
+  assert.match(tracker, /uniform\.length \|\| hasNcoRank/);
   assert.match(styles, /grid-template-columns:repeat\(5,minmax\(0,1fr\)\)/);
+  assert.match(styles, /\.right-arm-rank \{ grid-column:1 \/ -1;/);
   assert.match(styles, /\.award-image-badge\.advanced/);
   assert.match(styles, /\.award-uniform-layout \{[^}]*grid-template-columns:minmax\(0,1fr\)/);
   assert.match(styles, /\.uniform-badge-row \{[^}]*grid-template-columns:repeat\(5,minmax\(0,1fr\)\)/);

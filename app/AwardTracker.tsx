@@ -207,11 +207,30 @@ function initials(name: string) {
     .toUpperCase();
 }
 
+function NcoRankInsignia({ rank }: { rank: string }) {
+  const chevronsByRank: Record<string, number> = {
+    "Lance Corporal": 1,
+    Corporal: 2,
+    Sergeant: 3,
+    "Staff Sergeant": 4,
+  };
+  const chevrons = chevronsByRank[rank];
+  if (!chevrons) return null;
+
+  return <div className="right-arm-rank" aria-label={`${rank} rank insignia`} title={`${rank} · ${chevrons} rank chevron${chevrons === 1 ? "" : "s"}`}>
+    <svg viewBox={`0 0 60 ${27 + (chevrons - 1) * 9}`} role="img" aria-hidden="true">
+      {Array.from({ length: chevrons }, (_, index) => <path key={index} d={`M7 ${index * 9} L30 ${16 + index * 9} L53 ${index * 9} L53 ${index * 9 + 7} L30 ${23 + index * 9} L7 ${index * 9 + 7} Z`} />)}
+    </svg>
+    <span>{rank}</span>
+  </div>;
+}
+
 function AwardArmletVisual({ member, layout }: { member: Member; layout?: MemberAwardLayout }) {
   const [selectedBadge, setSelectedBadge] = useState<AwardBadgeLayoutItem | null>(null);
   const uniform = layout?.uniform ?? [];
   const collection = layout?.collection ?? [];
   const pendingArtwork = layout?.pending_artwork ?? [];
+  const hasNcoRank = ["Lance Corporal", "Corporal", "Sergeant", "Staff Sergeant"].includes(member.rank);
   const rightArm = uniform.filter((badge) => badge.region === "right_arm");
   const leftGroups = ["founder", "special_row", "scholastic", "service_upper", "service_lower"];
   const leftBreast = uniform.filter((badge) => badge.region === "left_breast" || badge.region === "medal");
@@ -238,7 +257,7 @@ function AwardArmletVisual({ member, layout }: { member: Member; layout?: Member
   );
 
   return <section className="award-visual" aria-label={`${member.name} awarded badge visual`}>
-    {uniform.length ? (
+    {uniform.length || hasNcoRank ? (
       <div className="award-uniform-layout">
         <article className="uniform-placement-panel left-arm-panel">
           <header><span>Left arm</span><strong>Service & special</strong></header>
@@ -252,7 +271,10 @@ function AwardArmletVisual({ member, layout }: { member: Member; layout?: Member
         </article>
         <article className="uniform-placement-panel right-arm-panel">
           <header><span>Right arm</span><strong>Target & proficiency</strong></header>
-          <div className="uniform-fabric right-arm-fabric">{expandedBadges(rightArm).map(({ badge, instance }) => badgeButton(badge, instance))}</div>
+          <div className="uniform-fabric right-arm-fabric">
+            <NcoRankInsignia rank={member.rank} />
+            {expandedBadges(rightArm).map(({ badge, instance }) => badgeButton(badge, instance))}
+          </div>
           <small>Target first, then alphabetical · maximum five per row</small>
         </article>
       </div>
