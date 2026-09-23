@@ -474,7 +474,9 @@ test("member profile overlay keeps the navigation footer outside the scrolling c
   ]);
   assert.match(styles, /\.modal\.member-profile-modal\s*\{[^}]*display:flex;[^}]*flex-direction:column;[^}]*overflow:hidden/);
   assert.match(styles, /\.member-profile-body\s*\{[^}]*flex:1 1 auto;[^}]*overflow-y:auto/);
-  assert.match(styles, /\.member-profile-stats \{[^}]*grid-auto-rows:minmax\(76px, auto\)/);
+  assert.match(styles, /\.member-profile-stats \{ min-height:96px;[^}]*grid-auto-rows:minmax\(94px,\s*auto\)/);
+  assert.match(styles, /\.member-profile-stats span \{ box-sizing:border-box;[^}]*min-height:94px/);
+  assert.match(styles, /\.member-profile-stats \{[^}]*grid-auto-rows:minmax\(94px, auto\)/);
   assert.match(tracker, /memberProfileBodyRef\.current\?\.scrollTo\(\{ top: 0 \}\)/);
   assert.match(tracker, /className="member-profile-body" ref=\{memberProfileBodyRef\}/);
   assert.match(styles, /\.member-profile-footer\s*\{[^}]*position:\s*static;[^}]*flex:\s*0 0 auto/);
