@@ -447,6 +447,11 @@ test("renders awarded records with supplied badge artwork and handbook placement
   assert.doesNotMatch(tracker, /uniform-figure|armlet-badge/);
   assert.match(styles, /grid-template-columns:repeat\(5,minmax\(0,1fr\)\)/);
   assert.match(styles, /\.award-image-badge\.advanced/);
+  assert.match(styles, /\.award-uniform-layout \{[^}]*grid-template-columns:minmax\(0,1fr\)/);
+  assert.match(styles, /\.uniform-badge-row \{[^}]*grid-template-columns:repeat\(5,minmax\(0,1fr\)\)/);
+  assert.match(styles, /\.uniform-badge-row\.special_row \{ display:flex; flex-wrap:wrap;/);
+  assert.match(styles, /\.right-arm-fabric \{ display:grid; grid-template-columns:repeat\(5,minmax\(0,1fr\)\)/);
+  assert.match(styles, /\.award-collection-groups \{ display:grid; grid-template-columns:minmax\(0,1fr\)/);
   assert.match(styles, /@media \(max-width:760px\)[\s\S]*?\.award-uniform-layout \{ grid-template-columns:1fr;/);
   assert.ok(target.byteLength > 1000);
   assert.ok(presidentsAward.byteLength > 1000);
