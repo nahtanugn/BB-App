@@ -154,6 +154,11 @@ button:focus-visible, input:focus-visible, select:focus-visible { outline: 3px s
 .award-collection-heading { margin-bottom:14px; display:flex; align-items:center; justify-content:space-between; gap:12px; }
 .award-collection-heading h4 { margin:3px 0 0; color:#14395f; font-family:Georgia,serif; font-size:21px; font-weight:500; }
 .award-collection-heading > span { min-width:34px; height:34px; padding:0 8px; display:grid; place-items:center; border-radius:999px; color:#126bd6; background:#e4f0ff; font-size:11px; font-weight:850; }
+.award-collection-groups { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; }
+.award-collection-group { min-width:0; padding:12px; border:1px solid #d8e3ef; border-radius:12px; background:#fff; }
+.award-collection-group:nth-child(3) { grid-column:1 / -1; }
+.award-collection-group h5 { margin:0 0 10px; color:#14395f; font-size:11px; }
+.award-collection-empty { min-height:56px; margin:0; display:grid; place-items:center; border:1px dashed #d8e3ef; border-radius:9px; color:#8291a4; font-size:10px; }
 .award-collection-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(92px,1fr)); gap:10px; }
 .award-collection-item { min-width:0; min-height:126px; padding:12px 8px 9px; display:flex; flex-direction:column; align-items:center; gap:6px; border:1px solid #d5e1ed; border-radius:12px; background:#fff; text-align:center; }
 .award-collection-item strong { max-width:100%; color:#14395f; font-size:9px; line-height:1.25; overflow-wrap:anywhere; }
@@ -177,7 +182,7 @@ button:focus-visible, input:focus-visible, select:focus-visible { outline: 3px s
 .award-accessible-list th,.award-accessible-list td { padding:9px 12px; border-top:1px solid #e2e9f1; text-align:left; }
 .award-visual-empty { min-height:110px; display:grid; place-items:center; border:1px dashed #c8d7e6; border-radius:14px; color:#71829b; background:#f8fbff; font-size:11px; }
 @media (max-width:760px) { .award-planning-strip { grid-template-columns:1fr; gap:12px; } .award-uniform-layout { grid-template-columns:1fr; } .uniform-fabric { min-height:170px; } }
-@media (max-width:480px) { .award-visual { gap:12px; } .uniform-fabric { padding:14px 10px; } .right-arm-fabric { gap:10px 5px; } .award-image-badge { width:clamp(34px,15vw,52px); } .award-collection-grid { grid-template-columns:repeat(3,minmax(0,1fr)); gap:7px; } .award-collection-item { min-height:116px; padding-inline:5px; } .award-badge-detail { align-items:flex-start; } }
+@media (max-width:480px) { .award-visual { gap:12px; } .uniform-fabric { padding:14px 10px; } .right-arm-fabric { gap:10px 5px; } .award-image-badge { width:clamp(34px,15vw,52px); } .award-collection-groups { grid-template-columns:1fr; } .award-collection-group:nth-child(3) { grid-column:auto; } .award-collection-grid { grid-template-columns:repeat(3,minmax(0,1fr)); gap:7px; } .award-collection-item { min-height:116px; padding-inline:5px; } .award-badge-detail { align-items:flex-start; } }
 .auth-brand .brand-mark { width: 56px; height: 56px; border-radius: 14px; }
 .brand strong, .brand span { display: block; }
 .brand strong { font-size: 16px; letter-spacing: -.2px; }

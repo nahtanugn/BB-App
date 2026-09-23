@@ -215,6 +215,11 @@ function AwardArmletVisual({ member, layout }: { member: Member; layout?: Member
   const rightArm = uniform.filter((badge) => badge.region === "right_arm");
   const leftGroups = ["founder", "special_row", "scholastic", "service_upper", "service_lower"];
   const leftBreast = uniform.filter((badge) => badge.region === "left_breast" || badge.region === "medal");
+  const collectionGroups = [
+    { key: "right-arm", title: "Right armlet", badges: collection.filter((badge) => badge.region === "right_arm") },
+    { key: "left-arm", title: "Left armlet", badges: collection.filter((badge) => badge.region === "left_arm_special" || badge.region === "left_arm_service") },
+    { key: "breast", title: "Left breast & medals", badges: collection.filter((badge) => badge.region === "left_breast" || badge.region === "medal") },
+  ];
   const expandedBadges = (badges: AwardBadgeLayoutItem[]) => badges.flatMap((badge) =>
     Array.from({ length: Math.max(1, badge.quantity) }, (_, index) => ({ badge, instance: index })),
   );
@@ -254,8 +259,11 @@ function AwardArmletVisual({ member, layout }: { member: Member; layout?: Member
     ) : <div className="award-visual-empty">No awarded badges with artwork yet.</div>}
 
     {collection.length > 0 && <div className="award-collection">
-      <div className="award-collection-heading"><div><p className="eyebrow">COLLECTION</p><h4>Awarded badges</h4></div><span>{collection.reduce((total, badge) => total + Math.max(1, badge.quantity), 0)}</span></div>
-      <div className="award-collection-grid">{collection.map((badge) => <div className="award-collection-item" key={badge.award_code}>{badgeButton(badge, 0, true)}<strong>{badge.award_name}</strong><small>{badge.level === "advanced" ? "Advanced" : "Basic"}</small></div>)}</div>
+      <div className="award-collection-heading"><div><p className="eyebrow">COLLECTION</p><h4>Awarded badges by placement</h4></div><span>{collection.reduce((total, badge) => total + Math.max(1, badge.quantity), 0)}</span></div>
+      <div className="award-collection-groups">{collectionGroups.map((group) => <section className="award-collection-group" key={group.key} aria-label={group.title}>
+        <h5>{group.title}</h5>
+        {group.badges.length ? <div className="award-collection-grid">{group.badges.map((badge) => <div className="award-collection-item" key={badge.award_code}>{badgeButton(badge, 0, true)}<strong>{badge.award_name}</strong><small>{badge.level === "advanced" ? "Advanced" : "Basic"}</small></div>)}</div> : <p className="award-collection-empty">No awarded badges</p>}
+      </section>)}</div>
     </div>}
 
     {selectedBadge && <div className="award-badge-detail" role="status">
@@ -268,7 +276,7 @@ function AwardArmletVisual({ member, layout }: { member: Member; layout?: Member
 
     {(collection.length > 0 || pendingArtwork.length > 0) && <details className="award-accessible-list">
       <summary>View awarded badges as a list</summary>
-      <div className="table-scroll"><table><thead><tr><th>Award</th><th>Level</th><th>Date</th><th>Artwork</th></tr></thead><tbody>{[...collection, ...pendingArtwork].map((badge) => <tr key={badge.award_code}><th>{badge.award_name}{badge.quantity > 1 ? ` × ${badge.quantity}` : ""}</th><td>{badge.level}</td><td>{badge.awarded_at ?? "—"}</td><td>{badge.artwork_src ? "Available" : "Pending"}</td></tr>)}</tbody></table></div>
+      <div className="table-scroll"><table><thead><tr><th>Award</th><th>Placement</th><th>Level</th><th>Date</th><th>Artwork</th></tr></thead><tbody>{[...collection, ...pendingArtwork].map((badge) => <tr key={badge.award_code}><th>{badge.award_name}{badge.quantity > 1 ? ` × ${badge.quantity}` : ""}</th><td>{badge.region?.replaceAll("_", " ") ?? "Not assigned"}</td><td>{badge.level}</td><td>{badge.awarded_at ?? "—"}</td><td>{badge.artwork_src ? "Available" : "Pending"}</td></tr>)}</tbody></table></div>
     </details>}
   </section>;
 }

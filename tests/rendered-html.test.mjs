@@ -437,6 +437,10 @@ test("renders awarded records with supplied badge artwork and handbook placement
   assert.match(metadata, /"duke_of_edinburgh_bronze"/);
   assert.match(metadata, /advanced_backing: region === "right_arm" && code !== "target"/);
   assert.match(tracker, /className="award-collection-grid"/);
+  assert.match(tracker, /title: "Right armlet"/);
+  assert.match(tracker, /title: "Left armlet"/);
+  assert.match(tracker, /Left breast & medals/);
+  assert.match(tracker, /badge\.region\?\.replaceAll\("_", " "\)/);
   assert.match(tracker, /Artwork pending/);
   assert.match(tracker, /View awarded badges as a list/);
   assert.match(tracker, /className="company-badge-board"/);
