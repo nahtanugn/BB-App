@@ -453,3 +453,11 @@ test("renders awarded records with supplied badge artwork and handbook placement
   assert.ok(serviceBadge.byteLength > 1000);
   assert.doesNotMatch(extractor, /\/Users\/nathan/);
 });
+
+test("member profile overlay keeps the navigation footer outside the scrolling content", async () => {
+  const styles = await readFile(new URL("../app/globals.css", import.meta.url), "utf8");
+  assert.match(styles, /\.modal\.member-profile-modal\s*\{[^}]*display:flex;[^}]*flex-direction:column;[^}]*overflow:hidden/);
+  assert.match(styles, /\.member-profile-body\s*\{[^}]*flex:1 1 auto;[^}]*overflow-y:auto/);
+  assert.match(styles, /\.member-profile-footer\s*\{[^}]*position:\s*static;[^}]*flex:\s*0 0 auto/);
+  assert.doesNotMatch(styles, /\.member-profile-body \{ padding: 14px 12px calc\(92px \+ env\(safe-area-inset-bottom\)\)/);
+});
