@@ -1,6 +1,6 @@
 "use client";
 
-import React, { FormEvent, useEffect, useMemo, useState } from "react";
+import React, { FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import AwardSubmissions from "./AwardSubmissions";
 import ExportCentre from "./ExportCentre";
 import { flushOfflineAttendance, queueOfflineAttendance } from "./offlineAttendance";
@@ -504,6 +504,7 @@ export default function AwardTracker({
   const [editingMember, setEditingMember] = useState<Member | null>(null);
   const [viewingMemberId, setViewingMemberId] = useState<number | null>(null);
   const [memberProfileTab, setMemberProfileTab] = useState<"overview" | "attendance" | "awards">("overview");
+  const memberProfileBodyRef = useRef<HTMLDivElement | null>(null);
   const [overrideMemberDetails, setOverrideMemberDetails] = useState(false);
   const [joinedAtDraft, setJoinedAtDraft] = useState(
     String(currentSubscriptionYear),
@@ -702,6 +703,9 @@ export default function AwardTracker({
 
   const viewingMember =
     data?.members.find((member) => member.id === viewingMemberId) ?? null;
+  useEffect(() => {
+    if (viewingMemberId !== null) memberProfileBodyRef.current?.scrollTo({ top: 0 });
+  }, [viewingMemberId, memberProfileTab]);
   const viewingMemberIndex = viewingMember
     ? filteredMembers.findIndex((member) => member.id === viewingMember.id)
     : -1;
@@ -3043,7 +3047,7 @@ export default function AwardTracker({
                   </button>
                 </div>
 
-                <div className="member-profile-body">
+                <div className="member-profile-body" ref={memberProfileBodyRef}>
                   <div className="member-profile-stats">
                     <span>
                       <strong>{attendance.percentage}%</strong>

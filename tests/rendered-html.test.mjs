@@ -467,9 +467,15 @@ test("renders awarded records with supplied badge artwork and handbook placement
 });
 
 test("member profile overlay keeps the navigation footer outside the scrolling content", async () => {
-  const styles = await readFile(new URL("../app/globals.css", import.meta.url), "utf8");
+  const [styles, tracker] = await Promise.all([
+    readFile(new URL("../app/globals.css", import.meta.url), "utf8"),
+    readFile(new URL("../app/AwardTracker.tsx", import.meta.url), "utf8"),
+  ]);
   assert.match(styles, /\.modal\.member-profile-modal\s*\{[^}]*display:flex;[^}]*flex-direction:column;[^}]*overflow:hidden/);
   assert.match(styles, /\.member-profile-body\s*\{[^}]*flex:1 1 auto;[^}]*overflow-y:auto/);
+  assert.match(styles, /\.member-profile-stats \{[^}]*grid-auto-rows:minmax\(76px, auto\)/);
+  assert.match(tracker, /memberProfileBodyRef\.current\?\.scrollTo\(\{ top: 0 \}\)/);
+  assert.match(tracker, /className="member-profile-body" ref=\{memberProfileBodyRef\}/);
   assert.match(styles, /\.member-profile-footer\s*\{[^}]*position:\s*static;[^}]*flex:\s*0 0 auto/);
   assert.doesNotMatch(styles, /\.member-profile-body \{ padding: 14px 12px calc\(92px \+ env\(safe-area-inset-bottom\)\)/);
 });
