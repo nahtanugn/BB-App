@@ -450,12 +450,14 @@ test("renders awarded records with supplied badge artwork and handbook placement
   assert.match(tracker, /<NcoRankInsignia rank=\{member\.rank\} \/>/);
   assert.match(tracker, /uniform\.length \|\| hasNcoRank/);
   assert.match(styles, /grid-template-columns:repeat\(5,minmax\(0,1fr\)\)/);
-  assert.match(styles, /\.right-arm-rank \{ grid-column:1 \/ -1;/);
+  assert.match(styles, /\.right-arm-rank \{ flex:0 0 100%;/);
   assert.match(styles, /\.award-image-badge\.advanced/);
   assert.match(styles, /\.award-uniform-layout \{[^}]*grid-template-columns:minmax\(0,1fr\)/);
-  assert.match(styles, /\.uniform-badge-row \{[^}]*grid-template-columns:repeat\(5,minmax\(0,1fr\)\)/);
-  assert.match(styles, /\.uniform-badge-row\.special_row \{ display:flex; flex-wrap:wrap;/);
-  assert.match(styles, /\.right-arm-fabric \{ display:grid; grid-template-columns:repeat\(5,minmax\(0,1fr\)\)/);
+  assert.match(styles, /\.uniform-badge-row \{[^}]*display:flex; flex-wrap:wrap; justify-content:center/);
+  assert.match(styles, /\.uniform-badge-cell \{ flex:0 0 calc\(\(100% - 40px\)\/5\)/);
+  assert.match(styles, /\.uniform-badge-row\.special_row \.uniform-badge-cell \{ flex:0 0 auto; \}/);
+  assert.match(styles, /\.right-arm-fabric \{ display:flex; flex-wrap:wrap; justify-content:center/);
+  assert.match(styles, /\.right-arm-badge-cell \{ flex:0 0 calc\(\(100% - 32px\)\/5\)/);
   assert.match(styles, /\.award-collection-groups \{ display:grid; grid-template-columns:minmax\(0,1fr\)/);
   assert.match(styles, /@media \(max-width:760px\)[\s\S]*?\.award-uniform-layout \{ grid-template-columns:1fr;/);
   assert.ok(target.byteLength > 1000);

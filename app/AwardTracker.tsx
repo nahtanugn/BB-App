@@ -264,7 +264,7 @@ function AwardArmletVisual({ member, layout }: { member: Member; layout?: Member
           <div className="uniform-fabric left-arm-fabric">
             {leftGroups.map((group) => {
               const badges = expandedBadges(uniform.filter((badge) => badge.region !== "right_arm" && badge.region !== "left_breast" && badge.region !== "medal" && badge.row_group === group));
-              return badges.length ? <div className={`uniform-badge-row ${group}`} key={group}>{badges.map(({ badge, instance }) => badgeButton(badge, instance))}</div> : null;
+              return badges.length ? <div className={`uniform-badge-row ${group}`} key={group}>{badges.map(({ badge, instance }) => <div className="uniform-badge-cell" key={`${badge.award_code}-${instance}`}>{badgeButton(badge, instance)}</div>)}</div> : null;
             })}
           </div>
           {leftBreast.length > 0 && <div className="left-breast-badges"><span>Left breast</span>{expandedBadges(leftBreast).map(({ badge, instance }) => badgeButton(badge, instance))}</div>}
@@ -273,7 +273,7 @@ function AwardArmletVisual({ member, layout }: { member: Member; layout?: Member
           <header><span>Right arm</span><strong>Target & proficiency</strong></header>
           <div className="uniform-fabric right-arm-fabric">
             <NcoRankInsignia rank={member.rank} />
-            {expandedBadges(rightArm).map(({ badge, instance }) => badgeButton(badge, instance))}
+            {expandedBadges(rightArm).map(({ badge, instance }) => <div className="right-arm-badge-cell" key={`${badge.award_code}-${instance}`}>{badgeButton(badge, instance)}</div>)}
           </div>
           <small>Target first, then alphabetical · maximum five per row</small>
         </article>

@@ -139,10 +139,13 @@ button:focus-visible, input:focus-visible, select:focus-visible { outline: 3px s
 .uniform-placement-panel > header strong { color:#14395f; font-size:11px; }
 .uniform-fabric { min-height:190px; padding:18px; background:linear-gradient(145deg,#153f69,#0b2f53); }
 .left-arm-fabric { display:flex; flex-direction:column; align-items:center; gap:12px; }
-.uniform-badge-row { width:100%; display:grid; grid-template-columns:repeat(5,minmax(0,1fr)); justify-items:center; gap:10px; }
-.uniform-badge-row.special_row { display:flex; flex-wrap:wrap; justify-content:center; }
-.right-arm-fabric { display:grid; grid-template-columns:repeat(5,minmax(0,1fr)); align-content:start; gap:12px 8px; }
-.right-arm-rank { grid-column:1 / -1; min-height:38px; display:flex; align-items:center; justify-content:center; gap:9px; color:#fff; }
+.uniform-badge-row { width:100%; display:flex; flex-wrap:wrap; justify-content:center; gap:10px; }
+.uniform-badge-cell { flex:0 0 calc((100% - 40px)/5); min-width:0; display:flex; justify-content:center; }
+.uniform-badge-cell .award-image-badge,.right-arm-badge-cell .award-image-badge { margin:0; }
+.uniform-badge-row.special_row .uniform-badge-cell { flex:0 0 auto; }
+.right-arm-fabric { display:flex; flex-wrap:wrap; justify-content:center; align-content:start; gap:12px 8px; }
+.right-arm-rank { flex:0 0 100%; min-height:38px; display:flex; align-items:center; justify-content:center; gap:9px; color:#fff; }
+.right-arm-badge-cell { flex:0 0 calc((100% - 32px)/5); min-width:0; display:flex; justify-content:center; }
 .right-arm-rank svg { width:34px; height:auto; max-height:46px; overflow:visible; fill:#f5f7fa; filter:drop-shadow(0 1px 1px rgba(0,0,0,.5)); }
 .right-arm-rank span { padding:4px 8px; border:1px solid rgba(255,255,255,.45); border-radius:999px; color:#fff; background:rgba(4,22,40,.42); font-size:9px; font-weight:800; letter-spacing:.04em; }
 .award-image-badge { position:relative; min-width:0; width:clamp(38px,6vw,58px); aspect-ratio:1; margin:auto; padding:4px; display:grid; place-items:center; border:0; border-radius:9px; background:rgba(255,255,255,.97); cursor:pointer; box-shadow:0 2px 7px rgba(0,0,0,.24); }
@@ -185,7 +188,7 @@ button:focus-visible, input:focus-visible, select:focus-visible { outline: 3px s
 .award-accessible-list th,.award-accessible-list td { padding:9px 12px; border-top:1px solid #e2e9f1; text-align:left; }
 .award-visual-empty { min-height:110px; display:grid; place-items:center; border:1px dashed #c8d7e6; border-radius:14px; color:#71829b; background:#f8fbff; font-size:11px; }
 @media (max-width:760px) { .award-planning-strip { grid-template-columns:1fr; gap:12px; } .award-uniform-layout { grid-template-columns:1fr; } .uniform-fabric { min-height:170px; } }
-@media (max-width:480px) { .award-visual { gap:12px; } .uniform-fabric { padding:14px 10px; } .right-arm-fabric { gap:10px 5px; } .award-image-badge { width:clamp(34px,15vw,52px); } .award-collection-grid { grid-template-columns:repeat(3,minmax(0,1fr)); gap:7px; } .award-collection-item { min-height:116px; padding-inline:5px; } .award-badge-detail { align-items:flex-start; } }
+@media (max-width:480px) { .award-visual { gap:12px; } .uniform-fabric { padding:14px 10px; } .right-arm-fabric { gap:10px 5px; } .right-arm-badge-cell { flex-basis:calc((100% - 20px)/5); } .award-image-badge { width:clamp(34px,15vw,52px); } .award-collection-grid { grid-template-columns:repeat(3,minmax(0,1fr)); gap:7px; } .award-collection-item { min-height:116px; padding-inline:5px; } .award-badge-detail { align-items:flex-start; } }
 .auth-brand .brand-mark { width: 56px; height: 56px; border-radius: 14px; }
 .brand strong, .brand span { display: block; }
 .brand strong { font-size: 16px; letter-spacing: -.2px; }
