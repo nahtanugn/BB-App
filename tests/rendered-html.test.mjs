@@ -449,7 +449,6 @@ test("renders awarded records with supplied badge artwork and handbook placement
   assert.match(tracker, /"Lance Corporal": 1[\s\S]*?Corporal: 2[\s\S]*?Sergeant: 3[\s\S]*?"Staff Sergeant": 4/);
   assert.match(tracker, /<NcoRankInsignia rank=\{member\.rank\} \/>/);
   assert.match(tracker, /uniform\.length \|\| hasNcoRank/);
-  assert.match(styles, /grid-template-columns:repeat\(5,minmax\(0,1fr\)\)/);
   assert.match(styles, /\.right-arm-rank \{ flex:0 0 100%;/);
   assert.match(styles, /\.award-image-badge\.advanced/);
   assert.match(styles, /\.award-uniform-layout \{[^}]*grid-template-columns:minmax\(0,1fr\)/);
@@ -459,7 +458,8 @@ test("renders awarded records with supplied badge artwork and handbook placement
   assert.match(styles, /\.right-arm-fabric \{ display:flex; flex-wrap:wrap; justify-content:center/);
   assert.match(styles, /\.right-arm-badge-cell \{ flex:0 0 calc\(\(100% - 32px\)\/5\)/);
   assert.match(styles, /\.award-collection-groups \{ display:grid; grid-template-columns:minmax\(0,1fr\)/);
-  assert.match(styles, /\.award-collection-item strong \{[^}]*overflow-wrap:normal; word-break:normal; hyphens:auto/);
+  assert.match(styles, /\.award-collection-grid \{ display:grid; grid-template-columns:repeat\(auto-fit,minmax\(min\(100%,128px\),1fr\)\)/);
+  assert.match(styles, /\.award-collection-item strong \{[^}]*overflow-wrap:normal; word-break:normal; hyphens:none/);
   assert.match(styles, /@media \(max-width:760px\)[\s\S]*?\.award-uniform-layout \{ grid-template-columns:1fr;/);
   assert.ok(target.byteLength > 1000);
   assert.ok(presidentsAward.byteLength > 1000);
