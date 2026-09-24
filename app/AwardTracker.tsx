@@ -232,7 +232,7 @@ function AwardArmletVisual({ member, layout }: { member: Member; layout?: Member
   const pendingArtwork = layout?.pending_artwork ?? [];
   const hasNcoRank = ["Lance Corporal", "Corporal", "Sergeant", "Staff Sergeant"].includes(member.rank);
   const rightArm = uniform.filter((badge) => badge.region === "right_arm");
-  const leftGroups = ["founder", "special_row", "scholastic", "service_upper", "service_lower"];
+  const leftGroups = ["special_top", "president_doe_gold", "scholastic", "special_row", "service_upper", "service_lower"];
   const leftBreast = uniform.filter((badge) => badge.region === "left_breast" || badge.region === "medal");
   const collectionGroups = [
     { key: "right-arm", title: "Right armlet", badges: collection.filter((badge) => badge.region === "right_arm") },
@@ -715,7 +715,7 @@ export default function AwardTracker({
       (data?.awards ?? []).filter(
         (award) =>
           award.category === category &&
-          (category !== "Service" || award.code === "one_year_service") &&
+          (category !== "Service" || ["one_year_service", "three_year_service"].includes(award.code)) &&
           (level === "basic"
             ? award.basic_available
             : award.advanced_available),
@@ -1384,7 +1384,7 @@ export default function AwardTracker({
         "Squad",
         "Joined Year",
         "Service Years",
-        "One-Year Service Awards",
+        "One Year Service Badges",
         "School",
         "Contact Number",
         "Emergency Contact Number",
@@ -2370,7 +2370,7 @@ export default function AwardTracker({
               <span>
                 {category === "Service"
                   ? canManageAwards
-                    ? "Use + or − to record how many One-Year Service Awards each member has"
+                    ? "Use + or − to record how many One Year Service Badges each member has"
                     : "Service award counts are shown in read-only mode"
                   : canManageAwards
                     ? "Choose an award status from each dropdown. Awarded uses today’s date automatically, or enter the actual date below it."
@@ -2419,7 +2419,7 @@ export default function AwardTracker({
                             <td key={award.code}>
                               <div
                                 className="service-count-control"
-                                aria-label={`${member.name}: ${member.service_award_count} One-Year Service Awards`}
+                                aria-label={`${member.name}: ${member.service_award_count} One Year Service Badges`}
                               >
                                 <button
                                   type="button"

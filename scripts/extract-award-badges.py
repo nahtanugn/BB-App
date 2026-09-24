@@ -16,7 +16,6 @@ PROFICIENCY_CROPS = {
     "bandsman": (1515, 55, 1810, 390),
     "camping": (205, 405, 560, 725),
     "christian_education": (650, 395, 960, 725),
-    "drill": (1080, 405, 1390, 725),
     "communication": (1490, 405, 1820, 725),
     "community_service": (1935, 405, 2280, 725),
     "computer_knowledge": (205, 725, 555, 1055),
@@ -42,6 +41,9 @@ PROFICIENCY_CROPS = {
     "swimming": (1275, 2060, 1600, 2440),
     "water_adventure": (1690, 2060, 2040, 2440),
 }
+
+# Drill artwork is maintained separately from the composite proficiency sheet:
+# use the shield illustration on page 128 of the Aug 2024 Senior Member's Handbook.
 
 SPECIAL_CROPS = {
     "founders_award": (315, 10, 610, 335),
@@ -78,8 +80,12 @@ def normalise_badge(image: Image.Image, remove_white: bool) -> Image.Image:
     if alpha_box:
         badge = badge.crop(alpha_box)
     badge.thumbnail((440, 440), Image.Resampling.LANCZOS)
-    canvas = Image.new("RGBA", (512, 512), (0, 0, 0, 0))
-    canvas.alpha_composite(badge, ((512 - badge.width) // 2, (512 - badge.height) // 2))
+    # Keep a small transparent safety margin, but do not put the badge back
+    # onto a large square canvas. That padding made narrow/vertical awards
+    # look tiny when the app displayed every asset inside the same square.
+    margin = max(4, round(max(badge.size) * 0.04))
+    canvas = Image.new("RGBA", (badge.width + margin * 2, badge.height + margin * 2), (0, 0, 0, 0))
+    canvas.alpha_composite(badge, (margin, margin))
     return canvas
 
 
@@ -87,6 +93,10 @@ def extract(sheet: Path, crops: dict[str, tuple[int, int, int, int]], output: Pa
     source = Image.open(sheet)
     for key, bounds in crops.items():
         badge = normalise_badge(source.crop(bounds), remove_white)
+        if key == "scholastics_silver" and badge.height > badge.width:
+            # The supplied Silver badge crop has a detached grey fleck below
+            # the round badge. Keep the badge itself square and centered.
+            badge = badge.crop((0, 0, badge.width, badge.width))
         badge.save(output / f"{key}.webp", "WEBP", quality=92, method=6)
 
 

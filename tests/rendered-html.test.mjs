@@ -318,7 +318,7 @@ test("ships the Malaysia Senior Section catalogue, role-based portals and instal
     /All Senior and Junior member records exported successfully/,
   );
   assert.match(tracker, /Attendance Percentage/);
-  assert.match(tracker, /One-Year Service Awards/);
+  assert.match(tracker, /One Year Service Badges/);
   assert.match(tracker, /Subscription \$\{year\}/);
   assert.match(route, /CREATE TABLE IF NOT EXISTS member_subscriptions/);
   assert.match(route, /action === "update_subscription"/);
@@ -432,6 +432,26 @@ test("renders awarded records with supplied badge artwork and handbook placement
   assert.match(route, /existing\.level !== "advanced" && row\.level === "advanced"/);
   assert.match(route, /awardLayouts/);
   assert.match(route, /pending_artwork/);
+  assert.doesNotMatch(route, /code NOT IN \([^)]*three_year_service/);
+  assert.match(route, /code: "three_year_service",\s*name: "Three Year Service Badge",\s*category: "Service"/);
+  assert.match(route, /code: "link_badge",\s*name: "Link Badge",\s*category: "Special",\s*basic: 1,\s*advanced: 0/);
+  assert.match(route, /code: "junior_service_award",\s*name: "Junior Service Award",\s*category: "Special",\s*basic: 1,\s*advanced: 0/);
+  assert.match(route, /code: "martial_arts",\s*name: "Martial Arts",\s*category: "D · Physical"/);
+  assert.match(metadata, /"martial_arts"/);
+  assert.match(metadata, /\["founders_award", metadata\("founders_award", "left_arm_special", "special_top", 0/);
+  assert.match(metadata, /\["presidents_award", metadata\("presidents_award", "left_arm_special", "president_doe_gold", 10/);
+  assert.match(metadata, /\["gold_award", metadata\("gold_award", "left_arm_special", "president_doe_gold", 11/);
+  assert.match(metadata, /\["duke_of_edinburgh_(?:bronze|silver|gold)", metadata\("duke_of_edinburgh_(?:bronze|silver|gold)", "left_arm_special", "president_doe_gold", 12/);
+  assert.match(metadata, /\["scholastics_gold", metadata\("scholastics_gold", "left_arm_special", "scholastic", 20/);
+  assert.match(metadata, /\["scholastics_bronze", metadata\("scholastics_bronze", "left_arm_special", "scholastic", 22/);
+  assert.match(tracker, /\["special_top", "president_doe_gold", "scholastic", "special_row"/);
+  assert.match(route, /\["duke_of_edinburgh_gold", "duke_of_edinburgh_silver", "duke_of_edinburgh_bronze"\][\s\S]*?find\(\(code\) => awardedByCode\.has\(code\)\)/);
+  assert.match(metadata, /\["nco_proficiency", metadata\("nco_proficiency", "left_arm_special", "special_row"/);
+  assert.match(metadata, /\["link_badge", metadata\("link_badge", "left_arm_special", "special_row", 31, "special"\)/);
+  assert.match(metadata, /\["junior_service_award", metadata\("junior_service_award", "left_arm_special", "special_row", 32, "special"\)/);
+  assert.match(route, /row\.award_code === "nco_proficiency" && row\.level !== "advanced"/);
+  assert.match(route, /"one_year_service",\s*"long_year_service",\s*\]\.includes\(awardCode\)/);
+  assert.match(tracker, /category !== "Service" \|\| \["one_year_service", "three_year_service"\]\.includes\(award\.code\)/);
   assert.match(metadata, /const rightArmOrder = \[\s*"target",\s*"arts",\s*"athletics"/);
   assert.match(metadata, /"scholastics_bronze"/);
   assert.match(metadata, /"duke_of_edinburgh_bronze"/);
@@ -451,10 +471,21 @@ test("renders awarded records with supplied badge artwork and handbook placement
   assert.match(tracker, /uniform\.length \|\| hasNcoRank/);
   assert.match(styles, /\.right-arm-rank \{ flex:0 0 100%;/);
   assert.match(styles, /\.award-image-badge\.advanced/);
+  assert.match(styles, /\.award-image-badge \{[^}]*padding:0;[^}]*border-radius:0;[^}]*background:transparent;[^}]*box-shadow:none/);
   assert.match(styles, /\.award-uniform-layout \{[^}]*grid-template-columns:minmax\(0,1fr\)/);
-  assert.match(styles, /\.uniform-badge-row \{[^}]*display:flex; flex-wrap:wrap; justify-content:center/);
+  assert.match(styles, /\.uniform-badge-row \{[^}]*display:flex; flex-wrap:wrap; align-items:center; justify-content:center/);
   assert.match(styles, /\.uniform-badge-cell \{ flex:0 0 calc\(\(100% - 40px\)\/5\)/);
   assert.match(styles, /\.uniform-badge-row\.special_row \.uniform-badge-cell \{ flex:0 0 auto; \}/);
+  assert.match(styles, /\.uniform-fabric \{ --armlet-badge-size:clamp\(50px,7vw,74px\); \}/);
+  assert.match(styles, /\.uniform-fabric \.award-image-badge \{ width:var\(--armlet-badge-size\); height:var\(--armlet-badge-size\); flex:0 0 var\(--armlet-badge-size\);/);
+  assert.match(styles, /\.award-image-badge\.advanced \{ padding:0; background:transparent; box-shadow:none; \}/);
+  assert.match(styles, /\.award-image-badge\.advanced::before \{[^}]*inset:0;[^}]*border-radius:50%/);
+  assert.match(styles, /\.award-image-badge img \{[^}]*width:84%; height:84%; max-width:84%; max-height:84%; object-fit:contain/);
+  assert.match(styles, /\.company-badge-board span\.advanced::before \{[^}]*inset:0;/);
+  assert.match(styles, /\.award-badge-detail-image\.advanced::before \{[^}]*inset:0;/);
+  assert.doesNotMatch(styles, /\.uniform-fabric \.award-image-badge(?:\.advanced)? img \{ transform:scale\(/);
+  assert.match(extractor, /margin = max\(4, round\(max\(badge\.size\) \* 0\.04\)\)/);
+  assert.match(styles, /\.uniform-fabric \{ min-height:190px; padding:18px; background:#000; \}/);
   assert.match(styles, /\.right-arm-fabric \{ display:flex; flex-wrap:wrap; justify-content:center/);
   assert.match(styles, /\.right-arm-badge-cell \{ flex:0 0 calc\(\(100% - 32px\)\/5\)/);
   assert.match(styles, /\.award-collection-groups \{ display:grid; grid-template-columns:minmax\(0,1fr\)/);
@@ -465,6 +496,7 @@ test("renders awarded records with supplied badge artwork and handbook placement
   assert.ok(presidentsAward.byteLength > 1000);
   assert.ok(serviceBadge.byteLength > 1000);
   assert.doesNotMatch(extractor, /\/Users\/nathan/);
+  assert.match(extractor, /key == "scholastics_silver" and badge\.height > badge\.width[\s\S]*?badge = badge\.crop\(\(0, 0, badge\.width, badge\.width\)\)/);
 });
 
 test("member profile overlay keeps the navigation footer outside the scrolling content", async () => {

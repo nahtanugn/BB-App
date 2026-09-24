@@ -410,7 +410,7 @@ export default function ExportCentre({
           "Member ID",
           "Section",
           "Full Name",
-          "One-Year Service Awards",
+          "One Year Service Badges",
           "Awards Earned",
           "In Progress or Review",
           "Earned Awards",

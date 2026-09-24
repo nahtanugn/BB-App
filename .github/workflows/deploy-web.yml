@@ -10,6 +10,7 @@ on:
         default: validate-only
         options:
           - validate-only
+          - deploy-application-only
           - deploy-production
 
 permissions:
@@ -35,7 +36,7 @@ jobs:
 
   deploy:
     needs: validate
-    if: inputs.approval == 'deploy-production'
+    if: inputs.approval == 'deploy-application-only' || inputs.approval == 'deploy-production'
     runs-on: ubuntu-latest
     environment: production
     env:
@@ -66,6 +67,7 @@ jobs:
       - name: Bind verified production database to built Worker
         run: node scripts/configure-built-worker.mjs
       - name: Apply latest additive schemas
+        if: inputs.approval == 'deploy-production'
         run: |
           pnpm exec wrangler d1 execute "$D1_DATABASE_NAME" --remote --config .wrangler/deployment.json --file drizzle/0039_automated_bb_guide.sql
           pnpm exec wrangler d1 execute "$D1_DATABASE_NAME" --remote --config .wrangler/deployment.json --file drizzle/0040_free_device_notifications.sql
@@ -75,6 +77,7 @@ jobs:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
       - name: Ensure private document bucket exists
+        if: inputs.approval == 'deploy-production'
         run: pnpm exec wrangler r2 bucket create "$R2_BUCKET_NAME" || pnpm exec wrangler r2 bucket info "$R2_BUCKET_NAME"
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}

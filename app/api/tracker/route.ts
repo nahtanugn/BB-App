@@ -255,6 +255,13 @@ const awards: AwardSeed[] = [
     advanced: 1,
   },
   {
+    code: "martial_arts",
+    name: "Martial Arts",
+    category: "D · Physical",
+    basic: 1,
+    advanced: 1,
+  },
+  {
     code: "physical_training",
     name: "Physical Training",
     category: "D · Physical",
@@ -299,6 +306,20 @@ const awards: AwardSeed[] = [
   {
     code: "gold_award",
     name: "Gold Award",
+    category: "Special",
+    basic: 1,
+    advanced: 0,
+  },
+  {
+    code: "link_badge",
+    name: "Link Badge",
+    category: "Special",
+    basic: 1,
+    advanced: 0,
+  },
+  {
+    code: "junior_service_award",
+    name: "Junior Service Award",
     category: "Special",
     basic: 1,
     advanced: 0,
@@ -361,21 +382,21 @@ const awards: AwardSeed[] = [
   },
   {
     code: "one_year_service",
-    name: "One-Year Service Awards",
+    name: "One Year Service Badge",
     category: "Service",
     basic: 1,
     advanced: 0,
   },
   {
     code: "three_year_service",
-    name: "Three-Year Service",
+    name: "Three Year Service Badge",
     category: "Service",
     basic: 1,
     advanced: 0,
   },
   {
     code: "long_year_service",
-    name: "Long-Year Service",
+    name: "Long Year Service Badge",
     category: "Service",
     basic: 1,
     advanced: 0,
@@ -969,7 +990,7 @@ export async function GET(request: Request) {
       await Promise.all([
         db
           .prepare(
-            "SELECT * FROM award_definitions WHERE section = ? AND code NOT IN ('arts_crafts_hobbies', 'band_proficiency', 'scholastic', 'duke_of_edinburgh', 'three_year_service', 'long_year_service') ORDER BY sort_order",
+            "SELECT * FROM award_definitions WHERE section = ? AND code NOT IN ('arts_crafts_hobbies', 'band_proficiency', 'scholastic', 'duke_of_edinburgh', 'long_year_service') ORDER BY sort_order",
           )
           .bind(section)
           .all(),
@@ -987,8 +1008,19 @@ export async function GET(request: Request) {
       const awardedByCode = new Map<string, (typeof progressRows)[number]>();
       for (const row of progressRows) {
         if (Number(row.member_id) !== Number(member.id) || row.status !== "awarded" || row.award_code === "one_year_service") continue;
+        // The handbook defines Basic NCO Proficiency as a certificate. Only the
+        // Advanced NCO Proficiency Star is wearable, so keep Basic in the tracker
+        // but do not render the star for it.
+        if (row.award_code === "nco_proficiency" && row.level !== "advanced") continue;
         const existing = awardedByCode.get(row.award_code);
         if (!existing || (existing.level !== "advanced" && row.level === "advanced")) awardedByCode.set(row.award_code, row);
+      }
+      // Only the highest earned Duke of Edinburgh level is worn/displayed at
+      // once. Keep the underlying member_awards rows and history untouched.
+      const highestDoeCode = ["duke_of_edinburgh_gold", "duke_of_edinburgh_silver", "duke_of_edinburgh_bronze"]
+        .find((code) => awardedByCode.has(code));
+      for (const code of ["duke_of_edinburgh_bronze", "duke_of_edinburgh_silver", "duke_of_edinburgh_gold"]) {
+        if (code !== highestDoeCode) awardedByCode.delete(code);
       }
       const serviceCount = Number(member.service_award_count ?? 0);
       if (serviceCount > 0) {
@@ -1012,6 +1044,7 @@ export async function GET(request: Request) {
           quantity: row.award_code === "one_year_service" ? serviceCount : 1,
           artwork_key: placement?.artwork_key ?? null,
           artwork_src: placement?.artwork_src ?? null,
+          artwork_source: placement?.artwork_source ?? null,
           region: placement?.region ?? null,
           row_group: placement?.row_group ?? null,
           display_order: placement?.display_order ?? 999,
@@ -1059,7 +1092,7 @@ export async function GET(request: Request) {
       bandSubscriptions: bandSubscriptionResult.results,
       awardPlacement: awardBadgeMetadata,
       awardLayouts,
-      awardVisual: { source: awardHandbookSource, rankPlacement: "right_arm", artworkVersion: "supplied-sheets-2026-09-14" },
+      awardVisual: { source: awardHandbookSource, rankPlacement: "right_arm", artworkVersion: "confirmed-assets-2026-09-23" },
       recommendations,
       companyRecommendations,
       syllabus:
@@ -1512,7 +1545,6 @@ export async function POST(request: Request) {
       if (
         [
           "one_year_service",
-          "three_year_service",
           "long_year_service",
         ].includes(awardCode)
       )
