@@ -232,7 +232,7 @@ function AwardArmletVisual({ member, layout }: { member: Member; layout?: Member
   const pendingArtwork = layout?.pending_artwork ?? [];
   const hasNcoRank = ["Lance Corporal", "Corporal", "Sergeant", "Staff Sergeant"].includes(member.rank);
   const rightArm = uniform.filter((badge) => badge.region === "right_arm");
-  const leftGroups = ["special_top", "president_doe_gold", "scholastic", "special_row", "service_upper", "service_lower"];
+  const leftGroups = ["special_top", "president_doe_gold", "scholastic", "special_row", "nco_service", "service_upper", "service_lower"];
   const leftBreast = uniform.filter((badge) => badge.region === "left_breast" || badge.region === "medal");
   const collectionGroups = [
     { key: "right-arm", title: "Right armlet", badges: collection.filter((badge) => badge.region === "right_arm") },

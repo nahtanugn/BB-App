@@ -446,7 +446,10 @@ test("renders awarded records with supplied badge artwork and handbook placement
   assert.match(metadata, /\["scholastics_bronze", metadata\("scholastics_bronze", "left_arm_special", "scholastic", 22/);
   assert.match(tracker, /\["special_top", "president_doe_gold", "scholastic", "special_row"/);
   assert.match(route, /\["duke_of_edinburgh_gold", "duke_of_edinburgh_silver", "duke_of_edinburgh_bronze"\][\s\S]*?find\(\(code\) => awardedByCode\.has\(code\)\)/);
-  assert.match(metadata, /\["nco_proficiency", metadata\("nco_proficiency", "left_arm_special", "special_row"/);
+  assert.match(metadata, /\["long_year_service", metadata\("long_year_service", "left_arm_service", "nco_service", 30/);
+  assert.match(metadata, /\["nco_proficiency", metadata\("nco_proficiency", "left_arm_special", "nco_service", 31/);
+  assert.match(metadata, /\["three_year_service", metadata\("three_year_service", "left_arm_service", "nco_service", 32/);
+  assert.match(tracker, /"scholastic", "special_row", "nco_service"/);
   assert.match(metadata, /\["link_badge", metadata\("link_badge", "left_arm_special", "special_row", 31, "special"\)/);
   assert.match(metadata, /\["junior_service_award", metadata\("junior_service_award", "left_arm_special", "special_row", 32, "special"\)/);
   assert.match(route, /row\.award_code === "nco_proficiency" && row\.level !== "advanced"/);
